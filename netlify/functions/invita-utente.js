@@ -46,7 +46,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const res = await fetch(`${identity.url}/admin/users`, {
+   const res = await fetch(`${identity.url}/invite`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${identity.token}`,
