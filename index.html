@@ -636,8 +636,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span class="pw-eye" onclick="togglePw()">👁</span>
         </div>
 
-        <div class="lf-forgot"><a href="#" onclick="forgotPw(event)">Password dimenticata?</a></div>
-
         <button class="btn-accedi" onclick="doLogin()">Accedi &rarr;</button>
         <div id="li-err" class="lf-error"></div>
 
@@ -1092,17 +1090,6 @@ async function doLogin() {
     // Fallback: apri il modal
     netlifyIdentity.open('login');
   }
-}
-
-async function forgotPw(e) {
-  e.preventDefault();
-  const email = document.getElementById('li-email').value.trim();
-  if (!email) { mostraErr('Inserisci prima la tua email.'); return; }
-  try {
-    await netlifyIdentity.gotrue.requestPasswordRecovery(email);
-    mostraErr('✅ Email di recupero inviata. Controlla la casella!');
-    document.getElementById('li-err').style.color = 'var(--green)';
-  } catch(err) { mostraErr('Errore. Verifica l\'indirizzo email.'); }
 }
 
 function doLogout() { netlifyIdentity.logout(); }
