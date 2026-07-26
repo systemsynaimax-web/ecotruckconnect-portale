@@ -916,14 +916,10 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 /* ====================================================
    ⚙️  CONFIGURAZIONE — CAMBIA SOLO QUESTI VALORI
    ==================================================== */
-const AT_TOKEN  = 'patWdNLjWbxoGgAv4.c933ecfa9104077723cfe3eddea68a7c5f5927e2e96dd5a4892ad70605f4a2eb';     // Token creato su Airtable → Builder Hub → Personal access tokens
-const AT_BASE   = 'app0TGG8f4ARpdlbl';             // ID base Airtable (NON cambiare)
-const PROXY_URL = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy sicuro Make: il bot passa da qui, niente chiavi AI esposte nel sito
+const PROXY_URL = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy sicuro Make: tutte le chiamate ad Airtable e all'IA passano da qui, niente chiavi esposte nel sito
 const PREZZO    = 20;                               // € per carico (cambia se vuoi €20)
 /* ==================================================== */
 
-const BASE_URL = `https://api.airtable.com/v0/${AT_BASE}`;
-const AT_HDR   = { 'Authorization': `Bearer ${AT_TOKEN}`, 'Content-Type': 'application/json' };
 const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy Portale EcoTruckConnect (Make) — usato da rilevaTipoUtente() e pubblicaCarico()
 
 let currentUser = null;
@@ -1215,14 +1211,13 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
   // trasportatori che cliccano "Prendi" quasi insieme finirebbero entrambi a
   // pagare, anche se il carico è già stato preso dal primo.
   try {
-    const checkRes = await fetch(`${BASE_URL}/Carichi/${id}`, { headers: AT_HDR });
-    if (!checkRes.ok) {
-      alert('⚠️ Questo carico non è più disponibile (potrebbe essere già stato preso).');
-      caricaDati(currentUser.email);
-      return;
-    }
+    const checkRes = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'check_carico', carico_id: id })
+    });
     const checkData = await checkRes.json();
-    if (checkData.fields.stato !== 'DISPONIBILE') {
+    if (!checkData.trovato || checkData.stato !== 'DISPONIBILE') {
       alert('⚠️ Questo carico non è più disponibile — qualcun altro lo ha già preso.');
       caricaDati(currentUser.email);
       return;
@@ -1232,12 +1227,17 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
     return;
   }
 
-  // Aggiorna stato su Airtable a IN PAGAMENTO
+  // Blocca il carico su Airtable (stato IN PAGAMENTO) — passa dal proxy Make, mai Airtable diretto
   try {
-    await fetch(`${BASE_URL}/Carichi/${id}`, {
-      method: 'PATCH',
-      headers: AT_HDR,
-      body: JSON.stringify({ fields: { stato: 'IN PAGAMENTO', bloccato_da_id: currentUser.email, bloccato_da_nome: currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email } })
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'blocca_carico',
+        carico_id: id,
+        bloccato_da_id: currentUser.email,
+        bloccato_da_nome: currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email
+      })
     });
   } catch(e) { console.error(e); }
 
@@ -1355,10 +1355,17 @@ async function caricaDati(email) {
     const recId = await rilevaTipoUtente(email);
     if (!recId) { azzeraStats(); renderStorico([]); return; }
 
-    // 3. Candidature del trasportatore
-    const r3 = await fetch(`${BASE_URL}/Candidature?filterByFormula={trasportatore_id}='${recId}'&maxRecords=200`, { headers: AT_HDR });
-    const d3 = await r3.json();
-    const cands = d3.records || [];
+    // 3. Candidature del trasportatore — passa dal proxy Make, mai Airtable diretto
+    let cands = [];
+    try {
+      const r3 = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_candidature_trasportatore', trasportatore_id: recId })
+      });
+      const d3 = await r3.json();
+      cands = d3.candidature || [];
+    } catch(e) { console.error(e); }
 
     // 4. Statistiche
     const now = new Date();
