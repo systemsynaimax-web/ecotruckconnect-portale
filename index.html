@@ -1095,18 +1095,30 @@ let tipoUtente = null; // 'trasportatore' | 'azienda'
 let capCorrente = null;
 let profiloAzienda = { nome: '', telefono: '' };
 
+let ultimoErroreRete = false;
+
 async function rilevaTipoUtente(email) {
   // Passa dal proxy Make (action: get_utente) — le chiamate dirette ad Airtable erano bloccate da CORS
-  let d;
-  try {
-    const r = await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_utente', email: email })
-    });
-    d = await r.json();
-  } catch(e) {
-    console.error('Errore rilevamento tipo utente:', e);
+  // Riprova fino a 3 volte prima di arrendersi: un fallimento di rete/timeout non deve
+  // essere confuso con "utente non registrato", altrimenti si mostra un messaggio sbagliato.
+  ultimoErroreRete = false;
+  let d = null;
+  for (let tentativo = 1; tentativo <= 3 && !d; tentativo++) {
+    try {
+      const r = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_utente', email: email })
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      d = await r.json();
+    } catch(e) {
+      console.error(`Errore rilevamento tipo utente (tentativo ${tentativo}/3):`, e);
+      if (tentativo < 3) await new Promise(res => setTimeout(res, 700));
+    }
+  }
+  if (!d) {
+    ultimoErroreRete = true;
     return null;
   }
 
@@ -1602,7 +1614,11 @@ async function apriGiornoCalendario(dataStr) {
     await rilevaTipoUtente(currentUser.email);
   }
   if (!tipoUtente) {
-    alert('Il tuo account non risulta registrato né come Azienda né come Trasportatore su Airtable (tabelle Aziende / Trasportatori). Aggiungi questa email nella tabella corretta per poter usare il calendario con questo utente.');
+    if (ultimoErroreRete) {
+      alert('⚠️ Problema temporaneo di connessione — non sono riuscito a verificare il tuo account. Riprova tra qualche secondo (se persiste, ricarica la pagina).');
+    } else {
+      alert('Il tuo account non risulta registrato né come Azienda né come Trasportatore su Airtable (tabelle Aziende / Trasportatori). Aggiungi questa email nella tabella corretta per poter usare il calendario con questo utente.');
+    }
     return;
   }
   if (tipoUtente === 'azienda') {
