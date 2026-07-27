@@ -1324,6 +1324,12 @@ async function caricaDati(email) {
     document.getElementById('cap-bar-section').style.display = 'flex';
     document.getElementById('sezione-azienda').style.display = 'none';
 
+    // 0. Rileva tipo utente — PRIMA di tutto il resto. Il calendario e la lista
+    // carichi diventano cliccabili subito dopo, quindi tipoUtente deve già essere
+    // impostato correttamente per evitare il falso errore "account non registrato"
+    // su click rapidi (es. tornando da un'altra tab del browser).
+    const recId = await rilevaTipoUtente(email);
+
     // 1. Carichi DISPONIBILI — via webhook Make (bypassa blocco CORS di Airtable)
     let rawCarichi = [];
     let erroreCarichi = false;
@@ -1351,8 +1357,6 @@ async function caricaDati(email) {
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
 
-    // 0. Rileva tipo utente
-    const recId = await rilevaTipoUtente(email);
     if (!recId) { azzeraStats(); renderStorico([]); return; }
 
     // 3. Candidature del trasportatore — passa dal proxy Make, mai Airtable diretto
@@ -1591,7 +1595,12 @@ function renderCalendarioMensile() {
   grid.insertAdjacentHTML('beforeend', html);
 }
 
-function apriGiornoCalendario(dataStr) {
+async function apriGiornoCalendario(dataStr) {
+  if (!tipoUtente && currentUser && currentUser.email) {
+    // Rete di sicurezza: se tipoUtente non è ancora impostato (es. rilevamento
+    // non ancora concluso), riprova una volta prima di dare l'errore definitivo.
+    await rilevaTipoUtente(currentUser.email);
+  }
   if (!tipoUtente) {
     alert('Il tuo account non risulta registrato né come Azienda né come Trasportatore su Airtable (tabelle Aziende / Trasportatori). Aggiungi questa email nella tabella corretta per poter usare il calendario con questo utente.');
     return;
