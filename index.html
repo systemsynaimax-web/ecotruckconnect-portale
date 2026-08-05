@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTruckConnect — Il Tuo Portale</title>
+<script>
+window.__rawAuthHash = window.location.hash;
+// CRITICO: pulisce subito l'hash dalla barra indirizzi, PRIMA che lo script
+// del widget Netlify Identity (riga sotto) venga caricato. Il widget, appena
+// caricato, controlla da solo se c'è un recovery_token/invite_token nell'hash
+// e lo consuma in automatico (è un token monouso) — se arriva prima di noi,
+// il link risulta "scaduto" anche al primissimo utilizzo, su qualsiasi
+// dispositivo o browser. Pulendo qui, il widget non lo vede mai.
+if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || window.__rawAuthHash.includes('invite_token') || window.__rawAuthHash.includes('confirmation_token'))) {
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+}
+</script>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ====================================================
+   CONFIGURAZIONE COLORI
+   ==================================================== */
+:root {
+  --bg:       #080d16;
+  --surface:  #0e1623;
+  --surface2: #131d2e;
+  --border:   rgba(255,255,255,0.07);
+  --blue:     #3b82f6;
+  --blue2:    #1d4ed8;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --amber:    #f59e0b;
+  --text:     #f1f5f9;
+  --muted:    rgba(241,245,249,0.45);
+  --font-h:   'Syne', sans-serif;
+  --font-b:   'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ====================================================
+   LOADING
+   ==================================================== */
+#loading{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;z-index:9999;
+}
+.load-logo{font-family:var(--font-h);font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.load-logo span{color:var(--blue);}
+.spinner{
+  width:36px;height:36px;
+  border:2.5px solid rgba(255,255,255,0.08);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin 0.75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-text{color:var(--muted);font-size:13px;}
+
+/* ====================================================
+   LOGIN PAGE
+   ==================================================== */
+#login-page{display:none;min-height:100vh;}
+.login-wrap{
+  display:grid;grid-template-columns:1fr 460px;min-height:100vh;
+}
+.login-visual{
+  position:relative;overflow:hidden;
+  background:url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80') center/cover;
+}
+.login-visual::before{
+  content:'';
+  position:absolute;inset:-15px;
+  background:inherit;
+  animation:truckMove 18s ease-in-out infinite alternate;
+  filter:blur(9px) brightness(0.85);
+  z-index:0;
+}
+@keyframes truckMove{
+  0%{transform:scale(1.0) translateX(0px);}
+  50%{transform:scale(1.06) translateX(-15px);}
+  100%{transform:scale(1.04) translateX(10px);}
+}
+.login-visual::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(8,13,22,0.88) 0%,rgba(8,13,22,0.45) 100%);
+  z-index:1;
+}
+.login-visual-content{
+  position:relative;z-index:2;height:100%;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:48px;
+}
+.lv-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--blue);margin-bottom:20px;
+  background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);
+  padding:5px 12px;border-radius:20px;width:fit-content;
+}
+.lv-badge::before{content:'●';font-size:7px;}
+.lv-title{
+  font-family:var(--font-h);font-size:44px;font-weight:800;
+  line-height:1.1;margin-bottom:16px;
+}
+.lv-sub{font-size:15px;color:var(--muted);max-width:360px;line-height:1.6;}
+.login-form-side{
+  background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;border-left:1px solid var(--border);
+}
+.lf-box{width:100%;max-width:340px;}
+.lf-logo{font-family:var(--font-h);font-size:22px;font-weight:800;margin-bottom:6px;}
+.lf-logo span{color:var(--blue);}
+.lf-tagline{font-size:13px;color:var(--muted);margin-bottom:40px;}
+.lf-label{
+  display:block;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+}
+.lf-input{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;color:var(--text);font-family:var(--font-b);
+  font-size:14px;outline:none;transition:border-color 0.2s;
+  margin-bottom:18px;
+}
+.lf-input:focus{border-color:var(--blue);}
+.lf-input::placeholder{color:rgba(255,255,255,0.2);}
+.pw-wrap{position:relative;}
+.pw-wrap .lf-input{padding-right:46px;}
+.pw-eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-55%);
+  cursor:pointer;color:var(--muted);font-size:14px;user-select:none;
+}
+.lf-forgot{text-align:right;margin-top:-8px;margin-bottom:24px;}
+.lf-forgot a{color:var(--blue);font-size:12px;text-decoration:none;}
+.lf-forgot a:hover{text-decoration:underline;}
+.btn-accedi{
+  width:100%;background:var(--blue);color:#fff;border:none;
+  border-radius:10px;padding:14px;font-family:var(--font-b);
+  font-size:15px;font-weight:500;cursor:pointer;
+  transition:background 0.2s,transform 0.1s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-accedi:hover{background:var(--blue2);}
+.btn-accedi:active{transform:scale(0.99);}
+.lf-error{
+  color:var(--red);font-size:12px;text-align:center;
+  margin-top:10px;display:none;
+}
+.lf-privacy{text-align:center;margin-top:24px;}
+.lf-privacy a{color:var(--muted);font-size:11px;text-decoration:none;}
+.lf-privacy a:hover{color:var(--text);}
+
+/* ====================================================
+   APP
+   ==================================================== */
+#app{display:none;}
+
+/* NAVBAR */
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 36px;height:60px;
+  background:rgba(8,13,22,0.95);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+  backdrop-filter:blur(12px);
+}
+.nav-logo{font-family:var(--font-h);font-size:18px;font-weight:800;}
+.nav-logo span{color:var(--blue);}
+.nav-right{display:flex;align-items:center;gap:14px;}
+.badge-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px;
+}
+.nav-name{color:var(--muted);font-size:13px;}
+.nav-av{
+  width:34px;height:34px;border-radius:50%;background:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-h);font-weight:700;font-size:13px;
+}
+.btn-esci{
+  background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+  color:var(--red);padding:5px 14px;border-radius:8px;font-size:12px;
+  cursor:pointer;transition:background 0.2s;font-family:var(--font-b);
+}
+.btn-esci:hover{background:rgba(239,68,68,0.16);}
+
+/* HERO */
+.hero{
+  position:relative;padding:72px 48px 56px;
+  overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;inset:-20px;z-index:0;
+  background:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80') center/cover;
+  filter:blur(10px) brightness(0.85);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to right,rgba(8,13,22,0.97) 45%,rgba(8,13,22,0.65) 100%);
+}
+.hero-content{position:relative;z-index:2;max-width:580px;}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:5px 12px;border-radius:20px;margin-bottom:22px;
+}
+.hero-pill::before{content:'●';font-size:7px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.hero h1{
+  font-family:var(--font-h);font-size:46px;font-weight:800;
+  line-height:1.1;margin-bottom:14px;
+}
+.hero h1 span{color:var(--blue);}
+.hero p{font-size:15px;color:var(--muted);line-height:1.7;max-width:460px;}
+.hero-stats{
+  display:flex;gap:44px;margin-top:44px;
+  padding-top:36px;border-top:1px solid var(--border);
+}
+.hs-val{
+  font-family:var(--font-h);font-size:36px;font-weight:800;
+  transition:all 0.5s ease;
+}
+.hs-val.blue{color:var(--blue);}
+.hs-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:0.5px;}
+
+/* MAIN */
+.main{padding:44px 48px;}
+
+/* CARDS */
+.cards{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:22px;margin-bottom:44px;
+}
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;cursor:pointer;
+  text-decoration:none;color:var(--text);display:block;
+  transition:border-color 0.25s,transform 0.25s,box-shadow 0.25s;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(59,130,246,0.04),transparent);
+  opacity:0;transition:opacity 0.25s;
+}
+.card:hover{
+  border-color:rgba(59,130,246,0.35);
+  transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(0,0,0,0.3);
+}
+.card:hover::before{opacity:1;}
+.card-icon{
+  width:42px;height:42px;border-radius:10px;
+  background:rgba(59,130,246,0.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;margin-bottom:18px;
+}
+.card h3{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:8px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
+.card-num{font-family:var(--font-h);font-size:30px;font-weight:800;color:var(--blue);}
+.card-num.green{color:var(--green);}
+.card-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* STORICO */
+.sec-head{
+  font-family:var(--font-h);font-size:20px;font-weight:700;
+  margin-bottom:18px;display:flex;align-items:center;gap:10px;
+}
+.table-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:48px;
+}
+table{width:100%;border-collapse:collapse;}
+th{
+  background:rgba(255,255,255,0.03);padding:12px 20px;
+  text-align:left;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);font-family:var(--font-b);font-weight:500;
+}
+td{
+  padding:15px 20px;font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:rgba(241,245,249,0.8);
+}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.badge-stato{
+  display:inline-block;padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:500;
+}
+.s-ok{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.s-wait{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
+.s-no{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;line-height:1.6;}
+
+/* ASSISTENZA */
+.assist-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:36px;align-items:start;
+}
+.assist-txt h2{
+  font-family:var(--font-h);font-size:28px;font-weight:800;
+  line-height:1.25;margin-bottom:16px;
+}
+.assist-txt p{
+  font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px;
+}
+.scrivici-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;
+}
+.sc-title{
+  font-family:var(--font-h);font-size:15px;font-weight:700;
+  margin-bottom:4px;display:flex;align-items:center;gap:8px;
+}
+.sc-sub{font-size:12px;color:var(--green);margin-bottom:20px;}
+.sc-input{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:12px 14px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;margin-bottom:10px;
+  transition:border-color 0.2s;
+}
+.sc-input:focus{border-color:var(--blue);}
+.sc-input::placeholder{color:rgba(255,255,255,0.2);}
+textarea.sc-input{resize:vertical;min-height:96px;}
+.btn-send{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:11px 22px;font-family:var(--font-b);
+  font-size:13px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:7px;
+  transition:background 0.2s;
+}
+.btn-send:hover{background:var(--blue2);}
+.sc-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:11px 14px;border-radius:8px;
+  font-size:13px;display:none;margin-top:10px;
+}
+
+/* ====================================================
+   CAP TEMPORANEO
+   ==================================================== */
+.cap-bar{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px 22px;margin-bottom:24px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.cap-bar-label{font-size:12px;color:var(--muted);flex-shrink:0;}
+.cap-input{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;padding:9px 13px;color:var(--text);
+  font-family:var(--font-b);font-size:13px;outline:none;
+  width:120px;transition:border-color 0.2s;
+}
+.cap-input:focus{border-color:var(--blue);}
+.cap-input::placeholder{color:rgba(255,255,255,0.2);}
+.btn-cap{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:9px 18px;font-family:var(--font-b);
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:background 0.2s;
+}
+.btn-cap:hover{background:var(--blue2);}
+.cap-attivo{font-size:12px;color:var(--green);margin-left:auto;}
+
+/* ====================================================
+   SEZIONE INSERIMENTO CARICHI (AZIENDE)
+   ==================================================== */
+.ins-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;margin-bottom:32px;
+}
+.ins-title{
+  font-family:var(--font-h);font-size:18px;font-weight:700;
+  margin-bottom:6px;display:flex;align-items:center;gap:10px;
+}
+.ins-sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
+.ins-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+}
+.ins-field label{
+  display:block;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:7px;
+}
+.ins-field input,.ins-field select,.ins-field textarea{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:11px 13px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;transition:border-color 0.2s;
+}
+.ins-field input:focus,.ins-field select:focus,.ins-field textarea:focus{border-color:var(--blue);}
+.ins-field input::placeholder,.ins-field textarea::placeholder{color:rgba(255,255,255,0.2);}
+.ins-field select option{background:var(--surface);color:var(--text);}
+.ins-full{grid-column:1/-1;}
+.btn-pubblica{
+  background:var(--green);color:#fff;border:none;
+  border-radius:10px;padding:13px 28px;font-family:var(--font-b);
+  font-size:14px;font-weight:600;cursor:pointer;margin-top:18px;
+  display:flex;align-items:center;gap:8px;
+  transition:background 0.2s,transform 0.1s;
+}
+.btn-pubblica:hover{background:#16a34a;}
+.btn-pubblica:active{transform:scale(0.99);}
+.ins-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:12px 16px;border-radius:8px;
+  font-size:13px;display:none;margin-top:12px;
+}
+.ins-err{
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+  color:var(--red);padding:12px 16px;border-radius:8px;
+  font-size:13px;display:none;margin-top:12px;
+}
+
+/* ====================================================
+   CARICHI CLICCABILI NEL CALENDARIO
+   ==================================================== */
+.carichi-lista{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:32px;
+}
+.carico-item{
+  padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.04);
+  display:flex;align-items:center;gap:16px;
+  transition:background 0.2s;
+}
+.carico-item:last-child{border-bottom:none;}
+.carico-item:hover{background:rgba(255,255,255,0.02);}
+.carico-dot{
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;
+}
+.dot-blue{background:var(--blue);}
+.dot-amber{background:var(--amber);}
+.dot-red{background:var(--red);}
+.carico-info{flex:1;}
+.carico-tratta{
+  font-family:var(--font-h);font-size:14px;font-weight:700;
+  margin-bottom:4px;
+}
+.carico-det{font-size:12px;color:var(--muted);}
+.carico-data{font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;}
+.btn-prendi{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:8px 18px;font-family:var(--font-b);
+  font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;
+  transition:background 0.2s,transform 0.1s;
+}
+.btn-prendi:hover{background:var(--blue2);}
+.btn-prendi:active{transform:scale(0.97);}
+.btn-prendi:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:not-allowed;}
+.carico-empty{
+  padding:48px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;
+}
+
+/* ====================================================
+   BOT CLAUDE
+   ==================================================== */
+#bot-btn{
+  position:fixed;bottom:28px;right:28px;z-index:500;
+  width:54px;height:54px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--blue),#6366f1);
+  cursor:pointer;font-size:22px;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(59,130,246,0.45);
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+#bot-btn.visible{display:flex;}
+#bot-btn:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(59,130,246,0.55);}
+#bot-panel{
+  position:fixed;bottom:94px;right:28px;z-index:500;
+  width:358px;height:480px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;
+  display:none;flex-direction:column;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6);
+  overflow:hidden;
+}
+#bot-panel.open{display:flex;}
+.bot-head{
+  background:var(--surface2);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.bot-av{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),#6366f1);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.bot-info-name{font-family:var(--font-h);font-size:13px;font-weight:700;}
+.bot-info-status{font-size:11px;color:var(--green);}
+.bot-info-ai{font-size:10px;color:var(--muted);margin-top:2px;}
+.bot-x{
+  margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:17px;line-height:1;
+}
+.bot-msgs{
+  flex:1;overflow-y:auto;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.bot-msgs::-webkit-scrollbar{width:4px;}
+.bot-msgs::-webkit-scrollbar-track{background:transparent;}
+.bot-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
+.bm{
+  max-width:86%;padding:10px 13px;
+  border-radius:12px;font-size:13px;line-height:1.55;
+}
+.bm.bot{
+  background:var(--surface2);align-self:flex-start;
+  border-bottom-left-radius:3px;
+}
+.bm.user{
+  background:var(--blue);align-self:flex-end;
+  border-bottom-right-radius:3px;
+}
+.bm.typing{color:var(--muted);font-style:italic;font-size:12px;}
+.bot-bar{
+  padding:12px;border-top:1px solid var(--border);
+  display:flex;gap:8px;
+}
+.bot-inp{
+  flex:1;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:9px 13px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;
+}
+.bot-inp:focus{border-color:var(--blue);}
+.bot-send{
+  background:var(--blue);border:none;border-radius:8px;
+  width:36px;cursor:pointer;color:#fff;font-size:15px;
+  transition:background 0.2s;
+}
+.bot-send:hover{background:var(--blue2);}
+
+/* ====================================================
+   CALENDARIO MENSILE INTERATTIVO
+   ==================================================== */
+.cal-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:32px;
+}
+.cal-legend{
+  padding:18px 24px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.cal-legend span{font-size:12px;color:var(--muted);}
+.cal-dot-inline{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;}
+.cal-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;border-bottom:1px solid var(--border);
+}
+.cal-nav-btn{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;width:32px;height:32px;
+  cursor:pointer;font-size:15px;transition:background 0.2s;
+}
+.cal-nav-btn:hover{background:rgba(255,255,255,0.08);}
+.cal-nav-title{font-family:var(--font-h);font-size:15px;font-weight:700;text-transform:capitalize;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);}
+.cal-day-name{
+  background:var(--surface2);text-align:center;font-size:10px;
+  letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  padding:10px 0;
+}
+.cal-cell{
+  background:var(--surface);min-height:76px;padding:8px;
+  cursor:pointer;transition:background 0.15s;position:relative;
+}
+.cal-cell:hover{background:var(--surface2);}
+.cal-cell-empty{background:var(--bg);cursor:default;}
+.cal-cell-empty:hover{background:var(--bg);}
+.cal-cell-num{font-size:13px;font-weight:500;color:var(--muted);}
+.cal-cell-oggi .cal-cell-num{
+  color:var(--blue);font-weight:700;
+}
+.cal-cell-badges{margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;}
+.cal-mini-dot{width:7px;height:7px;border-radius:50%;}
+.cal-cell-count{
+  font-size:10px;color:var(--muted);margin-top:4px;
+}
+.cal-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;z-index:2000;
+  padding:20px;
+}
+.cal-modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;max-width:440px;width:100%;
+  max-height:80vh;overflow-y:auto;
+}
+.cal-modal h3{font-family:var(--font-h);font-size:16px;margin-bottom:16px;}
+.cal-modal-close{
+  float:right;background:none;border:none;color:var(--muted);
+  font-size:18px;cursor:pointer;
+}
+.cal-modal-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-logo">Eco<span>Truck</span>Connect</div>
+  <div class="spinner"></div>
+  <p class="load-text">Caricamento in corso...</p>
+</div>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="login-page">
+  <div class="login-wrap">
+    <div class="login-visual">
+      <div class="login-visual-content">
+        <div class="lv-badge">Sistema Privato Certificato</div>
+        <h1 class="lv-title">Entra nel tuo<br><span style="color:var(--blue);">Portale Personale.</span></h1>
+        <p class="lv-sub">Accedi al tuo spazio personale EcoTruckConnect. Carichi, calendario, storico e fatture — tutto in un posto, tutto privato.</p>
+      </div>
+    </div>
+    <div class="login-form-side">
+      <div class="lf-box">
+        <div class="lf-logo">Eco<span>Truck</span>Connect</div>
+        <div class="lf-tagline">Accedi al tuo spazio personale</div>
+
+        <label class="lf-label">EMAIL</label>
+        <input type="email" id="li-email" class="lf-input" placeholder="la-tua@email.com">
+
+        <label class="lf-label">PASSWORD</label>
+        <div class="pw-wrap">
+          <input type="password" id="li-pw" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+          <span class="pw-eye" onclick="togglePw()">👁</span>
+        </div>
+
+        <button class="btn-accedi" onclick="doLogin()">Accedi &rarr;</button>
+        <div id="li-err" class="lf-error"></div>
+
+        <div class="lf-privacy"><a href="https://legal.synaimaxpro.com" target="_blank">Privacy Policy</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RECUPERO / IMPOSTA PASSWORD ==================== -->
+<div id="recovery-page" style="display:none;">
+  <div class="login-wrap">
+    <div class="login-visual">
+      <div class="login-visual-content">
+        <div class="lv-badge">Sistema Privato Certificato</div>
+        <h1 class="lv-title">Imposta la tua<br><span style="color:var(--blue);">nuova password.</span></h1>
+        <p class="lv-sub">Scegli una password sicura per accedere al tuo Portale Personale EcoTruckConnect.</p>
+      </div>
+    </div>
+    <div class="login-form-side">
+      <div class="lf-box">
+        <div class="lf-logo">Eco<span>Truck</span>Connect</div>
+        <div class="lf-tagline">Imposta nuova password</div>
+
+        <label class="lf-label">NUOVA PASSWORD</label>
+        <div class="pw-wrap">
+          <input type="password" id="rc-pw" class="lf-input" placeholder="••••••••">
+          <span class="pw-eye" onclick="toggleRcPw()">👁</span>
+        </div>
+
+        <label class="lf-label">CONFERMA PASSWORD</label>
+        <input type="password" id="rc-pw2" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSetPassword()">
+
+        <button class="btn-accedi" onclick="doSetPassword()">Imposta password &rarr;</button>
+        <div id="rc-err" class="lf-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="app">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">Eco<span>Truck</span>Connect</div>
+    <div class="nav-right">
+      <span class="badge-ok">✓ Utente Verificato</span>
+      <span class="nav-name" id="nav-name"></span>
+      <div class="nav-av" id="nav-av"></div>
+      <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
+      <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
+      <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
+      <p>Questo è il tuo angolo privato, creato solo per te. Carichi, calendario, storico, fatture. Tutto organizzato, tutto privato.</p>
+      <div class="hero-stats">
+        <div>
+          <div class="hs-val" id="st-disp">—</div>
+          <div class="hs-label">Carichi disponibili oggi</div>
+        </div>
+        <div>
+          <div class="hs-val blue" id="st-guad">—</div>
+          <div class="hs-label">Guadagnato questo mese</div>
+        </div>
+        <div>
+          <div class="hs-val" id="st-tot">—</div>
+          <div class="hs-label">Carichi totali</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- CAP TEMPORANEO (solo trasportatori) -->
+    <div class="cap-bar" id="cap-bar-section">
+      <span class="cap-bar-label">📍 Dove sei adesso?</span>
+      <input class="cap-input" id="cap-temp-input" type="text" maxlength="5" placeholder="CAP attuale" pattern="[0-9]{5}">
+      <button class="btn-cap" onclick="aggiornaCap()">Aggiorna posizione</button>
+      <span class="cap-attivo" id="cap-attivo-label"></span>
+    </div>
+
+    <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
+    <div class="ins-box" id="sezione-profilo-trasportatore" style="display:none;">
+      <div class="ins-title">🚚 Il Mio Profilo — Parco Mezzi e Autorizzazioni</div>
+      <div class="ins-sub">Seleziona tutti i mezzi che possiedi e le autorizzazioni che hai. Puoi tornare qui e modificarle quando vuoi.</div>
+
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
+      <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
+        <button type="button" class="btn-cap" id="dd-btn-camion" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camion')">
+          <span id="dd-label-camion">Seleziona i mezzi...</span>
+          <span>▾</span>
+        </button>
+        <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <div id="checkbox-tipo-camion" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+      </div>
+      <div id="tags-camion" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
+      <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
+        <button type="button" class="btn-cap" id="dd-btn-aut" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('aut')">
+          <span id="dd-label-aut">Seleziona le autorizzazioni...</span>
+          <span>▾</span>
+        </button>
+        <div id="dd-panel-aut" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <div id="checkbox-autorizzazioni" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+      </div>
+      <div id="tags-aut" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
+      <button class="btn-cap" onclick="salvaProfiloTrasportatore()" style="margin-top:16px;">💾 Salva il mio profilo</button>
+      <span id="profilo-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
+    </div>
+
+    <!-- SEZIONE INSERIMENTO CARICHI (solo aziende) -->
+    <div class="ins-box" id="sezione-azienda" style="display:none;">
+      <div class="ins-title">📦 Pubblica un Carico</div>
+      <div class="ins-sub">Inserisci i dettagli del carico. Il sistema trova automaticamente il trasportatore giusto nella zona.</div>
+      <div class="ins-grid">
+        <div class="ins-field">
+          <label>CAP Partenza *</label>
+          <input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026">
+        </div>
+        <div class="ins-field">
+          <label>CAP Arrivo *</label>
+          <input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100">
+        </div>
+        <div class="ins-field">
+          <label>Città Partenza *</label>
+          <input type="text" id="ins-citta-part" placeholder="es. Favara">
+        </div>
+        <div class="ins-field">
+          <label>Città Arrivo *</label>
+          <input type="text" id="ins-citta-arr" placeholder="es. Palermo">
+        </div>
+        <div class="ins-field">
+          <label>Data Carico *</label>
+          <input type="date" id="ins-data">
+        </div>
+        <div class="ins-field">
+          <label>Tipo Merce *</label>
+          <select id="ins-merce">
+            <option value="">Seleziona tipo...</option>
+            <option>Alimentare</option>
+            <option>Mobili e arredi</option>
+            <option>Elettrodomestici</option>
+            <option>Materiali edili/inerti (17 09 04)</option>
+            <option>Ferrosi (17 04 05)</option>
+            <option>Non ferrosi (17 04 07)</option>
+            <option>Legno (17 02 01)</option>
+            <option>Carta e cartone (20 01 01)</option>
+            <option>Vetro (17 02 02)</option>
+            <option>Materiale plastico (19 12 04)</option>
+            <option>Rifiuti pericolosi</option>
+            <option>Rifiuti non pericolosi</option>
+            <option>Rifiuti urbani (20 03 01)</option>
+            <option>Rifiuti elettronici/RAEE (20 01 36)</option>
+            <option>Rifiuti organici (20 01 08)</option>
+            <option>Prodotti chimici</option>
+            <option>Macchinari/attrezzature</option>
+            <option>Merci deperibili/frigo</option>
+            <option>Merci generiche/pallettizzate</option>
+            <option>Abbigliamento/tessile</option>
+            <option>Altro (specificare)</option>
+          </select>
+        </div>
+        <div class="ins-field ins-full">
+          <label>Specifica <span style="opacity:.5;font-weight:400;">(facoltativo)</span></label>
+          <input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari...">
+        </div>
+        <div class="ins-field ins-full">
+          <label>Note (opzionale)</label>
+          <textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro..."></textarea>
+        </div>
+      </div>
+      <button class="btn-pubblica" onclick="pubblicaCarico()">📦 Pubblica Carico</button>
+      <div class="ins-ok" id="ins-ok">✅ Carico pubblicato! I trasportatori nella zona riceveranno la notifica.</div>
+      <div class="ins-err" id="ins-err"></div>
+    </div>
+
+    <!-- CARICHI DISPONIBILI CLICCABILI (solo trasportatori) -->
+    <div id="carichi-disponibili-wrap">
+      <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
+      <div class="carichi-lista" id="carichi-lista">
+        <div class="carico-empty">Caricamento carichi in corso...</div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO MENSILE INTERATTIVO -->
+    <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
+    <div class="cal-box">
+      <div class="cal-legend">
+        <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
+        <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
+        <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
+        <span style="margin-left:auto;">Clicca un giorno per vedere o inserire carichi</span>
+      </div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1)">←</button>
+        <div class="cal-nav-title" id="cal-nav-title">—</div>
+        <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1)">→</button>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
+        <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
+      </div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="cards">
+      <div class="card" onclick="document.getElementById('calendario-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
+        <div class="card-icon">📅</div>
+        <h3>Calendario Carichi</h3>
+        <p>Carichi disponibili in tempo reale. Blu = disponibile, Arancione = in pagamento, Rosso = preso.</p>
+        <div class="card-num" id="c-disp">—</div>
+        <div class="card-sub">carichi disponibili oggi</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h3>Storico Personale</h3>
+        <p>Tutti i carichi che hai accaparrato, giorno per giorno. Sempre aggiornato in tempo reale.</p>
+        <div class="card-num" id="c-tot">—</div>
+        <div class="card-sub">carichi totali</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧾</div>
+        <h3>Le Tue Fatture</h3>
+        <p>Ogni accaparramento registrato. Pronto quando ti serve per la contabilità.</p>
+        <div class="card-num green" id="c-guad">—</div>
+        <div class="card-sub">guadagnato questo mese</div>
+      </div>
+    </div>
+
+    <!-- STORICO TABLE -->
+    <div class="sec-head">📦 Storico Carichi</div>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>ID Richiesta</th>
+            <th>Stato</th>
+            <th>Importo</th>
+          </tr>
+        </thead>
+        <tbody id="storico-body">
+          <tr><td colspan="4" class="empty">Caricamento storico...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ASSISTENZA -->
+    <div class="assist-grid">
+      <div class="assist-txt">
+        <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
+        <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
+        <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo le fatture?</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
+      </div>
+      <div>
+        <div class="scrivici-box">
+          <div class="sc-title">✉️ Scrivici</div>
+          <div class="sc-sub">Compila il modulo. Ti rispondiamo entro 24 ore, tutti i giorni.</div>
+          <form name="supporto" data-netlify="true" onsubmit="inviaForm(event)">
+            <input type="hidden" name="form-name" value="supporto">
+            <input class="sc-input" type="text" id="sc-nome" name="nome" placeholder="Il tuo nome" required>
+            <textarea class="sc-input" id="sc-msg" name="messaggio" placeholder="Scrivi quello di cui hai bisogno..." required></textarea>
+            <input type="hidden" id="sc-email" name="email">
+            <button type="submit" class="btn-send">Invia messaggio →</button>
+          </form>
+          <div class="sc-ok" id="sc-ok">✅ Messaggio inviato! Ti risponderemo entro 24 ore.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- BOT BUTTON -->
+<button id="bot-btn" onclick="toggleBot()" title="Assistente EcoTruckConnect">🤖</button>
+
+<!-- BOT PANEL -->
+<div id="bot-panel">
+  <div class="bot-head">
+    <div class="bot-av">🤖</div>
+    <div>
+      <div class="bot-info-name">Assistente EcoTruckConnect</div>
+      <div class="bot-info-status">● Online — rispondo subito</div>
+      <div class="bot-info-ai">🤖 Assistente basato su intelligenza artificiale — non è una persona reale</div>
+    </div>
+    <button class="bot-x" onclick="toggleBot()">✕</button>
+  </div>
+  <div class="bot-msgs" id="bot-msgs">
+    <div class="bm bot">Ciao! Sono l'assistente virtuale di EcoTruckConnect, basato su intelligenza artificiale. Posso aiutarti con qualsiasi domanda sul portale, i carichi, il calendario e come funziona il sistema. Cosa ti serve?</div>
+  </div>
+  <div class="bot-bar">
+    <input class="bot-inp" id="bot-inp" placeholder="Scrivi la tua domanda..." onkeydown="if(event.key==='Enter')sendBot()">
+    <button class="bot-send" onclick="sendBot()">➤</button>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script>
+/* ====================================================
+   ⚙️  CONFIGURAZIONE — CAMBIA SOLO QUESTI VALORI
+   ==================================================== */
+const PROXY_URL = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy sicuro Make: tutte le chiamate ad Airtable e all'IA passano da qui, niente chiavi esposte nel sito
+const PREZZO    = 20;                               // € per carico (cambia se vuoi €20)
+/* ==================================================== */
+
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy Portale EcoTruckConnect (Make) — usato da rilevaTipoUtente() e pubblicaCarico()
+
+let currentUser = null;
+
+// ===== PROFILO TRASPORTATORE — Parco mezzi e Autorizzazioni =====
+let trasportatoreRecordId = null;
+let trasportatoreFieldsCorrenti = {};
+
+const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furgone grande","Furgone frigo","Pick-up","Motrice piccola (7,5t)","Motrice media (12t)","Motrice grande (18t)","Motrice centinata","Motrice cassonata","Motrice frigo","Motrice cisterna","Motrice con gru","Motrice ribaltabile","Motrice portacontainer","Bilico centinato","Bilico frigo","Bilico cisterna","Bilico portacontainer","Bilico cassonato","Bilico ribaltabile","Bilico ADR (merci pericolose)","Bilico con sponda idraulica","Bilico portabobine","Bilico portamacchine (car transporter)","Autotreno centinato","Autotreno frigo","Autotreno cisterna","Autotreno cassonato","Autotreno ribaltabile","Cassone scarrabile","Semirimorchio ribassato (lowbed)","Semirimorchio allungabile","Trasporto eccezionale","Autogru","Autobetoniera","Autospurgo","Portacontainer 20 piedi","Portacontainer 40 piedi","Bisarca (trasporto veicoli)","Trattore stradale","Trattore con rimorchio","Rimorchio centinato","Rimorchio frigo","Rimorchio cassonato","Autocompattatore","Autospazzatrice","Autocarro con sponda caricatrice","Muletto/carrello elevatore su strada","Altro (specificare)"];
+
+const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
+
+function renderCheckboxGroup(containerId, opzioni, selezionate) {
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  opzioni.forEach((op, i) => {
+    const id = containerId + '-' + i;
+    const checked = selezionate.includes(op) ? 'checked' : '';
+    cont.insertAdjacentHTML('beforeend',
+      '<label style="display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">' +
+      '<input type="checkbox" value="' + op + '" id="' + id + '" ' + checked + ' onchange="aggiornaEtichettaTendina(\'' + (containerId === 'checkbox-tipo-camion' ? 'camion' : 'aut') + '\')"> ' + op +
+      '</label>'
+    );
+  });
+}
+
+function toggleDropdown(which) {
+  const altra = which === 'camion' ? 'aut' : 'camion';
+  const panel = document.getElementById('dd-panel-' + which);
+  const panelAltra = document.getElementById('dd-panel-' + altra);
+  panelAltra.style.display = 'none';
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.dd-wrap')) {
+    ['camion','aut'].forEach(w => { const p = document.getElementById('dd-panel-' + w); if (p) p.style.display = 'none'; });
+  }
+});
+
+function aggiornaEtichettaTendina(which) {
+  const containerId = which === 'camion' ? 'checkbox-tipo-camion' : 'checkbox-autorizzazioni';
+  const checks = document.querySelectorAll('#' + containerId + ' input:checked');
+  const n = checks.length;
+  const label = document.getElementById('dd-label-' + which);
+  const testoBase = which === 'camion' ? 'mezzo selezionato' : 'autorizzazione selezionata';
+  const testoBasePlur = which === 'camion' ? 'mezzi selezionati' : 'autorizzazioni selezionate';
+  label.textContent = n === 0 ? (which === 'camion' ? 'Seleziona i mezzi...' : 'Seleziona le autorizzazioni...') : (n === 1 ? '1 ' + testoBase : n + ' ' + testoBasePlur);
+
+  // Etichette visibili sotto, con crocetta per togliere velocemente
+  const tagsWrap = document.getElementById('tags-' + which);
+  tagsWrap.innerHTML = '';
+  checks.forEach(chk => {
+    const tag = document.createElement('span');
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:rgba(0,150,255,0.15);border:1px solid rgba(0,150,255,0.4);color:#fff;padding:5px 10px;border-radius:20px;font-size:12px;';
+    tag.innerHTML = chk.value + ' <span style="cursor:pointer;font-weight:700;opacity:0.8;">✕</span>';
+    tag.querySelector('span').onclick = () => {
+      chk.checked = false;
+      aggiornaEtichettaTendina(which);
+    };
+    tagsWrap.appendChild(tag);
+  });
+}
+
+function apriProfiloTrasportatore() {
+  document.getElementById('sezione-azienda').style.display = 'none';
+  document.getElementById('sezione-profilo-trasportatore').style.display = 'block';
+  const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
+  const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
+  renderCheckboxGroup('checkbox-tipo-camion', TIPO_CAMION_OPZIONI, camionSel);
+  renderCheckboxGroup('checkbox-autorizzazioni', AUTORIZZAZIONI_OPZIONI, autSel);
+  aggiornaEtichettaTendina('camion');
+  aggiornaEtichettaTendina('aut');
+  document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function salvaProfiloTrasportatore() {
+  const mezziSelezionati = Array.from(document.querySelectorAll('#checkbox-tipo-camion input:checked')).map(el => el.value);
+  const autSelezionate = Array.from(document.querySelectorAll('#checkbox-autorizzazioni input:checked')).map(el => el.value);
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'salva_profilo_trasportatore',
+        record_id: trasportatoreRecordId,
+        tipo_camion: mezziSelezionati,
+        autorizzazioni: autSelezionate
+      })
+    });
+    trasportatoreFieldsCorrenti.tipo_camion = mezziSelezionati;
+    trasportatoreFieldsCorrenti.autorizzazioni = autSelezionate;
+    document.getElementById('profilo-salvato-msg').style.display = 'inline';
+    setTimeout(() => { document.getElementById('profilo-salvato-msg').style.display = 'none'; }, 3000);
+  } catch(e) {
+    console.error('Errore salvataggio profilo:', e);
+    alert('Errore nel salvataggio, riprova tra un momento.');
+  }
+}
+// ===== FINE PROFILO TRASPORTATORE =====
+let botOpen = false;
+let botHistory = [];
+
+/* ——— NETLIFY IDENTITY ——— */
+let __recoveryToken = null;
+let __recoveryType  = null;
+
+(function leggiTokenRecupero() {
+  const rawHash = window.__rawAuthHash || '';
+  function parseTok(key) {
+    const m = rawHash.match(new RegExp(key + '=([^&]+)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  const recTok = parseTok('recovery_token');
+  const invTok = parseTok('invite_token');
+  if (recTok) { __recoveryToken = recTok; __recoveryType = 'recovery'; }
+  else if (invTok) { __recoveryToken = invTok; __recoveryType = 'invite'; }
+  // Pulisce subito l'hash dalla barra indirizzi: se il widget nativo Netlify Identity
+  // vede ancora recovery_token/invite_token quando parte, apre da solo un suo modal
+  // invisibile sopra la pagina che blocca ogni click sul form personalizzato sotto.
+  if (recTok || invTok) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  // MODALITA' ANTEPRIMA — bypassa completamente login/Netlify Identity.
+  // Aprendo il portale con ?preview=trasportatore o ?preview=azienda si vede
+  // subito la schermata corrispondente con dati di esempio, senza password.
+  // Solo per uso interno di test/anteprima, da rimuovere prima del lancio pubblico.
+  const previewParam = new URLSearchParams(window.location.search).get('preview');
+  if (previewParam === 'trasportatore' || previewParam === 'azienda') {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('bot-btn').classList.add('visible');
+    document.getElementById('nav-name').textContent = previewParam === 'azienda' ? 'Azienda Anteprima' : 'Trasportatore Anteprima';
+    document.getElementById('nav-av').textContent = previewParam === 'azienda' ? 'A' : 'T';
+    tipoUtente = previewParam;
+    if (previewParam === 'trasportatore') {
+      capCorrente = '92026';
+      document.getElementById('cap-bar-section').style.display = 'none';
+      document.getElementById('sezione-azienda').style.display = 'none';
+      document.getElementById('carichi-disponibili-wrap').style.display = 'block';
+      document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+      trasportatoreRecordId = 'preview-recid';
+      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [] };
+      document.getElementById('cap-temp-input').value = capCorrente;
+      document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
+      ultimiCarichi = [
+        { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', data_consegna:new Date().toISOString() } },
+        { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString() } }
+      ];
+      renderCarichi(ultimiCarichi);
+      renderCalendarioMensile();
+    } else {
+      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567' };
+      document.getElementById('cap-bar-section').style.display = 'none';
+      document.getElementById('sezione-azienda').style.display = 'block';
+      document.getElementById('carichi-disponibili-wrap').style.display = 'none';
+      ultimiCarichi = [];
+      renderCalendarioMensile();
+    }
+    return;
+  }
+  netlifyIdentity.on('init', u => {
+    if (__recoveryToken) { mostraRecovery(); return; }
+    if (u) { currentUser = u; avviaApp(); }
+    else    { mostraLogin(); }
+  });
+  netlifyIdentity.on('login', u => {
+    currentUser = u;
+    netlifyIdentity.close();
+    avviaApp();
+  });
+  netlifyIdentity.on('logout', () => { currentUser = null; mostraLogin(); });
+  netlifyIdentity.init();
+});
+
+function mostraRecovery() {
+  netlifyIdentity.close();
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('recovery-page').style.display = 'block';
+}
+
+function toggleRcPw() {
+  const f = document.getElementById('rc-pw');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function mostraRcErr(msg) {
+  const e = document.getElementById('rc-err');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+async function doSetPassword() {
+  const pw  = document.getElementById('rc-pw').value;
+  const pw2 = document.getElementById('rc-pw2').value;
+  if (!pw || pw.length < 8) { mostraRcErr('La password deve avere almeno 8 caratteri.'); return; }
+  if (pw !== pw2) { mostraRcErr('Le due password non coincidono.'); return; }
+  try {
+    let user;
+    if (__recoveryType === 'invite') {
+      user = await netlifyIdentity.gotrue.acceptInvite(__recoveryToken, true);
+    } else {
+      user = await netlifyIdentity.gotrue.recover(__recoveryToken, true);
+    }
+    await user.update({ password: pw });
+    currentUser = user;
+    __recoveryToken = null;
+    avviaApp();
+  } catch (err) {
+    mostraRcErr('Il link non è più valido o è scaduto. Richiedi un nuovo link.');
+  }
+}
+
+function mostraLogin() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('bot-btn').classList.remove('visible');
+}
+
+function avviaApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('bot-btn').classList.add('visible');
+
+  const email = currentUser.email;
+  const nome  = currentUser.user_metadata?.full_name || email.split('@')[0];
+
+  document.getElementById('nav-name').textContent = nome;
+  document.getElementById('nav-av').textContent = nome[0].toUpperCase();
+  document.getElementById('sc-email').value = email;
+
+  caricaDati(email);
+}
+
+/* ——— LOGIN ——— */
+function togglePw() {
+  const f = document.getElementById('li-pw');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function mostraErr(msg) {
+  const e = document.getElementById('li-err');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pw    = document.getElementById('li-pw').value;
+  if (!email || !pw) { mostraErr('Inserisci email e password.'); return; }
+  try {
+    // Usa il GoTrue client esposto dal widget
+    const user = await netlifyIdentity.gotrue.login(email, pw, true);
+    currentUser = user;
+    avviaApp();
+  } catch(err) {
+    mostraErr('Email o password non corretti.');
+    // Fallback: apri il modal
+    netlifyIdentity.open('login');
+  }
+}
+
+function doLogout() { netlifyIdentity.logout(); }
+
+/* ——— TIPO UTENTE (trasportatore o azienda) ——— */
+let tipoUtente = null; // 'trasportatore' | 'azienda'
+let capCorrente = null;
+let profiloAzienda = { nome: '', telefono: '' };
+
+let ultimoErroreRete = false;
+
+async function rilevaTipoUtente(email) {
+  // Passa dal proxy Make (action: get_utente) — le chiamate dirette ad Airtable erano bloccate da CORS
+  // Riprova fino a 3 volte prima di arrendersi: un fallimento di rete/timeout non deve
+  // essere confuso con "utente non registrato", altrimenti si mostra un messaggio sbagliato.
+  ultimoErroreRete = false;
+  let d = null;
+  for (let tentativo = 1; tentativo <= 3 && !d; tentativo++) {
+    try {
+      const r = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_utente', email: email })
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      d = await r.json();
+    } catch(e) {
+      console.error(`Errore rilevamento tipo utente (tentativo ${tentativo}/3):`, e);
+      if (tentativo < 3) await new Promise(res => setTimeout(res, 700));
+    }
+  }
+  if (!d) {
+    ultimoErroreRete = true;
+    return null;
+  }
+
+  const trasportatori = (d && d.trasportatore) || [];
+  const aziende = (d && d.azienda) || [];
+
+  if (trasportatori.length > 0) {
+    tipoUtente = 'trasportatore';
+    capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
+    trasportatoreRecordId = trasportatori[0].id;
+    trasportatoreFieldsCorrenti = trasportatori[0].fields;
+    document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+    document.getElementById('cap-bar-section').style.display = 'none';
+    document.getElementById('sezione-azienda').style.display = 'none';
+    document.getElementById('carichi-disponibili-wrap').style.display = 'block';
+    if (capCorrente) {
+      document.getElementById('cap-temp-input').value = capCorrente;
+      document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
+    }
+    return trasportatori[0].id;
+  }
+  if (aziende.length > 0) {
+    tipoUtente = 'azienda';
+    profiloAzienda.nome = aziende[0].fields.nome_azienda || aziende[0].fields.nome_referente || aziende[0].fields.nome || '';
+    profiloAzienda.telefono = aziende[0].fields.telefono_azienda || aziende[0].fields.telefono || '';
+    document.getElementById('cap-bar-section').style.display = 'none';
+    document.getElementById('sezione-azienda').style.display = 'block';
+    document.getElementById('carichi-disponibili-wrap').style.display = 'none';
+    return aziende[0].id;
+  }
+  return null;
+}
+
+/* ——— CAP TEMPORANEO ——— */
+function aggiornaCap() {
+  const cap = document.getElementById('cap-temp-input').value.trim();
+  if (cap.length !== 5 || isNaN(cap)) {
+    alert('Inserisci un CAP valido (5 cifre).');
+    return;
+  }
+  capCorrente = cap;
+  document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${cap}`;
+  renderCarichi(ultimiCarichi);
+}
+
+/* ——— CARICHI CLICCABILI ——— */
+let ultimiCarichi = [];
+
+function renderCarichi(carichi) {
+  const lista = document.getElementById('carichi-lista');
+
+  // BLOCCO DI SICUREZZA: le aziende non devono mai vedere/poter cliccare "Prendi"
+  if (tipoUtente === 'azienda') {
+    lista.innerHTML = '<div class="carico-empty">Questa sezione è riservata ai trasportatori.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Usa "Pubblica un Carico" qui sopra per inserire i tuoi carichi.</span></div>';
+    return;
+  }
+
+  // Se trasportatore, filtra per CAP se disponibile
+  let filtrati = carichi;
+  if (tipoUtente === 'trasportatore' && capCorrente) {
+    filtrati = carichi.filter(c => {
+      const capPart = c.fields.cap_partenza || c.fields.CAP_partenza || '';
+      return capPart.startsWith(capCorrente.substring(0,3)) || capPart === capCorrente;
+    });
+    // Se non ci sono nella zona, mostra tutti disponibili
+    if (filtrati.length === 0) filtrati = carichi;
+  }
+
+  if (!filtrati.length) {
+    lista.innerHTML = '<div class="carico-empty">Nessun carico disponibile in questo momento.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Riceverai una notifica su Telegram appena arriva un carico nella tua zona.</span></div>';
+    return;
+  }
+
+  lista.innerHTML = filtrati.map(c => {
+    const f = c.fields;
+    const stato = (f.stato || 'DISPONIBILE').toUpperCase();
+    const dotClass = stato === 'DISPONIBILE' ? 'dot-blue' : stato.includes('PAGAMENTO') ? 'dot-amber' : 'dot-red';
+    const disabilitato = stato !== 'DISPONIBILE' ? 'disabled' : '';
+    const testoBtn = stato === 'DISPONIBILE' ? 'Prendi →' : stato.includes('PAGAMENTO') ? 'In pagamento' : 'Preso';
+    const partenza = f.citta_partenza || f.cap_partenza || '—';
+    const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
+    const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
+    const merce = f.tipo_merce || f.merce || '—';
+    return `<div class="carico-item">
+      <div class="carico-dot ${dotClass}"></div>
+      <div class="carico-info">
+        <div class="carico-tratta">${partenza} → ${arrivo}</div>
+        <div class="carico-det">${merce} · CAP ${f.cap_partenza || '—'} → ${f.cap_arrivo || '—'}</div>
+      </div>
+      <div class="carico-data">${data}</div>
+      <button class="btn-prendi" ${disabilitato} onclick="prendiCarico('${c.id}','${partenza}','${arrivo}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${merce}')">${testoBtn}</button>
+    </div>`;
+  }).join('');
+}
+
+async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
+  if (tipoUtente === 'azienda') {
+    alert('Le aziende non possono accaparrare carichi. Questa funzione è riservata ai trasportatori.');
+    return;
+  }
+  if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}\n\nVerrai reindirizzato al pagamento.`)) return;
+
+  // CONTROLLO REALE DI DISPONIBILITÀ — prima di mandare a pagare, verifica che
+  // il carico esista ancora e sia DISPONIBILE. Senza questo controllo, due
+  // trasportatori che cliccano "Prendi" quasi insieme finirebbero entrambi a
+  // pagare, anche se il carico è già stato preso dal primo.
+  try {
+    const checkRes = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'check_carico', carico_id: id })
+    });
+    const checkData = await checkRes.json();
+    if (!checkData.trovato || checkData.stato !== 'DISPONIBILE') {
+      alert('⚠️ Questo carico non è più disponibile — qualcun altro lo ha già preso.');
+      caricaDati(currentUser.email);
+      return;
+    }
+  } catch(e) {
+    alert('⚠️ Non riesco a verificare la disponibilità del carico. Riprova.');
+    return;
+  }
+
+  // Blocca il carico su Airtable (stato IN PAGAMENTO) — passa dal proxy Make, mai Airtable diretto
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'blocca_carico',
+        carico_id: id,
+        bloccato_da_id: currentUser.email,
+        bloccato_da_nome: currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email
+      })
+    });
+  } catch(e) { console.error(e); }
+
+  // Reindirizza a Shopify per il pagamento
+  const url = `https://shop.synaimaxpro.com/products/accaparramento-carico-ecotruckconnect?cap_partenza=${capPart}&cap_arrivo=${capArr}&merce=${encodeURIComponent(merce)}&carico_id=${id}`;
+  window.open(url, '_blank');
+
+  // Ricarica i carichi dopo 3 secondi
+  setTimeout(() => caricaDati(currentUser.email), 3000);
+}
+
+/* ——— PUBBLICA CARICO (aziende) — passa dal proxy Make, non più Airtable diretto ——— */
+async function pubblicaCarico() {
+  const capPart  = document.getElementById('ins-cap-part').value.trim();
+  const capArr   = document.getElementById('ins-cap-arr').value.trim();
+  const cittaPart = document.getElementById('ins-citta-part').value.trim();
+  const cittaArr  = document.getElementById('ins-citta-arr').value.trim();
+  const data     = document.getElementById('ins-data').value;
+  const merce    = document.getElementById('ins-merce').value;
+  const specifica = document.getElementById('ins-specifica').value.trim();
+  const note     = document.getElementById('ins-note').value.trim();
+
+  const err = document.getElementById('ins-err');
+  const ok  = document.getElementById('ins-ok');
+  err.style.display = 'none';
+  ok.style.display  = 'none';
+
+  if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce) {
+    err.textContent = '⚠️ Compila tutti i campi obbligatori.';
+    err.style.display = 'block';
+    return;
+  }
+  if (capPart.length !== 5 || capArr.length !== 5) {
+    err.textContent = '⚠️ I CAP devono essere di 5 cifre.';
+    err.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'crea_carico',
+        numero_ordine: 'ORD-' + Date.now(),
+        cap_partenza: capPart,
+        cap_arrivo: capArr,
+        citta_partenza: cittaPart,
+        citta_arrivo: cittaArr,
+        data_consegna: data,
+        tipo_merce: merce,
+        specifica: specifica,
+        note: note,
+        email_azienda: currentUser.email,
+        nome_azienda: profiloAzienda.nome,
+        telefono_azienda: profiloAzienda.telefono
+      })
+    });
+    if (res.ok) {
+      ok.style.display = 'block';
+      document.getElementById('ins-cap-part').value = '';
+      document.getElementById('ins-cap-arr').value  = '';
+      document.getElementById('ins-citta-part').value = '';
+      document.getElementById('ins-citta-arr').value  = '';
+      document.getElementById('ins-data').value  = '';
+      document.getElementById('ins-merce').value = '';
+      document.getElementById('ins-specifica').value = '';
+      document.getElementById('ins-note').value  = '';
+      setTimeout(() => caricaDati(currentUser.email), 2000);
+    } else {
+      err.textContent = '❌ Errore durante la pubblicazione. Riprova.';
+      err.style.display = 'block';
+    }
+  } catch(e) {
+    err.textContent = '❌ Errore di connessione. Riprova.';
+    err.style.display = 'block';
+  }
+}
+
+/* ——— CARICAMENTO DATI ——— */
+async function caricaDati(email) {
+  try {
+    // Barra CAP rimossa definitivamente: il matching non dipende più dal CAP
+    document.getElementById('cap-bar-section').style.display = 'none';
+    document.getElementById('sezione-azienda').style.display = 'none';
+
+    // 0. Rileva tipo utente — PRIMA di tutto il resto. Il calendario e la lista
+    // carichi diventano cliccabili subito dopo, quindi tipoUtente deve già essere
+    // impostato correttamente per evitare il falso errore "account non registrato"
+    // su click rapidi (es. tornando da un'altra tab del browser).
+    const recId = await rilevaTipoUtente(email);
+
+    // 1. Carichi DISPONIBILI — via webhook Make (bypassa blocco CORS di Airtable)
+    let rawCarichi = [];
+    let erroreCarichi = false;
+    try {
+      const r1 = await fetch('https://hook.eu1.make.com/ntu5l19xd1gu6kw5ri2bbb6soe5jyy6q');
+      if (!r1.ok) throw new Error(`Il webhook ha risposto con errore ${r1.status}`);
+      const d1 = await r1.json();
+      // Make può restituire un oggetto singolo o un array; normalizziamo sempre ad array
+      if (d1.carichi) {
+        rawCarichi = Array.isArray(d1.carichi) ? d1.carichi : [d1.carichi];
+      }
+    } catch (errCarichi) {
+      erroreCarichi = true;
+      console.error('Errore caricamento carichi:', errCarichi);
+      document.getElementById('carichi-lista').innerHTML =
+        `<div class="carico-empty">⚠️ Non riesco a caricare i carichi in questo momento.<br>
+        <span style="font-size:11px;color:rgba(255,255,255,0.3);">Dettaglio tecnico: ${(errCarichi && errCarichi.message) || errCarichi}</span></div>`;
+    }
+    // I campi arrivano "piatti" (senza .fields) — li riportiamo nel formato {id, fields} atteso dal resto del codice
+    ultimiCarichi = rawCarichi
+      .map(r => ({ id: r.id, fields: r }))
+      .filter(r => (r.fields.stato||'').toUpperCase() !== 'PRESO');
+    const nDisp = ultimiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'DISPONIBILE').length;
+    aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
+    if (!erroreCarichi) renderCarichi(ultimiCarichi);
+    renderCalendarioMensile();
+
+    if (!recId) { azzeraStats(); renderStorico([]); return; }
+
+    // 3. Candidature del trasportatore — passa dal proxy Make, mai Airtable diretto
+    let cands = [];
+    try {
+      const r3 = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_candidature_trasportatore', trasportatore_id: recId })
+      });
+      const d3 = await r3.json();
+      cands = d3.candidature || [];
+    } catch(e) { console.error(e); }
+
+    // 4. Statistiche
+    const now = new Date();
+    const mese = now.getMonth(), anno = now.getFullYear();
+
+    const completate = cands.filter(c => {
+      const s = (c.fields.stato || '').toLowerCase();
+      return s.includes('complet') || s.includes('accett') || s.includes('pagat');
+    });
+
+    const questoMese = completate.filter(c => {
+      const d = c.fields.data_candidatura || c.fields.data_risposta || '';
+      if (!d) return false;
+      const dt = new Date(d);
+      return dt.getMonth() === mese && dt.getFullYear() === anno;
+    });
+
+    const guadagno = questoMese.length * PREZZO;
+    const totali   = cands.length;
+
+    aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
+    aggiorna('st-tot',  totali);
+    aggiorna('c-guad',  `€ ${guadagno.toLocaleString('it-IT')}`);
+    aggiorna('c-tot',   totali);
+
+    renderStorico(cands);
+
+  } catch(err) {
+    console.error('Errore dati:', err);
+    azzeraStats();
+    renderStorico([]);
+  }
+}
+
+function aggiorna(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function azzeraStats() {
+  ['st-disp','st-guad','st-tot','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
+}
+
+function renderStorico(cands) {
+  const body = document.getElementById('storico-body');
+  if (!cands.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty">
+      Nessun carico ancora.<br>
+      <span style="font-size:12px;color:rgba(255,255,255,0.25);">
+        Il tuo storico apparirà qui non appena accaparri il primo carico.
+      </span>
+    </td></tr>`;
+    return;
+  }
+
+  body.innerHTML = cands
+    .sort((a, b) => {
+      const da = a.fields.data_candidatura || '';
+      const db = b.fields.data_candidatura || '';
+      return db.localeCompare(da);
+    })
+    .map(c => {
+      const f = c.fields;
+      const data  = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+      const rId   = f.richiesta_id || '—';
+      const stato = f.stato || '—';
+      const cls   = stato.toLowerCase().includes('complet') || stato.toLowerCase().includes('accett') || stato.toLowerCase().includes('pagat')
+                  ? 's-ok'
+                  : stato.toLowerCase().includes('attesa') || stato.toLowerCase().includes('corso')
+                  ? 's-wait' : 's-no';
+      return `<tr>
+        <td>${data}</td>
+        <td style="font-family:monospace;font-size:12px;">${rId}</td>
+        <td><span class="badge-stato ${cls}">${stato}</span></td>
+        <td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>
+      </tr>`;
+    }).join('');
+}
+
+/* ——— FORM SCRIVICI ——— */
+async function inviaForm(e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('form-name', 'supporto');
+  fd.append('nome', document.getElementById('sc-nome').value);
+  fd.append('messaggio', document.getElementById('sc-msg').value);
+  fd.append('email', document.getElementById('sc-email').value);
+  try {
+    await fetch('/', { method: 'POST', body: fd });
+    document.getElementById('sc-ok').style.display = 'block';
+    e.target.reset();
+    setTimeout(() => { document.getElementById('sc-ok').style.display = 'none'; }, 6000);
+  } catch(err) { alert('Errore nell\'invio. Riprova.'); }
+}
+
+/* ——— BOT CLAUDE ——— */
+function toggleBot() {
+  botOpen = !botOpen;
+  document.getElementById('bot-panel').classList.toggle('open', botOpen);
+}
+
+async function sendBot() {
+  const inp = document.getElementById('bot-inp');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+
+  addMsg(msg, 'user');
+  botHistory.push({ role: 'user', content: msg });
+
+  const typing = addMsg('Sto scrivendo...', 'bot typing');
+
+  const chiamaProxy = () => fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'chat_bot',
+      message: msg
+    })
+  });
+
+  try {
+    // Il bot passa dal Proxy sicuro su Make (azione "chat_bot"): niente chiavi AI
+    // esposte nel codice del sito. Mandiamo solo l'ultimo messaggio (non tutta
+    // la cronologia) per evitare problemi di formato con Make.
+    // Se il primo tentativo fallisce (rete instabile), riprova una volta prima
+    // di mostrare l'errore.
+    let res;
+    try {
+      res = await chiamaProxy();
+    } catch (primoTentativoErr) {
+      res = await chiamaProxy();
+    }
+
+    if (!res.ok) {
+      const testoGrezzo = await res.text();
+      throw new Error('HTTP ' + res.status + ' — ' + testoGrezzo.slice(0, 200));
+    }
+
+    const data = await res.json();
+    const reply = data.reply || 'Mi dispiace, non ho capito. Riprova.';
+
+    typing.remove();
+    botHistory.push({ role: 'assistant', content: reply });
+    addMsg(reply, 'bot');
+
+  } catch(err) {
+    typing.remove();
+    addMsg('DEBUG TEMPORANEO — errore reale: ' + (err && err.message ? err.message : String(err)), 'bot');
+  }
+}
+
+function addMsg(text, cls) {
+  const d = document.createElement('div');
+  d.className = `bm ${cls}`;
+  d.textContent = text;
+  const box = document.getElementById('bot-msgs');
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return d;
+}
+
+/* ====================================================
+   ——— CALENDARIO MENSILE INTERATTIVO ———
+   ==================================================== */
+let meseCalendario = new Date();
+const NOMI_MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+function cambiaMeseCalendario(delta) {
+  meseCalendario.setMonth(meseCalendario.getMonth() + delta);
+  renderCalendarioMensile();
+}
+
+function dataLocaleYMD(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function renderCalendarioMensile() {
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+
+  const anno = meseCalendario.getFullYear();
+  const mese = meseCalendario.getMonth();
+  document.getElementById('cal-nav-title').textContent = `${NOMI_MESI[mese]} ${anno}`;
+
+  // Rimuove solo le celle giorno, mantiene l'intestazione Lun-Dom (prime 7 già in HTML)
+  const celleEsistenti = grid.querySelectorAll('.cal-cell, .cal-cell-empty');
+  celleEsistenti.forEach(c => c.remove());
+
+  const primoGiorno = new Date(anno, mese, 1);
+  const ultimoGiorno = new Date(anno, mese + 1, 0);
+  const offset = (primoGiorno.getDay() + 6) % 7; // lunedì = 0
+  const oggiStr = dataLocaleYMD(new Date());
+
+  let html = '';
+  for (let i = 0; i < offset; i++) html += `<div class="cal-cell cal-cell-empty"></div>`;
+
+  for (let giorno = 1; giorno <= ultimoGiorno.getDate(); giorno++) {
+    const dataCella = new Date(anno, mese, giorno);
+    const dataStr = dataLocaleYMD(dataCella);
+    const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
+    const isOggi = dataStr === oggiStr ? 'cal-cell-oggi' : '';
+
+    let badgesHtml = '';
+    if (carichiGiorno.length > 0) {
+      const puntini = carichiGiorno.slice(0, 6).map(c => {
+        const stato = (c.fields.stato || 'DISPONIBILE').toUpperCase();
+        const colore = stato === 'DISPONIBILE' ? '#3b82f6' : stato.includes('PAGAMENTO') ? '#f59e0b' : '#ef4444';
+        return `<span class="cal-mini-dot" style="background:${colore};"></span>`;
+      }).join('');
+      badgesHtml = `<div class="cal-cell-badges">${puntini}</div><div class="cal-cell-count">${carichiGiorno.length} ${carichiGiorno.length===1?'carico':'carichi'}</div>`;
+    }
+
+    html += `
+      <div class="cal-cell ${isOggi}" onclick="apriGiornoCalendario('${dataStr}')">
+        <div class="cal-cell-num">${giorno}</div>
+        ${badgesHtml}
+      </div>
+    `;
+  }
+
+  grid.insertAdjacentHTML('beforeend', html);
+}
+
+async function apriGiornoCalendario(dataStr) {
+  if (!tipoUtente && currentUser && currentUser.email) {
+    // Rete di sicurezza: se tipoUtente non è ancora impostato (es. rilevamento
+    // non ancora concluso), riprova una volta prima di dare l'errore definitivo.
+    await rilevaTipoUtente(currentUser.email);
+  }
+  if (!tipoUtente) {
+    if (ultimoErroreRete) {
+      alert('⚠️ Problema temporaneo di connessione — non sono riuscito a verificare il tuo account. Riprova tra qualche secondo (se persiste, ricarica la pagina).');
+    } else {
+      alert('Il tuo account non risulta registrato né come Azienda né come Trasportatore su Airtable (tabelle Aziende / Trasportatori). Aggiungi questa email nella tabella corretta per poter usare il calendario con questo utente.');
+    }
+    return;
+  }
+  if (tipoUtente === 'azienda') {
+    // Riusa il form "Pubblica un Carico" già esistente, precompilando la data
+    document.getElementById('ins-data').value = dataStr;
+    document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('ins-cap-part').focus();
+    return;
+  }
+
+  // Trasportatore: mostra i carichi di quel giorno in un modal, riusando prendiCarico() già esistente
+  const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
+  const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
+
+  let corpo;
+  if (carichiGiorno.length === 0) {
+    corpo = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno nella tua zona.</div>`;
+  } else {
+    corpo = carichiGiorno.map(c => {
+      const f = c.fields;
+      const stato = (f.stato || 'DISPONIBILE').toUpperCase();
+      const disabilitato = stato !== 'DISPONIBILE' ? 'disabled' : '';
+      const testoBtn = stato === 'DISPONIBILE' ? 'Prendi →' : stato.includes('PAGAMENTO') ? 'In pagamento' : 'Preso';
+      const partenza = f.citta_partenza || f.cap_partenza || '—';
+      const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
+      const merce = f.tipo_merce || f.merce || '—';
+      return `<div class="carico-item" style="border-radius:10px;border:1px solid var(--border);margin-bottom:10px;">
+        <div class="carico-info">
+          <div class="carico-tratta">${partenza} → ${arrivo}</div>
+          <div class="carico-det">${merce} · CAP ${f.cap_partenza||'—'} → ${f.cap_arrivo||'—'}</div>
+        </div>
+        <button class="btn-prendi" ${disabilitato} onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${partenza}','${arrivo}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${merce}')">${testoBtn}</button>
+      </div>`;
+    }).join('');
+  }
+
+  const html = `
+    <div class="cal-modal-overlay" id="cal-modal-overlay" onclick="if(event.target===this)chiudiModaleCalendario()">
+      <div class="cal-modal">
+        <button class="cal-modal-close" onclick="chiudiModaleCalendario()">✕</button>
+        <h3 style="text-transform:capitalize;">${dataLeggibile}</h3>
+        ${corpo}
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function chiudiModaleCalendario() {
+  const m = document.getElementById('cal-modal-overlay');
+  if (m) m.remove();
+}
+</script>
+</body>
+</html>
