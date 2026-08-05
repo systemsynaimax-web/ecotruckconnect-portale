@@ -1,0 +1,86 @@
+TROVA QUESTA RIGA ESATTA nel file index.html:
+
+let currentUser = null;
+
+SUBITO DOPO QUESTA RIGA, INCOLLA TUTTO QUESTO BLOCCO NUOVO:
+
+// ===== PROFILO TRASPORTATORE — Parco mezzi e Autorizzazioni =====
+let trasportatoreRecordId = null;
+let trasportatoreFieldsCorrenti = {};
+
+const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furgone grande","Furgone frigo","Pick-up","Motrice piccola (7,5t)","Motrice media (12t)","Motrice grande (18t)","Motrice centinata","Motrice cassonata","Motrice frigo","Motrice cisterna","Motrice con gru","Motrice ribaltabile","Motrice portacontainer","Bilico centinato","Bilico frigo","Bilico cisterna","Bilico portacontainer","Bilico cassonato","Bilico ribaltabile","Bilico ADR (merci pericolose)","Bilico con sponda idraulica","Bilico portabobine","Bilico portamacchine (car transporter)","Autotreno centinato","Autotreno frigo","Autotreno cisterna","Autotreno cassonato","Autotreno ribaltabile","Cassone scarrabile","Semirimorchio ribassato (lowbed)","Semirimorchio allungabile","Trasporto eccezionale","Autogru","Autobetoniera","Autospurgo","Portacontainer 20 piedi","Portacontainer 40 piedi","Bisarca (trasporto veicoli)","Trattore stradale","Trattore con rimorchio","Rimorchio centinato","Rimorchio frigo","Rimorchio cassonato","Autocompattatore","Autospazzatrice","Autocarro con sponda caricatrice","Muletto/carrello elevatore su strada","Altro (specificare)"];
+
+const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
+
+function renderCheckboxGroup(containerId, opzioni, selezionate) {
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  opzioni.forEach((op, i) => {
+    const id = containerId + '-' + i;
+    const checked = selezionate.includes(op) ? 'checked' : '';
+    cont.insertAdjacentHTML('beforeend',
+      '<label style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:#fff;">' +
+      '<input type="checkbox" value="' + op + '" id="' + id + '" ' + checked + '> ' + op +
+      '</label>'
+    );
+  });
+}
+
+function apriProfiloTrasportatore() {
+  document.getElementById('sezione-azienda').style.display = 'none';
+  document.getElementById('sezione-profilo-trasportatore').style.display = 'block';
+  const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
+  const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
+  renderCheckboxGroup('checkbox-tipo-camion', TIPO_CAMION_OPZIONI, camionSel);
+  renderCheckboxGroup('checkbox-autorizzazioni', AUTORIZZAZIONI_OPZIONI, autSel);
+  document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function salvaProfiloTrasportatore() {
+  const mezziSelezionati = Array.from(document.querySelectorAll('#checkbox-tipo-camion input:checked')).map(el => el.value);
+  const autSelezionate = Array.from(document.querySelectorAll('#checkbox-autorizzazioni input:checked')).map(el => el.value);
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'salva_profilo_trasportatore',
+        record_id: trasportatoreRecordId,
+        tipo_camion: mezziSelezionati,
+        autorizzazioni: autSelezionate
+      })
+    });
+    trasportatoreFieldsCorrenti.tipo_camion = mezziSelezionati;
+    trasportatoreFieldsCorrenti.autorizzazioni = autSelezionate;
+    document.getElementById('profilo-salvato-msg').style.display = 'inline';
+    setTimeout(() => { document.getElementById('profilo-salvato-msg').style.display = 'none'; }, 3000);
+  } catch(e) {
+    console.error('Errore salvataggio profilo:', e);
+    alert('Errore nel salvataggio, riprova tra un momento.');
+  }
+}
+// ===== FINE PROFILO TRASPORTATORE =====
+
+
+-----------------------------------------------------------
+
+POI TROVA QUESTO BLOCCO (dentro la funzione rilevaTipoUtente):
+
+  if (trasportatori.length > 0) {
+    tipoUtente = 'trasportatore';
+    capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
+    document.getElementById('cap-bar-section').style.display = 'flex';
+    document.getElementById('sezione-azienda').style.display = 'none';
+    document.getElementById('carichi-disponibili-wrap').style.display = 'block';
+
+SOSTITUISCILO CON QUESTO (uguale, più 4 righe nuove aggiunte):
+
+  if (trasportatori.length > 0) {
+    tipoUtente = 'trasportatore';
+    capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
+    trasportatoreRecordId = trasportatori[0].id;
+    trasportatoreFieldsCorrenti = trasportatori[0].fields;
+    document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+    document.getElementById('cap-bar-section').style.display = 'flex';
+    document.getElementById('sezione-azienda').style.display = 'none';
+    document.getElementById('carichi-disponibili-wrap').style.display = 'block';
