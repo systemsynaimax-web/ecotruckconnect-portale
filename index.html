@@ -765,43 +765,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     <!-- SEZIONE INSERIMENTO CARICHI (solo aziende) -->
     <div class="ins-box" id="sezione-azienda" style="display:none;">
 
-      <!-- PARCO MEZZI AZIENDALE — per aziende che possiedono anche mezzi propri: tir, container, ecc. -->
-      <div style="border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;">
-        <div class="ins-title">🚛 Il Mio Parco Mezzi</div>
-        <div class="ins-sub">Se la tua azienda possiede anche mezzi propri (TIR, container, autotreni...), indicali qui.</div>
-
-        <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo posseduto</h4>
-        <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
-          <button type="button" class="btn-cap" id="dd-btn-camionAzienda" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camionAzienda')">
-            <span id="dd-label-camionAzienda">Seleziona i mezzi di proprietà...</span>
-            <span>▾</span>
-          </button>
-          <div id="dd-panel-camionAzienda" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-            <div id="checkbox-tipo-camion-azienda" style="display:flex;flex-direction:column;gap:4px;"></div>
-          </div>
-        </div>
-        <div id="tags-camionAzienda" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
-        <div class="ins-field" id="specifica-azienda-wrap" style="display:none;max-width:520px;margin-top:10px;">
-          <label>Specifica il mezzo "Altro"</label>
-          <input type="text" id="specifica-azienda" placeholder="Descrivi il mezzo non presente nell'elenco">
-        </div>
-
-        <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
-        <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
-          <button type="button" class="btn-cap" id="dd-btn-autAzienda" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('autAzienda')">
-            <span id="dd-label-autAzienda">Seleziona le autorizzazioni...</span>
-            <span>▾</span>
-          </button>
-          <div id="dd-panel-autAzienda" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-            <div id="checkbox-autorizzazioni-azienda" style="display:flex;flex-direction:column;gap:4px;"></div>
-          </div>
-        </div>
-        <div id="tags-autAzienda" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
-
-        <button class="btn-cap" onclick="salvaProfiloAzienda()" style="margin-top:16px;">💾 Salva il mio parco mezzi</button>
-        <span id="parco-azienda-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-      </div>
-
       <div class="ins-title">📦 Pubblica un Carico</div>
       <div class="ins-sub">Inserisci i dettagli del carico. Il sistema trova automaticamente il trasportatore giusto nella zona.</div>
       <div class="ins-grid">
@@ -1056,9 +1019,7 @@ const DROPDOWN_CONFIG = {
   camion:        { containerId: 'checkbox-tipo-camion',      opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
   aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
   mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
-  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' },
-  camionAzienda: { containerId: 'checkbox-tipo-camion-azienda',    opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi di proprietà...' },
-  autAzienda:    { containerId: 'checkbox-autorizzazioni-azienda', opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' }
+  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
 };
 
 function renderCheckboxGroup(which, selezionate) {
@@ -1112,7 +1073,7 @@ function aggiornaEtichettaTendina(which) {
   });
 
   // "Altro (specificare)" — mostra/nasconde il campo testo di specifica per il profilo mezzi
-  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap', camionAzienda: 'specifica-azienda-wrap' };
+  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap' };
   if (SPECIFICA_WRAP_ID[which]) {
     const altroSelezionato = Array.from(checks).some(chk => chk.value === 'Altro (specificare)');
     const wrap = document.getElementById(SPECIFICA_WRAP_ID[which]);
@@ -1167,41 +1128,6 @@ async function salvaProfiloTrasportatore() {
 }
 // ===== FINE PROFILO TRASPORTATORE =====
 
-// ===== PARCO MEZZI AZIENDALE (aziende con mezzi propri) =====
-let aziendaRecordId = null;
-let aziendaFieldsCorrenti = {};
-
-async function salvaProfiloAzienda() {
-  const mezziSelezionati = Array.from(document.querySelectorAll('#checkbox-tipo-camion-azienda input:checked')).map(el => el.value);
-  const autSelezionate = Array.from(document.querySelectorAll('#checkbox-autorizzazioni-azienda input:checked')).map(el => el.value);
-  const specificaMezzo = document.getElementById('specifica-azienda').value.trim();
-  if (!aziendaRecordId) {
-    alert('Profilo non disponibile in questa modalità (anteprima).');
-    return;
-  }
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'salva_profilo_azienda',
-        record_id: aziendaRecordId,
-        tipo_camion: mezziSelezionati,
-        autorizzazioni: autSelezionate,
-        specifica: specificaMezzo
-      })
-    });
-    aziendaFieldsCorrenti.tipo_camion = mezziSelezionati;
-    aziendaFieldsCorrenti.autorizzazioni = autSelezionate;
-    aziendaFieldsCorrenti.specifica = specificaMezzo;
-    document.getElementById('parco-azienda-salvato-msg').style.display = 'inline';
-    setTimeout(() => { document.getElementById('parco-azienda-salvato-msg').style.display = 'none'; }, 3000);
-  } catch(e) {
-    console.error('Errore salvataggio parco mezzi azienda:', e);
-    alert('Errore nel salvataggio, riprova tra un momento.');
-  }
-}
-// ===== FINE PARCO MEZZI AZIENDALE =====
 let botOpen = false;
 let botHistory = [];
 
@@ -1259,8 +1185,6 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCalendarioMensile();
     } else {
       profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567' };
-      aziendaRecordId = 'preview-recid';
-      aziendaFieldsCorrenti = { tipo_camion: [], autorizzazioni: [] };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'block';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
@@ -1268,10 +1192,6 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCheckboxGroup('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
       aggiornaEtichettaTendina('autRichiesta');
-      renderCheckboxGroup('camionAzienda', []);
-      renderCheckboxGroup('autAzienda', []);
-      aggiornaEtichettaTendina('camionAzienda');
-      aggiornaEtichettaTendina('autAzienda');
       ultimiCarichi = [];
       renderCalendarioMensile();
     }
@@ -1436,8 +1356,6 @@ async function rilevaTipoUtente(email) {
     tipoUtente = 'azienda';
     profiloAzienda.nome = aziende[0].fields.nome_azienda || aziende[0].fields.nome_referente || aziende[0].fields.nome || '';
     profiloAzienda.telefono = aziende[0].fields.telefono_azienda || aziende[0].fields.telefono || '';
-    aziendaRecordId = aziende[0].id;
-    aziendaFieldsCorrenti = aziende[0].fields;
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
@@ -1445,11 +1363,6 @@ async function rilevaTipoUtente(email) {
     renderCheckboxGroup('autRichiesta', []);
     aggiornaEtichettaTendina('mezzoRichiesto');
     aggiornaEtichettaTendina('autRichiesta');
-    renderCheckboxGroup('camionAzienda', aziendaFieldsCorrenti.tipo_camion || []);
-    renderCheckboxGroup('autAzienda', aziendaFieldsCorrenti.autorizzazioni || []);
-    aggiornaEtichettaTendina('camionAzienda');
-    aggiornaEtichettaTendina('autAzienda');
-    document.getElementById('specifica-azienda').value = aziendaFieldsCorrenti.specifica || '';
     return aziende[0].id;
   }
   return null;
