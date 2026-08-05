@@ -1,8 +1,0 @@
-TROVA QUESTA RIGA ESATTA nel file index.html (dentro <nav class="navbar">):
-
-      <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
-
-SOSTITUISCILA CON QUESTE DUE RIGHE (aggiungi il bottone profilo prima di "Esci"):
-
-      <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
-      <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
