@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTruckConnect — Dashboard Gestori</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080d16;
+  --surface:  #0e1623;
+  --surface2: #131d2e;
+  --border:   rgba(255,255,255,0.07);
+  --blue:     #3b82f6;
+  --blue2:    #1d4ed8;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --amber:    #f59e0b;
+  --text:     #f1f5f9;
+  --muted:    rgba(241,245,249,0.45);
+  --font-h:   'Syne', sans-serif;
+  --font-b:   'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,h4{font-family:var(--font-h);}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--surface);}
+.logo{font-family:var(--font-h);font-weight:800;font-size:22px;letter-spacing:-0.5px;}
+.logo span{color:var(--blue);}
+.header-right{display:flex;align-items:center;gap:16px;}
+.refresh-info{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.badge{font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--blue);}
+
+.wrap{max-width:1400px;margin:0 auto;padding:32px;}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.stat-label{font-size:13px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.stat-value{font-family:var(--font-h);font-size:36px;font-weight:800;}
+.stat-value.blue{color:var(--blue);}
+.stat-value.amber{color:var(--amber);}
+.stat-value.red{color:var(--red);}
+.stat-value.green{color:var(--green);}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;}
+.section-title{font-size:20px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.legend{display:flex;gap:20px;margin-bottom:20px;font-size:13px;color:var(--muted);}
+.legend span{display:flex;align-items:center;gap:6px;}
+.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-nav{background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px;}
+.cal-nav:hover{background:rgba(59,130,246,0.15);}
+.cal-month{font-family:var(--font-h);font-size:18px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.cal-day-head{background:var(--surface2);padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;}
+.cal-cell{background:var(--surface);min-height:90px;padding:8px;cursor:pointer;transition:background 0.15s;}
+.cal-cell:hover{background:var(--surface2);}
+.cal-cell.empty{background:rgba(255,255,255,0.01);cursor:default;}
+.cal-cell.today .cal-daynum{color:var(--blue);font-weight:800;}
+.cal-daynum{font-size:13px;color:var(--muted);margin-bottom:6px;}
+.cal-dots{display:flex;flex-wrap:wrap;gap:3px;}
+.cal-mini-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.cal-count{font-size:10px;color:var(--muted);margin-top:4px;}
+
+.feed-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+.feed-item:last-child{border-bottom:none;}
+.feed-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.feed-info{flex:1;}
+.feed-title{font-size:14px;font-weight:600;}
+.feed-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.feed-date{font-size:12px;color:var(--muted);white-space:nowrap;}
+.feed-empty{text-align:center;padding:30px;color:var(--muted);font-size:14px;}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-family:var(--font-h);font-size:20px;font-weight:700;}
+.modal-close{cursor:pointer;font-size:22px;color:var(--muted);background:none;border:none;}
+.modal-close:hover{color:var(--text);}
+.carico-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.carico-card:last-child{margin-bottom:0;}
+.carico-tratta{font-weight:700;font-size:15px;margin-bottom:6px;}
+.carico-stato{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:10px;text-transform:uppercase;}
+.carico-stato.disponibile{background:rgba(59,130,246,0.15);color:var(--blue);}
+.carico-stato.pagamento{background:rgba(245,158,11,0.15);color:var(--amber);}
+.carico-stato.preso{background:rgba(34,197,94,0.15);color:var(--green);}
+.carico-row{font-size:13px;color:var(--muted);margin-top:4px;}
+.carico-row b{color:var(--text);font-weight:500;}
+.modal-empty{text-align:center;color:var(--muted);padding:30px;}
+
+@media(max-width:700px){
+  .wrap{padding:16px;}
+  .header{padding:14px 16px;}
+  .cal-cell{min-height:60px;padding:4px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Eco<span>Truck</span>Connect</div>
+  <div class="header-right">
+    <span class="refresh-info"><span class="dot-live"></span>Aggiornato automaticamente</span>
+    <span class="badge">🔒 Dashboard Gestori</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Carichi Disponibili</div>
+      <div class="stat-value blue" id="st-disponibili">—</div>
+      <div class="stat-sub">In attesa di essere presi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Pagamento Ora</div>
+      <div class="stat-value amber" id="st-pagamento">—</div>
+      <div class="stat-sub">Bloccati, entro 5 minuti</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Carichi Presi (Totale)</div>
+      <div class="stat-value green" id="st-presi">—</div>
+      <div class="stat-sub">Da sempre</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Incassato (Totale)</div>
+      <div class="stat-value" id="st-incassato">—</div>
+      <div class="stat-sub">Commissioni da 20€ a carico</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📅 Calendario Carichi</div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:var(--blue);"></span>Disponibile</span>
+      <span><span class="legend-dot" style="background:var(--amber);"></span>In pagamento</span>
+      <span><span class="legend-dot" style="background:var(--green);"></span>Preso</span>
+    </div>
+    <div class="cal-header">
+      <button class="cal-nav" onclick="cambiaMese(-1)">←</button>
+      <div class="cal-month" id="cal-month-label">—</div>
+      <button class="cal-nav" onclick="cambiaMese(1)">→</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🕓 Attività Recente</div>
+    <div id="feed-list"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)chiudiModal();">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">—</div>
+      <button class="modal-close" onclick="chiudiModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+const PREZZO = 20;
+let tuttiCarichi = [];
+let meseVisualizzato = new Date();
+
+async function caricaDashboard() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_dashboard_data' })
+    });
+    const data = await res.json();
+    const raw = data.carichi || [];
+    tuttiCarichi = raw.map(r => ({ id: r.id, fields: r.fields || r }));
+    aggiornaStats();
+    renderCalendario();
+    renderFeed();
+  } catch (e) {
+    console.error('Errore caricamento dashboard:', e);
+    document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Errore di connessione. Riprovo tra poco…</div>';
+  }
+}
+
+function aggiornaStats() {
+  const disp = tuttiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'DISPONIBILE').length;
+  const pag  = tuttiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'IN PAGAMENTO').length;
+  const presi = tuttiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'PRESO').length;
+  document.getElementById('st-disponibili').textContent = disp;
+  document.getElementById('st-pagamento').textContent = pag;
+  document.getElementById('st-presi').textContent = presi;
+  document.getElementById('st-incassato').textContent = '€ ' + (presi * PREZZO).toLocaleString('it-IT');
+}
+
+function coloreStato(stato) {
+  const s = (stato||'').toUpperCase();
+  if (s === 'DISPONIBILE') return 'var(--blue)';
+  if (s === 'IN PAGAMENTO') return 'var(--amber)';
+  if (s === 'PRESO') return 'var(--green)';
+  return 'var(--muted)';
+}
+function classeStato(stato) {
+  const s = (stato||'').toUpperCase();
+  if (s === 'DISPONIBILE') return 'disponibile';
+  if (s === 'IN PAGAMENTO') return 'pagamento';
+  if (s === 'PRESO') return 'preso';
+  return '';
+}
+
+function cambiaMese(delta) {
+  meseVisualizzato.setMonth(meseVisualizzato.getMonth() + delta);
+  renderCalendario();
+}
+
+function renderCalendario() {
+  const anno = meseVisualizzato.getFullYear();
+  const mese = meseVisualizzato.getMonth();
+  const nomiMesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  document.getElementById('cal-month-label').textContent = nomiMesi[mese] + ' ' + anno;
+
+  const primoGiorno = new Date(anno, mese, 1);
+  const ultimoGiorno = new Date(anno, mese + 1, 0);
+  let offset = primoGiorno.getDay() - 1; if (offset < 0) offset = 6;
+
+  const carichiPerGiorno = {};
+  tuttiCarichi.forEach(c => {
+    const d = c.fields.data_consegna;
+    if (!d) return;
+    const key = d.slice(0,10);
+    if (!carichiPerGiorno[key]) carichiPerGiorno[key] = [];
+    carichiPerGiorno[key].push(c);
+  });
+
+  const oggi = new Date();
+  const oggiKey = oggi.toISOString().slice(0,10);
+
+  let html = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map(g => `<div class="cal-day-head">${g}</div>`).join('');
+  for (let i = 0; i < offset; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let giorno = 1; giorno <= ultimoGiorno.getDate(); giorno++) {
+    const key = `${anno}-${String(mese+1).padStart(2,'0')}-${String(giorno).padStart(2,'0')}`;
+    const carichiGiorno = carichiPerGiorno[key] || [];
+    const isToday = key === oggiKey;
+    const dots = carichiGiorno.slice(0,6).map(c => `<span class="cal-mini-dot" style="background:${coloreStato(c.fields.stato)};"></span>`).join('');
+    html += `<div class="cal-cell ${isToday?'today':''}" onclick="apriGiorno('${key}')">
+      <div class="cal-daynum">${giorno}</div>
+      <div class="cal-dots">${dots}</div>
+      ${carichiGiorno.length ? `<div class="cal-count">${carichiGiorno.length} carich${carichiGiorno.length===1?'o':'i'}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function apriGiorno(key) {
+  const carichiGiorno = tuttiCarichi.filter(c => (c.fields.data_consegna||'').slice(0,10) === key);
+  const [y,m,d] = key.split('-');
+  document.getElementById('modal-title').textContent = `${d}/${m}/${y}`;
+  const body = document.getElementById('modal-body');
+  if (!carichiGiorno.length) {
+    body.innerHTML = '<div class="modal-empty">Nessun carico per questo giorno.</div>';
+  } else {
+    body.innerHTML = carichiGiorno.map(c => {
+      const f = c.fields;
+      const trasportatore = f.assegnato_a_nome ? `
+        <div class="carico-row"><b>Trasportatore:</b> ${f.assegnato_a_nome}</div>
+        <div class="carico-row"><b>Telefono:</b> ${f.assegnato_a_telefono || '—'}</div>` : '';
+      return `<div class="carico-card">
+        <div class="carico-tratta">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
+        <span class="carico-stato ${classeStato(f.stato)}">${f.stato||'—'}</span>
+        <div class="carico-row"><b>Azienda:</b> ${f.nome_azienda||'—'}</div>
+        <div class="carico-row"><b>Merce:</b> ${f.tipo_merce||'—'}</div>
+        <div class="carico-row"><b>Numero ordine:</b> ${f.numero_ordine||'—'}</div>
+        ${trasportatore}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('modal-bg').classList.add('open');
+}
+function chiudiModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+function renderFeed() {
+  const recenti = [...tuttiCarichi]
+    .filter(c => c.fields.data_pubblicazione || c.fields.data_assegnato)
+    .sort((a,b) => {
+      const da = new Date(a.fields.data_assegnato || a.fields.data_pubblicazione);
+      const db = new Date(b.fields.data_assegnato || b.fields.data_pubblicazione);
+      return db - da;
+    })
+    .slice(0, 15);
+
+  const el = document.getElementById('feed-list');
+  if (!recenti.length) { el.innerHTML = '<div class="feed-empty">Nessuna attività recente.</div>'; return; }
+
+  el.innerHTML = recenti.map(c => {
+    const f = c.fields;
+    const data = f.data_assegnato || f.data_pubblicazione;
+    const dataFmt = data ? new Date(data).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome||'trasportatore'}` : `Pubblicato da ${f.nome_azienda||'azienda'}`;
+    return `<div class="feed-item">
+      <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
+      <div class="feed-info">
+        <div class="feed-title">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
+        <div class="feed-sub">${azione}</div>
+      </div>
+      <div class="feed-date">${dataFmt}</div>
+    </div>`;
+  }).join('');
+}
+
+caricaDashboard();
+setInterval(caricaDashboard, 30000);
+</script>
+</body>
+</html>
