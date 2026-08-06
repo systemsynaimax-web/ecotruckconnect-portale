@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTruckConnect — Registrazioni</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080d16;
+  --surface:  #0e1623;
+  --surface2: #131d2e;
+  --border:   rgba(255,255,255,0.07);
+  --blue:     #3b82f6;
+  --green:    #22c55e;
+  --amber:    #f59e0b;
+  --text:     #f1f5f9;
+  --muted:    rgba(241,245,249,0.45);
+  --font-h:   'Syne', sans-serif;
+  --font-b:   'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;}
+h1,h2,h3{font-family:var(--font-h);}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--surface);}
+.logo{font-family:var(--font-h);font-weight:800;font-size:22px;}
+.logo span{color:var(--blue);}
+.back-link{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;}
+.back-link:hover{color:var(--text);}
+
+.wrap{max-width:1000px;margin:0 auto;padding:32px;}
+
+.page-title{font-size:26px;font-weight:800;margin-bottom:6px;}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+
+.note-box{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:var(--amber);}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.stat-label{font-size:13px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.stat-value{font-family:var(--font-h);font-size:32px;font-weight:800;color:var(--green);}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;}
+.section-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-b);}
+.btn:hover{background:#2563eb;}
+
+.reg-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.reg-row:last-child{border-bottom:none;}
+.reg-name{font-weight:700;font-size:14px;}
+.reg-contact{font-size:12px;color:var(--muted);margin-top:3px;}
+.reg-amount{background:rgba(34,197,94,0.15);color:var(--green);font-size:12px;font-weight:700;padding:4px 12px;border-radius:12px;white-space:nowrap;}
+.reg-date{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Eco<span>Truck</span>Connect</div>
+  <a href="dashboard.html" class="back-link">← Torna alla Dashboard</a>
+</div>
+
+<div class="wrap">
+  <div class="page-title">🏢 Registrazioni Vetrina</div>
+  <div class="page-sub">Chi si è registrato pagando l'ingresso, dati veri da Shopify.</div>
+
+  <div class="note-box">
+    ℹ️ Shopify usa lo stesso prodotto sia per trasportatori che per aziende — qui vedi il totale unico, non ancora diviso per tipo. Ordini di test interni sono già esclusi.
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Membri Registrati (Vetrina)</div>
+      <div class="stat-value" id="st-count">—</div>
+      <div class="stat-sub">Pagamenti veri, ordini di test esclusi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Totale Incassato</div>
+      <div class="stat-value" id="st-totale">—</div>
+      <div class="stat-sub">Somma reale dei pagamenti, prezzo variabile</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span>Elenco Registrazioni</span>
+      <button class="btn" onclick="scaricaCSV()">📥 Scarica connotati (CSV)</button>
+    </div>
+    <div id="lista-registrazioni"><div class="empty-state">Caricamento…</div></div>
+  </div>
+</div>
+
+<script>
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+// Email interne da escludere sempre dai conteggi reali (test dello staff)
+const EMAIL_ESCLUSE = ['system.synaimax@gmail.com', 'synautomationpro@gmail.com'];
+
+let registrazioni = [];
+
+function estraiOrdini(body) {
+  // Prova diversi formati possibili di risposta GraphQL/Make
+  const percorsi = [
+    body?.data?.orders?.nodes,
+    body?.orders?.nodes,
+    body?.body?.data?.orders?.nodes,
+    body?.body?.orders?.nodes
+  ];
+  for (const p of percorsi) {
+    if (Array.isArray(p)) return p;
+  }
+  return [];
+}
+
+function eTest(email) {
+  if (!email) return false;
+  const e = email.toLowerCase();
+  return EMAIL_ESCLUSE.some(x => e === x.toLowerCase()) || e.includes('synaimax');
+}
+
+function eRegistrazione(ordine) {
+  const items = ordine.lineItems?.nodes || [];
+  return items.some(i => (i.title || '').toLowerCase().includes('innovazione digitale'));
+}
+
+async function carica() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_registrazioni' })
+    });
+    const data = await res.json();
+    const tuttiOrdini = estraiOrdini(data);
+
+    registrazioni = tuttiOrdini
+      .filter(o => eRegistrazione(o))
+      .filter(o => {
+        const email = o.customer?.email || o.email || '';
+        const totale = parseFloat(o.totalPriceSet?.shopMoney?.amount || '0');
+        return !eTest(email) && totale > 0;
+      })
+      .map(o => ({
+        nome: [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(' ') || 'Nome non disponibile',
+        email: o.customer?.email || o.email || '—',
+        telefono: o.customer?.phone || o.phone || '—',
+        data: o.createdAt,
+        importo: parseFloat(o.totalPriceSet?.shopMoney?.amount || '0'),
+        valuta: o.totalPriceSet?.shopMoney?.currencyCode || 'EUR',
+        ordine: o.name || ''
+      }));
+
+    render();
+  } catch (e) {
+    console.error('Errore caricamento registrazioni:', e);
+    document.getElementById('lista-registrazioni').innerHTML = '<div class="empty-state">⚠️ Errore di connessione. Riprova tra poco.</div>';
+  }
+}
+
+function render() {
+  document.getElementById('st-count').textContent = registrazioni.length;
+  const totale = registrazioni.reduce((sum, r) => sum + r.importo, 0);
+  document.getElementById('st-totale').textContent = '€ ' + totale.toLocaleString('it-IT', {minimumFractionDigits: 2});
+
+  const el = document.getElementById('lista-registrazioni');
+  if (!registrazioni.length) {
+    el.innerHTML = '<div class="empty-state">Nessuna registrazione reale trovata (esclusi i test).</div>';
+    return;
+  }
+
+  el.innerHTML = registrazioni
+    .sort((a,b) => new Date(b.data) - new Date(a.data))
+    .map(r => {
+      const dataFmt = r.data ? new Date(r.data).toLocaleDateString('it-IT') : '—';
+      return `<div class="reg-row">
+        <div>
+          <div class="reg-name">${r.nome}</div>
+          <div class="reg-contact">✉️ ${r.email} &nbsp; 📞 ${r.telefono}</div>
+        </div>
+        <div class="reg-amount">€ ${r.importo.toFixed(2)}</div>
+        <div class="reg-date">${dataFmt}</div>
+      </div>`;
+    }).join('');
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v).replace(/"/g, '""');
+  return /[",\n]/.test(s) ? `"${s}"` : s;
+}
+
+function scaricaCSV() {
+  if (!registrazioni.length) return;
+  const header = ['Nome', 'Email', 'Telefono', 'Data', 'Importo', 'Valuta', 'Numero Ordine'].map(csvEscape).join(',');
+  const righe = registrazioni.map(r => [
+    r.nome, r.email, r.telefono,
+    r.data ? new Date(r.data).toLocaleDateString('it-IT') : '',
+    r.importo.toFixed(2), r.valuta, r.ordine
+  ].map(csvEscape).join(',')).join('\n');
+  const csv = header + '\n' + righe;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `registrazioni_vetrina_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+carica();
+</script>
+</body>
+</html>
