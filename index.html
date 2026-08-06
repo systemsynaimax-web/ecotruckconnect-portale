@@ -1383,7 +1383,20 @@ function aggiornaCap() {
 
 /* ——— CARICHI CLICCABILI ——— */
 let ultimiCarichi = [];
-
+// Punto 6 requisiti Gerlando — matching automatico per tipo mezzo + autorizzazioni, SENZA CAP.
+// Il trasportatore vede SOLO i carichi compatibili col proprio profilo (parco mezzi + autorizzazioni).
+// Un carico senza requisiti specificati resta visibile a tutti (compatibilità coi carichi vecchi/di test).
+function carichiCompatibiliPerTrasportatore(carichi) {
+  const mieiMezzi = trasportatoreFieldsCorrenti.tipo_camion || [];
+  const mieAutorizzazioni = trasportatoreFieldsCorrenti.autorizzazioni || [];
+  return carichi.filter(c => {
+    const mezziRichiesti = c.fields.tipo_mezzo_richiesto || [];
+    const autRichieste = c.fields.autorizzazione_richiesta || [];
+    const mezzoOk = mezziRichiesti.length === 0 || mezziRichiesti.some(m => mieiMezzi.includes(m));
+    const autOk = autRichieste.length === 0 || autRichieste.some(a => mieAutorizzazioni.includes(a));
+    return mezzoOk && autOk;
+  });
+}
 function renderCarichi(carichi) {
   const lista = document.getElementById('carichi-lista');
 
@@ -1393,14 +1406,16 @@ function renderCarichi(carichi) {
     return;
   }
 
-  // Se trasportatore, filtra per CAP se disponibile
+ // Filtro CAP — DISATTIVATO su decisione Davide/Gerlando (6/8): il matching ora si basa
+  // solo su tipo mezzo + autorizzazioni. Il CAP resta qui, pronto da riattivare in futuro
+  // come opzione premium a pagamento (50-100€).
   let filtrati = carichi;
-  if (tipoUtente === 'trasportatore' && capCorrente) {
+  const FILTRO_CAP_ATTIVO = false; // ← cambiare in true per riattivare il filtro CAP in futuro
+  if (FILTRO_CAP_ATTIVO && tipoUtente === 'trasportatore' && capCorrente) {
     filtrati = carichi.filter(c => {
       const capPart = c.fields.cap_partenza || c.fields.CAP_partenza || '';
       return capPart.startsWith(capCorrente.substring(0,3)) || capPart === capCorrente;
     });
-    // Se non ci sono nella zona, mostra tutti disponibili
     if (filtrati.length === 0) filtrati = carichi;
   }
 
@@ -1615,6 +1630,9 @@ async function caricaDati(email) {
     ultimiCarichi = rawCarichi
       .map(r => ({ id: r.id, fields: r }))
       .filter(r => (r.fields.stato||'').toUpperCase() !== 'PRESO');
+    if (tipoUtente === 'trasportatore') {
+      ultimiCarichi = carichiCompatibiliPerTrasportatore(ultimiCarichi);
+    }
     const nDisp = ultimiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'DISPONIBILE').length;
     aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
