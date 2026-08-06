@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTruckConnect — Report Trasportatori</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080d16;
+  --surface:  #0e1623;
+  --surface2: #131d2e;
+  --border:   rgba(255,255,255,0.07);
+  --blue:     #3b82f6;
+  --green:    #22c55e;
+  --amber:    #f59e0b;
+  --text:     #f1f5f9;
+  --muted:    rgba(241,245,249,0.45);
+  --font-h:   'Syne', sans-serif;
+  --font-b:   'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;}
+h1,h2,h3{font-family:var(--font-h);}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--surface);}
+.logo{font-family:var(--font-h);font-weight:800;font-size:22px;}
+.logo span{color:var(--blue);}
+.back-link{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;}
+.back-link:hover{color:var(--text);}
+
+.wrap{max-width:1000px;margin:0 auto;padding:32px;}
+
+.page-title{font-size:26px;font-weight:800;margin-bottom:6px;}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;display:flex;align-items:end;gap:16px;flex-wrap:wrap;}
+.filter-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.filter-field input, .filter-field select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--font-b);font-size:14px;}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--font-b);}
+.btn:hover{background:#2563eb;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--blue);background:rgba(59,130,246,0.08);}
+.btn-sm{padding:8px 14px;font-size:13px;}
+
+.summary-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.summary-text{font-size:14px;color:var(--muted);}
+.summary-text b{color:var(--text);}
+
+.trasp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+.trasp-top{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap;}
+.trasp-name{font-size:17px;font-weight:700;font-family:var(--font-h);}
+.trasp-contact{font-size:13px;color:var(--muted);margin-top:4px;}
+.trasp-count{background:rgba(34,197,94,0.15);color:var(--green);font-size:12px;font-weight:700;padding:4px 12px;border-radius:12px;white-space:nowrap;}
+.trasp-tratte{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.7;}
+.trasp-tratte .t-item{display:inline-block;background:var(--surface2);border-radius:6px;padding:3px 10px;margin:2px 4px 2px 0;color:var(--text);}
+.trasp-actions{margin-top:14px;}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Eco<span>Truck</span>Connect</div>
+  <a href="dashboard.html" class="back-link">← Torna alla Dashboard</a>
+</div>
+
+<div class="wrap">
+  <div class="page-title">📋 Report Trasportatori</div>
+  <div class="page-sub">Viaggi accaparrati per periodo, pronti per la fatturazione.</div>
+
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label>Da</label>
+      <input type="date" id="data-da">
+    </div>
+    <div class="filter-field">
+      <label>A</label>
+      <input type="date" id="data-a">
+    </div>
+    <div class="filter-field">
+      <label>Periodo rapido</label>
+      <select id="periodo-rapido" onchange="periodoRapido(this.value)">
+        <option value="">Personalizzato</option>
+        <option value="7">Ultimi 7 giorni</option>
+        <option value="15">Ultimi 15 giorni</option>
+        <option value="30" selected>Ultimi 30 giorni</option>
+      </select>
+    </div>
+    <button class="btn" onclick="applicaFiltro()">Filtra</button>
+    <button class="btn btn-outline" onclick="scaricaTutti()">📥 Scarica tutti (CSV)</button>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-text" id="summary-text">Caricamento…</div>
+  </div>
+
+  <div id="lista-trasportatori"></div>
+</div>
+
+<script>
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+let tuttiCarichi = [];
+let carichiFiltrati = [];
+
+function fmtData(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('it-IT');
+}
+function inputDate(d) {
+  return d.toISOString().slice(0,10);
+}
+
+function periodoRapido(giorni) {
+  if (!giorni) return;
+  const oggi = new Date();
+  const da = new Date();
+  da.setDate(oggi.getDate() - parseInt(giorni));
+  document.getElementById('data-da').value = inputDate(da);
+  document.getElementById('data-a').value = inputDate(oggi);
+  applicaFiltro();
+}
+
+async function carica() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_dashboard_data' })
+    });
+    const data = await res.json();
+    const raw = data.carichi || [];
+    tuttiCarichi = raw.map(r => ({ id: r.id, fields: r.fields || r }))
+      .filter(c => (c.fields.stato||'').toUpperCase() === 'PRESO' && c.fields.data_assegnato);
+    periodoRapido(30);
+  } catch (e) {
+    document.getElementById('summary-text').textContent = '⚠️ Errore di connessione.';
+    console.error(e);
+  }
+}
+
+function applicaFiltro() {
+  const da = document.getElementById('data-da').value;
+  const a = document.getElementById('data-a').value;
+  if (!da || !a) return;
+  const daDate = new Date(da + 'T00:00:00');
+  const aDate = new Date(a + 'T23:59:59');
+  carichiFiltrati = tuttiCarichi.filter(c => {
+    const d = new Date(c.fields.data_assegnato);
+    return d >= daDate && d <= aDate;
+  });
+  renderLista();
+}
+
+function renderLista() {
+  const gruppi = {};
+  carichiFiltrati.forEach(c => {
+    const f = c.fields;
+    const key = f.bloccato_da_id || f.assegnato_a_nome || 'sconosciuto';
+    if (!gruppi[key]) gruppi[key] = { nome: f.assegnato_a_nome || 'Nome non disponibile', telefono: f.assegnato_a_telefono || '—', email: f.bloccato_da_id || '—', carichi: [] };
+    gruppi[key].carichi.push(f);
+  });
+
+  const nomiTrasportatori = Object.keys(gruppi).length;
+  document.getElementById('summary-text').innerHTML = `<b>${carichiFiltrati.length}</b> viaggi accaparrati da <b>${nomiTrasportatori}</b> trasportatori nel periodo selezionato.`;
+
+  const el = document.getElementById('lista-trasportatori');
+  if (!nomiTrasportatori) {
+    el.innerHTML = '<div class="empty-state">Nessun viaggio accaparrato in questo periodo.</div>';
+    return;
+  }
+
+  el.innerHTML = Object.entries(gruppi).map(([key, g]) => {
+    const tratte = g.carichi.map(c => `<span class="t-item">${fmtData(c.data_assegnato)} · ${c.citta_partenza}→${c.citta_arrivo}</span>`).join('');
+    return `<div class="trasp-card">
+      <div class="trasp-top">
+        <div>
+          <div class="trasp-name">👤 ${g.nome}</div>
+          <div class="trasp-contact">📞 ${g.telefono} &nbsp; ✉️ ${g.email}</div>
+        </div>
+        <div class="trasp-count">${g.carichi.length} viagg${g.carichi.length===1?'io':'i'}</div>
+      </div>
+      <div class="trasp-tratte">${tratte}</div>
+      <div class="trasp-actions">
+        <button class="btn btn-sm" onclick='scaricaTrasportatore(${JSON.stringify(key)})'>📥 Scarica report di ${g.nome}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v).replace(/"/g, '""');
+  return /[",\n]/.test(s) ? `"${s}"` : s;
+}
+
+function generaCSV(righe, intestazioni) {
+  const header = intestazioni.map(csvEscape).join(',');
+  const body = righe.map(r => r.map(csvEscape).join(',')).join('\n');
+  return header + '\n' + body;
+}
+
+function scaricaFile(contenuto, nomeFile) {
+  const blob = new Blob(['\uFEFF' + contenuto], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeFile;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function scaricaTrasportatore(key) {
+  const carichi = carichiFiltrati.filter(c => (c.fields.bloccato_da_id || c.fields.assegnato_a_nome) === key);
+  if (!carichi.length) return;
+  const nome = carichi[0].fields.assegnato_a_nome || 'trasportatore';
+  const righe = carichi.map(c => {
+    const f = c.fields;
+    return [fmtData(f.data_assegnato), `${f.citta_partenza} → ${f.citta_arrivo}`, f.nome_azienda||'', f.numero_ordine||'', f.tipo_merce||''];
+  });
+  const csv = generaCSV(righe, ['Data', 'Tratta', 'Azienda', 'Numero Ordine', 'Merce']);
+  scaricaFile(csv, `report_${nome.replace(/\s+/g,'')}_${document.getElementById('data-da').value}_${document.getElementById('data-a').value}.csv`);
+}
+
+function scaricaTutti() {
+  if (!carichiFiltrati.length) return;
+  const righe = carichiFiltrati.map(c => {
+    const f = c.fields;
+    return [fmtData(f.data_assegnato), f.assegnato_a_nome||'', f.assegnato_a_telefono||'', f.bloccato_da_id||'', `${f.citta_partenza} → ${f.citta_arrivo}`, f.nome_azienda||'', f.numero_ordine||'', f.tipo_merce||''];
+  });
+  const csv = generaCSV(righe, ['Data', 'Trasportatore', 'Telefono', 'Email', 'Tratta', 'Azienda', 'Numero Ordine', 'Merce']);
+  scaricaFile(csv, `report_completo_${document.getElementById('data-da').value}_${document.getElementById('data-a').value}.csv`);
+}
+
+carica();
+</script>
+</body>
+</html>
