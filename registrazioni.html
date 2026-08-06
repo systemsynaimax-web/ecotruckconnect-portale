@@ -68,14 +68,19 @@ h1,h2,h3{font-family:var(--font-h);}
   <div class="page-title">🏢 Registrazioni Vetrina</div>
   <div class="page-sub">Chi si è registrato pagando l'ingresso, dati veri da Shopify.</div>
 
-  <div class="note-box">
-    ℹ️ Shopify usa lo stesso prodotto sia per trasportatori che per aziende — qui vedi il totale unico, non ancora diviso per tipo. Ordini di test interni sono già esclusi.
+  <div class="note-box" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.08);">
+    ✅ Ogni registrazione è incrociata con Airtable per sapere se è un trasportatore o un'azienda. Ordini di test interni sono esclusi.
   </div>
 
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">Membri Registrati (Vetrina)</div>
-      <div class="stat-value" id="st-count">—</div>
+      <div class="stat-label">Trasportatori Registrati</div>
+      <div class="stat-value" id="st-trasportatori">—</div>
+      <div class="stat-sub">Pagamenti veri, ordini di test esclusi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Aziende Registrate</div>
+      <div class="stat-value" id="st-aziende">—</div>
       <div class="stat-sub">Pagamenti veri, ordini di test esclusi</div>
     </div>
     <div class="stat-card">
@@ -102,17 +107,26 @@ const EMAIL_ESCLUSE = ['system.synaimax@gmail.com', 'synautomationpro@gmail.com'
 let registrazioni = [];
 
 function estraiOrdini(body) {
-  // Prova diversi formati possibili di risposta GraphQL/Make
+  const shopifyBody = body?.shopify || body;
   const percorsi = [
-    body?.data?.orders?.nodes,
-    body?.orders?.nodes,
-    body?.body?.data?.orders?.nodes,
-    body?.body?.orders?.nodes
+    shopifyBody?.data?.orders?.nodes,
+    shopifyBody?.orders?.nodes,
+    shopifyBody?.body?.data?.orders?.nodes,
+    shopifyBody?.body?.orders?.nodes
   ];
   for (const p of percorsi) {
     if (Array.isArray(p)) return p;
   }
   return [];
+}
+
+function estraiEmailSet(records) {
+  const set = new Set();
+  (records || []).forEach(r => {
+    const email = r.fields?.email;
+    if (email) set.add(email.toLowerCase().trim());
+  });
+  return set;
 }
 
 function eTest(email) {
@@ -135,6 +149,15 @@ async function carica() {
     });
     const data = await res.json();
     const tuttiOrdini = estraiOrdini(data);
+    const emailTrasportatori = estraiEmailSet(data.trasportatori);
+    const emailAziende = estraiEmailSet(data.aziende);
+
+    function tipoDiEmail(email) {
+      const e = (email || '').toLowerCase().trim();
+      if (emailTrasportatori.has(e)) return 'Trasportatore';
+      if (emailAziende.has(e)) return 'Azienda';
+      return 'Non trovato';
+    }
 
     registrazioni = tuttiOrdini
       .filter(o => eRegistrazione(o))
@@ -150,7 +173,8 @@ async function carica() {
         data: o.createdAt,
         importo: parseFloat(o.totalPriceSet?.shopMoney?.amount || '0'),
         valuta: o.totalPriceSet?.shopMoney?.currencyCode || 'EUR',
-        ordine: o.name || ''
+        ordine: o.name || '',
+        tipo: tipoDiEmail(o.customer?.email || o.email || '')
       }));
 
     render();
@@ -161,7 +185,10 @@ async function carica() {
 }
 
 function render() {
-  document.getElementById('st-count').textContent = registrazioni.length;
+  const nTrasp = registrazioni.filter(r => r.tipo === 'Trasportatore').length;
+  const nAzie = registrazioni.filter(r => r.tipo === 'Azienda').length;
+  document.getElementById('st-trasportatori').textContent = nTrasp;
+  document.getElementById('st-aziende').textContent = nAzie;
   const totale = registrazioni.reduce((sum, r) => sum + r.importo, 0);
   document.getElementById('st-totale').textContent = '€ ' + totale.toLocaleString('it-IT', {minimumFractionDigits: 2});
 
@@ -175,9 +202,10 @@ function render() {
     .sort((a,b) => new Date(b.data) - new Date(a.data))
     .map(r => {
       const dataFmt = r.data ? new Date(r.data).toLocaleDateString('it-IT') : '—';
+      const tipoColore = r.tipo === 'Trasportatore' ? 'var(--blue)' : (r.tipo === 'Azienda' ? 'var(--amber)' : 'var(--muted)');
       return `<div class="reg-row">
         <div>
-          <div class="reg-name">${r.nome}</div>
+          <div class="reg-name">${r.nome} <span style="color:${tipoColore};font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px;">${r.tipo}</span></div>
           <div class="reg-contact">✉️ ${r.email} &nbsp; 📞 ${r.telefono}</div>
         </div>
         <div class="reg-amount">€ ${r.importo.toFixed(2)}</div>
@@ -194,9 +222,9 @@ function csvEscape(v) {
 
 function scaricaCSV() {
   if (!registrazioni.length) return;
-  const header = ['Nome', 'Email', 'Telefono', 'Data', 'Importo', 'Valuta', 'Numero Ordine'].map(csvEscape).join(',');
+  const header = ['Nome', 'Tipo', 'Email', 'Telefono', 'Data', 'Importo', 'Valuta', 'Numero Ordine'].map(csvEscape).join(',');
   const righe = registrazioni.map(r => [
-    r.nome, r.email, r.telefono,
+    r.nome, r.tipo, r.email, r.telefono,
     r.data ? new Date(r.data).toLocaleDateString('it-IT') : '',
     r.importo.toFixed(2), r.valuta, r.ordine
   ].map(csvEscape).join(',')).join('\n');
