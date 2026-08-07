@@ -816,11 +816,11 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           </select>
         </div>
         <div class="ins-field ins-full">
-          <label>Specifica <span style="opacity:.5;font-weight:400;">(facoltativo)</span></label>
+          <label>Specifica *</label>
           <input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari...">
         </div>
         <div class="ins-field ins-full">
-          <label>Note (opzionale)</label>
+          <label>Note *</label>
           <textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro..."></textarea>
         </div>
       </div>
@@ -1517,7 +1517,7 @@ async function pubblicaCarico() {
   err.style.display = 'none';
   ok.style.display  = 'none';
 
-  if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce) {
+  if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce || !specifica || !note) {
     err.textContent = '⚠️ Compila tutti i campi obbligatori.';
     err.style.display = 'block';
     return;
