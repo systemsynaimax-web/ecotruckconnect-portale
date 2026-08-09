@@ -751,11 +751,11 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span>▾</span>
         </button>
         <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:380px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-          <input type="text" id="ricerca-camion" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniCamion(this.value)">
+          <input type="text" id="ricerca-camion" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('camion', this.value)">
           <div id="checkbox-tipo-camion" style="display:flex;flex-direction:column;gap:4px;"></div>
           <div id="nessun-risultato-camion" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
             <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun mezzo trovato per "<span id="testo-ricerca-camion"></span>"</div>
-            <button type="button" onclick="aggiungiNuovoMezzo()" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
+            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('camion')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
           </div>
         </div>
       </div>
@@ -807,32 +807,17 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <label>Data Carico *</label>
           <input type="date" id="ins-data">
         </div>
-        <div class="ins-field">
+        <div class="ins-field" style="position:relative;">
           <label>Tipo Merce *</label>
-          <select id="ins-merce">
-            <option value="">Seleziona tipo...</option>
-            <option>Alimentare</option>
-            <option>Mobili e arredi</option>
-            <option>Elettrodomestici</option>
-            <option>Materiali edili/inerti (17 09 04)</option>
-            <option>Ferrosi (17 04 05)</option>
-            <option>Non ferrosi (17 04 07)</option>
-            <option>Legno (17 02 01)</option>
-            <option>Carta e cartone (20 01 01)</option>
-            <option>Vetro (17 02 02)</option>
-            <option>Materiale plastico (19 12 04)</option>
-            <option>Rifiuti pericolosi</option>
-            <option>Rifiuti non pericolosi</option>
-            <option>Rifiuti urbani (20 03 01)</option>
-            <option>Rifiuti elettronici/RAEE (20 01 36)</option>
-            <option>Rifiuti organici (20 01 08)</option>
-            <option>Prodotti chimici</option>
-            <option>Macchinari/attrezzature</option>
-            <option>Merci deperibili/frigo</option>
-            <option>Merci generiche/pallettizzate</option>
-            <option>Abbigliamento/tessile</option>
-            <option>Altro (specificare)</option>
-          </select>
+          <input type="text" id="ins-merce-ricerca" placeholder="Cerca o scrivi un tipo di merce..." autocomplete="off" onclick="apriTendinaMerce()" oninput="filtraTendinaMerce(this.value)">
+          <input type="hidden" id="ins-merce" value="">
+          <div id="pannello-merce" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:60;margin-top:4px;">
+            <div id="lista-merce"></div>
+            <div id="nessun-risultato-merce" style="display:none;margin:6px 6px 0;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun tipo trovato per "<span id="testo-ricerca-merce"></span>"</div>
+              <button type="button" onclick="aggiungiNuovaMerce()" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo tipo di merce</button>
+            </div>
+          </div>
         </div>
         <div class="ins-field ins-full">
           <label>Specifica *</label>
@@ -866,8 +851,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span id="dd-label-mezzoRichiesto">Seleziona i mezzi richiesti...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-mezzoRichiesto" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+        <div id="dd-panel-mezzoRichiesto" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:380px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <input type="text" id="ricerca-mezzoRichiesto" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('mezzoRichiesto', this.value)">
           <div id="checkbox-mezzo-richiesto" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div id="nessun-risultato-mezzoRichiesto" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun mezzo trovato per "<span id="testo-ricerca-mezzoRichiesto"></span>"</div>
+            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('mezzoRichiesto')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
+          </div>
         </div>
       </div>
       <div id="tags-mezzoRichiesto" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
@@ -1037,13 +1027,22 @@ let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
 
 const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
 
+// Tipi di merce per il form "Pubblica Carico" (azienda). Copia mutabile: un
+// tipo nuovo aggiunto con la ricerca resta disponibile per i carichi successivi.
+let OPZIONI_MERCE = ["Alimentare","Mobili e arredi","Elettrodomestici","Materiali edili/inerti (17 09 04)","Ferrosi (17 04 05)","Non ferrosi (17 04 07)","Legno (17 02 01)","Carta e cartone (20 01 01)","Vetro (17 02 02)","Materiale plastico (19 12 04)","Rifiuti pericolosi","Rifiuti non pericolosi","Rifiuti urbani (20 03 01)","Rifiuti elettronici/RAEE (20 01 36)","Rifiuti organici (20 01 08)","Prodotti chimici","Macchinari/attrezzature","Merci deperibili/frigo","Merci generiche/pallettizzate","Abbigliamento/tessile"];
+
+// Copia separata e mutabile anche per il form "Pubblica Carico" (azienda) —
+// isolata da OPZIONI_MEZZO_TRASPORTATORE: un mezzo nuovo aggiunto qui non
+// compare nel profilo del trasportatore, e viceversa.
+let OPZIONI_MEZZO_RICHIESTO = [...TIPO_CAMION_OPZIONI];
+
 // ===== TENDINE A TAG — configurazione generica =====
 // Usata sia dal profilo trasportatore (parco mezzi/autorizzazioni possedute)
 // sia dal form Pubblica Carico azienda (mezzo/autorizzazione richiesta per il carico).
 const DROPDOWN_CONFIG = {
   camion:        { containerId: 'checkbox-tipo-camion',      opzioni: OPZIONI_MEZZO_TRASPORTATORE, singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
   aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
-  mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
+  mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: OPZIONI_MEZZO_RICHIESTO, singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
   autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
 };
 
@@ -1069,61 +1068,138 @@ function toggleDropdown(which) {
   });
   const staAprendo = (panel.style.display === 'none' || !panel.style.display);
   panel.style.display = staAprendo ? 'block' : 'none';
-  // Riapertura del menu "Tipo di mezzo" (profilo trasportatore) — svuota la
-  // ricerca e mostra di nuovo tutti i mezzi, così non resta filtrato da prima.
-  if (which === 'camion' && staAprendo) {
-    const ricerca = document.getElementById('ricerca-camion');
-    if (ricerca) { ricerca.value = ''; filtraOpzioniCamion(''); }
+  // Riapertura di una tendina con ricerca (Tipo di mezzo / Tipo di mezzo
+  // richiesto) — svuota la ricerca e mostra di nuovo tutte le opzioni, così
+  // non resta filtrata da prima.
+  if (staAprendo) {
+    const ricerca = document.getElementById('ricerca-' + which);
+    if (ricerca) { ricerca.value = ''; filtraOpzioniDropdown(which, ''); }
   }
 }
 
-// Filtra dal vivo le checkbox del "Tipo di mezzo" (profilo trasportatore) in
-// base a quello che viene digitato. Se dopo almeno 3 lettere non c'è nessun
-// risultato, mostra il pulsante per aggiungere il mezzo come nuova opzione.
-function filtraOpzioniCamion(testo) {
+// Filtra dal vivo le checkbox di una tendina (usata sia per "Tipo di mezzo"
+// nel profilo trasportatore, sia per "Tipo di mezzo richiesto" nel form
+// Pubblica Carico dell'azienda). Se dopo almeno 3 lettere non c'è nessun
+// risultato, mostra il pulsante per aggiungere la voce come nuova opzione.
+function filtraOpzioniDropdown(which, testo) {
+  const cfg = DROPDOWN_CONFIG[which];
   const q = testo.trim().toLowerCase();
-  const labels = document.querySelectorAll('#checkbox-tipo-camion label');
+  const labels = document.querySelectorAll('#' + cfg.containerId + ' label');
   let visibili = 0;
   labels.forEach(lbl => {
     const match = q === '' || lbl.textContent.toLowerCase().includes(q);
     lbl.style.display = match ? 'flex' : 'none';
     if (match) visibili++;
   });
-  const nessunRisultato = document.getElementById('nessun-risultato-camion');
+  const nessunRisultato = document.getElementById('nessun-risultato-' + which);
+  if (!nessunRisultato) return;
   if (q.length >= 3 && visibili === 0) {
-    document.getElementById('testo-ricerca-camion').textContent = testo.trim();
+    document.getElementById('testo-ricerca-' + which).textContent = testo.trim();
     nessunRisultato.style.display = 'block';
   } else {
     nessunRisultato.style.display = 'none';
   }
 }
 
-// Aggiunge un mezzo digitato ma non presente in elenco. Viene inserito SOLO
-// nella lista del profilo trasportatore (OPZIONI_MEZZO_TRASPORTATORE), mai
-// nel form "Pubblica Carico" dell'azienda.
+// Aggiunge una voce digitata ma non presente in elenco. La lista di ciascuna
+// tendina (OPZIONI_MEZZO_TRASPORTATORE per il profilo trasportatore,
+// OPZIONI_MEZZO_RICHIESTO per il form Pubblica Carico) è separata: una nuova
+// voce aggiunta in una non compare mai nell'altra.
 //
-// ATTENZIONE TECNICA: se il campo "tipo_camion" su Airtable è una colonna a
-// scelta fissa (Single/Multiple select), Airtable potrebbe rifiutare un
-// valore nuovo mai definito prima nella tabella, anche se qui sembra
-// salvato correttamente. Verificare il tipo di campo su Airtable, o cambiare
-// la colonna in "Testo lungo"/"Multiple select" con opzione di creazione
-// automatica, prima di considerare questa funzione affidabile al 100%.
-function aggiungiNuovoMezzo() {
-  const input = document.getElementById('ricerca-camion');
+// NOTA TECNICA (verificata l'9/8 direttamente su Airtable e Make): i campi
+// "tipo_camion" e "tipo_mezzo_richiesto" su Airtable sono colonne a scelta
+// fissa (multipleSelects). Lo scenario Make che salva questi dati
+// (salva_profilo_trasportatore e crea_carico) ha "typecast: true" attivo,
+// quindi Airtable crea da sola la nuova opzione quando arriva un valore mai
+// visto prima — questa funzione è quindi affidabile, non solo lato portale.
+function aggiungiNuovaOpzioneDropdown(which) {
+  const input = document.getElementById('ricerca-' + which);
   const nuovoValore = input.value.trim();
   if (!nuovoValore) return;
-  if (OPZIONI_MEZZO_TRASPORTATORE.some(o => o.toLowerCase() === nuovoValore.toLowerCase())) {
-    alert('Questo mezzo è già presente nell\'elenco.');
+  const cfg = DROPDOWN_CONFIG[which];
+  if (cfg.opzioni.some(o => o.toLowerCase() === nuovoValore.toLowerCase())) {
+    alert('Questa voce è già presente nell\'elenco.');
     return;
   }
-  const selezionateAttuali = Array.from(document.querySelectorAll('#checkbox-tipo-camion input:checked')).map(el => el.value);
-  OPZIONI_MEZZO_TRASPORTATORE.push(nuovoValore);
+  const selezionateAttuali = Array.from(document.querySelectorAll('#' + cfg.containerId + ' input:checked')).map(el => el.value);
+  cfg.opzioni.push(nuovoValore);
   selezionateAttuali.push(nuovoValore);
-  renderCheckboxGroup('camion', selezionateAttuali);
-  aggiornaEtichettaTendina('camion');
+  renderCheckboxGroup(which, selezionateAttuali);
+  aggiornaEtichettaTendina(which);
   input.value = '';
-  document.getElementById('nessun-risultato-camion').style.display = 'none';
+  document.getElementById('nessun-risultato-' + which).style.display = 'none';
 }
+
+// ===== TIPO MERCE — campo di ricerca a scelta singola (Pubblica Carico, azienda) =====
+// A differenza dei mezzi (a più scelte con checkbox), qui si sceglie un solo
+// tipo di merce per carico: campo di testo con elenco a comparsa sotto,
+// stesso principio di ricerca/aggiunta. Il valore vero e proprio (quello che
+// legge pubblicaCarico() per la validazione) resta nel campo nascosto
+// "ins-merce", così non serve toccare il resto della logica del form.
+function renderListaMerce(filtro) {
+  const cont = document.getElementById('lista-merce');
+  cont.innerHTML = '';
+  const q = (filtro || '').trim().toLowerCase();
+  let visibili = 0;
+  OPZIONI_MERCE.forEach(op => {
+    if (q && !op.toLowerCase().includes(q)) return;
+    visibili++;
+    const voce = document.createElement('div');
+    voce.textContent = op;
+    voce.style.cssText = 'padding:9px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;';
+    voce.onmouseenter = () => voce.style.background = 'rgba(255,255,255,0.08)';
+    voce.onmouseleave = () => voce.style.background = 'transparent';
+    voce.onclick = () => selezionaMerce(op);
+    cont.appendChild(voce);
+  });
+  const nessunRisultato = document.getElementById('nessun-risultato-merce');
+  if (q.length >= 3 && visibili === 0) {
+    document.getElementById('testo-ricerca-merce').textContent = filtro.trim();
+    nessunRisultato.style.display = 'block';
+  } else {
+    nessunRisultato.style.display = 'none';
+  }
+}
+
+function apriTendinaMerce() {
+  document.getElementById('pannello-merce').style.display = 'block';
+  renderListaMerce(document.getElementById('ins-merce-ricerca').value);
+}
+
+function filtraTendinaMerce(testo) {
+  document.getElementById('ins-merce').value = ''; // finché non si sceglie/aggiunge, nessun valore valido selezionato
+  renderListaMerce(testo);
+}
+
+function selezionaMerce(valore) {
+  document.getElementById('ins-merce').value = valore;
+  document.getElementById('ins-merce-ricerca').value = valore;
+  document.getElementById('pannello-merce').style.display = 'none';
+}
+
+// NOTA TECNICA: il campo "tipo_merce" su Airtable è anch'esso a scelta fissa
+// (singleSelect), ma il modulo Make che pubblica il carico (azione
+// crea_carico) ha già "typecast: true" attivo — verificato il 9/8 — quindi
+// un tipo di merce nuovo viene creato automaticamente su Airtable, senza
+// bisogno di modifiche aggiuntive su Make.
+function aggiungiNuovaMerce() {
+  const testo = document.getElementById('ins-merce-ricerca').value.trim();
+  if (!testo) return;
+  if (OPZIONI_MERCE.some(o => o.toLowerCase() === testo.toLowerCase())) {
+    alert('Questo tipo di merce è già presente nell\'elenco.');
+    return;
+  }
+  OPZIONI_MERCE.push(testo);
+  selezionaMerce(testo);
+  document.getElementById('nessun-risultato-merce').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#ins-merce-ricerca') && !e.target.closest('#pannello-merce')) {
+    const p = document.getElementById('pannello-merce');
+    if (p) p.style.display = 'none';
+  }
+});
 
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.dd-wrap')) {
@@ -1689,6 +1765,7 @@ async function pubblicaCarico() {
       document.getElementById('ins-citta-arr').value  = '';
       document.getElementById('ins-data').value  = '';
       document.getElementById('ins-merce').value = '';
+      document.getElementById('ins-merce-ricerca').value = '';
       document.getElementById('ins-specifica').value = '';
       document.getElementById('ins-note').value  = '';
       document.getElementById('ins-rifiuto').checked = false;
