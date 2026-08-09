@@ -750,8 +750,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span id="dd-label-camion">Seleziona i mezzi...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+        <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:380px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <input type="text" id="ricerca-camion" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniCamion(this.value)">
           <div id="checkbox-tipo-camion" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div id="nessun-risultato-camion" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun mezzo trovato per "<span id="testo-ricerca-camion"></span>"</div>
+            <button type="button" onclick="aggiungiNuovoMezzo()" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
+          </div>
         </div>
       </div>
       <div id="tags-camion" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
@@ -1024,13 +1029,19 @@ let trasportatoreFieldsCorrenti = {};
 
 const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furgone grande","Furgone frigo","Pick-up","Motrice piccola (7,5t)","Motrice media (12t)","Motrice grande (18t)","Motrice centinata","Motrice cassonata","Motrice frigo","Motrice cisterna","Motrice con gru","Motrice ribaltabile","Motrice portacontainer","Bilico centinato","Bilico frigo","Bilico cisterna","Bilico portacontainer","Bilico cassonato","Bilico ribaltabile","Bilico ADR (merci pericolose)","Bilico con sponda idraulica","Bilico portabobine","Bilico portamacchine (car transporter)","Autotreno centinato","Autotreno frigo","Autotreno cisterna","Autotreno cassonato","Autotreno ribaltabile","Cassone scarrabile","Semirimorchio ribassato (lowbed)","Semirimorchio allungabile","Trasporto eccezionale","Autogru","Autobetoniera","Autospurgo","Portacontainer 20 piedi","Portacontainer 40 piedi","Bisarca (trasporto veicoli)","Trattore stradale","Trattore con rimorchio","Rimorchio centinato","Rimorchio frigo","Rimorchio cassonato","Autocompattatore","Autospazzatrice","Autocarro con sponda caricatrice","Muletto/carrello elevatore su strada","Altro (specificare)"];
 
+// Copia SEPARATA e mutabile, usata solo dal profilo trasportatore ("Il mio
+// profilo" → Tipo di mezzo). Se il trasportatore aggiunge un mezzo nuovo con
+// la ricerca, viene aggiunto SOLO qui — non compare nel form "Pubblica
+// Carico" dell'azienda, che resta legato alla lista originale TIPO_CAMION_OPZIONI.
+let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
+
 const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
 
 // ===== TENDINE A TAG — configurazione generica =====
 // Usata sia dal profilo trasportatore (parco mezzi/autorizzazioni possedute)
 // sia dal form Pubblica Carico azienda (mezzo/autorizzazione richiesta per il carico).
 const DROPDOWN_CONFIG = {
-  camion:        { containerId: 'checkbox-tipo-camion',      opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
+  camion:        { containerId: 'checkbox-tipo-camion',      opzioni: OPZIONI_MEZZO_TRASPORTATORE, singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
   aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
   mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
   autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
@@ -1056,7 +1067,62 @@ function toggleDropdown(which) {
   Object.keys(DROPDOWN_CONFIG).forEach(w => {
     if (w !== which) { const p = document.getElementById('dd-panel-' + w); if (p) p.style.display = 'none'; }
   });
-  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+  const staAprendo = (panel.style.display === 'none' || !panel.style.display);
+  panel.style.display = staAprendo ? 'block' : 'none';
+  // Riapertura del menu "Tipo di mezzo" (profilo trasportatore) — svuota la
+  // ricerca e mostra di nuovo tutti i mezzi, così non resta filtrato da prima.
+  if (which === 'camion' && staAprendo) {
+    const ricerca = document.getElementById('ricerca-camion');
+    if (ricerca) { ricerca.value = ''; filtraOpzioniCamion(''); }
+  }
+}
+
+// Filtra dal vivo le checkbox del "Tipo di mezzo" (profilo trasportatore) in
+// base a quello che viene digitato. Se dopo almeno 3 lettere non c'è nessun
+// risultato, mostra il pulsante per aggiungere il mezzo come nuova opzione.
+function filtraOpzioniCamion(testo) {
+  const q = testo.trim().toLowerCase();
+  const labels = document.querySelectorAll('#checkbox-tipo-camion label');
+  let visibili = 0;
+  labels.forEach(lbl => {
+    const match = q === '' || lbl.textContent.toLowerCase().includes(q);
+    lbl.style.display = match ? 'flex' : 'none';
+    if (match) visibili++;
+  });
+  const nessunRisultato = document.getElementById('nessun-risultato-camion');
+  if (q.length >= 3 && visibili === 0) {
+    document.getElementById('testo-ricerca-camion').textContent = testo.trim();
+    nessunRisultato.style.display = 'block';
+  } else {
+    nessunRisultato.style.display = 'none';
+  }
+}
+
+// Aggiunge un mezzo digitato ma non presente in elenco. Viene inserito SOLO
+// nella lista del profilo trasportatore (OPZIONI_MEZZO_TRASPORTATORE), mai
+// nel form "Pubblica Carico" dell'azienda.
+//
+// ATTENZIONE TECNICA: se il campo "tipo_camion" su Airtable è una colonna a
+// scelta fissa (Single/Multiple select), Airtable potrebbe rifiutare un
+// valore nuovo mai definito prima nella tabella, anche se qui sembra
+// salvato correttamente. Verificare il tipo di campo su Airtable, o cambiare
+// la colonna in "Testo lungo"/"Multiple select" con opzione di creazione
+// automatica, prima di considerare questa funzione affidabile al 100%.
+function aggiungiNuovoMezzo() {
+  const input = document.getElementById('ricerca-camion');
+  const nuovoValore = input.value.trim();
+  if (!nuovoValore) return;
+  if (OPZIONI_MEZZO_TRASPORTATORE.some(o => o.toLowerCase() === nuovoValore.toLowerCase())) {
+    alert('Questo mezzo è già presente nell\'elenco.');
+    return;
+  }
+  const selezionateAttuali = Array.from(document.querySelectorAll('#checkbox-tipo-camion input:checked')).map(el => el.value);
+  OPZIONI_MEZZO_TRASPORTATORE.push(nuovoValore);
+  selezionateAttuali.push(nuovoValore);
+  renderCheckboxGroup('camion', selezionateAttuali);
+  aggiornaEtichettaTendina('camion');
+  input.value = '';
+  document.getElementById('nessun-risultato-camion').style.display = 'none';
 }
 
 document.addEventListener('click', function(e) {
