@@ -701,7 +701,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
       <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
-      <button class="btn-esci" id="btn-profilo-az" style="display:none;" onclick="apriProfiloAzienda()">🏢 Il mio profilo</button>
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
   </nav>
@@ -740,35 +739,12 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="cap-attivo" id="cap-attivo-label"></span>
     </div>
 
-    <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni + anagrafica) -->
+    <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
     <div class="ins-box" id="sezione-profilo-trasportatore" style="display:none;">
-      <div class="ins-title">🚚 Il Mio Profilo</div>
-      <div class="ins-sub">Qui puoi aggiornare i tuoi dati, i mezzi che possiedi e le autorizzazioni che hai. Torna quando vuoi per modificarli.</div>
+      <div class="ins-title">🚚 Il Mio Profilo — Parco Mezzi e Autorizzazioni</div>
+      <div class="ins-sub">Seleziona tutti i mezzi che possiedi e le autorizzazioni che hai. Puoi tornare qui e modificarle quando vuoi.</div>
 
-      <h4 style="margin-top:20px;margin-bottom:14px;color:#fff;font-family:var(--font-h);">I miei dati</h4>
-      <div class="ins-grid">
-        <div class="ins-field"><label>Nome</label><input type="text" id="prof-nome"></div>
-        <div class="ins-field"><label>Cognome</label><input type="text" id="prof-cognome"></div>
-        <div class="ins-field ins-full"><label>Ragione sociale (solo se società)</label><input type="text" id="prof-ragione-sociale"></div>
-        <div class="ins-field"><label>Codice Fiscale</label><input type="text" id="prof-cf" style="text-transform:uppercase;"></div>
-        <div class="ins-field"><label>Partita IVA</label><input type="text" id="prof-piva"></div>
-        <div class="ins-field"><label>PEC</label><input type="email" id="prof-pec"></div>
-        <div class="ins-field"><label>Codice SDI</label><input type="text" id="prof-sdi"></div>
-        <div class="ins-field"><label>Camera di Commercio</label><input type="text" id="prof-cciaa"></div>
-        <div class="ins-field"><label>Numero REA</label><input type="text" id="prof-rea"></div>
-        <div class="ins-field ins-full"><label>Nome amministratore (solo se società)</label><input type="text" id="prof-admin"></div>
-        <div class="ins-field ins-full"><label>Indirizzo e civico — Sede</label><input type="text" id="prof-via"></div>
-        <div class="ins-field"><label>CAP</label><input type="text" id="prof-cap" maxlength="5" inputmode="numeric" oninput="autocompilaCittaDaProfilo('trasp')"></div>
-        <div class="ins-field"><label>Città</label><input type="text" id="prof-citta"></div>
-        <div class="ins-field"><label>Provincia</label><input type="text" id="prof-provincia" maxlength="2"></div>
-        <div class="ins-field"><label>Telefono</label><input type="tel" id="prof-telefono"></div>
-        <div class="ins-field"><label>Email (login — non modificabile qui)</label><input type="email" id="prof-email" disabled style="opacity:.5;"></div>
-      </div>
-      <button class="btn-cap" onclick="salvaAnagraficaTrasportatore()" style="margin-top:16px;">💾 Salva i miei dati</button>
-      <span id="anagrafica-trasp-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio dei dati anagrafici non è ancora collegato al sistema centrale — questa parte è in costruzione.</div>
-
-      <h4 style="margin-top:28px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-camion" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camion')">
           <span id="dd-label-camion">Seleziona i mezzi...</span>
@@ -803,33 +779,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 
       <button class="btn-cap" onclick="salvaProfiloTrasportatore()" style="margin-top:16px;">💾 Salva il mio profilo</button>
       <span id="profilo-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-    </div>
-
-    <!-- SEZIONE PROFILO AZIENDA (anagrafica) -->
-    <div class="ins-box" id="sezione-profilo-azienda" style="display:none;">
-      <div class="ins-title">🏢 Il Mio Profilo</div>
-      <div class="ins-sub">Qui puoi aggiornare i dati della tua azienda. Torna quando vuoi per modificarli.</div>
-
-      <div class="ins-grid" style="margin-top:16px;">
-        <div class="ins-field ins-full"><label>Ragione sociale</label><input type="text" id="prof-az-ragione-sociale"></div>
-        <div class="ins-field"><label>Codice Fiscale</label><input type="text" id="prof-az-cf" style="text-transform:uppercase;"></div>
-        <div class="ins-field"><label>Partita IVA</label><input type="text" id="prof-az-piva"></div>
-        <div class="ins-field"><label>PEC</label><input type="email" id="prof-az-pec"></div>
-        <div class="ins-field"><label>Codice SDI</label><input type="text" id="prof-az-sdi"></div>
-        <div class="ins-field"><label>Camera di Commercio</label><input type="text" id="prof-az-cciaa"></div>
-        <div class="ins-field"><label>Numero REA</label><input type="text" id="prof-az-rea"></div>
-        <div class="ins-field ins-full"><label>Nome amministratore (solo se società)</label><input type="text" id="prof-az-admin"></div>
-        <div class="ins-field ins-full"><label>Indirizzo e civico — Sede</label><input type="text" id="prof-az-via"></div>
-        <div class="ins-field"><label>CAP</label><input type="text" id="prof-az-cap" maxlength="5" inputmode="numeric" oninput="autocompilaCittaDaProfilo('az')"></div>
-        <div class="ins-field"><label>Città</label><input type="text" id="prof-az-citta"></div>
-        <div class="ins-field"><label>Provincia</label><input type="text" id="prof-az-provincia" maxlength="2"></div>
-        <div class="ins-field"><label>Telefono</label><input type="tel" id="prof-az-telefono"></div>
-        <div class="ins-field"><label>Email (login — non modificabile qui)</label><input type="email" id="prof-az-email" disabled style="opacity:.5;"></div>
-        <div class="ins-field ins-full"><label>Settore / tipo di attività</label><input type="text" id="prof-az-specifica"></div>
-      </div>
-      <button class="btn-cap" onclick="salvaAnagraficaAzienda()" style="margin-top:16px;">💾 Salva i miei dati</button>
-      <span id="anagrafica-az-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio dei dati anagrafici non è ancora collegato al sistema centrale — questa parte è in costruzione.</div>
     </div>
 
     <!-- SEZIONE INSERIMENTO CARICHI (solo aziende) -->
@@ -984,10 +933,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     </div>
 
     <!-- STORICO TABLE -->
-    <div class="sec-head" style="display:flex;align-items:center;justify-content:space-between;">
-      <span>📦 Storico Carichi</span>
-      <button class="btn-cap" id="btn-scarica-storico" onclick="scaricaStoricoCSV()" style="display:none;">⬇️ Scarica il mio storico (CSV)</button>
-    </div>
+    <div class="sec-head">📦 Storico Carichi</div>
     <div class="table-box">
       <table>
         <thead>
@@ -1332,7 +1278,6 @@ function resetTendina(which) {
 
 function apriProfiloTrasportatore() {
   document.getElementById('sezione-azienda').style.display = 'none';
-  document.getElementById('sezione-profilo-azienda').style.display = 'none';
   document.getElementById('sezione-profilo-trasportatore').style.display = 'block';
   const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
   const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
@@ -1341,146 +1286,7 @@ function apriProfiloTrasportatore() {
   aggiornaEtichettaTendina('camion');
   aggiornaEtichettaTendina('aut');
   document.getElementById('specifica-trasp').value = trasportatoreFieldsCorrenti.specifica || '';
-
-  // Precompila i dati anagrafici con quanto già presente su Airtable
-  const f = trasportatoreFieldsCorrenti;
-  document.getElementById('prof-nome').value = f.nome || '';
-  document.getElementById('prof-cognome').value = f.cognome || '';
-  document.getElementById('prof-ragione-sociale').value = f.ragione_sociale || '';
-  document.getElementById('prof-cf').value = f.codice_fiscale || '';
-  document.getElementById('prof-piva').value = f.partita_iva || '';
-  document.getElementById('prof-pec').value = f.pec || '';
-  document.getElementById('prof-sdi').value = f.codice_sdi || '';
-  document.getElementById('prof-cciaa').value = f.camera_commerciale || '';
-  document.getElementById('prof-rea').value = f.numero_rea || '';
-  document.getElementById('prof-admin').value = f.nome_amministratore || '';
-  document.getElementById('prof-via').value = f.via || '';
-  document.getElementById('prof-cap').value = f.cap || '';
-  document.getElementById('prof-citta').value = f.citta || '';
-  document.getElementById('prof-provincia').value = f.provincia || '';
-  document.getElementById('prof-telefono').value = f.telefono || '';
-  document.getElementById('prof-email').value = (currentUser && currentUser.email) || '';
-
   document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-async function salvaAnagraficaTrasportatore() {
-  const dati = {
-    action: 'salva_anagrafica_trasportatore',
-    record_id: trasportatoreRecordId,
-    nome: document.getElementById('prof-nome').value.trim(),
-    cognome: document.getElementById('prof-cognome').value.trim(),
-    ragione_sociale: document.getElementById('prof-ragione-sociale').value.trim(),
-    codice_fiscale: document.getElementById('prof-cf').value.trim().toUpperCase(),
-    partita_iva: document.getElementById('prof-piva').value.trim(),
-    pec: document.getElementById('prof-pec').value.trim(),
-    codice_sdi: document.getElementById('prof-sdi').value.trim(),
-    camera_commerciale: document.getElementById('prof-cciaa').value.trim(),
-    numero_rea: document.getElementById('prof-rea').value.trim(),
-    nome_amministratore: document.getElementById('prof-admin').value.trim(),
-    via: document.getElementById('prof-via').value.trim(),
-    cap: document.getElementById('prof-cap').value.trim(),
-    citta: document.getElementById('prof-citta').value.trim(),
-    provincia: document.getElementById('prof-provincia').value.trim().toUpperCase(),
-    telefono: document.getElementById('prof-telefono').value.trim()
-  };
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dati)
-    });
-    Object.assign(trasportatoreFieldsCorrenti, dati);
-    document.getElementById('anagrafica-trasp-salvato-msg').style.display = 'inline';
-    setTimeout(() => { document.getElementById('anagrafica-trasp-salvato-msg').style.display = 'none'; }, 3000);
-  } catch(e) {
-    console.error('Errore salvataggio anagrafica trasportatore:', e);
-    alert('Errore nel salvataggio, riprova tra un momento.');
-  }
-}
-
-function apriProfiloAzienda() {
-  document.getElementById('sezione-azienda').style.display = 'none';
-  document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
-  document.getElementById('sezione-profilo-azienda').style.display = 'block';
-
-  const f = profiloAzienda;
-  document.getElementById('prof-az-ragione-sociale').value = f.nome || '';
-  document.getElementById('prof-az-cf').value = f.codice_fiscale || '';
-  document.getElementById('prof-az-piva').value = f.partita_iva || '';
-  document.getElementById('prof-az-pec').value = f.pec || '';
-  document.getElementById('prof-az-sdi').value = f.codice_sdi || '';
-  document.getElementById('prof-az-cciaa').value = f.camera_commerciale || '';
-  document.getElementById('prof-az-rea').value = f.numero_rea || '';
-  document.getElementById('prof-az-admin').value = f.nome_amministratore || '';
-  document.getElementById('prof-az-via').value = f.via || '';
-  document.getElementById('prof-az-cap').value = f.cap || '';
-  document.getElementById('prof-az-citta').value = f.citta || '';
-  document.getElementById('prof-az-provincia').value = f.provincia || '';
-  document.getElementById('prof-az-telefono').value = f.telefono || '';
-  document.getElementById('prof-az-email').value = (currentUser && currentUser.email) || '';
-  document.getElementById('prof-az-specifica').value = f.specifica || '';
-
-  document.getElementById('sezione-profilo-azienda').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-async function salvaAnagraficaAzienda() {
-  const dati = {
-    action: 'salva_anagrafica_azienda',
-    record_id: aziendaRecordId,
-    ragione_sociale: document.getElementById('prof-az-ragione-sociale').value.trim(),
-    codice_fiscale: document.getElementById('prof-az-cf').value.trim().toUpperCase(),
-    partita_iva: document.getElementById('prof-az-piva').value.trim(),
-    pec: document.getElementById('prof-az-pec').value.trim(),
-    codice_sdi: document.getElementById('prof-az-sdi').value.trim(),
-    camera_commerciale: document.getElementById('prof-az-cciaa').value.trim(),
-    numero_rea: document.getElementById('prof-az-rea').value.trim(),
-    nome_amministratore: document.getElementById('prof-az-admin').value.trim(),
-    via: document.getElementById('prof-az-via').value.trim(),
-    cap: document.getElementById('prof-az-cap').value.trim(),
-    citta: document.getElementById('prof-az-citta').value.trim(),
-    provincia: document.getElementById('prof-az-provincia').value.trim().toUpperCase(),
-    telefono: document.getElementById('prof-az-telefono').value.trim(),
-    specifica: document.getElementById('prof-az-specifica').value.trim()
-  };
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dati)
-    });
-    profiloAzienda.nome = dati.ragione_sociale;
-    Object.assign(profiloAzienda, dati);
-    document.getElementById('anagrafica-az-salvato-msg').style.display = 'inline';
-    setTimeout(() => { document.getElementById('anagrafica-az-salvato-msg').style.display = 'none'; }, 3000);
-  } catch(e) {
-    console.error('Errore salvataggio anagrafica azienda:', e);
-    alert('Errore nel salvataggio, riprova tra un momento.');
-  }
-}
-
-// Autocompletamento CAP→Città/Provincia riusato nei due profili (stessa API
-// gratuita già usata in registrazione: comuni-ita.nicolorebaioli.dev)
-let capProfiloLookupTimer = null;
-function autocompilaCittaDaProfilo(tipo) {
-  const prefix = tipo === 'az' ? 'prof-az-' : 'prof-';
-  const capInp = document.getElementById(prefix + 'cap');
-  const cittaInp = document.getElementById(prefix + 'citta');
-  const provInp = document.getElementById(prefix + 'provincia');
-  const cap = capInp.value.trim();
-  clearTimeout(capProfiloLookupTimer);
-  if (cap.length !== 5 || isNaN(cap)) return;
-  capProfiloLookupTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(`https://comuni-ita.nicolorebaioli.dev/comuni?cap=${cap}&fields=nome,provincia&pagesize=5`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        cittaInp.value = data[0].nome;
-        if (data[0].provincia && data[0].provincia.sigla) provInp.value = data[0].provincia.sigla;
-      }
-    } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
-  }, 500);
 }
 
 async function salvaProfiloTrasportatore() {
@@ -1552,15 +1358,12 @@ document.addEventListener('DOMContentLoaded', () => {
     tipoUtente = previewParam;
     if (previewParam === 'trasportatore') {
       capCorrente = '92026';
-      currentUser = { email: 'anteprima.trasportatore@test.it' };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'none';
-      document.getElementById('sezione-profilo-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
       document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
-      document.getElementById('btn-profilo-az').style.display = 'none';
       trasportatoreRecordId = 'preview-recid';
-      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
+      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [] };
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
       ultimiCarichi = [
@@ -1570,15 +1373,11 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
     } else {
-      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567', codice_fiscale:'', partita_iva:'12345678901', pec:'azienda@pec.it', codice_sdi:'', camera_commerciale:'Agrigento', numero_rea:'', nome_amministratore:'', via:'Via Roma 1', cap:'92026', citta:'Favara', provincia:'AG', specifica:'Logistica' };
-      aziendaRecordId = 'preview-recid-az';
+      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567' };
       currentUser = { email:'anteprima.azienda@test.it' };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'block';
-      document.getElementById('sezione-profilo-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
-      document.getElementById('btn-profilo-az').style.display = 'inline-block';
-      document.getElementById('btn-profilo-trasp').style.display = 'none';
       renderCheckboxGroup('mezzoRichiesto', []);
       renderCheckboxGroup('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
@@ -1696,8 +1495,7 @@ function doLogout() { netlifyIdentity.logout(); }
 /* ——— TIPO UTENTE (trasportatore o azienda) ——— */
 let tipoUtente = null; // 'trasportatore' | 'azienda'
 let capCorrente = null;
-let profiloAzienda = { nome: '', telefono: '', codice_fiscale: '', partita_iva: '', pec: '', codice_sdi: '', camera_commerciale: '', numero_rea: '', nome_amministratore: '', via: '', cap: '', citta: '', provincia: '', specifica: '' };
-let aziendaRecordId = null;
+let profiloAzienda = { nome: '', telefono: '' };
 
 let ultimoErroreRete = false;
 
@@ -1735,10 +1533,8 @@ async function rilevaTipoUtente(email) {
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
     document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
-    document.getElementById('btn-profilo-az').style.display = 'none';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
-    document.getElementById('sezione-profilo-azienda').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'block';
     if (capCorrente) {
       document.getElementById('cap-temp-input').value = capCorrente;
@@ -1748,28 +1544,10 @@ async function rilevaTipoUtente(email) {
   }
   if (aziende.length > 0) {
     tipoUtente = 'azienda';
-    aziendaRecordId = aziende[0].id;
-    const af = aziende[0].fields;
-    profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
-    profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
-    profiloAzienda.codice_fiscale = af.codice_fiscale || '';
-    profiloAzienda.partita_iva = af.partita_iva || '';
-    profiloAzienda.pec = af.pec || '';
-    profiloAzienda.codice_sdi = af.codice_sdi || '';
-    profiloAzienda.camera_commerciale = af.camera_commerciale || '';
-    profiloAzienda.numero_rea = af.numero_rea || '';
-    profiloAzienda.nome_amministratore = af.nome_amministratore || '';
-    profiloAzienda.via = af.via || '';
-    profiloAzienda.cap = af.cap || '';
-    profiloAzienda.citta = af.citta || '';
-    profiloAzienda.provincia = af.provincia || '';
-    profiloAzienda.specifica = af.specifica || '';
-    document.getElementById('btn-profilo-az').style.display = 'inline-block';
-    document.getElementById('btn-profilo-trasp').style.display = 'none';
+    profiloAzienda.nome = aziende[0].fields.nome_azienda || aziende[0].fields.nome_referente || aziende[0].fields.nome || '';
+    profiloAzienda.telefono = aziende[0].fields.telefono_azienda || aziende[0].fields.telefono || '';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
-    document.getElementById('sezione-profilo-azienda').style.display = 'none';
-    document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
     renderCheckboxGroup('mezzoRichiesto', []);
     renderCheckboxGroup('autRichiesta', []);
@@ -2106,12 +1884,8 @@ function azzeraStats() {
   ['st-disp','st-guad','st-tot','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
 }
 
-let ultimeCandidature = [];
-
 function renderStorico(cands) {
-  ultimeCandidature = cands || [];
   const body = document.getElementById('storico-body');
-  const btnScarica = document.getElementById('btn-scarica-storico');
   if (!cands.length) {
     body.innerHTML = `<tr><td colspan="4" class="empty">
       Nessun carico ancora.<br>
@@ -2119,10 +1893,8 @@ function renderStorico(cands) {
         Il tuo storico apparirà qui non appena accaparri il primo carico.
       </span>
     </td></tr>`;
-    if (btnScarica) btnScarica.style.display = 'none';
     return;
   }
-  if (btnScarica) btnScarica.style.display = 'inline-flex';
 
   body.innerHTML = cands
     .sort((a, b) => {
@@ -2146,30 +1918,6 @@ function renderStorico(cands) {
         <td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>
       </tr>`;
     }).join('');
-}
-
-// Scarica lo storico personale in CSV — funziona interamente lato portale,
-// usa i dati già caricati in memoria (nessuna chiamata a Make necessaria).
-function scaricaStoricoCSV() {
-  if (!ultimeCandidature.length) return;
-  const righe = [['Data', 'ID Richiesta', 'Stato', 'Importo (€)']];
-  ultimeCandidature
-    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
-    .forEach(c => {
-      const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '';
-      righe.push([data, f.richiesta_id || '', f.stato || '', PREZZO]);
-    });
-  const csv = righe.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `storico_ecotruckconnect_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 /* ——— FORM SCRIVICI ——— */
