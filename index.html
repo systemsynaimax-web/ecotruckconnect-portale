@@ -700,7 +700,18 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="badge-ok">✓ Utente Verificato</span>
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
-      <button class="btn-esci" id="btn-dashboard" style="display:none;background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);" onclick="apriDashboard()">📊 Dashboard</button>
+      <div class="dd-wrap" style="position:relative;display:none;" id="dash-nav-wrap">
+        <button class="btn-esci" id="btn-dashboard" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);display:flex;align-items:center;gap:5px;" onclick="toggleDashMenu()">📊 Dashboard <span style="font-size:10px;">▾</span></button>
+        <div id="dash-nav-panel" style="display:none;position:absolute;top:115%;right:0;min-width:210px;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px;z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
+          <div class="dash-nav-voce" id="dash-nav-mezzi" onclick="chiudiDashMenu();apriProfiloTrasportatore()" style="display:none;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🚚 I miei mezzi</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🪪 I miei dati</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('documenti')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📎 I miei documenti</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Le mie fatture</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('report')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📈 I miei report</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('notifiche')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔔 Notifiche</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('sicurezza')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔒 Sicurezza</div>
+        </div>
+      </div>
       <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
@@ -743,43 +754,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
     <!-- ==================== DASHBOARD (nuovo, separato da "Il mio profilo") ==================== -->
     <div class="ins-box" id="sezione-dashboard" style="display:none;">
-      <div class="ins-title">📊 Dashboard</div>
-      <div class="ins-sub">Da qui gestisci tutto: dati, mezzi, fatture, sicurezza. "Il mio profilo" resta comunque disponibile come prima.</div>
-
-      <!-- MENU DASHBOARD -->
-      <div id="dash-menu" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:18px;">
-        <div class="dash-voce" id="dash-voce-mezzi" onclick="apriProfiloTrasportatore()" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .2s;">
-          <div style="font-size:22px;margin-bottom:6px;">🚚</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei mezzi</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('dati')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">🪪</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei dati</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('documenti')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">📎</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei documenti</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('fatture')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">🧾</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Le mie fatture</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('report')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">📈</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei report</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('notifiche')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">🔔</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Notifiche</div>
-        </div>
-        <div class="dash-voce" onclick="mostraDashSezione('sicurezza')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
-          <div style="font-size:22px;margin-bottom:6px;">🔒</div>
-          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Sicurezza</div>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="ins-title" style="margin-bottom:0;">📊 Dashboard</div>
+        <button class="btn-esci" onclick="chiudiDashSezione()" style="font-size:12px;">✕ Chiudi</button>
       </div>
 
       <!-- ===== I MIEI DATI ===== -->
-      <div id="dash-sezione-dati" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-dati" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🪪 I miei dati</h4>
         <div class="ins-grid">
           <div class="ins-field"><label>Nome</label><input type="text" id="dd-nome"></div>
@@ -805,13 +786,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       </div>
 
       <!-- ===== I MIEI DOCUMENTI (in arrivo) ===== -->
-      <div id="dash-sezione-documenti" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-documenti" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📎 I miei documenti</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
       </div>
 
       <!-- ===== LE MIE FATTURE ===== -->
-      <div id="dash-sezione-fatture" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-fatture" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <span>🧾 Le mie fatture</span>
           <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaStoricoCSV()" style="display:none;">⬇️ Scarica CSV</button>
@@ -825,19 +806,19 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       </div>
 
       <!-- ===== I MIEI REPORT (in arrivo) ===== -->
-      <div id="dash-sezione-report" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-report" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📈 I miei report</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — dettaglio delle tratte effettuate, tempi, distanze.</div>
       </div>
 
       <!-- ===== NOTIFICHE (in arrivo) ===== -->
-      <div id="dash-sezione-notifiche" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-notifiche" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">🔔 Notifiche</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — preferenze Telegram/email e orari di silenziamento.</div>
       </div>
 
       <!-- ===== SICUREZZA ===== -->
-      <div id="dash-sezione-sicurezza" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div id="dash-sezione-sicurezza" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔒 Sicurezza</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Se vuoi rigenerare la tua password per sicurezza, clicca qui sotto: il sistema ne genera una nuova e te la manda via email, senza che tu debba sceglierla.</div>
         <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
@@ -1417,32 +1398,42 @@ function apriProfiloTrasportatore() {
 }
 
 // ===== DASHBOARD (nuovo, separato da "Il mio profilo") =====
-function apriDashboard() {
-  document.getElementById('sezione-azienda').style.display = tipoUtente === 'azienda' ? 'block' : 'none';
-  // Per l'azienda "Pubblica un Carico" resta visibile sotto, non la nascondiamo:
-  // la Dashboard si apre sopra, senza far sparire il form principale.
+// ===== DASHBOARD — vera tendina di navigazione (come "Seleziona i mezzi...") =====
+function toggleDashMenu() {
+  const panel = document.getElementById('dash-nav-panel');
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+  document.getElementById('dash-nav-mezzi').style.display = tipoUtente === 'trasportatore' ? 'block' : 'none';
+}
+function chiudiDashMenu() {
+  document.getElementById('dash-nav-panel').style.display = 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#dash-nav-wrap')) chiudiDashMenu();
+});
+
+// Apre DIRETTAMENTE la sezione scelta dalla tendina — niente griglia di
+// scelta in mezzo, un click e sei dentro alla pagina che vuoi.
+function apriDashSezione(nome) {
+  chiudiDashMenu();
   document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
+  if (tipoUtente !== 'azienda') document.getElementById('sezione-azienda').style.display = 'none';
   document.getElementById('sezione-dashboard').style.display = 'block';
 
-  // Mostra "I miei mezzi" solo per il trasportatore
-  document.getElementById('dash-voce-mezzi').style.display = tipoUtente === 'trasportatore' ? 'block' : 'none';
-
-  // Chiude tutte le sottosezioni, mostra solo il menu
-  ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
-    document.getElementById('dash-sezione-' + s).style.display = 'none';
-  });
-  document.getElementById('rigenera-pw-msg').style.display = 'none';
-
-  precompilaDashDati();
-  document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-function mostraDashSezione(nome) {
   ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
     document.getElementById('dash-sezione-' + s).style.display = (s === nome) ? 'block' : 'none';
   });
+  document.getElementById('rigenera-pw-msg').style.display = 'none';
+
+  if (nome === 'dati') precompilaDashDati();
   if (nome === 'fatture') aggiornaDashFatture();
-  document.getElementById('dash-sezione-' + nome).scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Chiude la Dashboard e torna alla vista normale del portale.
+function chiudiDashSezione() {
+  document.getElementById('sezione-dashboard').style.display = 'none';
+  if (tipoUtente === 'azienda') document.getElementById('sezione-azienda').style.display = 'block';
 }
 
 // Precompila "I miei dati" con quanto già presente su Airtable, sia per
@@ -1643,7 +1634,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('sezione-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
       document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
-      document.getElementById('btn-dashboard').style.display = 'inline-block';
+      document.getElementById('dash-nav-wrap').style.display = 'block';
       trasportatoreRecordId = 'preview-recid';
       trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
       document.getElementById('cap-temp-input').value = capCorrente;
@@ -1665,7 +1656,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'block';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
-      document.getElementById('btn-dashboard').style.display = 'inline-block';
+      document.getElementById('dash-nav-wrap').style.display = 'block';
       renderCheckboxGroup('mezzoRichiesto', []);
       renderCheckboxGroup('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
@@ -1822,7 +1813,7 @@ async function rilevaTipoUtente(email) {
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
     document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
-    document.getElementById('btn-dashboard').style.display = 'inline-block';
+    document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'block';
@@ -1850,7 +1841,7 @@ async function rilevaTipoUtente(email) {
     profiloAzienda.citta = af.citta || '';
     profiloAzienda.provincia = af.provincia || '';
     profiloAzienda.specifica = af.specifica || '';
-    document.getElementById('btn-dashboard').style.display = 'inline-block';
+    document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
