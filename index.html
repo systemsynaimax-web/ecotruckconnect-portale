@@ -982,6 +982,9 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div class="ins-err" id="ins-err"></div>
     </div>
 
+    <!-- CONTENUTO NORMALE DEL PORTALE — nascosto interamente quando la Dashboard è aperta -->
+    <div id="contenuto-normale-portale">
+
     <!-- CARICHI DISPONIBILI CLICCABILI (solo trasportatori) -->
     <div id="carichi-disponibili-wrap">
       <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
@@ -1076,6 +1079,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
       </div>
     </div>
+
+    </div><!-- /contenuto-normale-portale -->
 
   </div><!-- /main -->
 </div><!-- /app -->
@@ -1417,6 +1422,7 @@ function apriDashSezione(nome) {
   chiudiDashMenu();
   document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
   if (tipoUtente !== 'azienda') document.getElementById('sezione-azienda').style.display = 'none';
+  document.getElementById('contenuto-normale-portale').style.display = 'none';
   document.getElementById('sezione-dashboard').style.display = 'block';
 
   ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
@@ -1433,6 +1439,7 @@ function apriDashSezione(nome) {
 // Chiude la Dashboard e torna alla vista normale del portale.
 function chiudiDashSezione() {
   document.getElementById('sezione-dashboard').style.display = 'none';
+  document.getElementById('contenuto-normale-portale').style.display = 'block';
   if (tipoUtente === 'azienda') document.getElementById('sezione-azienda').style.display = 'block';
 }
 
