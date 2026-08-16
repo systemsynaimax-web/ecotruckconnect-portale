@@ -701,9 +701,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
       <div class="dd-wrap" style="position:relative;display:none;" id="dash-nav-wrap">
-        <button class="btn-esci" id="btn-dashboard" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);display:flex;align-items:center;gap:5px;" onclick="toggleDashMenu()">📊 Dashboard <span style="font-size:10px;">▾</span></button>
+        <button class="btn-esci" id="btn-dashboard" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);display:flex;align-items:center;gap:0;padding:0;overflow:hidden;">
+          <span onclick="apriDashSezione('overview')" style="padding:5px 10px 5px 14px;cursor:pointer;">📊 Dashboard</span>
+          <span onclick="event.stopPropagation();toggleDashMenu()" style="padding:5px 12px 5px 8px;cursor:pointer;border-left:1px solid rgba(59,130,246,0.25);font-size:10px;">▾</span>
+        </button>
         <div id="dash-nav-panel" style="display:none;position:absolute;top:115%;right:0;min-width:210px;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px;z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
-          <div class="dash-nav-voce" id="dash-nav-mezzi" onclick="chiudiDashMenu();apriProfiloTrasportatore()" style="display:none;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🚚 I miei mezzi</div>
+          <div class="dash-nav-voce" id="dash-nav-mezzi" onclick="apriMezziDaDashboard()" style="display:none;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🚚 I miei mezzi</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('overview')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📊 Panoramica</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🪪 I miei dati</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('documenti')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📎 I miei documenti</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Le mie fatture</div>
@@ -757,6 +761,44 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="ins-title" style="margin-bottom:0;">📊 Dashboard</div>
         <button class="btn-esci" onclick="chiudiDashSezione()" style="font-size:12px;">✕ Chiudi</button>
+      </div>
+
+      <!-- ===== PANORAMICA (calendario + numeri, vista principale) ===== -->
+      <div id="dash-sezione-overview" style="display:none;margin-top:18px;">
+        <div class="cards" style="margin-bottom:28px;">
+          <div class="card" style="cursor:default;">
+            <div class="card-icon">📅</div>
+            <h3>Carichi disponibili oggi</h3>
+            <div class="card-num" id="dash-stat-disp">—</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="card-icon">📋</div>
+            <h3>Carichi totali</h3>
+            <div class="card-num" id="dash-stat-tot">—</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="card-icon">🧾</div>
+            <h3>Guadagnato questo mese</h3>
+            <div class="card-num green" id="dash-stat-guad">—</div>
+          </div>
+        </div>
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🗓️ Calendario Carichi</h4>
+        <div class="cal-box">
+          <div class="cal-legend">
+            <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
+            <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
+            <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
+          </div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1);renderCalendarioMensile('cal-grid-dash','cal-nav-title-dash')">←</button>
+            <div class="cal-nav-title" id="cal-nav-title-dash">—</div>
+            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1);renderCalendarioMensile('cal-grid-dash','cal-nav-title-dash')">→</button>
+          </div>
+          <div class="cal-grid" id="cal-grid-dash">
+            <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
+            <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== I MIEI DATI ===== -->
@@ -1416,8 +1458,8 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('#dash-nav-wrap')) chiudiDashMenu();
 });
 
-// Apre DIRETTAMENTE la sezione scelta dalla tendina — niente griglia di
-// scelta in mezzo, un click e sei dentro alla pagina che vuoi.
+// Apre DIRETTAMENTE la sezione scelta — niente griglia di scelta in mezzo,
+// un click e sei dentro alla pagina che vuoi. 'overview' = calendario+numeri.
 function apriDashSezione(nome) {
   chiudiDashMenu();
   document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
@@ -1425,15 +1467,32 @@ function apriDashSezione(nome) {
   document.getElementById('contenuto-normale-portale').style.display = 'none';
   document.getElementById('sezione-dashboard').style.display = 'block';
 
-  ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
+  ['overview','dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
     document.getElementById('dash-sezione-' + s).style.display = (s === nome) ? 'block' : 'none';
   });
   document.getElementById('rigenera-pw-msg').style.display = 'none';
 
+  if (nome === 'overview') {
+    document.getElementById('dash-stat-disp').textContent = document.getElementById('st-disp').textContent;
+    document.getElementById('dash-stat-tot').textContent = document.getElementById('st-tot').textContent;
+    document.getElementById('dash-stat-guad').textContent = document.getElementById('st-guad').textContent;
+    renderCalendarioMensile('cal-grid-dash', 'cal-nav-title-dash');
+  }
   if (nome === 'dati') precompilaDashDati();
   if (nome === 'fatture') aggiornaDashFatture();
 
   document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// "I miei mezzi" dalla tendina Dashboard: stessa identica pagina "Il mio
+// profilo" (mai duplicata), ma qui nascondiamo prima il calendario/carichi
+// sotto, così anche questa voce si comporta come le altre della Dashboard.
+// Il pulsante standalone "Il mio profilo" in navbar resta invece invariato.
+function apriMezziDaDashboard() {
+  chiudiDashMenu();
+  document.getElementById('sezione-dashboard').style.display = 'none';
+  document.getElementById('contenuto-normale-portale').style.display = 'none';
+  apriProfiloTrasportatore();
 }
 
 // Chiude la Dashboard e torna alla vista normale del portale.
@@ -2348,13 +2407,15 @@ function dataLocaleYMD(d) {
   return `${y}-${m}-${day}`;
 }
 
-function renderCalendarioMensile() {
-  const grid = document.getElementById('cal-grid');
+function renderCalendarioMensile(gridId, titleId) {
+  gridId = gridId || 'cal-grid';
+  titleId = titleId || 'cal-nav-title';
+  const grid = document.getElementById(gridId);
   if (!grid) return;
 
   const anno = meseCalendario.getFullYear();
   const mese = meseCalendario.getMonth();
-  document.getElementById('cal-nav-title').textContent = `${NOMI_MESI[mese]} ${anno}`;
+  document.getElementById(titleId).textContent = `${NOMI_MESI[mese]} ${anno}`;
 
   // Rimuove solo le celle giorno, mantiene l'intestazione Lun-Dom (prime 7 già in HTML)
   const celleEsistenti = grid.querySelectorAll('.cal-cell, .cal-cell-empty');
