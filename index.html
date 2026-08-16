@@ -707,9 +707,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </button>
         <div id="dash-nav-panel" style="display:none;position:absolute;top:115%;right:0;min-width:210px;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px;z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
           <div class="dash-nav-voce" id="dash-nav-mezzi" onclick="apriMezziDaDashboard()" style="display:none;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🚚 I miei mezzi</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('overview')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📊 Panoramica</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🪪 I miei dati</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('documenti')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📎 I miei documenti</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">✏️ Modifica i miei dati</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Le mie fatture</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('report')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📈 I miei report</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('notifiche')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔔 Notifiche</div>
@@ -803,7 +801,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 
       <!-- ===== I MIEI DATI ===== -->
       <div id="dash-sezione-dati" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🪪 I miei dati</h4>
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">✏️ Modifica i miei dati</h4>
         <div class="ins-grid">
           <div class="ins-field"><label>Nome</label><input type="text" id="dd-nome"></div>
           <div class="ins-field"><label>Cognome</label><input type="text" id="dd-cognome"></div>
@@ -824,12 +822,10 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
         <button class="btn-cap" onclick="salvaDashDati()" style="margin-top:16px;">💾 Salva i miei dati</button>
         <span id="dd-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio non è ancora collegato al sistema centrale (Make è in pausa) — la richiesta parte già correttamente, ma va abbinata a un'azione lato Make non ancora creata.</div>
-      </div>
+        <div id="dd-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio non è ancora collegato al sistema centrale (Make è in pausa) — la richiesta parte già correttamente, ma va abbinata a un'azione lato Make non ancora creata. Quando è collegato, ogni modifica avviserà automaticamente anche il team EcoTruckConnect.</div>
 
-      <!-- ===== I MIEI DOCUMENTI (in arrivo) ===== -->
-      <div id="dash-sezione-documenti" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📎 I miei documenti</h4>
+        <h4 style="color:#fff;font-family:var(--font-h);margin:28px 0 6px;">📎 I miei documenti</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
       </div>
 
@@ -845,6 +841,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
             <tbody id="dash-fatture-body"><tr><td colspan="4" class="empty">Caricamento...</td></tr></tbody>
           </table>
         </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:10px;">Aggiornato al: <span id="fatture-ultimo-agg">—</span></div>
       </div>
 
       <!-- ===== I MIEI REPORT (in arrivo) ===== -->
@@ -853,10 +850,46 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — dettaglio delle tratte effettuate, tempi, distanze.</div>
       </div>
 
-      <!-- ===== NOTIFICHE (in arrivo) ===== -->
+      <!-- ===== NOTIFICHE ===== -->
       <div id="dash-sezione-notifiche" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">🔔 Notifiche</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — preferenze Telegram/email e orari di silenziamento.</div>
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔔 Notifiche</h4>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <input type="checkbox" id="notif-attive" checked style="width:18px;height:18px;">
+          <label for="notif-attive" style="cursor:pointer;color:#fff;font-size:13px;">Voglio ricevere notifiche</label>
+        </div>
+
+        <div style="margin-bottom:18px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+          <div style="color:#fff;font-size:13px;font-weight:600;margin-bottom:8px;">📲 Notifiche Telegram</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Per riceverle devi collegare il bot (un click, una volta sola).</div>
+          <a href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank" class="btn-cap" style="display:inline-flex;text-decoration:none;">🔗 Collega Telegram</a>
+        </div>
+
+        <h4 style="color:#fff;font-family:var(--font-h);font-size:14px;margin-bottom:10px;">Tipi di notifica</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-nuovo-carico" checked style="width:16px;height:16px;"><label for="notif-nuovo-carico" style="color:#fff;font-size:13px;cursor:pointer;">Nuovo carico disponibile nella tua zona</label></div>
+          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-pagamento" checked style="width:16px;height:16px;"><label for="notif-pagamento" style="color:#fff;font-size:13px;cursor:pointer;">Aggiornamenti sui pagamenti</label></div>
+          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-promemoria" style="width:16px;height:16px;"><label for="notif-promemoria" style="color:#fff;font-size:13px;cursor:pointer;">Promemoria e novità della piattaforma</label></div>
+        </div>
+
+        <div class="ins-grid" style="margin-bottom:10px;">
+          <div class="ins-field"><label>Ricevi notifiche dalle</label><input type="time" id="notif-ora-da" value="08:00"></div>
+          <div class="ins-field"><label>alle</label><input type="time" id="notif-ora-a" value="21:00"></div>
+          <div class="ins-field ins-full">
+            <label>Tono notifica</label>
+            <select id="notif-tono">
+              <option value="predefinito">Predefinito</option>
+              <option value="discreto">Discreto</option>
+              <option value="deciso">Deciso</option>
+              <option value="nessuno">Nessun suono</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-cap" onclick="salvaNotifiche()" style="margin-top:6px;">💾 Salva preferenze notifiche</button>
+        <span id="notif-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
+        <div id="notif-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Preferenze salvate solo in questa sessione per ora — il salvataggio permanente arriva quando colleghiamo Make.</div>
       </div>
 
       <!-- ===== SICUREZZA ===== -->
@@ -865,10 +898,12 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Se vuoi rigenerare la tua password per sicurezza, clicca qui sotto: il sistema ne genera una nuova e te la manda via email, senza che tu debba sceglierla.</div>
         <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
         <div id="rigenera-pw-msg" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;">✅ A breve riceverai un'email con i tuoi dati di accesso.</div>
+        <div id="pw-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima rigenerazione: mai</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px;">⚠️ Non ancora collegato al sistema centrale (Make è in pausa) — pronto da attivare quando Make riparte.</div>
         <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(239,68,68,0.2);">
           <div style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:8px;">Elimina il mio account</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">🔜 In arrivo.</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Questa azione è definitiva: perderai l'accesso al portale e ai tuoi dati.</div>
+          <button class="btn-cap" onclick="chiediEliminazioneAccount()" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:var(--red);">🗑️ Elimina il mio account</button>
         </div>
       </div>
 
@@ -1459,15 +1494,18 @@ document.addEventListener('click', function(e) {
 });
 
 // Apre DIRETTAMENTE la sezione scelta — niente griglia di scelta in mezzo,
-// un click e sei dentro alla pagina che vuoi. 'overview' = calendario+numeri.
+// un click e sei dentro alla pagina che vuoi. 'overview' = calendario+numeri
+// (è la Dashboard stessa — "Chiudi" da qualsiasi altra sezione torna qui).
+let dashSezioneCorrente = 'overview';
 function apriDashSezione(nome) {
   chiudiDashMenu();
+  dashSezioneCorrente = nome;
   document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
   if (tipoUtente !== 'azienda') document.getElementById('sezione-azienda').style.display = 'none';
   document.getElementById('contenuto-normale-portale').style.display = 'none';
   document.getElementById('sezione-dashboard').style.display = 'block';
 
-  ['overview','dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
+  ['overview','dati','fatture','report','notifiche','sicurezza'].forEach(s => {
     document.getElementById('dash-sezione-' + s).style.display = (s === nome) ? 'block' : 'none';
   });
   document.getElementById('rigenera-pw-msg').style.display = 'none';
@@ -1490,16 +1528,25 @@ function apriDashSezione(nome) {
 // Il pulsante standalone "Il mio profilo" in navbar resta invece invariato.
 function apriMezziDaDashboard() {
   chiudiDashMenu();
+  dashSezioneCorrente = 'mezzi';
   document.getElementById('sezione-dashboard').style.display = 'none';
   document.getElementById('contenuto-normale-portale').style.display = 'none';
   apriProfiloTrasportatore();
 }
 
-// Chiude la Dashboard e torna alla vista normale del portale.
+// "Chiudi": se sei già sulla Panoramica (o sui mezzi) esce del tutto verso
+// il portale normale. Se sei in una sotto-sezione (dati/fatture/report/
+// notifiche/sicurezza), torna alla Panoramica invece di uscire — la
+// Panoramica È la Dashboard, non serve mai uscire completamente da lì.
 function chiudiDashSezione() {
-  document.getElementById('sezione-dashboard').style.display = 'none';
-  document.getElementById('contenuto-normale-portale').style.display = 'block';
-  if (tipoUtente === 'azienda') document.getElementById('sezione-azienda').style.display = 'block';
+  if (dashSezioneCorrente === 'overview' || dashSezioneCorrente === 'mezzi') {
+    document.getElementById('sezione-dashboard').style.display = 'none';
+    document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
+    document.getElementById('contenuto-normale-portale').style.display = 'block';
+    if (tipoUtente === 'azienda') document.getElementById('sezione-azienda').style.display = 'block';
+  } else {
+    apriDashSezione('overview');
+  }
 }
 
 // Precompila "I miei dati" con quanto già presente su Airtable, sia per
@@ -1553,11 +1600,23 @@ async function salvaDashDati() {
     if (tipoUtente === 'azienda') { Object.assign(profiloAzienda, dati); }
     else { Object.assign(trasportatoreFieldsCorrenti, dati); }
     document.getElementById('dd-salvato-msg').style.display = 'inline';
+    document.getElementById('dd-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
     setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
   } catch(e) {
     console.error('Errore salvataggio dati Dashboard:', e);
     alert('Errore nel salvataggio, riprova tra un momento.');
   }
+}
+
+// Formatta data+ora corrente in formato italiano leggibile — riusata per il
+// timestamp "Ultima modifica" su ogni sezione modificabile della Dashboard.
+function formatDataOra() {
+  const d = new Date();
+  const gg = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const min = String(d.getMinutes()).padStart(2,'0');
+  return `${gg}/${mm}/${d.getFullYear()}, ${hh}:${min}`;
 }
 
 // Riusa lo stesso servizio gratuito comuni-ita già usato in registrazione.
@@ -1604,6 +1663,8 @@ function aggiornaDashFatture() {
       const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
       return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td>${f.stato || '—'}</td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
     }).join('');
+  const elAgg = document.getElementById('fatture-ultimo-agg');
+  if (elAgg) elAgg.textContent = formatDataOra();
 }
 
 // Rigenera password — SOLO questo meccanismo, MAI il vecchio sistema a link
@@ -1620,10 +1681,63 @@ async function rigeneraPassword() {
       body: JSON.stringify({ action: 'rigenera_password', email: currentUser.email })
     });
     document.getElementById('rigenera-pw-msg').style.display = 'block';
+    document.getElementById('pw-ultima-modifica').textContent = 'Ultima rigenerazione: ' + formatDataOra();
   } catch(e) {
     console.error('Errore rigenerazione password:', e);
     alert('Errore, riprova tra un momento.');
   }
+}
+
+// Notifiche — per ora salvate solo lato client (variabile in memoria),
+// pronte per essere collegate a un'azione Make quando riparte.
+let preferenzeNotifiche = {};
+async function salvaNotifiche() {
+  preferenzeNotifiche = {
+    attive: document.getElementById('notif-attive').checked,
+    nuovoCarico: document.getElementById('notif-nuovo-carico').checked,
+    pagamento: document.getElementById('notif-pagamento').checked,
+    promemoria: document.getElementById('notif-promemoria').checked,
+    oraDa: document.getElementById('notif-ora-da').value,
+    oraA: document.getElementById('notif-ora-a').value,
+    tono: document.getElementById('notif-tono').value
+  };
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'salva_preferenze_notifiche', email: (currentUser && currentUser.email) || '', ...preferenzeNotifiche })
+    });
+  } catch(e) { console.error('Errore salvataggio notifiche (non bloccante):', e); }
+  document.getElementById('notif-salvato-msg').style.display = 'inline';
+  document.getElementById('notif-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
+  setTimeout(() => { document.getElementById('notif-salvato-msg').style.display = 'none'; }, 3000);
+}
+
+// Eliminazione account — richiede doppia conferma tramite popup, stesso
+// principio già usato per la rimozione di un mezzo (chiediConfermaRimozione).
+function chiediEliminazioneAccount() {
+  const esistente = document.getElementById('confirm-overlay');
+  if (esistente) esistente.remove();
+  const html = `
+    <div class="confirm-overlay" id="confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-icon">⚠️</div>
+        <div class="confirm-title">Eliminare il tuo account?</div>
+        <div class="confirm-text">Questa azione è <strong>definitiva</strong>: perderai l'accesso al portale, ai tuoi carichi e ai tuoi dati. Non si può annullare.</div>
+        <div class="confirm-actions">
+          <button class="confirm-btn confirm-btn-cancel" id="confirm-annulla">Annulla</button>
+          <button class="confirm-btn confirm-btn-remove" id="confirm-rimuovi">Sì, elimina il mio account</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  const overlay = document.getElementById('confirm-overlay');
+  document.getElementById('confirm-annulla').onclick = () => overlay.remove();
+  document.getElementById('confirm-rimuovi').onclick = () => {
+    overlay.remove();
+    alert('⚠️ Funzione non ancora collegata al sistema centrale (Make è in pausa) — la conferma funziona, l\'eliminazione vera arriva quando Make riparte.');
+  };
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 }
 
 async function salvaProfiloTrasportatore() {
