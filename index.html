@@ -700,6 +700,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="badge-ok">✓ Utente Verificato</span>
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
+      <button class="btn-esci" id="btn-dashboard" style="display:none;background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);" onclick="apriDashboard()">📊 Dashboard</button>
       <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
@@ -740,6 +741,117 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     </div>
 
     <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
+    <!-- ==================== DASHBOARD (nuovo, separato da "Il mio profilo") ==================== -->
+    <div class="ins-box" id="sezione-dashboard" style="display:none;">
+      <div class="ins-title">📊 Dashboard</div>
+      <div class="ins-sub">Da qui gestisci tutto: dati, mezzi, fatture, sicurezza. "Il mio profilo" resta comunque disponibile come prima.</div>
+
+      <!-- MENU DASHBOARD -->
+      <div id="dash-menu" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:18px;">
+        <div class="dash-voce" id="dash-voce-mezzi" onclick="apriProfiloTrasportatore()" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .2s;">
+          <div style="font-size:22px;margin-bottom:6px;">🚚</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei mezzi</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('dati')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">🪪</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei dati</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('documenti')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">📎</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei documenti</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('fatture')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">🧾</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Le mie fatture</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('report')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">📈</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">I miei report</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('notifiche')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">🔔</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Notifiche</div>
+        </div>
+        <div class="dash-voce" onclick="mostraDashSezione('sicurezza')" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;">
+          <div style="font-size:22px;margin-bottom:6px;">🔒</div>
+          <div style="font-family:var(--font-h);font-size:13px;font-weight:700;">Sicurezza</div>
+        </div>
+      </div>
+
+      <!-- ===== I MIEI DATI ===== -->
+      <div id="dash-sezione-dati" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🪪 I miei dati</h4>
+        <div class="ins-grid">
+          <div class="ins-field"><label>Nome</label><input type="text" id="dd-nome"></div>
+          <div class="ins-field"><label>Cognome</label><input type="text" id="dd-cognome"></div>
+          <div class="ins-field ins-full"><label>Ragione sociale (solo se società)</label><input type="text" id="dd-ragione-sociale"></div>
+          <div class="ins-field"><label>Codice Fiscale</label><input type="text" id="dd-cf" style="text-transform:uppercase;"></div>
+          <div class="ins-field"><label>Partita IVA</label><input type="text" id="dd-piva"></div>
+          <div class="ins-field"><label>PEC</label><input type="email" id="dd-pec"></div>
+          <div class="ins-field"><label>Codice SDI</label><input type="text" id="dd-sdi"></div>
+          <div class="ins-field"><label>Camera di Commercio</label><input type="text" id="dd-cciaa"></div>
+          <div class="ins-field"><label>Numero REA</label><input type="text" id="dd-rea"></div>
+          <div class="ins-field ins-full"><label>Nome amministratore (solo se società)</label><input type="text" id="dd-admin"></div>
+          <div class="ins-field ins-full"><label>Indirizzo e civico — Sede</label><input type="text" id="dd-via"></div>
+          <div class="ins-field"><label>CAP</label><input type="text" id="dd-cap" maxlength="5" inputmode="numeric" oninput="autocompilaCittaDaDashboard()"></div>
+          <div class="ins-field"><label>Città</label><input type="text" id="dd-citta"></div>
+          <div class="ins-field"><label>Provincia</label><input type="text" id="dd-provincia" maxlength="2"></div>
+          <div class="ins-field"><label>Telefono</label><input type="tel" id="dd-telefono"></div>
+          <div class="ins-field"><label>Email (login — non modificabile qui)</label><input type="email" id="dd-email" disabled style="opacity:.5;"></div>
+        </div>
+        <button class="btn-cap" onclick="salvaDashDati()" style="margin-top:16px;">💾 Salva i miei dati</button>
+        <span id="dd-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio non è ancora collegato al sistema centrale (Make è in pausa) — la richiesta parte già correttamente, ma va abbinata a un'azione lato Make non ancora creata.</div>
+      </div>
+
+      <!-- ===== I MIEI DOCUMENTI (in arrivo) ===== -->
+      <div id="dash-sezione-documenti" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📎 I miei documenti</h4>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
+      </div>
+
+      <!-- ===== LE MIE FATTURE ===== -->
+      <div id="dash-sezione-fatture" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+          <span>🧾 Le mie fatture</span>
+          <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaStoricoCSV()" style="display:none;">⬇️ Scarica CSV</button>
+        </h4>
+        <div class="table-box" style="margin-bottom:0;">
+          <table>
+            <thead><tr><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
+            <tbody id="dash-fatture-body"><tr><td colspan="4" class="empty">Caricamento...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== I MIEI REPORT (in arrivo) ===== -->
+      <div id="dash-sezione-report" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📈 I miei report</h4>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — dettaglio delle tratte effettuate, tempi, distanze.</div>
+      </div>
+
+      <!-- ===== NOTIFICHE (in arrivo) ===== -->
+      <div id="dash-sezione-notifiche" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">🔔 Notifiche</h4>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — preferenze Telegram/email e orari di silenziamento.</div>
+      </div>
+
+      <!-- ===== SICUREZZA ===== -->
+      <div id="dash-sezione-sicurezza" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔒 Sicurezza</h4>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Se vuoi rigenerare la tua password per sicurezza, clicca qui sotto: il sistema ne genera una nuova e te la manda via email, senza che tu debba sceglierla.</div>
+        <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
+        <div id="rigenera-pw-msg" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;">✅ A breve riceverai un'email con i tuoi dati di accesso.</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px;">⚠️ Non ancora collegato al sistema centrale (Make è in pausa) — pronto da attivare quando Make riparte.</div>
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(239,68,68,0.2);">
+          <div style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:8px;">Elimina il mio account</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">🔜 In arrivo.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
     <div class="ins-box" id="sezione-profilo-trasportatore" style="display:none;">
       <div class="ins-title">🚚 Il Mio Profilo — Parco Mezzi e Autorizzazioni</div>
       <div class="ins-sub">Seleziona tutti i mezzi che possiedi e le autorizzazioni che hai. Puoi tornare qui e modificarle quando vuoi.</div>
@@ -771,8 +883,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span id="dd-label-aut">Seleziona le autorizzazioni...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-aut" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+        <div id="dd-panel-aut" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <input type="text" id="ricerca-aut" placeholder="Cerca un'autorizzazione (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('aut', this.value)">
           <div id="checkbox-autorizzazioni" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div id="nessun-risultato-aut" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessuna autorizzazione trovata per "<span id="testo-ricerca-aut"></span>"</div>
+            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('aut')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuova autorizzazione</button>
+          </div>
         </div>
       </div>
       <div id="tags-aut" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
@@ -868,8 +985,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <span id="dd-label-autRichiesta">Seleziona le autorizzazioni richieste...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-autRichiesta" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+        <div id="dd-panel-autRichiesta" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+          <input type="text" id="ricerca-autRichiesta" placeholder="Cerca un'autorizzazione (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('autRichiesta', this.value)">
           <div id="checkbox-aut-richiesta" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div id="nessun-risultato-autRichiesta" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessuna autorizzazione trovata per "<span id="testo-ricerca-autRichiesta"></span>"</div>
+            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('autRichiesta')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuova autorizzazione</button>
+          </div>
         </div>
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
@@ -1026,6 +1148,10 @@ const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furg
 let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
 
 const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
+// Copie separate e mutabili — un'autorizzazione nuova aggiunta dal trasportatore
+// non si mescola con quelle richieste dall'azienda nel form Pubblica Carico.
+let OPZIONI_AUT_TRASPORTATORE = [...AUTORIZZAZIONI_OPZIONI];
+let OPZIONI_AUT_RICHIESTA = [...AUTORIZZAZIONI_OPZIONI];
 
 // Tipi di merce per il form "Pubblica Carico" (azienda). Copia mutabile: un
 // tipo nuovo aggiunto con la ricerca resta disponibile per i carichi successivi.
@@ -1041,9 +1167,9 @@ let OPZIONI_MEZZO_RICHIESTO = [...TIPO_CAMION_OPZIONI];
 // sia dal form Pubblica Carico azienda (mezzo/autorizzazione richiesta per il carico).
 const DROPDOWN_CONFIG = {
   camion:        { containerId: 'checkbox-tipo-camion',      opzioni: OPZIONI_MEZZO_TRASPORTATORE, singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
-  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
+  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: OPZIONI_AUT_TRASPORTATORE,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
   mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: OPZIONI_MEZZO_RICHIESTO, singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
-  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
+  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: OPZIONI_AUT_RICHIESTA,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
 };
 
 function renderCheckboxGroup(which, selezionate) {
@@ -1278,6 +1404,7 @@ function resetTendina(which) {
 
 function apriProfiloTrasportatore() {
   document.getElementById('sezione-azienda').style.display = 'none';
+  document.getElementById('sezione-dashboard').style.display = 'none';
   document.getElementById('sezione-profilo-trasportatore').style.display = 'block';
   const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
   const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
@@ -1287,6 +1414,159 @@ function apriProfiloTrasportatore() {
   aggiornaEtichettaTendina('aut');
   document.getElementById('specifica-trasp').value = trasportatoreFieldsCorrenti.specifica || '';
   document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ===== DASHBOARD (nuovo, separato da "Il mio profilo") =====
+function apriDashboard() {
+  document.getElementById('sezione-azienda').style.display = tipoUtente === 'azienda' ? 'block' : 'none';
+  // Per l'azienda "Pubblica un Carico" resta visibile sotto, non la nascondiamo:
+  // la Dashboard si apre sopra, senza far sparire il form principale.
+  document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
+  document.getElementById('sezione-dashboard').style.display = 'block';
+
+  // Mostra "I miei mezzi" solo per il trasportatore
+  document.getElementById('dash-voce-mezzi').style.display = tipoUtente === 'trasportatore' ? 'block' : 'none';
+
+  // Chiude tutte le sottosezioni, mostra solo il menu
+  ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
+    document.getElementById('dash-sezione-' + s).style.display = 'none';
+  });
+  document.getElementById('rigenera-pw-msg').style.display = 'none';
+
+  precompilaDashDati();
+  document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function mostraDashSezione(nome) {
+  ['dati','documenti','fatture','report','notifiche','sicurezza'].forEach(s => {
+    document.getElementById('dash-sezione-' + s).style.display = (s === nome) ? 'block' : 'none';
+  });
+  if (nome === 'fatture') aggiornaDashFatture();
+  document.getElementById('dash-sezione-' + nome).scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Precompila "I miei dati" con quanto già presente su Airtable, sia per
+// trasportatore che per azienda — stesso pannello condiviso per entrambi.
+function precompilaDashDati() {
+  const f = tipoUtente === 'azienda' ? profiloAzienda : trasportatoreFieldsCorrenti;
+  document.getElementById('dd-nome').value = f.nome || '';
+  document.getElementById('dd-cognome').value = f.cognome || '';
+  document.getElementById('dd-ragione-sociale').value = f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '';
+  document.getElementById('dd-cf').value = f.codice_fiscale || '';
+  document.getElementById('dd-piva').value = f.partita_iva || '';
+  document.getElementById('dd-pec').value = f.pec || '';
+  document.getElementById('dd-sdi').value = f.codice_sdi || '';
+  document.getElementById('dd-cciaa').value = f.camera_commerciale || '';
+  document.getElementById('dd-rea').value = f.numero_rea || '';
+  document.getElementById('dd-admin').value = f.nome_amministratore || '';
+  document.getElementById('dd-via').value = f.via || '';
+  document.getElementById('dd-cap').value = f.cap || '';
+  document.getElementById('dd-citta').value = f.citta || '';
+  document.getElementById('dd-provincia').value = f.provincia || '';
+  document.getElementById('dd-telefono').value = f.telefono || '';
+  document.getElementById('dd-email').value = (currentUser && currentUser.email) || '';
+}
+
+async function salvaDashDati() {
+  const dati = {
+    action: tipoUtente === 'azienda' ? 'salva_anagrafica_azienda' : 'salva_anagrafica_trasportatore',
+    record_id: tipoUtente === 'azienda' ? aziendaRecordId : trasportatoreRecordId,
+    nome: document.getElementById('dd-nome').value.trim(),
+    cognome: document.getElementById('dd-cognome').value.trim(),
+    ragione_sociale: document.getElementById('dd-ragione-sociale').value.trim(),
+    codice_fiscale: document.getElementById('dd-cf').value.trim().toUpperCase(),
+    partita_iva: document.getElementById('dd-piva').value.trim(),
+    pec: document.getElementById('dd-pec').value.trim(),
+    codice_sdi: document.getElementById('dd-sdi').value.trim(),
+    camera_commerciale: document.getElementById('dd-cciaa').value.trim(),
+    numero_rea: document.getElementById('dd-rea').value.trim(),
+    nome_amministratore: document.getElementById('dd-admin').value.trim(),
+    via: document.getElementById('dd-via').value.trim(),
+    cap: document.getElementById('dd-cap').value.trim(),
+    citta: document.getElementById('dd-citta').value.trim(),
+    provincia: document.getElementById('dd-provincia').value.trim().toUpperCase(),
+    telefono: document.getElementById('dd-telefono').value.trim()
+  };
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dati)
+    });
+    if (tipoUtente === 'azienda') { Object.assign(profiloAzienda, dati); }
+    else { Object.assign(trasportatoreFieldsCorrenti, dati); }
+    document.getElementById('dd-salvato-msg').style.display = 'inline';
+    setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
+  } catch(e) {
+    console.error('Errore salvataggio dati Dashboard:', e);
+    alert('Errore nel salvataggio, riprova tra un momento.');
+  }
+}
+
+// Riusa lo stesso servizio gratuito comuni-ita già usato in registrazione.
+let capDashLookupTimer = null;
+function autocompilaCittaDaDashboard() {
+  const cap = document.getElementById('dd-cap').value.trim();
+  clearTimeout(capDashLookupTimer);
+  if (cap.length !== 5 || isNaN(cap)) return;
+  capDashLookupTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`https://comuni-ita.nicolorebaioli.dev/comuni?cap=${cap}&fields=nome,provincia&pagesize=5`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        document.getElementById('dd-citta').value = data[0].nome;
+        if (data[0].provincia && data[0].provincia.sigla) document.getElementById('dd-provincia').value = data[0].provincia.sigla;
+      }
+    } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
+  }, 500);
+}
+
+// "Le mie fatture" dentro Dashboard — per il trasportatore riusa lo storico
+// candidature già caricato (ultimeCandidature). Per l'azienda non esiste
+// ancora una fonte dati equivalente (nessuna azione Make per lo storico
+// carichi pubblicati) — mostra un avviso onesto invece di dati finti.
+function aggiornaDashFatture() {
+  const body = document.getElementById('dash-fatture-body');
+  const btn = document.getElementById('btn-scarica-fatture');
+  if (tipoUtente === 'azienda') {
+    body.innerHTML = '<tr><td colspan="4" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
+    btn.style.display = 'none';
+    return;
+  }
+  if (!ultimeCandidature || !ultimeCandidature.length) {
+    body.innerHTML = '<tr><td colspan="4" class="empty">Nessun carico ancora.</td></tr>';
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = 'inline-flex';
+  body.innerHTML = ultimeCandidature
+    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
+    .map(c => {
+      const f = c.fields;
+      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+      return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td>${f.stato || '—'}</td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
+    }).join('');
+}
+
+// Rigenera password — SOLO questo meccanismo, MAI il vecchio sistema a link
+// "recovery_token"/"Imposta nuova password" (deciso definitivamente il 16/8,
+// causò settimane di problemi in passato). Il sistema genera lui la nuova
+// password (stessa funzione già collaudata dell'attivazione) e la manda via
+// email — l'utente non sceglie/digita nessuna password propria.
+async function rigeneraPassword() {
+  if (!currentUser || !currentUser.email) return;
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rigenera_password', email: currentUser.email })
+    });
+    document.getElementById('rigenera-pw-msg').style.display = 'block';
+  } catch(e) {
+    console.error('Errore rigenerazione password:', e);
+    alert('Errore, riprova tra un momento.');
+  }
 }
 
 async function salvaProfiloTrasportatore() {
@@ -1358,26 +1638,34 @@ document.addEventListener('DOMContentLoaded', () => {
     tipoUtente = previewParam;
     if (previewParam === 'trasportatore') {
       capCorrente = '92026';
+      currentUser = { email: 'anteprima.trasportatore@test.it' };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
       document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+      document.getElementById('btn-dashboard').style.display = 'inline-block';
       trasportatoreRecordId = 'preview-recid';
-      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [] };
+      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
       ultimiCarichi = [
         { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', data_consegna:new Date().toISOString() } },
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString() } }
       ];
+      ultimeCandidature = [
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'Completato' } }
+      ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
+      renderStorico(ultimeCandidature);
     } else {
-      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567' };
+      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567', codice_fiscale:'', partita_iva:'12345678901', pec:'azienda@pec.it', codice_sdi:'', camera_commerciale:'Agrigento', numero_rea:'', nome_amministratore:'', via:'Via Roma 1', cap:'92026', citta:'Favara', provincia:'AG', specifica:'Logistica' };
+      aziendaRecordId = 'preview-recid-az';
       currentUser = { email:'anteprima.azienda@test.it' };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'block';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
+      document.getElementById('btn-dashboard').style.display = 'inline-block';
       renderCheckboxGroup('mezzoRichiesto', []);
       renderCheckboxGroup('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
@@ -1495,7 +1783,8 @@ function doLogout() { netlifyIdentity.logout(); }
 /* ——— TIPO UTENTE (trasportatore o azienda) ——— */
 let tipoUtente = null; // 'trasportatore' | 'azienda'
 let capCorrente = null;
-let profiloAzienda = { nome: '', telefono: '' };
+let profiloAzienda = { nome: '', telefono: '', codice_fiscale: '', partita_iva: '', pec: '', codice_sdi: '', camera_commerciale: '', numero_rea: '', nome_amministratore: '', via: '', cap: '', citta: '', provincia: '', specifica: '' };
+let aziendaRecordId = null;
 
 let ultimoErroreRete = false;
 
@@ -1533,6 +1822,7 @@ async function rilevaTipoUtente(email) {
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
     document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+    document.getElementById('btn-dashboard').style.display = 'inline-block';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'block';
@@ -1544,8 +1834,23 @@ async function rilevaTipoUtente(email) {
   }
   if (aziende.length > 0) {
     tipoUtente = 'azienda';
-    profiloAzienda.nome = aziende[0].fields.nome_azienda || aziende[0].fields.nome_referente || aziende[0].fields.nome || '';
-    profiloAzienda.telefono = aziende[0].fields.telefono_azienda || aziende[0].fields.telefono || '';
+    aziendaRecordId = aziende[0].id;
+    const af = aziende[0].fields;
+    profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
+    profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
+    profiloAzienda.codice_fiscale = af.codice_fiscale || '';
+    profiloAzienda.partita_iva = af.partita_iva || '';
+    profiloAzienda.pec = af.pec || '';
+    profiloAzienda.codice_sdi = af.codice_sdi || '';
+    profiloAzienda.camera_commerciale = af.camera_commerciale || '';
+    profiloAzienda.numero_rea = af.numero_rea || '';
+    profiloAzienda.nome_amministratore = af.nome_amministratore || '';
+    profiloAzienda.via = af.via || '';
+    profiloAzienda.cap = af.cap || '';
+    profiloAzienda.citta = af.citta || '';
+    profiloAzienda.provincia = af.provincia || '';
+    profiloAzienda.specifica = af.specifica || '';
+    document.getElementById('btn-dashboard').style.display = 'inline-block';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
@@ -1884,7 +2189,10 @@ function azzeraStats() {
   ['st-disp','st-guad','st-tot','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
 }
 
+let ultimeCandidature = [];
+
 function renderStorico(cands) {
+  ultimeCandidature = cands || [];
   const body = document.getElementById('storico-body');
   if (!cands.length) {
     body.innerHTML = `<tr><td colspan="4" class="empty">
@@ -1918,6 +2226,29 @@ function renderStorico(cands) {
         <td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>
       </tr>`;
     }).join('');
+}
+
+// Scarica lo storico personale in CSV — lato portale, dati già in memoria.
+function scaricaStoricoCSV() {
+  if (!ultimeCandidature.length) return;
+  const righe = [['Data', 'ID Richiesta', 'Stato', 'Importo (€)']];
+  ultimeCandidature
+    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
+    .forEach(c => {
+      const f = c.fields;
+      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '';
+      righe.push([data, f.richiesta_id || '', f.stato || '', PREZZO]);
+    });
+  const csv = righe.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `storico_ecotruckconnect_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ——— FORM SCRIVICI ——— */
