@@ -1500,7 +1500,11 @@ function apriDashSezione(nome) {
   chiudiDashMenu();
   dashSezioneCorrente = nome;
   document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
-  if (tipoUtente !== 'azienda') document.getElementById('sezione-azienda').style.display = 'none';
+  // "Pubblica un Carico" (azienda) resta visibile SOLO nella Panoramica,
+  // insieme al calendario — in ogni altra sotto-sezione della Dashboard
+  // (dati, fatture, report, notifiche, sicurezza) deve sparire, esattamente
+  // come succede al trasportatore col resto del portale.
+  document.getElementById('sezione-azienda').style.display = (tipoUtente === 'azienda' && nome === 'overview') ? 'block' : 'none';
   document.getElementById('contenuto-normale-portale').style.display = 'none';
   document.getElementById('sezione-dashboard').style.display = 'block';
 
