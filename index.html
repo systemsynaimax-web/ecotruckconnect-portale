@@ -714,7 +714,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <div class="dash-nav-voce" onclick="apriDashSezione('sicurezza')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔒 Sicurezza</div>
         </div>
       </div>
-      <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
   </nav>
@@ -1813,7 +1812,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
-      document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
       document.getElementById('dash-nav-wrap').style.display = 'block';
       trasportatoreRecordId = 'preview-recid';
       trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
@@ -1992,7 +1990,6 @@ async function rilevaTipoUtente(email) {
     capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
-    document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
     document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
