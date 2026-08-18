@@ -963,11 +963,11 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div class="ins-grid">
         <div class="ins-field">
           <label>CAP Partenza *</label>
-          <input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026">
+          <input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026" inputmode="numeric" oninput="autocompilaCittaCarico('part')">
         </div>
         <div class="ins-field">
           <label>CAP Arrivo *</label>
-          <input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100">
+          <input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100" inputmode="numeric" oninput="autocompilaCittaCarico('arr')">
         </div>
         <div class="ins-field">
           <label>Città Partenza *</label>
@@ -2163,6 +2163,26 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
 }
 
 /* ——— PUBBLICA CARICO (aziende) — passa dal proxy Make, non più Airtable diretto ——— */
+// Autocompletamento CAP→Città/Provincia nel form "Pubblica un Carico"
+// (azienda) — stessa API gratuita già usata in registrazione e Dashboard
+// (comuni-ita.nicolorebaioli.dev). 'tipo' è 'part' o 'arr'.
+let capCaricoLookupTimer = {};
+function autocompilaCittaCarico(tipo) {
+  const cap = document.getElementById('ins-cap-' + tipo).value.trim();
+  clearTimeout(capCaricoLookupTimer[tipo]);
+  if (cap.length !== 5 || isNaN(cap)) return;
+  capCaricoLookupTimer[tipo] = setTimeout(async () => {
+    try {
+      const res = await fetch(`https://comuni-ita.nicolorebaioli.dev/comuni?cap=${cap}&fields=nome&pagesize=5`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        document.getElementById('ins-citta-' + tipo).value = data[0].nome;
+      }
+    } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
+  }, 500);
+}
+
 async function pubblicaCarico() {
   const capPart  = document.getElementById('ins-cap-part').value.trim();
   const capArr   = document.getElementById('ins-cap-arr').value.trim();
