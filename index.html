@@ -1845,6 +1845,7 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       renderCalendarioMensile();
+      precompilaCaricoAzienda();
     }
     return;
   }
@@ -2030,9 +2031,19 @@ async function rilevaTipoUtente(email) {
     renderCheckboxGroup('autRichiesta', []);
     aggiornaEtichettaTendina('mezzoRichiesto');
     aggiornaEtichettaTendina('autRichiesta');
+    precompilaCaricoAzienda();
     return aziende[0].id;
   }
   return null;
+}
+
+// Precompila CAP/Città Partenza nel form "Pubblica un Carico" con i dati
+// già noti della sede dell'azienda (quasi sempre il carico parte da lì).
+// Resta comunque modificabile — utile solo per risparmiare tempo quando
+// coincide, l'azienda può sempre cambiarlo per quella singola volta.
+function precompilaCaricoAzienda() {
+  if (profiloAzienda.cap) document.getElementById('ins-cap-part').value = profiloAzienda.cap;
+  if (profiloAzienda.citta) document.getElementById('ins-citta-part').value = profiloAzienda.citta;
 }
 
 /* ——— CAP TEMPORANEO ——— */
