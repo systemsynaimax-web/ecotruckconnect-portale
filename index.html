@@ -604,6 +604,10 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
       </div>
       <div id="tags-mezzoRichiesto" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      <div class="ins-field" id="specifica-mezzoRichiesto-wrap" style="display:none;max-width:520px;margin-top:10px;">
+        <label>Specifica il mezzo "Altro"</label>
+        <input type="text" id="specifica-mezzoRichiesto" placeholder="Descrivi il mezzo richiesto non presente nell'elenco">
+      </div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazione richiesta al trasportatore *</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-autRichiesta" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('autRichiesta')">
@@ -962,7 +966,7 @@ function aggiornaEtichettaTendina(which) {
     };
     tagsWrap.appendChild(tag);
   });
-  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap' };
+  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap', mezzoRichiesto: 'specifica-mezzoRichiesto-wrap' };
   if (SPECIFICA_WRAP_ID[which]) {
     const altroSelezionato = Array.from(checks).some(chk => chk.value === 'Altro (specificare)');
     const wrap = document.getElementById(SPECIFICA_WRAP_ID[which]);
@@ -1650,6 +1654,7 @@ async function pubblicaCarico() {
   const pericoloso = document.getElementById('ins-pericoloso').checked;
   const codiceCer  = document.getElementById('ins-cer').value.trim();
   const mezzoRichiesto = Array.from(document.querySelectorAll('#checkbox-mezzo-richiesto input:checked')).map(el => el.value);
+  const specificaMezzoRichiesto = document.getElementById('specifica-mezzoRichiesto').value.trim();
   const autRichiesta   = Array.from(document.querySelectorAll('#checkbox-aut-richiesta input:checked')).map(el => el.value);
   const err = document.getElementById('ins-err');
   const ok  = document.getElementById('ins-ok');
@@ -1699,6 +1704,7 @@ async function pubblicaCarico() {
         pericoloso: pericoloso,
         codice_cer: codiceCer,
         tipo_mezzo_richiesto: mezzoRichiesto,
+        specifica_mezzo_richiesto: specificaMezzoRichiesto,
         autorizzazione_richiesta: autRichiesta,
         email_azienda: currentUser.email,
         nome_azienda: profiloAzienda.nome,
@@ -1720,6 +1726,7 @@ async function pubblicaCarico() {
       document.getElementById('ins-pericoloso').checked = false;
       document.getElementById('ins-cer').value = '';
       document.getElementById('ins-cer-wrap').style.display = 'none';
+      document.getElementById('specifica-mezzoRichiesto').value = '';
       resetTendina('mezzoRichiesto');
       resetTendina('autRichiesta');
       setTimeout(() => caricaDati(currentUser.email), 2000);
