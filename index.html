@@ -737,9 +737,65 @@ let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
 // reali (Albo Gestori Ambientali D.M. 120/2014, classi ADR, tipi Reg. CE 1/2005,
 // livelli ATP). Il matching (carichiCompatibiliPerTrasportatore) confronta le
 // stringhe esatte tra profilo trasportatore e requisiti del carico.
-const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Amb. - Cat.1 (Rifiuti Urbani)","Albo Gestori Amb. - Cat.3bis (RAEE)","Albo Gestori Amb. - Cat.4 (Speciali non pericolosi)","Albo Gestori Amb. - Cat.5 (Speciali pericolosi)","Albo Gestori Amb. - Cat.6 (Transfrontalieri)","ADR Classe 1 (Esplosivi)","ADR Classe 2 (Gas)","ADR Classe 3 (Liquidi infiammabili)","ADR Classe 4 (Solidi infiammabili)","ADR Classe 5 (Comburenti/perossidi)","ADR Classe 6 (Tossiche/infettive)","ADR Classe 7 (Radioattive)","ADR Classe 8 (Corrosive)","ADR Classe 9 (Varie)","Animali Vivi - Tipo 1 (Viaggi brevi, sotto 8h)","Animali Vivi - Tipo 2 (Viaggi lunghi, oltre 8h)","Alimentare ATP - Isotermico","Alimentare ATP - Frigorifero (0°C)","Alimentare ATP - Frigorifero rinforzato (-20°C)"];
-let OPZIONI_AUT_TRASPORTATORE = [...AUTORIZZAZIONI_OPZIONI];
-let OPZIONI_AUT_RICHIESTA = [...AUTORIZZAZIONI_OPZIONI];
+const AUTORIZZAZIONI_STRUTTURA = [
+  {nome:"Conto Terzi", sub:null},
+  {nome:"Albo Gestori Ambientali (Rifiuti)", sub:["Categoria 1 (Rifiuti Urbani)","Categoria 2bis (Rifiuti propri)","Categoria 3bis (RAEE)","Categoria 4 (Speciali non pericolosi)","Categoria 5 (Speciali pericolosi)","Categoria 6 (Transfrontalieri)","Categoria 8 (Intermediazione)","Categoria 9 (Bonifica siti)","Categoria 10 (Bonifica amianto)"]},
+  {nome:"ADR - Merci Pericolose", sub:["Classe 1 (Esplosivi)","Classe 2 (Gas)","Classe 3 (Liquidi infiammabili)","Classe 4 (Solidi infiammabili)","Classe 5 (Comburenti/perossidi)","Classe 6 (Tossiche/infettive)","Classe 7 (Radioattive)","Classe 8 (Corrosive)","Classe 9 (Varie)"]},
+  {nome:"Animali Vivi", sub:["Tipo 1 (Viaggi brevi, sotto 8h)","Tipo 2 (Viaggi lunghi, oltre 8h)"]},
+  {nome:"Alimentare (ATP)", sub:["Isotermico","Frigorifero (0°C)","Frigorifero rinforzato (-20°C)"]}
+];
+let autAccordionAperto = { aut: null, autRichiesta: null };
+
+function renderAutorizzazioniAccordion(which, selezionate) {
+  const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  AUTORIZZAZIONI_STRUTTURA.forEach((cat, i) => {
+    if (cat.sub === null) {
+      const checked = selezionate.includes(cat.nome);
+      cont.insertAdjacentHTML('beforeend',
+        '<label style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">' +
+        '<input type="checkbox" value="'+cat.nome+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+cat.nome+
+        '</label>'
+      );
+    } else {
+      const nSel = cat.sub.filter(s => selezionate.includes(s)).length;
+      const aperto = autAccordionAperto[which] === i;
+      const wrap = document.createElement('div');
+      wrap.style.marginBottom = '4px';
+      wrap.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;" onclick="toggleAutCategoria(\''+which+'\','+i+')">' +
+        '<span>'+cat.nome+(nSel>0?' <span style="color:#3b82f6;font-weight:400;font-size:11px;">('+nSel+' selezionate)</span>':'')+'</span><span>'+(aperto?'▴':'▾')+'</span>' +
+        '</div>';
+      if (aperto) {
+        let subHtml = '<div style="margin-left:14px;border-left:2px solid rgba(255,255,255,0.15);padding-left:10px;">';
+        cat.sub.forEach(s => {
+          const checked = selezionate.includes(s);
+          subHtml += '<label style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">' +
+            '<input type="checkbox" value="'+s+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+s+
+            '</label>';
+        });
+        subHtml += '</div>';
+        wrap.insertAdjacentHTML('beforeend', subHtml);
+      }
+      cont.appendChild(wrap);
+    }
+  });
+}
+
+function toggleAutCategoria(which, i) {
+  autAccordionAperto[which] = autAccordionAperto[which] === i ? null : i;
+  const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+  const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value);
+  renderAutorizzazioniAccordion(which, sel);
+}
+
+function toggleAutFoglia(which) {
+  const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+  const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value);
+  renderAutorizzazioniAccordion(which, sel);
+  aggiornaEtichettaTendina(which);
+}
 
 let OPZIONI_MERCE = ["Alimentare","Mobili e arredi","Elettrodomestici","Materiali edili/inerti (17 09 04)","Ferrosi (17 04 05)","Non ferrosi (17 04 07)","Legno (17 02 01)","Carta e cartone (20 01 01)","Vetro (17 02 02)","Materiale plastico (19 12 04)","Rifiuti pericolosi","Rifiuti non pericolosi","Rifiuti urbani (20 03 01)","Rifiuti elettronici/RAEE (20 01 36)","Rifiuti organici (20 01 08)","Prodotti chimici","Macchinari/attrezzature","Merci deperibili/frigo","Merci generiche/pallettizzate","Abbigliamento/tessile"];
 
@@ -747,9 +803,9 @@ let OPZIONI_MEZZO_RICHIESTO = [...TIPO_CAMION_OPZIONI];
 
 const DROPDOWN_CONFIG = {
   camion:        { containerId: 'checkbox-tipo-camion',      opzioni: OPZIONI_MEZZO_TRASPORTATORE, singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
-  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: OPZIONI_AUT_TRASPORTATORE,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
+  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: [],  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
   mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: OPZIONI_MEZZO_RICHIESTO, singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
-  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: OPZIONI_AUT_RICHIESTA,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
+  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: [],  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
 };
 
 function renderCheckboxGroup(which, selezionate) {
@@ -774,7 +830,11 @@ function toggleDropdown(which) {
   });
   const staAprendo = (panel.style.display === 'none' || !panel.style.display);
   panel.style.display = staAprendo ? 'block' : 'none';
-  if (staAprendo) {
+  if (staAprendo && (which === 'aut' || which === 'autRichiesta')) {
+    autAccordionAperto[which] = null;
+    const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+    renderAutorizzazioniAccordion(which, Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value));
+  } else if (staAprendo) {
     const ricerca = document.getElementById('ricerca-' + which);
     if (ricerca) { ricerca.value = ''; filtraOpzioniDropdown(which, ''); }
   }
@@ -898,7 +958,13 @@ function aggiornaEtichettaTendina(which) {
     tag.innerHTML = chk.value + ' <span style="cursor:pointer;font-weight:700;opacity:0.8;">✕</span>';
     tag.querySelector('span').onclick = () => {
       chiediConfermaRimozione(chk.value, () => {
-        chk.checked = false;
+        if (which === 'aut' || which === 'autRichiesta') {
+          const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+          const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value).filter(v => v !== chk.value);
+          renderAutorizzazioniAccordion(which, sel);
+        } else {
+          chk.checked = false;
+        }
         aggiornaEtichettaTendina(which);
       });
     };
@@ -939,8 +1005,13 @@ function chiediConfermaRimozione(nomeElemento, onConferma) {
 }
 
 function resetTendina(which) {
-  const cfg = DROPDOWN_CONFIG[which];
-  document.querySelectorAll('#' + cfg.containerId + ' input:checked').forEach(chk => chk.checked = false);
+  if (which === 'aut' || which === 'autRichiesta') {
+    autAccordionAperto[which] = null;
+    renderAutorizzazioniAccordion(which, []);
+  } else {
+    const cfg = DROPDOWN_CONFIG[which];
+    document.querySelectorAll('#' + cfg.containerId + ' input:checked').forEach(chk => chk.checked = false);
+  }
   aggiornaEtichettaTendina(which);
 }
 
@@ -951,7 +1022,7 @@ function apriProfiloTrasportatore() {
   const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
   const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
   renderCheckboxGroup('camion', camionSel);
-  renderCheckboxGroup('aut', autSel);
+  renderAutorizzazioniAccordion('aut', autSel);
   aggiornaEtichettaTendina('camion');
   aggiornaEtichettaTendina('aut');
   document.getElementById('specifica-trasp').value = trasportatoreFieldsCorrenti.specifica || '';
@@ -1272,7 +1343,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
       document.getElementById('dash-nav-wrap').style.display = 'block';
       renderCheckboxGroup('mezzoRichiesto', []);
-      renderCheckboxGroup('autRichiesta', []);
+      renderAutorizzazioniAccordion('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
@@ -1446,7 +1517,7 @@ async function rilevaTipoUtente(email) {
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
     renderCheckboxGroup('mezzoRichiesto', []);
-    renderCheckboxGroup('autRichiesta', []);
+    renderAutorizzazioniAccordion('autRichiesta', []);
     aggiornaEtichettaTendina('mezzoRichiesto');
     aggiornaEtichettaTendina('autRichiesta');
     return aziende[0].id;
