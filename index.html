@@ -533,7 +533,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div id="tags-camion" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
       <div class="ins-field" id="specifica-trasp-wrap" style="display:none;max-width:520px;margin-top:10px;">
         <label>Specifica il mezzo "Altro"</label>
-        <input type="text" id="specifica-trasp" placeholder="Descrivi il mezzo non presente nell'elenco">
+        <input type="text" id="specifica-trasp" placeholder="Descrivi il mezzo non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('camion');}">
+        <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('camion')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
       </div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
@@ -606,7 +607,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div id="tags-mezzoRichiesto" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
       <div class="ins-field" id="specifica-mezzoRichiesto-wrap" style="display:none;max-width:520px;margin-top:10px;">
         <label>Specifica il mezzo "Altro"</label>
-        <input type="text" id="specifica-mezzoRichiesto" placeholder="Descrivi il mezzo richiesto non presente nell'elenco">
+        <input type="text" id="specifica-mezzoRichiesto" placeholder="Descrivi il mezzo richiesto non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('mezzoRichiesto');}">
+        <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('mezzoRichiesto')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
       </div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazione richiesta al trasportatore *</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
@@ -726,6 +728,27 @@ let trasportatoreFieldsCorrenti = {};
 const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furgone grande","Furgone frigo","Pick-up","Motrice piccola (7,5t)","Motrice media (12t)","Motrice grande (18t)","Motrice centinata","Motrice cassonata","Motrice frigo","Motrice cisterna","Motrice con gru","Motrice ribaltabile","Motrice portacontainer","Bilico centinato","Bilico frigo","Bilico cisterna","Bilico portacontainer","Bilico cassonato","Bilico ribaltabile","Bilico ADR (merci pericolose)","Bilico con sponda idraulica","Bilico portabobine","Bilico portamacchine (car transporter)","Autotreno centinato","Autotreno frigo","Autotreno cisterna","Autotreno cassonato","Autotreno ribaltabile","Cassone scarrabile","Semirimorchio ribassato (lowbed)","Semirimorchio allungabile","Trasporto eccezionale","Autogru","Autobetoniera","Autospurgo","Portacontainer 20 piedi","Portacontainer 40 piedi","Bisarca (trasporto veicoli)","Trattore stradale","Trattore con rimorchio","Rimorchio centinato","Rimorchio frigo","Rimorchio cassonato","Autocompattatore","Autospazzatrice","Autocarro con sponda caricatrice","Muletto/carrello elevatore su strada","Altro (specificare)"];
 
 let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
+window.SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap', mezzoRichiesto: 'specifica-mezzoRichiesto-wrap' };
+const SPECIFICA_INPUT_ID = { camion: 'specifica-trasp', mezzoRichiesto: 'specifica-mezzoRichiesto' };
+
+function confermaSpecificaAltro(which) {
+  const input = document.getElementById(SPECIFICA_INPUT_ID[which]);
+  const testo = input.value.trim();
+  if (!testo) return;
+  const cfg = DROPDOWN_CONFIG[which];
+  if (cfg.opzioni.some(o => o.toLowerCase() === testo.toLowerCase())) {
+    alert('Questa voce è già presente nell\'elenco.');
+    return;
+  }
+  let selezionateAttuali = Array.from(document.querySelectorAll('#' + cfg.containerId + ' input:checked')).map(el => el.value);
+  selezionateAttuali = selezionateAttuali.filter(v => v !== 'Altro (specificare)');
+  cfg.opzioni.push(testo);
+  selezionateAttuali.push(testo);
+  renderCheckboxGroup(which, selezionateAttuali);
+  aggiornaEtichettaTendina(which);
+  input.value = '';
+  document.getElementById(window.SPECIFICA_WRAP_ID[which]).style.display = 'none';
+}
 
 // AGGIORNATO 26/8 — autorizzazioni sostituite con le sotto-categorie ufficiali
 // reali (Albo Gestori Ambientali D.M. 120/2014, classi ADR, tipi Reg. CE 1/2005,
@@ -966,7 +989,7 @@ function aggiornaEtichettaTendina(which) {
     };
     tagsWrap.appendChild(tag);
   });
-  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap', mezzoRichiesto: 'specifica-mezzoRichiesto-wrap' };
+  const SPECIFICA_WRAP_ID = window.SPECIFICA_WRAP_ID;
   if (SPECIFICA_WRAP_ID[which]) {
     const altroSelezionato = Array.from(checks).some(chk => chk.value === 'Altro (specificare)');
     const wrap = document.getElementById(SPECIFICA_WRAP_ID[which]);
