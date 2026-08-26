@@ -151,9 +151,11 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .email-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .email-btn{
   background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);
-  border-radius:8px;padding:12px;font-size:12px;text-align:center;text-decoration:none;display:block;transition:background 0.2s;
+  border-radius:8px;padding:12px;font-size:12px;text-align:center;cursor:pointer;
+  display:block;width:100%;transition:background 0.2s;font-family:var(--font-b);
 }
 .email-btn:hover{background:rgba(255,255,255,0.08);}
+.email-btn.copiato{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:var(--green);}
 
 /* MODAL — esistente, invariato */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px;}
@@ -222,14 +224,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://www.iubenda.com/app/it/generatore-privacy-policy/3121757/edit" target="_blank"><span class="icon">🔒</span>Iubenda</a>
     <a class="tool-btn" href="https://admin.shopify.com/store/zdv0ey-rv" target="_blank"><span class="icon">🛒</span>Shopify</a>
     <a class="tool-btn" href="https://github.com/systemsynaimax-web/ecotruckconnect-portale/blob/main/index.html" target="_blank"><span class="icon">💻</span>GitHub</a>
-    <a class="tool-btn" href="https://docs.google.com/document/d/1VLI5CuMXl4NTlPhG5h6Ez5O0TwS15mW1D1mUvx_dHu4/edit" target="_blank"><span class="icon">📁</span>Google Drive</a>
-    <a class="tool-btn" href="https://elevenlabs.io/app" target="_blank"><span class="icon">🎙️</span>ElevenLabs</a>
-    <a class="tool-btn" href="https://www.kapwing.com/" target="_blank"><span class="icon">🎬</span>Kapwing</a>
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
-    <a class="tool-btn" href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank"><span class="icon">📲</span>Telegram</a>
-    <a class="tool-btn" href="https://youtube.com/@EcoTruckConnectOfficial" target="_blank"><span class="icon">▶️</span>YouTube</a>
-    <div class="tool-btn soon"><span class="icon">📘</span>Facebook<small>in arrivo</small></div>
-    <div class="tool-btn soon"><span class="icon">📷</span>Instagram<small>in arrivo</small></div>
   </div>
 
   <div class="sec-title">📦 Portali personali — anteprima</div>
@@ -297,8 +292,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
   <div class="sec-title">✉️ Contatti diretti</div>
   <div class="email-grid">
-    <a class="email-btn" href="mailto:system.synaimax@gmail.com">system.synaimax@gmail.com</a>
-    <a class="email-btn" href="mailto:ecotruckconnect@synaimaxpro.com">ecotruckconnect@synaimaxpro.com</a>
+    <button class="email-btn" onclick="copiaEmail(this,'system.synaimax@gmail.com')">system.synaimax@gmail.com</button>
+    <button class="email-btn" onclick="copiaEmail(this,'ecotruckconnect@synaimaxpro.com')">ecotruckconnect@synaimaxpro.com</button>
   </div>
 
 </div>
@@ -472,6 +467,17 @@ function filtraFeed() {
     return azienda.includes(q) || trasportatore.includes(q);
   });
   renderFeed(filtrati);
+}
+
+function copiaEmail(btn, email) {
+  const testoOriginale = btn.textContent;
+  navigator.clipboard.writeText(email).then(() => {
+    btn.textContent = '✓ Copiata!';
+    btn.classList.add('copiato');
+    setTimeout(() => { btn.textContent = testoOriginale; btn.classList.remove('copiato'); }, 2000);
+  }).catch(() => {
+    alert('Indirizzo: ' + email);
+  });
 }
 
 caricaDashboard();
