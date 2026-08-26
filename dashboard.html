@@ -151,11 +151,10 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .email-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .email-btn{
   background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);
-  border-radius:8px;padding:12px;font-size:12px;text-align:center;cursor:pointer;
-  display:block;width:100%;transition:background 0.2s;font-family:var(--font-b);
+  border-radius:8px;padding:12px;font-size:12px;text-align:center;text-decoration:none;
+  display:block;transition:background 0.2s;
 }
 .email-btn:hover{background:rgba(255,255,255,0.08);}
-.email-btn.copiato{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:var(--green);}
 
 /* MODAL — esistente, invariato */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px;}
@@ -261,7 +260,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="sec-title">🔗 Collegamenti rapidi</div>
   <div class="quick-links">
     <a href="report.html" class="quick-link">📋 Report Trasportatori</a>
-    <a href="registrazioni.html" class="quick-link">🏢 Registrazioni</a>
+    <a href="#report-aziende-sezione" class="quick-link">🏢 Report Aziende</a>
+    <a href="registrazioni.html" class="quick-link">🆕 Registrazioni</a>
   </div>
 
   <div class="sec-title">🗓️ Calendario</div>
@@ -290,10 +290,20 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="feed-list"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
+  <div class="sec-title" id="report-aziende-sezione">🏢 Report Aziende — cerca, scarica, stampa</div>
+  <div class="section">
+    <input type="text" class="feed-search" id="az-cerca" placeholder="🔍 Cerca per nome azienda..." oninput="filtraAziende()">
+    <div class="feed-actions">
+      <button onclick="window.print()">📄 Scarica Report (PDF)</button>
+      <button onclick="window.print()">🖨️ Stampa</button>
+    </div>
+    <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
   <div class="sec-title">✉️ Contatti diretti</div>
   <div class="email-grid">
-    <button class="email-btn" onclick="copiaEmail(this,'system.synaimax@gmail.com')">system.synaimax@gmail.com</button>
-    <button class="email-btn" onclick="copiaEmail(this,'ecotruckconnect@synaimaxpro.com')">ecotruckconnect@synaimaxpro.com</button>
+    <a class="email-btn" href="https://mail.google.com/mail/u/0/#inbox" target="_blank">📬 system.synaimax@gmail.com</a>
+    <a class="email-btn" href="https://mail.google.com/mail/u/0/#inbox" target="_blank">📬 ecotruckconnect@synaimaxpro.com</a>
   </div>
 
 </div>
@@ -326,6 +336,7 @@ async function caricaDashboard() {
     aggiornaStats();
     renderCalendario();
     renderFeed(tuttiCarichi);
+    renderAziende(tuttiCarichi);
   } catch (e) {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
@@ -470,14 +481,40 @@ function filtraFeed() {
 }
 
 function copiaEmail(btn, email) {
-  const testoOriginale = btn.textContent;
   navigator.clipboard.writeText(email).then(() => {
-    btn.textContent = '✓ Copiata!';
+    btn.textContent = '✓';
     btn.classList.add('copiato');
-    setTimeout(() => { btn.textContent = testoOriginale; btn.classList.remove('copiato'); }, 2000);
+    setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copiato'); }, 2000);
   }).catch(() => {
     alert('Indirizzo: ' + email);
   });
+}
+
+function renderAziende(lista) {
+  const el = document.getElementById('az-lista');
+  const conAzienda = lista.filter(c => c.fields.nome_azienda);
+  if (!conAzienda.length) {
+    el.innerHTML = '<div class="feed-empty">Nessun carico con azienda trovato. Se Make è spento, appare da solo appena riparte.</div>';
+    return;
+  }
+  el.innerHTML = conAzienda.map(c => {
+    const f = c.fields;
+    const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
+    return `<div class="feed-item">
+      <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
+      <div class="feed-info">
+        <div class="feed-title">${f.nome_azienda} — ${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
+        <div class="feed-sub">${f.tipo_merce||'—'} · ${f.stato||'—'}</div>
+      </div>
+      <div class="feed-date">${data}</div>
+    </div>`;
+  }).join('');
+}
+
+function filtraAziende() {
+  const q = document.getElementById('az-cerca').value.trim().toLowerCase();
+  if (!q) { renderAziende(tuttiCarichi); return; }
+  renderAziende(tuttiCarichi.filter(c => (c.fields.nome_azienda||'').toLowerCase().includes(q)));
 }
 
 caricaDashboard();
