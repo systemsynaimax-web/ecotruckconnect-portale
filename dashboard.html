@@ -46,6 +46,30 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .badge{font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--blue);}
+
+/* NOTIFICA REGISTRAZIONI DA APPROVARE — nuovo */
+.notif-bell{position:relative;cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background 0.2s;}
+.notif-bell:hover{background:rgba(255,255,255,0.1);}
+.notif-bell.attiva{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);animation:bellPulse 1.6s infinite;}
+@keyframes bellPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0);}}
+.notif-count{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg);}
+.notif-count.show{display:flex;}
+.notif-panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:flex-start;justify-content:center;padding:60px 20px;}
+.notif-panel.open{display:flex;}
+.notif-box{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:75vh;overflow-y:auto;}
+.notif-box-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.notif-box-title{font-family:var(--font-h);font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.notif-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.notif-row-info{flex:1;min-width:180px;}
+.notif-row-nome{font-weight:700;font-size:14px;}
+.notif-row-nome .tipo-tag{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-left:8px;}
+.tipo-tag.trasp{background:rgba(59,130,246,0.15);color:var(--blue);}
+.tipo-tag.azie{background:rgba(245,158,11,0.15);color:var(--amber);}
+.notif-row-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+.btn-approva{background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;transition:background 0.2s;}
+.btn-approva:hover{background:#16a34a;}
+.btn-approva:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:default;}
+.notif-empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
 .hero-tagline{position:relative;z-index:2;padding:8px 32px 28px;font-size:13px;color:var(--muted);}
 
 .wrap{max-width:1400px;margin:0 auto;padding:32px;}
@@ -216,6 +240,10 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div class="logo">Eco<span>Truck</span>Connect</div>
     <div class="header-right">
       <span class="refresh-info"><span class="dot-live"></span>Aggiornato automaticamente</span>
+      <div class="notif-bell" id="notif-bell" onclick="apriNotifiche()" title="Registrazioni da approvare">
+        🔔
+        <span class="notif-count" id="notif-count">0</span>
+      </div>
       <span class="badge">🔒 Dashboard Gestori</span>
     </div>
   </div>
@@ -318,6 +346,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
 </div>
 
+<div class="notif-panel" id="notif-panel" onclick="if(event.target===this)chiudiNotifiche();">
+  <div class="notif-box">
+    <div class="notif-box-header">
+      <div class="notif-box-title">🆕 Registrazioni da approvare</div>
+      <button class="modal-close" onclick="chiudiNotifiche()">×</button>
+    </div>
+    <div id="notif-lista"><div class="notif-empty">Caricamento…</div></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)chiudiModal();">
   <div class="modal">
     <div class="modal-header">
@@ -350,6 +388,106 @@ async function caricaDashboard() {
   } catch (e) {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
+  }
+  caricaNotificheRegistrazioni();
+}
+
+/* ==================================================
+   NOTIFICA REGISTRAZIONI DA APPROVARE — nuovo
+   Controlla Airtable (via proxy) ogni 30 secondi: se c'è qualcuno con
+   stato = "Da Verificare" (trasportatore o azienda), accende il campanello
+   rosso con il conteggio. Approvazione diretta da qui, un click,
+   niente Airtable.
+   ================================================== */
+let registrazioniInAttesa = [];
+
+async function caricaNotificheRegistrazioni() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_utenti_da_verificare' })
+    });
+    const data = await res.json();
+    const trasp = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', fields: r.fields || r }));
+    const azie  = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', fields: r.fields || r }));
+    registrazioniInAttesa = [...trasp, ...azie];
+    aggiornaCampanello();
+  } catch (e) {
+    console.error('Errore caricamento notifiche registrazioni:', e);
+  }
+}
+
+function aggiornaCampanello() {
+  const n = registrazioniInAttesa.length;
+  const bell = document.getElementById('notif-bell');
+  const count = document.getElementById('notif-count');
+  if (n > 0) {
+    bell.classList.add('attiva');
+    count.textContent = n > 9 ? '9+' : n;
+    count.classList.add('show');
+  } else {
+    bell.classList.remove('attiva');
+    count.classList.remove('show');
+  }
+  // Se il pop-up è già aperto, tienilo aggiornato in tempo reale
+  if (document.getElementById('notif-panel').classList.contains('open')) renderNotifiche();
+}
+
+function apriNotifiche() {
+  document.getElementById('notif-panel').classList.add('open');
+  renderNotifiche();
+}
+function chiudiNotifiche() {
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+function renderNotifiche() {
+  const el = document.getElementById('notif-lista');
+  if (!registrazioniInAttesa.length) {
+    el.innerHTML = '<div class="notif-empty">✅ Nessuna registrazione in attesa. Tutto approvato.</div>';
+    return;
+  }
+  el.innerHTML = registrazioniInAttesa.map(r => {
+    const f = r.fields;
+    const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+    const tagClasse = r.tipo === 'azienda' ? 'azie' : 'trasp';
+    const tagTesto = r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore';
+    return `<div class="notif-row" id="notif-row-${r.id}">
+      <div class="notif-row-info">
+        <div class="notif-row-nome">${nome}<span class="tipo-tag ${tagClasse}">${tagTesto}</span></div>
+        <div class="notif-row-sub">✉️ ${f.email || '—'} &nbsp; 📞 ${f.telefono || '—'}</div>
+      </div>
+      <button class="btn-approva" onclick="approvaRegistrazione('${r.id}','${r.tipo}',this)">✅ Approva</button>
+    </div>`;
+  }).join('');
+}
+
+async function approvaRegistrazione(recordId, tipo, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Approvo…';
+  const action = tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action, record_id: recordId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    btn.textContent = '✅ Approvato';
+    // Rimuove dalla lista in attesa — l'email con la password parte da sola
+    // entro 5 minuti tramite lo scenario "Approva Utente" già attivo.
+    registrazioniInAttesa = registrazioniInAttesa.filter(r => r.id !== recordId);
+    aggiornaCampanello();
+    setTimeout(() => {
+      const row = document.getElementById('notif-row-' + recordId);
+      if (row) row.remove();
+      if (!registrazioniInAttesa.length) renderNotifiche();
+    }, 900);
+  } catch (e) {
+    console.error('Errore approvazione:', e);
+    btn.disabled = false;
+    btn.textContent = '⚠️ Riprova';
   }
 }
 
