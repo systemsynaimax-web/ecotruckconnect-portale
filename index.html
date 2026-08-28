@@ -381,30 +381,29 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
   </nav>
-  <section class="hero">
+  <section class="hero" style="position:relative;">
+    <div id="icone-profilo-trasp" style="display:none;flex-direction:row;gap:12px;position:absolute;top:78px;right:48px;z-index:5;">
+      <button onclick="apriProfiloTrasportatore()" style="position:relative;width:90px;height:90px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:6px;color:var(--text);font-family:var(--font-b);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+        <span id="badge-mezzi" style="display:none;position:absolute;top:-8px;right:-8px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg);">0</span>
+        <span style="font-size:24px;">🚚</span>
+        <span style="font-size:10px;color:var(--muted);text-align:center;line-height:1.2;">I miei mezzi</span>
+      </button>
+      <button onclick="apriProfiloTrasportatore()" style="position:relative;width:90px;height:90px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:6px;color:var(--text);font-family:var(--font-b);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+        <span id="badge-aut" style="display:none;position:absolute;top:-8px;right:-8px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg);">0</span>
+        <span style="font-size:24px;">📋</span>
+        <span style="font-size:10px;color:var(--muted);text-align:center;line-height:1.2;">Le mie autorizzazioni</span>
+      </button>
+    </div>
     <div class="hero-content">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
-        <div>
-          <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
-          <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
-        </div>
-        <div id="icone-profilo-trasp" style="display:none;flex-direction:row;gap:12px;flex-shrink:0;">
-          <button onclick="apriProfiloTrasportatore()" style="width:84px;height:84px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:6px;color:var(--text);font-family:var(--font-b);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-            <span style="font-size:22px;">🚚</span>
-            <span style="font-size:10px;color:var(--muted);text-align:center;line-height:1.2;">I miei mezzi</span>
-          </button>
-          <button onclick="apriProfiloTrasportatore()" style="width:84px;height:84px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:6px;color:var(--text);font-family:var(--font-b);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-            <span style="font-size:22px;">📋</span>
-            <span style="font-size:10px;color:var(--muted);text-align:center;line-height:1.2;">Le mie autorizzazioni</span>
-          </button>
-        </div>
-      </div>
+      <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
+      <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
       <p>Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
       <div class="hero-stats">
         <div><div class="hs-val" id="st-disp">—</div><div class="hs-label">Carichi disponibili oggi</div></div>
         <div><div class="hs-val blue" id="st-guad">—</div><div class="hs-label">Guadagnato questo mese</div></div>
         <div><div class="hs-val" id="st-tot">—</div><div class="hs-label">Carichi totali</div></div>
       </div>
+
     </div>
   </section>
   <div class="main">
@@ -1082,7 +1081,22 @@ function apriProfiloTrasportatore() {
 function aggiornaRiepilogoProfiloTrasportatore() {
   const icone = document.getElementById('icone-profilo-trasp');
   if (!icone) return;
-  icone.style.display = (tipoUtente === 'trasportatore') ? 'flex' : 'none';
+  if (tipoUtente !== 'trasportatore') { icone.style.display = 'none'; return; }
+  icone.style.display = 'flex';
+
+  const nMezzi = (trasportatoreFieldsCorrenti.tipo_camion || []).length;
+  const nAut = (trasportatoreFieldsCorrenti.autorizzazioni || []).length;
+
+  const badgeMezzi = document.getElementById('badge-mezzi');
+  const badgeAut = document.getElementById('badge-aut');
+  if (badgeMezzi) {
+    badgeMezzi.textContent = nMezzi > 9 ? '9+' : nMezzi;
+    badgeMezzi.style.display = nMezzi > 0 ? 'flex' : 'none';
+  }
+  if (badgeAut) {
+    badgeAut.textContent = nAut > 9 ? '9+' : nAut;
+    badgeAut.style.display = nAut > 0 ? 'flex' : 'none';
+  }
 }
 
 function toggleDashMenu() {
