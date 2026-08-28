@@ -51,6 +51,9 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .notif-bell{position:relative;cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background 0.2s;}
 .notif-bell:hover{background:rgba(255,255,255,0.1);}
 .notif-bell.attiva{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);animation:bellPulse 1.6s infinite;}
+.btn-anteprima-notif{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:0 14px;height:40px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:background 0.2s,color 0.2s;white-space:nowrap;}
+.btn-anteprima-notif:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+.anteprima-banner{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--amber);font-size:12px;padding:10px 14px;border-radius:8px;margin-bottom:14px;text-align:center;font-weight:600;}
 @keyframes bellPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0);}}
 .notif-count{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg);}
 .notif-count.show{display:flex;}
@@ -269,6 +272,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
         🔔
         <span class="notif-count" id="notif-count">0</span>
       </div>
+      <button class="btn-anteprima-notif" id="btn-anteprima-notif" onclick="apriAnteprimaNotifiche()" title="Mostra come funziona con dati di esempio">👁️ Anteprima</button>
       <span class="badge">🔒 Dashboard Gestori</span>
     </div>
   </div>
@@ -437,8 +441,41 @@ async function caricaDashboard() {
    niente Airtable.
    ================================================== */
 let registrazioniInAttesa = [];
+let modalitaAnteprima = false;
+
+/* Dati di esempio per l'anteprima — non toccano mai Airtable, servono solo
+   per mostrare a Gerlando come funziona il pannello, dal click sulla
+   campanella fino ad "Attiva". */
+const ANTEPRIMA_REGISTRAZIONI = [
+  { id: 'anteprima-1', tipo: 'trasportatore', fields: {
+      nome: 'Marco', cognome: 'Russo', email: 'marco.russo@esempio.it', telefono: '333 1112222',
+      data_nascita: '1985-04-12', partita_iva: '02345670840', codice_fiscale: 'RSSMRC85D12G273X',
+      forma_giuridica: 'Ditta individuale', camera_commerciale: 'AG-123456', numero_rea: '456789',
+      pec: 'marco.russo@pec.it', codice_sdi: 'ABCDEFG', via: 'Via Roma 12', cap: '92026',
+      citta: 'Favara', provincia: 'AG', nazione: 'Italia', specifica: '—', note: 'Registrazione di esempio'
+  }},
+  { id: 'anteprima-2', tipo: 'azienda', fields: {
+      ragione_sociale: 'Trasporti Belfiore Srl', email: 'info@belfioretrasporti.it', telefono: '0922 445566',
+      partita_iva: '01987650843', codice_fiscale: '01987650843', forma_giuridica: 'S.r.l.',
+      camera_commerciale: 'AG-654321', numero_rea: '112233', pec: 'belfiore@pec.it', codice_sdi: 'HIJKLMN',
+      via: 'Via Industriale 8', cap: '92100', citta: 'Agrigento', provincia: 'AG', nazione: 'Italia',
+      specifica_azienda: 'Logistica generale — esempio'
+  }}
+];
+
+function apriAnteprimaNotifiche() {
+  modalitaAnteprima = true;
+  registrazioniInAttesa = ANTEPRIMA_REGISTRAZIONI;
+  aggiornaCampanello();
+  document.getElementById('notif-panel').classList.add('open');
+  document.getElementById('notif-lista').style.display = 'block';
+  document.getElementById('notif-dettaglio').style.display = 'none';
+  document.getElementById('notif-box-title').textContent = '🆕 Registrazioni da approvare';
+  renderNotifiche();
+}
 
 async function caricaNotificheRegistrazioni() {
+  if (modalitaAnteprima) return; // non toccare i dati finti mentre l'anteprima è aperta
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -484,15 +521,20 @@ function apriNotifiche() {
 }
 function chiudiNotifiche() {
   document.getElementById('notif-panel').classList.remove('open');
+  if (modalitaAnteprima) {
+    modalitaAnteprima = false;
+    caricaNotificheRegistrazioni();
+  }
 }
 
 function renderNotifiche() {
   const el = document.getElementById('notif-lista');
+  const banner = modalitaAnteprima ? '<div class="anteprima-banner">🧪 Modalità anteprima — dati di esempio, nessuna modifica reale</div>' : '';
   if (!registrazioniInAttesa.length) {
-    el.innerHTML = '<div class="notif-empty">✅ Nessuna registrazione in attesa. Tutto approvato.</div>';
+    el.innerHTML = banner + '<div class="notif-empty">✅ Nessuna registrazione in attesa. Tutto approvato.</div>';
     return;
   }
-  el.innerHTML = registrazioniInAttesa.map(r => {
+  el.innerHTML = banner + registrazioniInAttesa.map(r => {
     const f = r.fields;
     const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
     const tagClasse = r.tipo === 'azienda' ? 'azie' : 'trasp';
@@ -539,6 +581,7 @@ function apriDettaglioUtente(recordId) {
   document.getElementById('notif-box-title').textContent = '📋 Anagrafica';
   document.getElementById('notif-dettaglio').innerHTML = `
     <button class="dett-back" onclick="tornaListaNotifiche()">← Torna alla lista</button>
+    ${modalitaAnteprima ? '<div class="anteprima-banner">🧪 Modalità anteprima — dati di esempio, nessuna modifica reale</div>' : ''}
     <div class="dett-nome">${nome}</div>
     <div class="dett-tipo">${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</div>
     <button class="btn-scarica" onclick="scaricaAnagrafica()">📥 Scarica anagrafica</button>
@@ -628,6 +671,16 @@ async function eseguiAttivazione() {
   const r = recordApertoCorrente;
   const btn = document.getElementById('btn-attiva-conferma');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Attivo…'; }
+
+  // Modalità anteprima: nessuna chiamata reale, solo simulazione visiva
+  if (modalitaAnteprima) {
+    await new Promise(res => setTimeout(res, 700));
+    registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
+    aggiornaCampanello();
+    tornaListaNotifiche();
+    return;
+  }
+
   const action = r.tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
   try {
     const res = await fetch(PROXY_WEBHOOK, {
