@@ -196,10 +196,20 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   .toolbar-grid{grid-template-columns:repeat(2,1fr);}
   .cal-cell{min-height:60px;padding:4px;}
   .header-right{flex-wrap:wrap;justify-content:flex-end;gap:8px;}
+}.print-timestamp{display:none;}
+@media print{
+  .hero,.toolbar-grid,.portali-grid,.feed-search,.feed-actions,button{display:none !important;}
+  body{background:#fff;color:#000;}
+  .section,.stat-card,.portale-card{border-color:#ccc;background:#fff;}
+  .print-timestamp{
+    display:block !important;font-size:11px;color:#666;margin-bottom:16px;
+    border-bottom:1px solid #ccc;padding-bottom:8px;
+  }
 }
 </style>
 </head>
 <body>
+<div class="print-timestamp" id="timbro-stampa"></div>
 
 <div class="hero">
   <div class="header">
@@ -284,8 +294,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="section">
     <input type="text" class="feed-search" id="feed-cerca" placeholder="🔍 Cerca per nome azienda o trasportatore..." oninput="filtraFeed()">
     <div class="feed-actions">
-      <button onclick="window.print()">📄 Scarica Report (PDF)</button>
-      <button onclick="window.print()">🖨️ Stampa</button>
+      <button onclick="stampaConTimbro()">📄 Scarica Report (PDF)</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="feed-list"><div class="feed-empty">Caricamento…</div></div>
   </div>
@@ -294,8 +304,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="section">
     <input type="text" class="feed-search" id="az-cerca" placeholder="🔍 Cerca per nome azienda..." oninput="filtraAziende()">
     <div class="feed-actions">
-      <button onclick="window.print()">📄 Scarica Report (PDF)</button>
-      <button onclick="window.print()">🖨️ Stampa</button>
+      <button onclick="stampaConTimbro()">📄 Scarica Report (PDF)</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
@@ -515,6 +525,15 @@ function filtraAziende() {
   const q = document.getElementById('az-cerca').value.trim().toLowerCase();
   if (!q) { renderAziende(tuttiCarichi); return; }
   renderAziende(tuttiCarichi.filter(c => (c.fields.nome_azienda||'').toLowerCase().includes(q)));
+}
+
+function stampaConTimbro() {
+  const ora = new Date();
+  const testo = 'EcoTruckConnect — Documento stampato il ' +
+    ora.toLocaleDateString('it-IT') + ' alle ' +
+    ora.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('timbro-stampa').textContent = testo;
+  window.print();
 }
 
 caricaDashboard();
