@@ -6,6 +6,12 @@
 <title>EcoTruckConnect — Il Tuo Portale</title>
 <script>
 window.__rawAuthHash = window.location.hash;
+// CRITICO: pulisce subito l'hash dalla barra indirizzi, PRIMA che lo script
+// del widget Netlify Identity (riga sotto) venga caricato. Il widget, appena
+// caricato, controlla da solo se c'è un recovery_token/invite_token nell'hash
+// e lo consuma in automatico (è un token monouso) — se arriva prima di noi,
+// il link risulta "scaduto" anche al primissimo utilizzo, su qualsiasi
+// dispositivo o browser. Pulendo qui, il widget non lo vede mai.
 if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || window.__rawAuthHash.includes('invite_token') || window.__rawAuthHash.includes('confirmation_token'))) {
   history.replaceState(null, '', window.location.pathname + window.location.search);
 }
@@ -13,6 +19,9 @@ if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+/* ====================================================
+   CONFIGURAZIONE COLORI
+   ==================================================== */
 :root {
   --bg:       #080d16;
   --surface:  #0e1623;
@@ -30,281 +39,594 @@ if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || 
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;z-index:9999;}
+
+/* ====================================================
+   LOADING
+   ==================================================== */
+#loading{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;z-index:9999;
+}
 .load-logo{font-family:var(--font-h);font-size:24px;font-weight:800;letter-spacing:-0.5px;}
 .load-logo span{color:var(--blue);}
-.spinner{width:36px;height:36px;border:2.5px solid rgba(255,255,255,0.08);border-top-color:var(--blue);border-radius:50%;animation:spin 0.75s linear infinite;}
+.spinner{
+  width:36px;height:36px;
+  border:2.5px solid rgba(255,255,255,0.08);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin 0.75s linear infinite;
+}
 @keyframes spin{to{transform:rotate(360deg);}}
 .load-text{color:var(--muted);font-size:13px;}
+
+/* ====================================================
+   LOGIN PAGE
+   ==================================================== */
 #login-page{display:none;min-height:100vh;}
-.login-wrap{display:grid;grid-template-columns:1fr 460px;min-height:100vh;}
-.login-visual{position:relative;overflow:hidden;background:url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80') center/cover;}
-.login-visual::before{content:'';position:absolute;inset:-15px;background:inherit;animation:truckMove 18s ease-in-out infinite alternate;filter:blur(9px) brightness(0.85);z-index:0;}
-@keyframes truckMove{0%{transform:scale(1.0) translateX(0px);}50%{transform:scale(1.06) translateX(-15px);}100%{transform:scale(1.04) translateX(10px);}}
-.login-visual::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,13,22,0.88) 0%,rgba(8,13,22,0.45) 100%);z-index:1;}
-.login-visual-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:48px;}
-.lv-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:20px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:5px 12px;border-radius:20px;width:fit-content;}
+.login-wrap{
+  display:grid;grid-template-columns:1fr 460px;min-height:100vh;
+}
+.login-visual{
+  position:relative;overflow:hidden;
+  background:url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80') center/cover;
+}
+.login-visual::before{
+  content:'';
+  position:absolute;inset:-15px;
+  background:inherit;
+  animation:truckMove 18s ease-in-out infinite alternate;
+  filter:blur(9px) brightness(0.85);
+  z-index:0;
+}
+@keyframes truckMove{
+  0%{transform:scale(1.0) translateX(0px);}
+  50%{transform:scale(1.06) translateX(-15px);}
+  100%{transform:scale(1.04) translateX(10px);}
+}
+.login-visual::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(8,13,22,0.88) 0%,rgba(8,13,22,0.45) 100%);
+  z-index:1;
+}
+.login-visual-content{
+  position:relative;z-index:2;height:100%;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:48px;
+}
+.lv-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--blue);margin-bottom:20px;
+  background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);
+  padding:5px 12px;border-radius:20px;width:fit-content;
+}
 .lv-badge::before{content:'●';font-size:7px;}
-.lv-title{font-family:var(--font-h);font-size:44px;font-weight:800;line-height:1.1;margin-bottom:16px;}
+.lv-title{
+  font-family:var(--font-h);font-size:44px;font-weight:800;
+  line-height:1.1;margin-bottom:16px;
+}
 .lv-sub{font-size:15px;color:var(--muted);max-width:360px;line-height:1.6;}
-.login-form-side{background:var(--surface);display:flex;align-items:center;justify-content:center;padding:40px;border-left:1px solid var(--border);}
+.login-form-side{
+  background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;border-left:1px solid var(--border);
+}
 .lf-box{width:100%;max-width:340px;}
 .lf-logo{font-family:var(--font-h);font-size:22px;font-weight:800;margin-bottom:6px;}
 .lf-logo span{color:var(--blue);}
 .lf-tagline{font-size:13px;color:var(--muted);margin-bottom:40px;}
-.lf-label{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-.lf-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text);font-family:var(--font-b);font-size:14px;outline:none;transition:border-color 0.2s;margin-bottom:18px;}
+.lf-label{
+  display:block;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+}
+.lf-input{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;color:var(--text);font-family:var(--font-b);
+  font-size:14px;outline:none;transition:border-color 0.2s;
+  margin-bottom:18px;
+}
 .lf-input:focus{border-color:var(--blue);}
 .lf-input::placeholder{color:rgba(255,255,255,0.2);}
 .pw-wrap{position:relative;}
 .pw-wrap .lf-input{padding-right:46px;}
-.pw-eye{position:absolute;right:14px;top:50%;transform:translateY(-55%);cursor:pointer;color:var(--muted);font-size:14px;user-select:none;}
+.pw-eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-55%);
+  cursor:pointer;color:var(--muted);font-size:14px;user-select:none;
+}
 .lf-forgot{text-align:right;margin-top:-8px;margin-bottom:24px;}
 .lf-forgot a{color:var(--blue);font-size:12px;text-decoration:none;}
 .lf-forgot a:hover{text-decoration:underline;}
-.btn-accedi{width:100%;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:14px;font-family:var(--font-b);font-size:15px;font-weight:500;cursor:pointer;transition:background 0.2s,transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-accedi{
+  width:100%;background:var(--blue);color:#fff;border:none;
+  border-radius:10px;padding:14px;font-family:var(--font-b);
+  font-size:15px;font-weight:500;cursor:pointer;
+  transition:background 0.2s,transform 0.1s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
 .btn-accedi:hover{background:var(--blue2);}
 .btn-accedi:active{transform:scale(0.99);}
-.lf-error{color:var(--red);font-size:12px;text-align:center;margin-top:10px;display:none;}
+.lf-error{
+  color:var(--red);font-size:12px;text-align:center;
+  margin-top:10px;display:none;
+}
 .lf-privacy{text-align:center;margin-top:24px;}
 .lf-privacy a{color:var(--muted);font-size:11px;text-decoration:none;}
 .lf-privacy a:hover{color:var(--text);}
+
+/* ====================================================
+   APP
+   ==================================================== */
 #app{display:none;}
-.navbar{display:flex;align-items:center;justify-content:space-between;padding:0 36px;height:60px;background:rgba(8,13,22,0.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;backdrop-filter:blur(12px);}
+
+/* NAVBAR */
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 36px;height:60px;
+  background:rgba(8,13,22,0.95);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+  backdrop-filter:blur(12px);
+}
 .nav-logo{font-family:var(--font-h);font-size:18px;font-weight:800;}
 .nav-logo span{color:var(--blue);}
 .nav-right{display:flex;align-items:center;gap:14px;}
-.badge-ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px;}
+.badge-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px;
+}
 .nav-name{color:var(--muted);font-size:13px;}
-.nav-av{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:13px;}
-.btn-esci{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:background 0.2s;font-family:var(--font-b);}
+.nav-av{
+  width:34px;height:34px;border-radius:50%;background:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-h);font-weight:700;font-size:13px;
+}
+.btn-esci{
+  background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+  color:var(--red);padding:5px 14px;border-radius:8px;font-size:12px;
+  cursor:pointer;transition:background 0.2s;font-family:var(--font-b);
+}
 .btn-esci:hover{background:rgba(239,68,68,0.16);}
-.hero{position:relative;padding:72px 48px 56px;overflow:hidden;}
-.hero::after{content:'';position:absolute;inset:-20px;z-index:0;background:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80') center/cover;filter:blur(10px) brightness(0.85);}
-.hero::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(to right,rgba(8,13,22,0.97) 45%,rgba(8,13,22,0.65) 100%);}
+
+/* HERO */
+.hero{
+  position:relative;padding:72px 48px 56px;
+  overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;inset:-20px;z-index:0;
+  background:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80') center/cover;
+  filter:blur(10px) brightness(0.85);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to right,rgba(8,13,22,0.97) 45%,rgba(8,13,22,0.65) 100%);
+}
 .hero-content{position:relative;z-index:2;max-width:580px;}
-.hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:5px 12px;border-radius:20px;margin-bottom:22px;}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:5px 12px;border-radius:20px;margin-bottom:22px;
+}
 .hero-pill::before{content:'●';font-size:7px;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-.hero h1{font-family:var(--font-h);font-size:46px;font-weight:800;line-height:1.1;margin-bottom:14px;}
+.hero h1{
+  font-family:var(--font-h);font-size:46px;font-weight:800;
+  line-height:1.1;margin-bottom:14px;
+}
 .hero h1 span{color:var(--blue);}
 .hero p{font-size:15px;color:var(--muted);line-height:1.7;max-width:460px;}
-.hero-stats{display:flex;gap:44px;margin-top:44px;padding-top:36px;border-top:1px solid var(--border);}
-.hs-val{font-family:var(--font-h);font-size:36px;font-weight:800;transition:all 0.5s ease;}
+.hero-stats{
+  display:flex;gap:44px;margin-top:44px;
+  padding-top:36px;border-top:1px solid var(--border);
+}
+.hs-val{
+  font-family:var(--font-h);font-size:36px;font-weight:800;
+  transition:all 0.5s ease;
+}
 .hs-val.blue{color:var(--blue);}
 .hs-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:0.5px;}
+
+.hero-title-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.hero-quick-icons{display:none;gap:12px;flex-shrink:0;}
+.hero-quick-icons.visible{display:flex;}
+.hqi-btn{
+  width:78px;height:78px;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;cursor:pointer;padding:6px;
+  transition:border-color 0.2s,transform 0.15s;
+}
+.hqi-btn:hover{border-color:rgba(59,130,246,0.4);transform:translateY(-2px);}
+.hqi-icon{font-size:20px;line-height:1;}
+.hqi-label{font-size:9.5px;color:var(--muted);text-align:center;line-height:1.25;font-family:var(--font-b);}
+
+/* MAIN */
 .main{padding:44px 48px;}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:44px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;cursor:pointer;text-decoration:none;color:var(--text);display:block;transition:border-color 0.25s,transform 0.25s,box-shadow 0.25s;position:relative;overflow:hidden;}
-.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,0.04),transparent);opacity:0;transition:opacity 0.25s;}
-.card:hover{border-color:rgba(59,130,246,0.35);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,0.3);}
+
+/* CARDS */
+.cards{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:22px;margin-bottom:44px;
+}
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;cursor:pointer;
+  text-decoration:none;color:var(--text);display:block;
+  transition:border-color 0.25s,transform 0.25s,box-shadow 0.25s;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(59,130,246,0.04),transparent);
+  opacity:0;transition:opacity 0.25s;
+}
+.card:hover{
+  border-color:rgba(59,130,246,0.35);
+  transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(0,0,0,0.3);
+}
 .card:hover::before{opacity:1;}
-.card-icon{width:42px;height:42px;border-radius:10px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:18px;}
+.card-icon{
+  width:42px;height:42px;border-radius:10px;
+  background:rgba(59,130,246,0.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;margin-bottom:18px;
+}
 .card h3{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:8px;}
 .card p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
 .card-num{font-family:var(--font-h);font-size:30px;font-weight:800;color:var(--blue);}
 .card-num.green{color:var(--green);}
 .card-sub{font-size:11px;color:var(--muted);margin-top:4px;}
-.sec-head{font-family:var(--font-h);font-size:20px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
-.table-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:48px;}
+
+/* STORICO */
+.sec-head{
+  font-family:var(--font-h);font-size:20px;font-weight:700;
+  margin-bottom:18px;display:flex;align-items:center;gap:10px;
+}
+.table-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:48px;
+}
 table{width:100%;border-collapse:collapse;}
-th{background:rgba(255,255,255,0.03);padding:12px 20px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-family:var(--font-b);font-weight:500;}
-td{padding:15px 20px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);color:rgba(241,245,249,0.8);}
+th{
+  background:rgba(255,255,255,0.03);padding:12px 20px;
+  text-align:left;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);font-family:var(--font-b);font-weight:500;
+}
+td{
+  padding:15px 20px;font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:rgba(241,245,249,0.8);
+}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,0.02);}
-.badge-stato{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-stato{
+  display:inline-block;padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:500;
+}
 .s-ok{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
 .s-wait{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
 .s-no{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
 .empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;line-height:1.6;}
-.assist-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start;}
-.assist-txt h2{font-family:var(--font-h);font-size:28px;font-weight:800;line-height:1.25;margin-bottom:16px;}
-.assist-txt p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px;}
-.scrivici-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;}
-.sc-title{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+
+/* ASSISTENZA */
+.assist-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:36px;align-items:start;
+}
+.assist-txt h2{
+  font-family:var(--font-h);font-size:28px;font-weight:800;
+  line-height:1.25;margin-bottom:16px;
+}
+.assist-txt p{
+  font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:10px;
+}
+.scrivici-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;
+}
+.sc-title{
+  font-family:var(--font-h);font-size:15px;font-weight:700;
+  margin-bottom:4px;display:flex;align-items:center;gap:8px;
+}
 .sc-sub{font-size:12px;color:var(--green);margin-bottom:20px;}
-.sc-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:10px;transition:border-color 0.2s;}
+.sc-input{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:12px 14px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;margin-bottom:10px;
+  transition:border-color 0.2s;
+}
 .sc-input:focus{border-color:var(--blue);}
 .sc-input::placeholder{color:rgba(255,255,255,0.2);}
 textarea.sc-input{resize:vertical;min-height:96px;}
-.btn-send{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px 22px;font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background 0.2s;}
+.btn-send{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:11px 22px;font-family:var(--font-b);
+  font-size:13px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:7px;
+  transition:background 0.2s;
+}
 .btn-send:hover{background:var(--blue2);}
-.sc-ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:11px 14px;border-radius:8px;font-size:13px;display:none;margin-top:10px;}
-.cap-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 22px;margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sc-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:11px 14px;border-radius:8px;
+  font-size:13px;display:none;margin-top:10px;
+}
+
+/* ====================================================
+   CAP TEMPORANEO
+   ==================================================== */
+.cap-bar{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px 22px;margin-bottom:24px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
 .cap-bar-label{font-size:12px;color:var(--muted);flex-shrink:0;}
-.cap-input{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;width:120px;transition:border-color 0.2s;}
+.cap-input{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;padding:9px 13px;color:var(--text);
+  font-family:var(--font-b);font-size:13px;outline:none;
+  width:120px;transition:border-color 0.2s;
+}
 .cap-input:focus{border-color:var(--blue);}
 .cap-input::placeholder{color:rgba(255,255,255,0.2);}
-.btn-cap{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
+.btn-cap{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:9px 18px;font-family:var(--font-b);
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:background 0.2s;
+}
 .btn-cap:hover{background:var(--blue2);}
 .cap-attivo{font-size:12px;color:var(--green);margin-left:auto;}
-.ins-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:32px;}
-.ins-title{font-family:var(--font-h);font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+
+/* ====================================================
+   SEZIONE INSERIMENTO CARICHI (AZIENDE)
+   ==================================================== */
+.ins-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;margin-bottom:32px;
+}
+.ins-title{
+  font-family:var(--font-h);font-size:18px;font-weight:700;
+  margin-bottom:6px;display:flex;align-items:center;gap:10px;
+}
 .ins-sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
-.ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.ins-field label{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
-.ins-field input,.ins-field select,.ins-field textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.2s;}
+.ins-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+}
+.ins-field label{
+  display:block;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:7px;
+}
+.ins-field input,.ins-field select,.ins-field textarea{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:11px 13px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;transition:border-color 0.2s;
+}
 .ins-field input:focus,.ins-field select:focus,.ins-field textarea:focus{border-color:var(--blue);}
 .ins-field input::placeholder,.ins-field textarea::placeholder{color:rgba(255,255,255,0.2);}
 .ins-field select option{background:var(--surface);color:var(--text);}
 .ins-full{grid-column:1/-1;}
-.btn-pubblica{background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px 28px;font-family:var(--font-b);font-size:14px;font-weight:600;cursor:pointer;margin-top:18px;display:flex;align-items:center;gap:8px;transition:background 0.2s,transform 0.1s;}
+.btn-pubblica{
+  background:var(--green);color:#fff;border:none;
+  border-radius:10px;padding:13px 28px;font-family:var(--font-b);
+  font-size:14px;font-weight:600;cursor:pointer;margin-top:18px;
+  display:flex;align-items:center;gap:8px;
+  transition:background 0.2s,transform 0.1s;
+}
 .btn-pubblica:hover{background:#16a34a;}
 .btn-pubblica:active{transform:scale(0.99);}
-.ins-ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;display:none;margin-top:12px;}
-.ins-err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);padding:12px 16px;border-radius:8px;font-size:13px;display:none;margin-top:12px;}
-.carichi-lista{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:32px;}
-.carico-item{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:16px;transition:background 0.2s;}
+.ins-ok{
+  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+  color:var(--green);padding:12px 16px;border-radius:8px;
+  font-size:13px;display:none;margin-top:12px;
+}
+.ins-err{
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+  color:var(--red);padding:12px 16px;border-radius:8px;
+  font-size:13px;display:none;margin-top:12px;
+}
+
+/* ====================================================
+   CARICHI CLICCABILI NEL CALENDARIO
+   ==================================================== */
+.carichi-lista{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:32px;
+}
+.carico-item{
+  padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.04);
+  display:flex;align-items:center;gap:16px;
+  transition:background 0.2s;
+}
 .carico-item:last-child{border-bottom:none;}
 .carico-item:hover{background:rgba(255,255,255,0.02);}
-.carico-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.carico-dot{
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;
+}
 .dot-blue{background:var(--blue);}
 .dot-amber{background:var(--amber);}
 .dot-red{background:var(--red);}
 .carico-info{flex:1;}
-.carico-tratta{font-family:var(--font-h);font-size:14px;font-weight:700;margin-bottom:4px;}
+.carico-tratta{
+  font-family:var(--font-h);font-size:14px;font-weight:700;
+  margin-bottom:4px;
+}
 .carico-det{font-size:12px;color:var(--muted);}
 .carico-data{font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;}
-.btn-prendi{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;transition:background 0.2s,transform 0.1s;}
+.btn-prendi{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:8px 18px;font-family:var(--font-b);
+  font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;
+  transition:background 0.2s,transform 0.1s;
+}
 .btn-prendi:hover{background:var(--blue2);}
 .btn-prendi:active{transform:scale(0.97);}
 .btn-prendi:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:not-allowed;}
-.carico-empty{padding:48px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
-#bot-btn{position:fixed;bottom:28px;right:28px;z-index:500;width:54px;height:54px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--blue),#6366f1);cursor:pointer;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(59,130,246,0.45);transition:transform 0.2s,box-shadow 0.2s;}
+.carico-empty{
+  padding:48px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;
+}
+
+/* ====================================================
+   BOT CLAUDE
+   ==================================================== */
+#bot-btn{
+  position:fixed;bottom:28px;right:28px;z-index:500;
+  width:54px;height:54px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--blue),#6366f1);
+  cursor:pointer;font-size:22px;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(59,130,246,0.45);
+  transition:transform 0.2s,box-shadow 0.2s;
+}
 #bot-btn.visible{display:flex;}
 #bot-btn:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(59,130,246,0.55);}
-#bot-panel{position:fixed;bottom:94px;right:28px;z-index:500;width:358px;height:480px;background:var(--surface);border:1px solid var(--border);border-radius:18px;display:none;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden;}
+#bot-panel{
+  position:fixed;bottom:94px;right:28px;z-index:500;
+  width:358px;height:480px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;
+  display:none;flex-direction:column;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6);
+  overflow:hidden;
+}
 #bot-panel.open{display:flex;}
-.bot-head{background:var(--surface2);padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
-.bot-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.bot-head{
+  background:var(--surface2);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.bot-av{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),#6366f1);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
 .bot-info-name{font-family:var(--font-h);font-size:13px;font-weight:700;}
 .bot-info-status{font-size:11px;color:var(--green);}
 .bot-info-ai{font-size:10px;color:var(--muted);margin-top:2px;}
-.bot-x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;}
-.bot-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.bot-x{
+  margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:17px;line-height:1;
+}
+.bot-msgs{
+  flex:1;overflow-y:auto;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
 .bot-msgs::-webkit-scrollbar{width:4px;}
 .bot-msgs::-webkit-scrollbar-track{background:transparent;}
 .bot-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
-.bm{max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.55;}
-.bm.bot{background:var(--surface2);align-self:flex-start;border-bottom-left-radius:3px;}
-.bm.user{background:var(--blue);align-self:flex-end;border-bottom-right-radius:3px;}
+.bm{
+  max-width:86%;padding:10px 13px;
+  border-radius:12px;font-size:13px;line-height:1.55;
+}
+.bm.bot{
+  background:var(--surface2);align-self:flex-start;
+  border-bottom-left-radius:3px;
+}
+.bm.user{
+  background:var(--blue);align-self:flex-end;
+  border-bottom-right-radius:3px;
+}
 .bm.typing{color:var(--muted);font-style:italic;font-size:12px;}
-.bot-bar{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;}
-.bot-inp{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;}
+.bot-bar{
+  padding:12px;border-top:1px solid var(--border);
+  display:flex;gap:8px;
+}
+.bot-inp{
+  flex:1;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;
+  padding:9px 13px;color:var(--text);font-family:var(--font-b);
+  font-size:13px;outline:none;
+}
 .bot-inp:focus{border-color:var(--blue);}
-.bot-send{background:var(--blue);border:none;border-radius:8px;width:36px;cursor:pointer;color:#fff;font-size:15px;transition:background 0.2s;}
+.bot-send{
+  background:var(--blue);border:none;border-radius:8px;
+  width:36px;cursor:pointer;color:#fff;font-size:15px;
+  transition:background 0.2s;
+}
 .bot-send:hover{background:var(--blue2);}
-.cal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:32px;}
-.cal-legend{padding:18px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+
+/* ====================================================
+   CALENDARIO MENSILE INTERATTIVO
+   ==================================================== */
+.cal-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;margin-bottom:32px;
+}
+.cal-legend{
+  padding:18px 24px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
 .cal-legend span{font-size:12px;color:var(--muted);}
 .cal-dot-inline{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;}
-.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);}
-.cal-nav-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px;transition:background 0.2s;}
+.cal-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;border-bottom:1px solid var(--border);
+}
+.cal-nav-btn{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;width:32px;height:32px;
+  cursor:pointer;font-size:15px;transition:background 0.2s;
+}
 .cal-nav-btn:hover{background:rgba(255,255,255,0.08);}
 .cal-nav-title{font-family:var(--font-h);font-size:15px;font-weight:700;text-transform:capitalize;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);}
-.cal-day-name{background:var(--surface2);text-align:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:10px 0;}
-.cal-cell{background:var(--surface);min-height:76px;padding:8px;cursor:pointer;transition:background 0.15s;position:relative;}
+.cal-day-name{
+  background:var(--surface2);text-align:center;font-size:10px;
+  letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  padding:10px 0;
+}
+.cal-cell{
+  background:var(--surface);min-height:76px;padding:8px;
+  cursor:pointer;transition:background 0.15s;position:relative;
+}
 .cal-cell:hover{background:var(--surface2);}
 .cal-cell-empty{background:var(--bg);cursor:default;}
 .cal-cell-empty:hover{background:var(--bg);}
 .cal-cell-num{font-size:13px;font-weight:500;color:var(--muted);}
-.cal-cell-oggi .cal-cell-num{color:var(--blue);font-weight:700;}
+.cal-cell-oggi .cal-cell-num{
+  color:var(--blue);font-weight:700;
+}
 .cal-cell-badges{margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;}
 .cal-mini-dot{width:7px;height:7px;border-radius:50%;}
-.cal-cell-count{font-size:10px;color:var(--muted);margin-top:4px;}
-.cal-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px;}
-.cal-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;}
+.cal-cell-count{
+  font-size:10px;color:var(--muted);margin-top:4px;
+}
+.cal-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;z-index:2000;
+  padding:20px;
+}
+.cal-modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px;max-width:440px;width:100%;
+  max-height:80vh;overflow-y:auto;
+}
 .cal-modal h3{font-family:var(--font-h);font-size:16px;margin-bottom:16px;}
-.cal-modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+.cal-modal-close{
+  float:right;background:none;border:none;color:var(--muted);
+  font-size:18px;cursor:pointer;
+}
 .cal-modal-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
-.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;}
-.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:380px;width:100%;text-align:center;}
-.confirm-icon{width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;}
-.confirm-title{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:8px;}
-.confirm-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
-.confirm-actions{display:flex;gap:10px;}
-.confirm-btn{flex:1;padding:11px;border-radius:8px;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background 0.2s,transform 0.1s;}
-.confirm-btn:active{transform:scale(0.97);}
-.confirm-btn-cancel{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid var(--border);}
-.confirm-btn-cancel:hover{background:rgba(255,255,255,0.1);}
-.confirm-btn-remove{background:var(--red);color:#fff;}
-.confirm-btn-remove:hover{background:#dc2626;}
-@media screen and (max-width: 900px) {
-  .login-wrap{grid-template-columns:1fr;}
-  .login-visual{min-height:220px;}
-  .login-form-side{border-left:none;border-top:1px solid var(--border);}
-  .hero{padding:48px 28px 40px;}
-  .hero h1{font-size:34px;}
-  .lv-title{font-size:32px;}
-  .main{padding:28px 24px;}
-  .cards{grid-template-columns:repeat(2,1fr);}
-  .assist-grid{grid-template-columns:1fr;gap:24px;}
-  .ins-grid{grid-template-columns:1fr;}
-  .navbar{padding:0 20px;height:auto;min-height:60px;flex-wrap:wrap;row-gap:8px;padding-top:8px;padding-bottom:8px;}
-  .nav-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
-  #dash-nav-panel{right:0;left:auto;min-width:220px;max-width:calc(100vw - 40px);}
-  #bot-panel{width:calc(100vw - 32px);right:16px;left:16px;height:70vh;max-height:520px;}
-  #bot-btn{right:16px;bottom:16px;}
-  .dd-panel-camion, [id^="dd-panel-"]{max-width:100%;}
-}
-@media screen and (max-width: 600px) {
-  .hero{padding:36px 18px 32px;}
-  .hero h1{font-size:26px;}
-  .hero p{font-size:13px;}
-  .hero-pill{font-size:9px;}
-  .lv-title{font-size:26px;}
-  .lv-sub{font-size:13px;}
-  .login-form-side{padding:24px 18px;}
-  .main{padding:20px 16px;}
-  .cards{grid-template-columns:1fr;gap:14px;}
-  .hero-stats{flex-wrap:wrap;gap:20px 32px;}
-  .card{padding:18px;}
-  .ins-box{padding:18px;}
-  .ins-title{font-size:16px;flex-wrap:wrap;gap:8px;}
-  .sec-head{font-size:17px;flex-wrap:wrap;gap:8px;}
-  .navbar{padding:0 12px;}
-  .nav-logo{font-size:15px;}
-  .nav-name{display:none;}
-  .badge-ok{display:none;}
-  .btn-esci{padding:5px 10px;font-size:11px;}
-  #dash-nav-wrap #btn-dashboard span:first-child{padding:5px 8px 5px 10px;}
-  #dash-nav-panel{min-width:180px;font-size:12px;}
-  .table-box{overflow-x:auto;}
-  table{min-width:520px;}
-  .cal-grid{font-size:11px;}
-  .cal-cell{min-height:52px;padding:4px;}
-  .cal-legend{gap:10px;padding:14px 14px 10px;}
-  .cal-legend span{font-size:10px;}
-  .cal-nav{padding:12px 14px;}
-  .cal-nav-title{font-size:13px;}
-  .carico-item{flex-wrap:wrap;padding:14px 16px;}
-  .carico-data{order:3;text-align:left;margin-top:4px;}
-  .btn-prendi{order:4;margin-top:6px;}
-  .scrivici-box{padding:18px;}
-  #bot-panel{width:calc(100vw - 20px);right:10px;left:10px;bottom:80px;height:65vh;}
-  #bot-btn{width:48px;height:48px;font-size:19px;right:12px;bottom:12px;}
-  .cal-modal{padding:18px;max-width:calc(100vw - 32px);}
-}
-@media print{
-  .navbar,.hero,#bot-btn,#bot-panel,.ins-box,.cap-bar,#carichi-disponibili-wrap,.cal-box,.cards,.assist-grid,button,#dash-nav-wrap,.btn-cap{display:none !important;}
-  #timbro-stampa{
-    display:block !important;font-size:11px;color:#666;margin-bottom:16px;
-    border-bottom:1px solid #ccc;padding-bottom:8px;
-  }
-  body{background:#fff;color:#000;}
-  .table-box{border-color:#ccc;background:#fff;}
-  th,td{color:#000;border-color:#ddd;}
-}
 </style>
 </head>
 <body>
-<div id="timbro-stampa" style="display:none;"></div>
+
+<!-- LOADING -->
 <div id="loading">
   <div class="load-logo">Eco<span>Truck</span>Connect</div>
   <div class="spinner"></div>
   <p class="load-text">Caricamento in corso...</p>
 </div>
+
+<!-- ==================== LOGIN ==================== -->
 <div id="login-page">
   <div class="login-wrap">
     <div class="login-visual">
@@ -318,20 +640,26 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div class="lf-box">
         <div class="lf-logo">Eco<span>Truck</span>Connect</div>
         <div class="lf-tagline">Accedi al tuo spazio personale</div>
+
         <label class="lf-label">EMAIL</label>
         <input type="email" id="li-email" class="lf-input" placeholder="la-tua@email.com">
+
         <label class="lf-label">PASSWORD</label>
         <div class="pw-wrap">
           <input type="password" id="li-pw" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
           <span class="pw-eye" onclick="togglePw()">👁</span>
         </div>
+
         <button class="btn-accedi" onclick="doLogin()">Accedi &rarr;</button>
         <div id="li-err" class="lf-error"></div>
+
         <div class="lf-privacy"><a href="https://legal.synaimaxpro.com" target="_blank">Privacy Policy</a></div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ==================== RECUPERO / IMPOSTA PASSWORD ==================== -->
 <div id="recovery-page" style="display:none;">
   <div class="login-wrap">
     <div class="login-visual">
@@ -345,264 +673,190 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div class="lf-box">
         <div class="lf-logo">Eco<span>Truck</span>Connect</div>
         <div class="lf-tagline">Imposta nuova password</div>
+
         <label class="lf-label">NUOVA PASSWORD</label>
         <div class="pw-wrap">
           <input type="password" id="rc-pw" class="lf-input" placeholder="••••••••">
           <span class="pw-eye" onclick="toggleRcPw()">👁</span>
         </div>
+
         <label class="lf-label">CONFERMA PASSWORD</label>
         <input type="password" id="rc-pw2" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSetPassword()">
+
         <button class="btn-accedi" onclick="doSetPassword()">Imposta password &rarr;</button>
         <div id="rc-err" class="lf-error"></div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ==================== APP ==================== -->
 <div id="app">
+
+  <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-logo">Eco<span>Truck</span>Connect</div>
     <div class="nav-right">
       <span class="badge-ok">✓ Utente Verificato</span>
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
-      <div class="dd-wrap" style="position:relative;display:none;" id="dash-nav-wrap">
-        <button class="btn-esci" id="btn-dashboard" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);display:flex;align-items:center;gap:0;padding:0;overflow:hidden;">
-          <span onclick="apriDashSezione('overview')" style="padding:5px 10px 5px 14px;cursor:pointer;">📊 Dashboard</span>
-          <span onclick="event.stopPropagation();toggleDashMenu()" style="padding:5px 12px 5px 8px;cursor:pointer;border-left:1px solid rgba(59,130,246,0.25);font-size:10px;">▾</span>
-        </button>
-        <div id="dash-nav-panel" style="display:none;position:absolute;top:115%;right:0;min-width:210px;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px;z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
-          <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">✏️ Modifica i miei dati</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Le mie fatture</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('report')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📈 I miei report</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('notifiche')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔔 Notifiche</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('sicurezza')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔒 Sicurezza</div>
-        </div>
-      </div>
+      <button class="btn-esci" id="btn-profilo-trasp" style="display:none;" onclick="apriProfiloTrasportatore()">🚚 Il mio profilo</button>
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
   </nav>
+
+  <!-- HERO -->
   <section class="hero">
     <div class="hero-content">
-      <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
-      <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
-      <p>Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
+      <div class="hero-title-row">
+        <div>
+          <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
+          <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
+        </div>
+        <div class="hero-quick-icons" id="hero-quick-icons">
+          <button class="hqi-btn" onclick="vaiAIMieiMezzi()" title="I miei mezzi">
+            <span class="hqi-icon">🚚</span>
+            <span class="hqi-label">I miei mezzi</span>
+          </button>
+          <button class="hqi-btn" onclick="vaiAMieAutorizzazioni()" title="Le mie autorizzazioni">
+            <span class="hqi-icon">📋</span>
+            <span class="hqi-label">Le mie<br>autorizzazioni</span>
+          </button>
+        </div>
+      </div>
+      <p>Questo è il tuo angolo privato, creato solo per te. Carichi, calendario, storico, fatture. Tutto organizzato, tutto privato.</p>
       <div class="hero-stats">
-        <div><div class="hs-val" id="st-disp">—</div><div class="hs-label">Carichi disponibili oggi</div></div>
-        <div><div class="hs-val blue" id="st-guad">—</div><div class="hs-label">Guadagnato questo mese</div></div>
-        <div><div class="hs-val" id="st-tot">—</div><div class="hs-label">Carichi totali</div></div>
+        <div>
+          <div class="hs-val" id="st-disp">—</div>
+          <div class="hs-label">Carichi disponibili oggi</div>
+        </div>
+        <div>
+          <div class="hs-val blue" id="st-guad">—</div>
+          <div class="hs-label">Guadagnato questo mese</div>
+        </div>
+        <div>
+          <div class="hs-val" id="st-tot">—</div>
+          <div class="hs-label">Carichi totali</div>
+        </div>
       </div>
     </div>
   </section>
+
+  <!-- MAIN CONTENT -->
   <div class="main">
-    <div class="ins-box" id="riquadro-profilo-trasp" style="display:none;">
-      <div class="ins-title" style="margin-bottom:6px;">✅ Prima di iniziare, completa il tuo profilo</div>
-      <div class="ins-sub" style="margin-bottom:18px;">Inserisci i tuoi mezzi e le tue autorizzazioni: solo così ti mandiamo i carichi giusti per te.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div onclick="apriProfiloTrasportatore()" style="cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:18px;">🚚</span><span style="font-weight:700;color:#fff;font-size:14px;">I miei mezzi</span></div>
-          <div id="riepilogo-mezzi" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:10px;">Clicca per modificare →</div>
-        </div>
-        <div onclick="apriProfiloTrasportatore()" style="cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:18px;">📋</span><span style="font-weight:700;color:#fff;font-size:14px;">Le mie autorizzazioni</span></div>
-          <div id="riepilogo-autorizzazioni" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:10px;">Clicca per modificare →</div>
-        </div>
-      </div>
-    </div>
+
+    <!-- CAP TEMPORANEO (solo trasportatori) -->
     <div class="cap-bar" id="cap-bar-section">
       <span class="cap-bar-label">📍 Dove sei adesso?</span>
       <input class="cap-input" id="cap-temp-input" type="text" maxlength="5" placeholder="CAP attuale" pattern="[0-9]{5}">
       <button class="btn-cap" onclick="aggiornaCap()">Aggiorna posizione</button>
       <span class="cap-attivo" id="cap-attivo-label"></span>
     </div>
-    <div class="ins-box" id="sezione-dashboard" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div class="ins-title" style="margin-bottom:0;">📊 Dashboard</div>
-        <button class="btn-esci" onclick="chiudiDashSezione()" style="font-size:12px;">✕ Chiudi</button>
-      </div>
-      <div id="dash-sezione-overview" style="display:none;margin-top:18px;">
-        <div class="cards" style="margin-bottom:28px;">
-          <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Carichi disponibili oggi</h3><div class="card-num" id="dash-stat-disp">—</div></div>
-          <div class="card" style="cursor:default;"><div class="card-icon">📋</div><h3>Carichi totali</h3><div class="card-num" id="dash-stat-tot">—</div></div>
-          <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Guadagnato questo mese</h3><div class="card-num green" id="dash-stat-guad">—</div></div>
-        </div>
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🗓️ Calendario Carichi</h4>
-        <div class="cal-box">
-          <div class="cal-legend">
-            <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
-            <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
-            <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
-          </div>
-          <div class="cal-nav">
-            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1);renderCalendarioMensile('cal-grid-dash','cal-nav-title-dash')">←</button>
-            <div class="cal-nav-title" id="cal-nav-title-dash">—</div>
-            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1);renderCalendarioMensile('cal-grid-dash','cal-nav-title-dash')">→</button>
-          </div>
-          <div class="cal-grid" id="cal-grid-dash">
-            <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
-            <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
-          </div>
-        </div>
-      </div>
-      <div id="dash-sezione-dati" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">✏️ Modifica i miei dati</h4>
-        <div class="ins-grid">
-          <div class="ins-field"><label>Nome</label><input type="text" id="dd-nome"></div>
-          <div class="ins-field"><label>Cognome</label><input type="text" id="dd-cognome"></div>
-          <div class="ins-field ins-full"><label>Ragione sociale (solo se società)</label><input type="text" id="dd-ragione-sociale"></div>
-          <div class="ins-field"><label>Codice Fiscale</label><input type="text" id="dd-cf" style="text-transform:uppercase;"></div>
-          <div class="ins-field"><label>Partita IVA</label><input type="text" id="dd-piva"></div>
-          <div class="ins-field"><label>PEC</label><input type="email" id="dd-pec"></div>
-          <div class="ins-field"><label>Codice SDI</label><input type="text" id="dd-sdi"></div>
-          <div class="ins-field"><label>Camera di Commercio</label><input type="text" id="dd-cciaa"></div>
-          <div class="ins-field"><label>Numero REA</label><input type="text" id="dd-rea"></div>
-          <div class="ins-field ins-full"><label>Nome amministratore (solo se società)</label><input type="text" id="dd-admin"></div>
-          <div class="ins-field ins-full"><label>Indirizzo e civico — Sede</label><input type="text" id="dd-via"></div>
-          <div class="ins-field"><label>CAP</label><input type="text" id="dd-cap" maxlength="5" inputmode="numeric" oninput="autocompilaCittaDaDashboard()"></div>
-          <div class="ins-field"><label>Città</label><input type="text" id="dd-citta"></div>
-          <div class="ins-field"><label>Provincia</label><input type="text" id="dd-provincia" maxlength="2"></div>
-          <div class="ins-field"><label>Telefono</label><input type="tel" id="dd-telefono"></div>
-          <div class="ins-field"><label>Email (login — non modificabile qui)</label><input type="email" id="dd-email" disabled style="opacity:.5;"></div>
-        </div>
-        <button class="btn-cap" onclick="salvaDashDati()" style="margin-top:16px;">💾 Salva i miei dati</button>
-        <span id="dd-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-        <div id="dd-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio non è ancora collegato al sistema centrale (Make è in pausa) — la richiesta parte già correttamente, ma va abbinata a un'azione lato Make non ancora creata. Quando è collegato, ogni modifica avviserà automaticamente anche il team EcoTruckConnect.</div>
-        <h4 style="color:#fff;font-family:var(--font-h);margin:28px 0 6px;">📎 I miei documenti</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
-      </div>
-      <div id="dash-sezione-fatture" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-          <span>🧾 Le mie fatture</span>
-          <span style="display:flex;gap:8px;">
-            <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaStoricoCSV()" style="display:none;">⬇️ Scarica CSV</button>
-            <button class="btn-cap" onclick="stampaConTimbro()">🖨️ Stampa</button>
-          </span>
-        </h4>
-        <div class="table-box" style="margin-bottom:0;">
-          <table>
-            <thead><tr><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
-            <tbody id="dash-fatture-body"><tr><td colspan="4" class="empty">Caricamento...</td></tr></tbody>
-          </table>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:10px;">Aggiornato al: <span id="fatture-ultimo-agg">—</span></div>
-      </div>
-      <div id="dash-sezione-report" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📈 I miei report</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — dettaglio delle tratte effettuate, tempi, distanze.</div>
-      </div>
-      <div id="dash-sezione-notifiche" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔔 Notifiche</h4>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-          <input type="checkbox" id="notif-attive" checked style="width:18px;height:18px;">
-          <label for="notif-attive" style="cursor:pointer;color:#fff;font-size:13px;">Voglio ricevere notifiche</label>
-        </div>
-        <div style="margin-bottom:18px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
-          <div style="color:#fff;font-size:13px;font-weight:600;margin-bottom:8px;">📲 Notifiche Telegram</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Per riceverle devi collegare il bot (un click, una volta sola).</div>
-          <a href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank" class="btn-cap" style="display:inline-flex;text-decoration:none;">🔗 Collega Telegram</a>
-        </div>
-        <h4 style="color:#fff;font-family:var(--font-h);font-size:14px;margin-bottom:10px;">Tipi di notifica</h4>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-nuovo-carico" checked style="width:16px;height:16px;"><label for="notif-nuovo-carico" style="color:#fff;font-size:13px;cursor:pointer;">Nuovo carico disponibile nella tua zona</label></div>
-          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-pagamento" checked style="width:16px;height:16px;"><label for="notif-pagamento" style="color:#fff;font-size:13px;cursor:pointer;">Aggiornamenti sui pagamenti</label></div>
-          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-promemoria" style="width:16px;height:16px;"><label for="notif-promemoria" style="color:#fff;font-size:13px;cursor:pointer;">Promemoria e novità della piattaforma</label></div>
-        </div>
-        <div class="ins-grid" style="margin-bottom:10px;">
-          <div class="ins-field"><label>Ricevi notifiche dalle</label><input type="time" id="notif-ora-da" value="08:00"></div>
-          <div class="ins-field"><label>alle</label><input type="time" id="notif-ora-a" value="21:00"></div>
-          <div class="ins-field ins-full">
-            <label>Tono notifica</label>
-            <select id="notif-tono">
-              <option value="predefinito">Predefinito</option>
-              <option value="discreto">Discreto</option>
-              <option value="deciso">Deciso</option>
-              <option value="nessuno">Nessun suono</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn-cap" onclick="salvaNotifiche()" style="margin-top:6px;">💾 Salva preferenze notifiche</button>
-        <span id="notif-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
-        <div id="notif-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Preferenze salvate solo in questa sessione per ora — il salvataggio permanente arriva quando colleghiamo Make.</div>
-      </div>
-      <div id="dash-sezione-sicurezza" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔒 Sicurezza</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Se vuoi rigenerare la tua password per sicurezza, clicca qui sotto: il sistema ne genera una nuova e te la manda via email, senza che tu debba sceglierla.</div>
-        <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
-        <div id="rigenera-pw-msg" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;">✅ A breve riceverai un'email con i tuoi dati di accesso.</div>
-        <div id="pw-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima rigenerazione: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px;">⚠️ Non ancora collegato al sistema centrale (Make è in pausa) — pronto da attivare quando Make riparte.</div>
-        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(239,68,68,0.2);">
-          <div style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:8px;">Elimina il mio account</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Questa azione è definitiva: perderai l'accesso al portale e ai tuoi dati.</div>
-          <button class="btn-cap" onclick="chiediEliminazioneAccount()" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:var(--red);">🗑️ Elimina il mio account</button>
-        </div>
-      </div>
-    </div>
+
+    <!-- SEZIONE PROFILO TRASPORTATORE (parco mezzi + autorizzazioni) -->
     <div class="ins-box" id="sezione-profilo-trasportatore" style="display:none;">
       <div class="ins-title">🚚 Il Mio Profilo — Parco Mezzi e Autorizzazioni</div>
       <div class="ins-sub">Seleziona tutti i mezzi che possiedi e le autorizzazioni che hai. Puoi tornare qui e modificarle quando vuoi.</div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
-      <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
-        <button type="button" class="btn-cap" id="dd-btn-camion" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camion')">
-          <span id="dd-label-camion">Seleziona i mezzi...</span>
-          <span>▾</span>
-        </button>
-        <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:380px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-          <input type="text" id="ricerca-camion" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('camion', this.value)">
-          <div id="checkbox-tipo-camion" style="display:flex;flex-direction:column;gap:4px;"></div>
-          <div id="nessun-risultato-camion" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun mezzo trovato per "<span id="testo-ricerca-camion"></span>"</div>
-            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('camion')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
+
+      <div id="gruppo-mezzi-trasp">
+        <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
+        <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
+          <button type="button" class="btn-cap" id="dd-btn-camion" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camion')">
+            <span id="dd-label-camion">Seleziona i mezzi...</span>
+            <span>▾</span>
+          </button>
+          <div id="dd-panel-camion" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+            <div id="checkbox-tipo-camion" style="display:flex;flex-direction:column;gap:4px;"></div>
           </div>
         </div>
-      </div>
-      <div id="tags-camion" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
-      <div class="ins-field" id="specifica-trasp-wrap" style="display:none;max-width:520px;margin-top:10px;">
-        <label>Specifica il mezzo "Altro"</label>
-        <input type="text" id="specifica-trasp" placeholder="Descrivi il mezzo non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('camion');}">
-        <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('camion')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
-      </div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
-      <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
-        <button type="button" class="btn-cap" id="dd-btn-aut" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('aut')">
-          <span id="dd-label-aut">Seleziona le autorizzazioni...</span>
-          <span>▾</span>
-        </button>
-        <div id="dd-panel-aut" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-          <div id="checkbox-autorizzazioni" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <div id="tags-camion" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+        <div class="ins-field" id="specifica-trasp-wrap" style="display:none;max-width:520px;margin-top:10px;">
+          <label>Specifica il mezzo "Altro"</label>
+          <input type="text" id="specifica-trasp" placeholder="Descrivi il mezzo non presente nell'elenco">
         </div>
       </div>
-      <div id="tags-aut" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
+      <div id="gruppo-aut-trasp">
+        <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
+        <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
+          <button type="button" class="btn-cap" id="dd-btn-aut" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('aut')">
+            <span id="dd-label-aut">Seleziona le autorizzazioni...</span>
+            <span>▾</span>
+          </button>
+          <div id="dd-panel-aut" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+            <div id="checkbox-autorizzazioni" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+        </div>
+        <div id="tags-aut" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      </div>
+
       <button class="btn-cap" onclick="salvaProfiloTrasportatore()" style="margin-top:16px;">💾 Salva il mio profilo</button>
       <span id="profilo-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
     </div>
+
+    <!-- SEZIONE INSERIMENTO CARICHI (solo aziende) -->
     <div class="ins-box" id="sezione-azienda" style="display:none;">
+
       <div class="ins-title">📦 Pubblica un Carico</div>
       <div class="ins-sub">Inserisci i dettagli del carico. Il sistema trova automaticamente il trasportatore giusto nella zona.</div>
       <div class="ins-grid">
-        <div class="ins-field"><label>CAP Partenza *</label><input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026" inputmode="numeric" oninput="autocompilaCittaCarico('part')"></div>
-        <div class="ins-field"><label>CAP Arrivo *</label><input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100" inputmode="numeric" oninput="autocompilaCittaCarico('arr')"></div>
-        <div class="ins-field"><label>Città Partenza *</label><input type="text" id="ins-citta-part" placeholder="es. Favara"></div>
-        <div class="ins-field"><label>Città Arrivo *</label><input type="text" id="ins-citta-arr" placeholder="es. Palermo"></div>
-        <div class="ins-field"><label>Data Carico *</label><input type="date" id="ins-data"></div>
-        <div class="ins-field" style="position:relative;">
-          <label>Tipo Merce *</label>
-          <input type="text" id="ins-merce-ricerca" placeholder="Cerca o scrivi un tipo di merce..." autocomplete="off" onclick="apriTendinaMerce()" oninput="filtraTendinaMerce(this.value)">
-          <input type="hidden" id="ins-merce" value="">
-          <div id="pannello-merce" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:60;margin-top:4px;">
-            <div id="lista-merce"></div>
-            <div id="nessun-risultato-merce" style="display:none;margin:6px 6px 0;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
-              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun tipo trovato per "<span id="testo-ricerca-merce"></span>"</div>
-              <button type="button" onclick="aggiungiNuovaMerce()" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo tipo di merce</button>
-            </div>
-          </div>
+        <div class="ins-field">
+          <label>CAP Partenza *</label>
+          <input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026">
         </div>
-        <div class="ins-field ins-full"><label>Specifica *</label><input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari..."></div>
-        <div class="ins-field ins-full"><label>Note *</label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro..."></textarea></div>
+        <div class="ins-field">
+          <label>CAP Arrivo *</label>
+          <input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100">
+        </div>
+        <div class="ins-field">
+          <label>Città Partenza *</label>
+          <input type="text" id="ins-citta-part" placeholder="es. Favara">
+        </div>
+        <div class="ins-field">
+          <label>Città Arrivo *</label>
+          <input type="text" id="ins-citta-arr" placeholder="es. Palermo">
+        </div>
+        <div class="ins-field">
+          <label>Data Carico *</label>
+          <input type="date" id="ins-data">
+        </div>
+        <div class="ins-field">
+          <label>Tipo Merce *</label>
+          <select id="ins-merce">
+            <option value="">Seleziona tipo...</option>
+            <option>Alimentare</option>
+            <option>Mobili e arredi</option>
+            <option>Elettrodomestici</option>
+            <option>Materiali edili/inerti (17 09 04)</option>
+            <option>Ferrosi (17 04 05)</option>
+            <option>Non ferrosi (17 04 07)</option>
+            <option>Legno (17 02 01)</option>
+            <option>Carta e cartone (20 01 01)</option>
+            <option>Vetro (17 02 02)</option>
+            <option>Materiale plastico (19 12 04)</option>
+            <option>Rifiuti pericolosi</option>
+            <option>Rifiuti non pericolosi</option>
+            <option>Rifiuti urbani (20 03 01)</option>
+            <option>Rifiuti elettronici/RAEE (20 01 36)</option>
+            <option>Rifiuti organici (20 01 08)</option>
+            <option>Prodotti chimici</option>
+            <option>Macchinari/attrezzature</option>
+            <option>Merci deperibili/frigo</option>
+            <option>Merci generiche/pallettizzate</option>
+            <option>Abbigliamento/tessile</option>
+            <option>Altro (specificare)</option>
+          </select>
+        </div>
+        <div class="ins-field ins-full">
+          <label>Specifica *</label>
+          <input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari...">
+        </div>
+        <div class="ins-field ins-full">
+          <label>Note *</label>
+          <textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro..."></textarea>
+        </div>
       </div>
+
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione carico</h4>
       <div class="ins-grid">
         <div class="ins-field" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
@@ -618,115 +872,138 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <input type="text" id="ins-cer" placeholder="es. 17 04 05">
         </div>
       </div>
+
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo richiesto *</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-mezzoRichiesto" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('mezzoRichiesto')">
           <span id="dd-label-mezzoRichiesto">Seleziona i mezzi richiesti...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-mezzoRichiesto" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:380px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
-          <input type="text" id="ricerca-mezzoRichiesto" placeholder="Cerca un mezzo (almeno 3 lettere)..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;" oninput="filtraOpzioniDropdown('mezzoRichiesto', this.value)">
+        <div id="dd-panel-mezzoRichiesto" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:320px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
           <div id="checkbox-mezzo-richiesto" style="display:flex;flex-direction:column;gap:4px;"></div>
-          <div id="nessun-risultato-mezzoRichiesto" style="display:none;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Nessun mezzo trovato per "<span id="testo-ricerca-mezzoRichiesto"></span>"</div>
-            <button type="button" onclick="aggiungiNuovaOpzioneDropdown('mezzoRichiesto')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);">+ Aggiungi come nuovo mezzo</button>
-          </div>
         </div>
       </div>
       <div id="tags-mezzoRichiesto" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
-      <div class="ins-field" id="specifica-mezzoRichiesto-wrap" style="display:none;max-width:520px;margin-top:10px;">
-        <label>Specifica il mezzo "Altro"</label>
-        <input type="text" id="specifica-mezzoRichiesto" placeholder="Descrivi il mezzo richiesto non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('mezzoRichiesto');}">
-        <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('mezzoRichiesto')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
-      </div>
+
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazione richiesta al trasportatore *</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-autRichiesta" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('autRichiesta')">
           <span id="dd-label-autRichiesta">Seleziona le autorizzazioni richieste...</span>
           <span>▾</span>
         </button>
-        <div id="dd-panel-autRichiesta" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:280px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
+        <div id="dd-panel-autRichiesta" style="display:none;position:absolute;top:105%;left:0;right:0;max-height:220px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px;z-index:50;">
           <div id="checkbox-aut-richiesta" style="display:flex;flex-direction:column;gap:4px;"></div>
         </div>
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
       <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica Carico</button>
       <div class="ins-ok" id="ins-ok">✅ Carico pubblicato! I trasportatori nella zona riceveranno la notifica.</div>
       <div class="ins-err" id="ins-err"></div>
     </div>
-    <div id="contenuto-normale-portale">
-      <div id="carichi-disponibili-wrap">
-        <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
-        <div class="carichi-lista" id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
+
+    <!-- CARICHI DISPONIBILI CLICCABILI (solo trasportatori) -->
+    <div id="carichi-disponibili-wrap">
+      <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
+      <div class="carichi-lista" id="carichi-lista">
+        <div class="carico-empty">Caricamento carichi in corso...</div>
       </div>
-      <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
-      <div class="cal-box">
-        <div class="cal-legend">
-          <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
-          <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
-          <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
-          <span style="margin-left:auto;">Clicca un giorno per vedere o inserire carichi</span>
-        </div>
-        <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1)">←</button>
-          <div class="cal-nav-title" id="cal-nav-title">—</div>
-          <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1)">→</button>
-        </div>
-        <div class="cal-grid" id="cal-grid">
-          <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
-          <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
-        </div>
+    </div>
+
+    <!-- CALENDARIO MENSILE INTERATTIVO -->
+    <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
+    <div class="cal-box">
+      <div class="cal-legend">
+        <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
+        <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
+        <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
+        <span style="margin-left:auto;">Clicca un giorno per vedere o inserire carichi</span>
       </div>
-      <div class="cards">
-        <div class="card" onclick="document.getElementById('calendario-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
-          <div class="card-icon">📅</div><h3>Calendario Carichi</h3>
-          <p>Carichi disponibili in tempo reale. Blu = disponibile, Arancione = in pagamento, Rosso = preso.</p>
-          <div class="card-num" id="c-disp">—</div><div class="card-sub">carichi disponibili oggi</div>
-        </div>
-        <div class="card">
-          <div class="card-icon">📋</div><h3>Storico Personale</h3>
-          <p>Tutti i carichi che hai accaparrato, giorno per giorno. Sempre aggiornato in tempo reale.</p>
-          <div class="card-num" id="c-tot">—</div><div class="card-sub">carichi totali</div>
-        </div>
-        <div class="card">
-          <div class="card-icon">🧾</div><h3>Le Tue Fatture</h3>
-          <p>Ogni accaparramento registrato. Pronto quando ti serve per la contabilità.</p>
-          <div class="card-num green" id="c-guad">—</div><div class="card-sub">guadagnato questo mese</div>
-        </div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1)">←</button>
+        <div class="cal-nav-title" id="cal-nav-title">—</div>
+        <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1)">→</button>
       </div>
-      <div class="sec-head" style="justify-content:space-between;">📦 Storico Carichi <button class="btn-cap" onclick="stampaConTimbro()" style="font-size:12px;">🖨️ Stampa</button></div>
-      <div class="table-box">
-        <table>
-          <thead><tr><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
-          <tbody id="storico-body"><tr><td colspan="4" class="empty">Caricamento storico...</td></tr></tbody>
-        </table>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
+        <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
       </div>
-      <div class="assist-grid">
-        <div class="assist-txt">
-          <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
-          <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
-          <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo le fatture?</p>
-          <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
-        </div>
-        <div>
-          <div class="scrivici-box">
-            <div class="sc-title">✉️ Scrivici</div>
-            <div class="sc-sub">Compila il modulo. Ti rispondiamo entro 24 ore, tutti i giorni.</div>
-            <form name="supporto" data-netlify="true" onsubmit="inviaForm(event)">
-              <input type="hidden" name="form-name" value="supporto">
-              <input class="sc-input" type="text" id="sc-nome" name="nome" placeholder="Il tuo nome" required>
-              <textarea class="sc-input" id="sc-msg" name="messaggio" placeholder="Scrivi quello di cui hai bisogno..." required></textarea>
-              <input type="hidden" id="sc-email" name="email">
-              <button type="submit" class="btn-send">Invia messaggio →</button>
-            </form>
-            <div class="sc-ok" id="sc-ok">✅ Messaggio inviato! Ti risponderemo entro 24 ore.</div>
-          </div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="cards">
+      <div class="card" onclick="document.getElementById('calendario-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
+        <div class="card-icon">📅</div>
+        <h3>Calendario Carichi</h3>
+        <p>Carichi disponibili in tempo reale. Blu = disponibile, Arancione = in pagamento, Rosso = preso.</p>
+        <div class="card-num" id="c-disp">—</div>
+        <div class="card-sub">carichi disponibili oggi</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h3>Storico Personale</h3>
+        <p>Tutti i carichi che hai accaparrato, giorno per giorno. Sempre aggiornato in tempo reale.</p>
+        <div class="card-num" id="c-tot">—</div>
+        <div class="card-sub">carichi totali</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧾</div>
+        <h3>Le Tue Fatture</h3>
+        <p>Ogni accaparramento registrato. Pronto quando ti serve per la contabilità.</p>
+        <div class="card-num green" id="c-guad">—</div>
+        <div class="card-sub">guadagnato questo mese</div>
+      </div>
+    </div>
+
+    <!-- STORICO TABLE -->
+    <div class="sec-head">📦 Storico Carichi</div>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>ID Richiesta</th>
+            <th>Stato</th>
+            <th>Importo</th>
+          </tr>
+        </thead>
+        <tbody id="storico-body">
+          <tr><td colspan="4" class="empty">Caricamento storico...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ASSISTENZA -->
+    <div class="assist-grid">
+      <div class="assist-txt">
+        <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
+        <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
+        <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo le fatture?</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
+      </div>
+      <div>
+        <div class="scrivici-box">
+          <div class="sc-title">✉️ Scrivici</div>
+          <div class="sc-sub">Compila il modulo. Ti rispondiamo entro 24 ore, tutti i giorni.</div>
+          <form name="supporto" data-netlify="true" onsubmit="inviaForm(event)">
+            <input type="hidden" name="form-name" value="supporto">
+            <input class="sc-input" type="text" id="sc-nome" name="nome" placeholder="Il tuo nome" required>
+            <textarea class="sc-input" id="sc-msg" name="messaggio" placeholder="Scrivi quello di cui hai bisogno..." required></textarea>
+            <input type="hidden" id="sc-email" name="email">
+            <button type="submit" class="btn-send">Invia messaggio →</button>
+          </form>
+          <div class="sc-ok" id="sc-ok">✅ Messaggio inviato! Ti risponderemo entro 24 ore.</div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- BOT BUTTON -->
 <button id="bot-btn" onclick="toggleBot()" title="Assistente EcoTruckConnect">🤖</button>
+
+<!-- BOT PANEL -->
 <div id="bot-panel">
   <div class="bot-head">
     <div class="bot-av">🤖</div>
@@ -745,115 +1022,36 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     <button class="bot-send" onclick="sendBot()">➤</button>
   </div>
 </div>
+
+<!-- ==================== SCRIPT ==================== -->
 <script>
-const PROXY_URL = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
-const PREZZO    = 20;
-const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+/* ====================================================
+   ⚙️  CONFIGURAZIONE — CAMBIA SOLO QUESTI VALORI
+   ==================================================== */
+const PROXY_URL = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy sicuro Make: tutte le chiamate ad Airtable e all'IA passano da qui, niente chiavi esposte nel sito
+const PREZZO    = 20;                               // € per carico (cambia se vuoi €20)
+/* ==================================================== */
+
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak'; // Proxy Portale EcoTruckConnect (Make) — usato da rilevaTipoUtente() e pubblicaCarico()
 
 let currentUser = null;
+
+// ===== PROFILO TRASPORTATORE — Parco mezzi e Autorizzazioni =====
 let trasportatoreRecordId = null;
 let trasportatoreFieldsCorrenti = {};
 
 const TIPO_CAMION_OPZIONI = ["Furgone piccolo (fino 3,5t)","Furgone medio","Furgone grande","Furgone frigo","Pick-up","Motrice piccola (7,5t)","Motrice media (12t)","Motrice grande (18t)","Motrice centinata","Motrice cassonata","Motrice frigo","Motrice cisterna","Motrice con gru","Motrice ribaltabile","Motrice portacontainer","Bilico centinato","Bilico frigo","Bilico cisterna","Bilico portacontainer","Bilico cassonato","Bilico ribaltabile","Bilico ADR (merci pericolose)","Bilico con sponda idraulica","Bilico portabobine","Bilico portamacchine (car transporter)","Autotreno centinato","Autotreno frigo","Autotreno cisterna","Autotreno cassonato","Autotreno ribaltabile","Cassone scarrabile","Semirimorchio ribassato (lowbed)","Semirimorchio allungabile","Trasporto eccezionale","Autogru","Autobetoniera","Autospurgo","Portacontainer 20 piedi","Portacontainer 40 piedi","Bisarca (trasporto veicoli)","Trattore stradale","Trattore con rimorchio","Rimorchio centinato","Rimorchio frigo","Rimorchio cassonato","Autocompattatore","Autospazzatrice","Autocarro con sponda caricatrice","Muletto/carrello elevatore su strada","Altro (specificare)"];
 
-let OPZIONI_MEZZO_TRASPORTATORE = [...TIPO_CAMION_OPZIONI];
-window.SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap', mezzoRichiesto: 'specifica-mezzoRichiesto-wrap' };
-const SPECIFICA_INPUT_ID = { camion: 'specifica-trasp', mezzoRichiesto: 'specifica-mezzoRichiesto' };
+const AUTORIZZAZIONI_OPZIONI = ["Conto Terzi","Albo Gestori Ambientali (Rifiuti)","Trasporto Merci Pericolose (ADR)","Trasporto Animali Vivi","Trasporto Alimentare (ATP)"];
 
-function confermaSpecificaAltro(which) {
-  const input = document.getElementById(SPECIFICA_INPUT_ID[which]);
-  const testo = input.value.trim();
-  if (!testo) return;
-  const cfg = DROPDOWN_CONFIG[which];
-  if (cfg.opzioni.some(o => o.toLowerCase() === testo.toLowerCase())) {
-    alert('Questa voce è già presente nell\'elenco.');
-    return;
-  }
-  let selezionateAttuali = Array.from(document.querySelectorAll('#' + cfg.containerId + ' input:checked')).map(el => el.value);
-  selezionateAttuali = selezionateAttuali.filter(v => v !== 'Altro (specificare)');
-  cfg.opzioni.push(testo);
-  selezionateAttuali.push(testo);
-  renderCheckboxGroup(which, selezionateAttuali);
-  aggiornaEtichettaTendina(which);
-  input.value = '';
-  document.getElementById(window.SPECIFICA_WRAP_ID[which]).style.display = 'none';
-}
-
-// AGGIORNATO 26/8 — autorizzazioni sostituite con le sotto-categorie ufficiali
-// reali (Albo Gestori Ambientali D.M. 120/2014, classi ADR, tipi Reg. CE 1/2005,
-// livelli ATP). Il matching (carichiCompatibiliPerTrasportatore) confronta le
-// stringhe esatte tra profilo trasportatore e requisiti del carico.
-const AUTORIZZAZIONI_STRUTTURA = [
-  {nome:"Conto Terzi", sub:null},
-  {nome:"Albo Gestori Ambientali (Rifiuti)", sub:["Categoria 1 (Rifiuti Urbani)","Categoria 2bis (Rifiuti propri)","Categoria 3bis (RAEE)","Categoria 4 (Speciali non pericolosi)","Categoria 5 (Speciali pericolosi)","Categoria 6 (Transfrontalieri)","Categoria 8 (Intermediazione)","Categoria 9 (Bonifica siti)","Categoria 10 (Bonifica amianto)"]},
-  {nome:"ADR - Merci Pericolose", sub:["Classe 1 (Esplosivi)","Classe 2 (Gas)","Classe 3 (Liquidi infiammabili)","Classe 4 (Solidi infiammabili)","Classe 5 (Comburenti/perossidi)","Classe 6 (Tossiche/infettive)","Classe 7 (Radioattive)","Classe 8 (Corrosive)","Classe 9 (Varie)"]},
-  {nome:"Animali Vivi", sub:["Tipo 1 (Viaggi brevi, sotto 8h)","Tipo 2 (Viaggi lunghi, oltre 8h)"]},
-  {nome:"Alimentare (ATP)", sub:["Isotermico","Frigorifero (0°C)","Frigorifero rinforzato (-20°C)"]}
-];
-let autAccordionAperto = { aut: null, autRichiesta: null };
-
-function renderAutorizzazioniAccordion(which, selezionate) {
-  const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
-  const cont = document.getElementById(containerId);
-  cont.innerHTML = '';
-  AUTORIZZAZIONI_STRUTTURA.forEach((cat, i) => {
-    if (cat.sub === null) {
-      const checked = selezionate.includes(cat.nome);
-      cont.insertAdjacentHTML('beforeend',
-        '<label style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">' +
-        '<input type="checkbox" value="'+cat.nome+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+cat.nome+
-        '</label>'
-      );
-    } else {
-      const nSel = cat.sub.filter(s => selezionate.includes(s)).length;
-      const aperto = autAccordionAperto[which] === i;
-      const wrap = document.createElement('div');
-      wrap.style.marginBottom = '4px';
-      wrap.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;" onclick="toggleAutCategoria(\''+which+'\','+i+')">' +
-        '<span>'+cat.nome+(nSel>0?' <span style="color:#3b82f6;font-weight:400;font-size:11px;">('+nSel+' selezionate)</span>':'')+'</span><span>'+(aperto?'▴':'▾')+'</span>' +
-        '</div>';
-      if (aperto) {
-        let subHtml = '<div style="margin-left:14px;border-left:2px solid rgba(255,255,255,0.15);padding-left:10px;">';
-        cat.sub.forEach(s => {
-          const checked = selezionate.includes(s);
-          subHtml += '<label style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">' +
-            '<input type="checkbox" value="'+s+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+s+
-            '</label>';
-        });
-        subHtml += '</div>';
-        wrap.insertAdjacentHTML('beforeend', subHtml);
-      }
-      cont.appendChild(wrap);
-    }
-  });
-}
-
-function toggleAutCategoria(which, i) {
-  autAccordionAperto[which] = autAccordionAperto[which] === i ? null : i;
-  setTimeout(() => {
-    const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
-    const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value);
-    renderAutorizzazioniAccordion(which, sel);
-  }, 0);
-}
-
-function toggleAutFoglia(which) {
-  const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
-  const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value);
-  renderAutorizzazioniAccordion(which, sel);
-  aggiornaEtichettaTendina(which);
-}
-
-let OPZIONI_MERCE = ["Alimentare","Mobili e arredi","Elettrodomestici","Materiali edili/inerti (17 09 04)","Ferrosi (17 04 05)","Non ferrosi (17 04 07)","Legno (17 02 01)","Carta e cartone (20 01 01)","Vetro (17 02 02)","Materiale plastico (19 12 04)","Rifiuti pericolosi","Rifiuti non pericolosi","Rifiuti urbani (20 03 01)","Rifiuti elettronici/RAEE (20 01 36)","Rifiuti organici (20 01 08)","Prodotti chimici","Macchinari/attrezzature","Merci deperibili/frigo","Merci generiche/pallettizzate","Abbigliamento/tessile"];
-
-let OPZIONI_MEZZO_RICHIESTO = [...TIPO_CAMION_OPZIONI];
-
+// ===== TENDINE A TAG — configurazione generica =====
+// Usata sia dal profilo trasportatore (parco mezzi/autorizzazioni possedute)
+// sia dal form Pubblica Carico azienda (mezzo/autorizzazione richiesta per il carico).
 const DROPDOWN_CONFIG = {
-  camion:        { containerId: 'checkbox-tipo-camion',      opzioni: OPZIONI_MEZZO_TRASPORTATORE, singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
-  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: [],  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
-  mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: OPZIONI_MEZZO_RICHIESTO, singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
-  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: [],  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
+  camion:        { containerId: 'checkbox-tipo-camion',      opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo selezionato',        plurale: 'mezzi selezionati',        placeholder: 'Seleziona i mezzi...' },
+  aut:           { containerId: 'checkbox-autorizzazioni',   opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione selezionata', plurale: 'autorizzazioni selezionate', placeholder: 'Seleziona le autorizzazioni...' },
+  mezzoRichiesto:{ containerId: 'checkbox-mezzo-richiesto',  opzioni: TIPO_CAMION_OPZIONI,     singolare: 'mezzo richiesto',          plurale: 'mezzi richiesti',          placeholder: 'Seleziona i mezzi richiesti...' },
+  autRichiesta:  { containerId: 'checkbox-aut-richiesta',    opzioni: AUTORIZZAZIONI_OPZIONI,  singolare: 'autorizzazione richiesta', plurale: 'autorizzazioni richieste', placeholder: 'Seleziona le autorizzazioni richieste...' }
 };
 
 function renderCheckboxGroup(which, selezionate) {
@@ -876,115 +1074,8 @@ function toggleDropdown(which) {
   Object.keys(DROPDOWN_CONFIG).forEach(w => {
     if (w !== which) { const p = document.getElementById('dd-panel-' + w); if (p) p.style.display = 'none'; }
   });
-  const staAprendo = (panel.style.display === 'none' || !panel.style.display);
-  panel.style.display = staAprendo ? 'block' : 'none';
-  if (staAprendo && (which === 'aut' || which === 'autRichiesta')) {
-    autAccordionAperto[which] = null;
-    const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
-    renderAutorizzazioniAccordion(which, Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value));
-  } else if (staAprendo) {
-    const ricerca = document.getElementById('ricerca-' + which);
-    if (ricerca) { ricerca.value = ''; filtraOpzioniDropdown(which, ''); }
-  }
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
 }
-
-function filtraOpzioniDropdown(which, testo) {
-  const cfg = DROPDOWN_CONFIG[which];
-  const q = testo.trim().toLowerCase();
-  const labels = document.querySelectorAll('#' + cfg.containerId + ' label');
-  let visibili = 0;
-  labels.forEach(lbl => {
-    const match = q === '' || lbl.textContent.toLowerCase().includes(q);
-    lbl.style.display = match ? 'flex' : 'none';
-    if (match) visibili++;
-  });
-  const nessunRisultato = document.getElementById('nessun-risultato-' + which);
-  if (!nessunRisultato) return;
-  if (q.length >= 3 && visibili === 0) {
-    document.getElementById('testo-ricerca-' + which).textContent = testo.trim();
-    nessunRisultato.style.display = 'block';
-  } else {
-    nessunRisultato.style.display = 'none';
-  }
-}
-
-function aggiungiNuovaOpzioneDropdown(which) {
-  const input = document.getElementById('ricerca-' + which);
-  const nuovoValore = input.value.trim();
-  if (!nuovoValore) return;
-  const cfg = DROPDOWN_CONFIG[which];
-  if (cfg.opzioni.some(o => o.toLowerCase() === nuovoValore.toLowerCase())) {
-    alert('Questa voce è già presente nell\'elenco.');
-    return;
-  }
-  const selezionateAttuali = Array.from(document.querySelectorAll('#' + cfg.containerId + ' input:checked')).map(el => el.value);
-  cfg.opzioni.push(nuovoValore);
-  selezionateAttuali.push(nuovoValore);
-  renderCheckboxGroup(which, selezionateAttuali);
-  aggiornaEtichettaTendina(which);
-  input.value = '';
-  document.getElementById('nessun-risultato-' + which).style.display = 'none';
-}
-
-function renderListaMerce(filtro) {
-  const cont = document.getElementById('lista-merce');
-  cont.innerHTML = '';
-  const q = (filtro || '').trim().toLowerCase();
-  let visibili = 0;
-  OPZIONI_MERCE.forEach(op => {
-    if (q && !op.toLowerCase().includes(q)) return;
-    visibili++;
-    const voce = document.createElement('div');
-    voce.textContent = op;
-    voce.style.cssText = 'padding:9px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;';
-    voce.onmouseenter = () => voce.style.background = 'rgba(255,255,255,0.08)';
-    voce.onmouseleave = () => voce.style.background = 'transparent';
-    voce.onclick = () => selezionaMerce(op);
-    cont.appendChild(voce);
-  });
-  const nessunRisultato = document.getElementById('nessun-risultato-merce');
-  if (q.length >= 3 && visibili === 0) {
-    document.getElementById('testo-ricerca-merce').textContent = filtro.trim();
-    nessunRisultato.style.display = 'block';
-  } else {
-    nessunRisultato.style.display = 'none';
-  }
-}
-
-function apriTendinaMerce() {
-  document.getElementById('pannello-merce').style.display = 'block';
-  renderListaMerce(document.getElementById('ins-merce-ricerca').value);
-}
-
-function filtraTendinaMerce(testo) {
-  document.getElementById('ins-merce').value = '';
-  renderListaMerce(testo);
-}
-
-function selezionaMerce(valore) {
-  document.getElementById('ins-merce').value = valore;
-  document.getElementById('ins-merce-ricerca').value = valore;
-  document.getElementById('pannello-merce').style.display = 'none';
-}
-
-function aggiungiNuovaMerce() {
-  const testo = document.getElementById('ins-merce-ricerca').value.trim();
-  if (!testo) return;
-  if (OPZIONI_MERCE.some(o => o.toLowerCase() === testo.toLowerCase())) {
-    alert('Questo tipo di merce è già presente nell\'elenco.');
-    return;
-  }
-  OPZIONI_MERCE.push(testo);
-  selezionaMerce(testo);
-  document.getElementById('nessun-risultato-merce').style.display = 'none';
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#ins-merce-ricerca') && !e.target.closest('#pannello-merce')) {
-    const p = document.getElementById('pannello-merce');
-    if (p) p.style.display = 'none';
-  }
-});
 
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.dd-wrap')) {
@@ -998,6 +1089,8 @@ function aggiornaEtichettaTendina(which) {
   const n = checks.length;
   const label = document.getElementById('dd-label-' + which);
   label.textContent = n === 0 ? cfg.placeholder : (n === 1 ? '1 ' + cfg.singolare : n + ' ' + cfg.plurale);
+
+  // Etichette visibili sotto, con crocetta per togliere velocemente
   const tagsWrap = document.getElementById('tags-' + which);
   tagsWrap.innerHTML = '';
   checks.forEach(chk => {
@@ -1005,20 +1098,14 @@ function aggiornaEtichettaTendina(which) {
     tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:rgba(0,150,255,0.15);border:1px solid rgba(0,150,255,0.4);color:#fff;padding:5px 10px;border-radius:20px;font-size:12px;';
     tag.innerHTML = chk.value + ' <span style="cursor:pointer;font-weight:700;opacity:0.8;">✕</span>';
     tag.querySelector('span').onclick = () => {
-      chiediConfermaRimozione(chk.value, () => {
-        if (which === 'aut' || which === 'autRichiesta') {
-          const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
-          const sel = Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(el => el.value).filter(v => v !== chk.value);
-          renderAutorizzazioniAccordion(which, sel);
-        } else {
-          chk.checked = false;
-        }
-        aggiornaEtichettaTendina(which);
-      });
+      chk.checked = false;
+      aggiornaEtichettaTendina(which);
     };
     tagsWrap.appendChild(tag);
   });
-  const SPECIFICA_WRAP_ID = window.SPECIFICA_WRAP_ID;
+
+  // "Altro (specificare)" — mostra/nasconde il campo testo di specifica per il profilo mezzi
+  const SPECIFICA_WRAP_ID = { camion: 'specifica-trasp-wrap' };
   if (SPECIFICA_WRAP_ID[which]) {
     const altroSelezionato = Array.from(checks).some(chk => chk.value === 'Altro (specificare)');
     const wrap = document.getElementById(SPECIFICA_WRAP_ID[which]);
@@ -1026,329 +1113,39 @@ function aggiornaEtichettaTendina(which) {
   }
 }
 
-function chiediConfermaRimozione(nomeElemento, onConferma) {
-  const esistente = document.getElementById('confirm-overlay');
-  if (esistente) esistente.remove();
-  const html = `
-    <div class="confirm-overlay" id="confirm-overlay">
-      <div class="confirm-box">
-        <div class="confirm-icon">⚠️</div>
-        <div class="confirm-title">Rimuovere questa selezione?</div>
-        <div class="confirm-text">Stai per rimuovere <strong>"${nomeElemento}"</strong> dalla tua selezione. Ricordati di premere "Salva" dopo per rendere definitiva la modifica.</div>
-        <div class="confirm-actions">
-          <button class="confirm-btn confirm-btn-cancel" id="confirm-annulla">Annulla</button>
-          <button class="confirm-btn confirm-btn-remove" id="confirm-rimuovi">Sì, rimuovi</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', html);
-  const overlay = document.getElementById('confirm-overlay');
-  document.getElementById('confirm-annulla').onclick = () => overlay.remove();
-  document.getElementById('confirm-rimuovi').onclick = () => {
-    overlay.remove();
-    onConferma();
-  };
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-}
-
 function resetTendina(which) {
-  if (which === 'aut' || which === 'autRichiesta') {
-    autAccordionAperto[which] = null;
-    renderAutorizzazioniAccordion(which, []);
-  } else {
-    const cfg = DROPDOWN_CONFIG[which];
-    document.querySelectorAll('#' + cfg.containerId + ' input:checked').forEach(chk => chk.checked = false);
-  }
+  const cfg = DROPDOWN_CONFIG[which];
+  document.querySelectorAll('#' + cfg.containerId + ' input:checked').forEach(chk => chk.checked = false);
   aggiornaEtichettaTendina(which);
 }
 
 function apriProfiloTrasportatore() {
   document.getElementById('sezione-azienda').style.display = 'none';
-  document.getElementById('sezione-dashboard').style.display = 'none';
   document.getElementById('sezione-profilo-trasportatore').style.display = 'block';
   const camionSel = trasportatoreFieldsCorrenti.tipo_camion || [];
   const autSel = trasportatoreFieldsCorrenti.autorizzazioni || [];
   renderCheckboxGroup('camion', camionSel);
-  renderAutorizzazioniAccordion('aut', autSel);
+  renderCheckboxGroup('aut', autSel);
   aggiornaEtichettaTendina('camion');
   aggiornaEtichettaTendina('aut');
   document.getElementById('specifica-trasp').value = trasportatoreFieldsCorrenti.specifica || '';
   document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-/* Riquadro grande "Prima di iniziare" in cima alla home — mostra sempre lo
-   stato reale di quello che il trasportatore ha già salvato (mezzi e
-   autorizzazioni), come una cassaforte aperta. Va richiamata ogni volta
-   che trasportatoreFieldsCorrenti cambia (caricamento dati o salvataggio). */
-function aggiornaRiepilogoProfiloTrasportatore() {
-  const riquadro = document.getElementById('riquadro-profilo-trasp');
-  if (!riquadro) return;
-  if (tipoUtente !== 'trasportatore') { riquadro.style.display = 'none'; return; }
-  riquadro.style.display = 'block';
-
-  const mezzi = trasportatoreFieldsCorrenti.tipo_camion || [];
-  const aut = trasportatoreFieldsCorrenti.autorizzazioni || [];
-
-  const renderTag = (val) => `<span style="font-size:11px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);color:#93c5fd;padding:4px 10px;border-radius:20px;">${val}</span>`;
-  const renderVuoto = () => `<span style="font-size:12px;color:var(--muted);">Nessuno ancora — clicca per aggiungere</span>`;
-
-  document.getElementById('riepilogo-mezzi').innerHTML = mezzi.length ? mezzi.map(renderTag).join('') : renderVuoto();
-  document.getElementById('riepilogo-autorizzazioni').innerHTML = aut.length ? aut.map(renderTag).join('') : renderVuoto();
-}
-
-function toggleDashMenu() {
-  const panel = document.getElementById('dash-nav-panel');
-  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
-}
-function chiudiDashMenu() {
-  document.getElementById('dash-nav-panel').style.display = 'none';
-}
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#dash-nav-wrap')) chiudiDashMenu();
-});
-
-let dashSezioneCorrente = 'overview';
-function apriDashSezione(nome) {
-  chiudiDashMenu();
-  dashSezioneCorrente = nome;
-  document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
-  document.getElementById('sezione-azienda').style.display = (tipoUtente === 'azienda' && nome === 'overview') ? 'block' : 'none';
-  document.getElementById('contenuto-normale-portale').style.display = 'none';
-  document.getElementById('sezione-dashboard').style.display = 'block';
-  ['overview','dati','fatture','report','notifiche','sicurezza'].forEach(s => {
-    document.getElementById('dash-sezione-' + s).style.display = (s === nome) ? 'block' : 'none';
-  });
-  document.getElementById('rigenera-pw-msg').style.display = 'none';
-  if (nome === 'overview') {
-    document.getElementById('dash-stat-disp').textContent = document.getElementById('st-disp').textContent;
-    document.getElementById('dash-stat-tot').textContent = document.getElementById('st-tot').textContent;
-    document.getElementById('dash-stat-guad').textContent = document.getElementById('st-guad').textContent;
-    renderCalendarioMensile('cal-grid-dash', 'cal-nav-title-dash');
-  }
-  if (nome === 'dati') precompilaDashDati();
-  if (nome === 'fatture') aggiornaDashFatture();
-  document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-function apriMezziDaDashboard() {
-  chiudiDashMenu();
-  dashSezioneCorrente = 'mezzi';
-  document.getElementById('sezione-dashboard').style.display = 'none';
-  document.getElementById('contenuto-normale-portale').style.display = 'none';
+function vaiAIMieiMezzi() {
   apriProfiloTrasportatore();
+  setTimeout(() => {
+    const el = document.getElementById('gruppo-mezzi-trasp');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 80);
 }
 
-function chiudiDashSezione() {
-  if (dashSezioneCorrente === 'overview' || dashSezioneCorrente === 'mezzi') {
-    document.getElementById('sezione-dashboard').style.display = 'none';
-    document.getElementById('sezione-profilo-trasportatore').style.display = 'none';
-    document.getElementById('contenuto-normale-portale').style.display = 'block';
-    if (tipoUtente === 'azienda') document.getElementById('sezione-azienda').style.display = 'block';
-  } else {
-    apriDashSezione('overview');
-  }
-}
-
-function precompilaDashDati() {
-  const f = tipoUtente === 'azienda' ? profiloAzienda : trasportatoreFieldsCorrenti;
-  document.getElementById('dd-nome').value = f.nome || '';
-  document.getElementById('dd-cognome').value = f.cognome || '';
-  document.getElementById('dd-ragione-sociale').value = f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '';
-  document.getElementById('dd-cf').value = f.codice_fiscale || '';
-  document.getElementById('dd-piva').value = f.partita_iva || '';
-  document.getElementById('dd-pec').value = f.pec || '';
-  document.getElementById('dd-sdi').value = f.codice_sdi || '';
-  document.getElementById('dd-cciaa').value = f.camera_commerciale || '';
-  document.getElementById('dd-rea').value = f.numero_rea || '';
-  document.getElementById('dd-admin').value = f.nome_amministratore || '';
-  document.getElementById('dd-via').value = f.via || '';
-  document.getElementById('dd-cap').value = f.cap || '';
-  document.getElementById('dd-citta').value = f.citta || '';
-  document.getElementById('dd-provincia').value = f.provincia || '';
-  document.getElementById('dd-telefono').value = f.telefono || '';
-  document.getElementById('dd-email').value = (currentUser && currentUser.email) || '';
-}
-
-// ===== REGISTRO ATTIVITÀ — chi ha fatto cosa, quando =====
-// Manda ogni azione importante (modifica dati, pubblicazione carico, presa
-// carico, eliminazioni) al proxy Make, che la scrive sulla tabella Airtable
-// "Registro Attività" (data/ora assegnata automaticamente da Airtable stesso,
-// non modificabile via API — è la prova che non può essere alterata).
-// Non bloccante: se questa chiamata fallisce, l'azione principale dell'utente
-// (salvataggio, pubblicazione, ecc.) NON viene comunque interrotta.
-function registraAttivita(tipo, titolo, dettaglio) {
-  const chi = tipoUtente === 'azienda'
-    ? (profiloAzienda.nome || (currentUser && currentUser.email) || 'Azienda')
-    : ((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim() || (currentUser && currentUser.email) || 'Trasportatore';
-  fetch(PROXY_WEBHOOK, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'log_attivita',
-      tipo_attivita: tipo,
-      titolo_attivita: titolo,
-      descrizione_attivita: dettaglio,
-      autore: chi,
-      email_autore: (currentUser && currentUser.email) || ''
-    })
-  }).catch(e => console.error('Registro attività non raggiunto (non bloccante):', e));
-}
-
-async function salvaDashDati() {
-  const dati = {
-    action: tipoUtente === 'azienda' ? 'salva_anagrafica_azienda' : 'salva_anagrafica_trasportatore',
-    record_id: tipoUtente === 'azienda' ? aziendaRecordId : trasportatoreRecordId,
-    nome: document.getElementById('dd-nome').value.trim(),
-    cognome: document.getElementById('dd-cognome').value.trim(),
-    ragione_sociale: document.getElementById('dd-ragione-sociale').value.trim(),
-    codice_fiscale: document.getElementById('dd-cf').value.trim().toUpperCase(),
-    partita_iva: document.getElementById('dd-piva').value.trim(),
-    pec: document.getElementById('dd-pec').value.trim(),
-    codice_sdi: document.getElementById('dd-sdi').value.trim(),
-    camera_commerciale: document.getElementById('dd-cciaa').value.trim(),
-    numero_rea: document.getElementById('dd-rea').value.trim(),
-    nome_amministratore: document.getElementById('dd-admin').value.trim(),
-    via: document.getElementById('dd-via').value.trim(),
-    cap: document.getElementById('dd-cap').value.trim(),
-    citta: document.getElementById('dd-citta').value.trim(),
-    provincia: document.getElementById('dd-provincia').value.trim().toUpperCase(),
-    telefono: document.getElementById('dd-telefono').value.trim()
-  };
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dati)
-    });
-    if (tipoUtente === 'azienda') { Object.assign(profiloAzienda, dati); }
-    else { Object.assign(trasportatoreFieldsCorrenti, dati); }
-    registraAttivita('Modifica Dati', 'Anagrafica modificata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha aggiornato i propri dati anagrafici.`);
-    document.getElementById('dd-salvato-msg').style.display = 'inline';
-    document.getElementById('dd-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
-    setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
-  } catch(e) {
-    console.error('Errore salvataggio dati Dashboard:', e);
-    alert('Errore nel salvataggio, riprova tra un momento.');
-  }
-}
-
-function formatDataOra() {
-  const d = new Date();
-  const gg = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const hh = String(d.getHours()).padStart(2,'0');
-  const min = String(d.getMinutes()).padStart(2,'0');
-  return `${gg}/${mm}/${d.getFullYear()}, ${hh}:${min}`;
-}
-
-let capDashLookupTimer = null;
-function autocompilaCittaDaDashboard() {
-  const cap = document.getElementById('dd-cap').value.trim();
-  clearTimeout(capDashLookupTimer);
-  if (cap.length !== 5 || isNaN(cap)) return;
-  capDashLookupTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(`https://comuni-ita.nicolorebaioli.dev/comuni?cap=${cap}&fields=nome,provincia&pagesize=5`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        document.getElementById('dd-citta').value = data[0].nome;
-        if (data[0].provincia && data[0].provincia.sigla) document.getElementById('dd-provincia').value = data[0].provincia.sigla;
-      }
-    } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
-  }, 500);
-}
-
-function aggiornaDashFatture() {
-  const body = document.getElementById('dash-fatture-body');
-  const btn = document.getElementById('btn-scarica-fatture');
-  if (tipoUtente === 'azienda') {
-    body.innerHTML = '<tr><td colspan="4" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
-    btn.style.display = 'none';
-    return;
-  }
-  if (!ultimeCandidature || !ultimeCandidature.length) {
-    body.innerHTML = '<tr><td colspan="4" class="empty">Nessun carico ancora.</td></tr>';
-    btn.style.display = 'none';
-    return;
-  }
-  btn.style.display = 'inline-flex';
-  body.innerHTML = ultimeCandidature
-    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
-    .map(c => {
-      const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
-      return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td>${f.stato || '—'}</td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
-    }).join('');
-  const elAgg = document.getElementById('fatture-ultimo-agg');
-  if (elAgg) elAgg.textContent = formatDataOra();
-}
-
-async function rigeneraPassword() {
-  if (!currentUser || !currentUser.email) return;
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'rigenera_password', email: currentUser.email })
-    });
-    document.getElementById('rigenera-pw-msg').style.display = 'block';
-    document.getElementById('pw-ultima-modifica').textContent = 'Ultima rigenerazione: ' + formatDataOra();
-    registraAttivita('Modifica Dati', 'Password rigenerata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha richiesto una nuova password.`);
-  } catch(e) {
-    console.error('Errore rigenerazione password:', e);
-    alert('Errore, riprova tra un momento.');
-  }
-}
-
-let preferenzeNotifiche = {};
-async function salvaNotifiche() {
-  preferenzeNotifiche = {
-    attive: document.getElementById('notif-attive').checked,
-    nuovoCarico: document.getElementById('notif-nuovo-carico').checked,
-    pagamento: document.getElementById('notif-pagamento').checked,
-    promemoria: document.getElementById('notif-promemoria').checked,
-    oraDa: document.getElementById('notif-ora-da').value,
-    oraA: document.getElementById('notif-ora-a').value,
-    tono: document.getElementById('notif-tono').value
-  };
-  try {
-    await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'salva_preferenze_notifiche', email: (currentUser && currentUser.email) || '', ...preferenzeNotifiche })
-    });
-  } catch(e) { console.error('Errore salvataggio notifiche (non bloccante):', e); }
-  registraAttivita('Modifica Dati', 'Preferenze notifiche aggiornate', `Notifiche ${preferenzeNotifiche.attive ? 'attive' : 'disattivate'}.`);
-  document.getElementById('notif-salvato-msg').style.display = 'inline';
-  document.getElementById('notif-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
-  setTimeout(() => { document.getElementById('notif-salvato-msg').style.display = 'none'; }, 3000);
-}
-
-function chiediEliminazioneAccount() {
-  const esistente = document.getElementById('confirm-overlay');
-  if (esistente) esistente.remove();
-  const html = `
-    <div class="confirm-overlay" id="confirm-overlay">
-      <div class="confirm-box">
-        <div class="confirm-icon">⚠️</div>
-        <div class="confirm-title">Eliminare il tuo account?</div>
-        <div class="confirm-text">Questa azione è <strong>definitiva</strong>: perderai l'accesso al portale, ai tuoi carichi e ai tuoi dati. Non si può annullare.</div>
-        <div class="confirm-actions">
-          <button class="confirm-btn confirm-btn-cancel" id="confirm-annulla">Annulla</button>
-          <button class="confirm-btn confirm-btn-remove" id="confirm-rimuovi">Sì, elimina il mio account</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-  const overlay = document.getElementById('confirm-overlay');
-  document.getElementById('confirm-annulla').onclick = () => overlay.remove();
-  document.getElementById('confirm-rimuovi').onclick = () => {
-    overlay.remove();
-    alert('⚠️ Funzione non ancora collegata al sistema centrale (Make è in pausa) — la conferma funziona, l\'eliminazione vera arriva quando Make riparte.');
-  };
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+function vaiAMieAutorizzazioni() {
+  apriProfiloTrasportatore();
+  setTimeout(() => {
+    const el = document.getElementById('gruppo-aut-trasp');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 80);
 }
 
 async function salvaProfiloTrasportatore() {
@@ -1370,8 +1167,6 @@ async function salvaProfiloTrasportatore() {
     trasportatoreFieldsCorrenti.tipo_camion = mezziSelezionati;
     trasportatoreFieldsCorrenti.autorizzazioni = autSelezionate;
     trasportatoreFieldsCorrenti.specifica = specificaMezzo;
-    aggiornaRiepilogoProfiloTrasportatore();
-    registraAttivita('Modifica Dati', 'Profilo mezzi/autorizzazioni aggiornato', `Mezzi: ${mezziSelezionati.join(', ') || 'nessuno'}. Autorizzazioni: ${autSelezionate.join(', ') || 'nessuna'}.`);
     document.getElementById('profilo-salvato-msg').style.display = 'inline';
     setTimeout(() => { document.getElementById('profilo-salvato-msg').style.display = 'none'; }, 3000);
   } catch(e) {
@@ -1379,9 +1174,12 @@ async function salvaProfiloTrasportatore() {
     alert('Errore nel salvataggio, riprova tra un momento.');
   }
 }
+// ===== FINE PROFILO TRASPORTATORE =====
 
 let botOpen = false;
 let botHistory = [];
+
+/* ——— NETLIFY IDENTITY ——— */
 let __recoveryToken = null;
 let __recoveryType  = null;
 
@@ -1395,12 +1193,19 @@ let __recoveryType  = null;
   const invTok = parseTok('invite_token');
   if (recTok) { __recoveryToken = recTok; __recoveryType = 'recovery'; }
   else if (invTok) { __recoveryToken = invTok; __recoveryType = 'invite'; }
+  // Pulisce subito l'hash dalla barra indirizzi: se il widget nativo Netlify Identity
+  // vede ancora recovery_token/invite_token quando parte, apre da solo un suo modal
+  // invisibile sopra la pagina che blocca ogni click sul form personalizzato sotto.
   if (recTok || invTok) {
     history.replaceState(null, '', window.location.pathname + window.location.search);
   }
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
+  // MODALITA' ANTEPRIMA — bypassa completamente login/Netlify Identity.
+  // Aprendo il portale con ?preview=trasportatore o ?preview=azienda si vede
+  // subito la schermata corrispondente con dati di esempio, senza password.
+  // Solo per uso interno di test/anteprima, da rimuovere prima del lancio pubblico.
   const previewParam = new URLSearchParams(window.location.search).get('preview');
   if (previewParam === 'trasportatore' || previewParam === 'azienda') {
     document.getElementById('loading').style.display = 'none';
@@ -1412,36 +1217,30 @@ document.addEventListener('DOMContentLoaded', () => {
     tipoUtente = previewParam;
     if (previewParam === 'trasportatore') {
       capCorrente = '92026';
-      currentUser = { email: 'anteprima.trasportatore@test.it' };
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
-      document.getElementById('dash-nav-wrap').style.display = 'block';
+      document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+      document.getElementById('hero-quick-icons').classList.add('visible');
       trasportatoreRecordId = 'preview-recid';
-      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
-      aggiornaRiepilogoProfiloTrasportatore();
+      trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [] };
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
       ultimiCarichi = [
         { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', data_consegna:new Date().toISOString() } },
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString() } }
       ];
-      ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'Completato' } }
-      ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
-      renderStorico(ultimeCandidature);
     } else {
-      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567', codice_fiscale:'', partita_iva:'12345678901', pec:'azienda@pec.it', codice_sdi:'', camera_commerciale:'Agrigento', numero_rea:'', nome_amministratore:'', via:'Via Roma 1', cap:'92026', citta:'Favara', provincia:'AG', specifica:'Logistica' };
-      aziendaRecordId = 'preview-recid-az';
+      profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567' };
       currentUser = { email:'anteprima.azienda@test.it' };
+      document.getElementById('hero-quick-icons').classList.remove('visible');
       document.getElementById('cap-bar-section').style.display = 'none';
       document.getElementById('sezione-azienda').style.display = 'block';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
-      document.getElementById('dash-nav-wrap').style.display = 'block';
       renderCheckboxGroup('mezzoRichiesto', []);
-      renderAutorizzazioniAccordion('autRichiesta', []);
+      renderCheckboxGroup('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
@@ -1514,14 +1313,18 @@ function avviaApp() {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('bot-btn').classList.add('visible');
+
   const email = currentUser.email;
   const nome  = currentUser.user_metadata?.full_name || email.split('@')[0];
+
   document.getElementById('nav-name').textContent = nome;
   document.getElementById('nav-av').textContent = nome[0].toUpperCase();
   document.getElementById('sc-email').value = email;
+
   caricaDati(email);
 }
 
+/* ——— LOGIN ——— */
 function togglePw() {
   const f = document.getElementById('li-pw');
   f.type = f.type === 'password' ? 'text' : 'password';
@@ -1537,24 +1340,30 @@ async function doLogin() {
   const pw    = document.getElementById('li-pw').value;
   if (!email || !pw) { mostraErr('Inserisci email e password.'); return; }
   try {
+    // Usa il GoTrue client esposto dal widget
     const user = await netlifyIdentity.gotrue.login(email, pw, true);
     currentUser = user;
     avviaApp();
   } catch(err) {
     mostraErr('Email o password non corretti.');
+    // Fallback: apri il modal
     netlifyIdentity.open('login');
   }
 }
 
 function doLogout() { netlifyIdentity.logout(); }
 
-let tipoUtente = null;
+/* ——— TIPO UTENTE (trasportatore o azienda) ——— */
+let tipoUtente = null; // 'trasportatore' | 'azienda'
 let capCorrente = null;
-let profiloAzienda = { nome: '', telefono: '', codice_fiscale: '', partita_iva: '', pec: '', codice_sdi: '', camera_commerciale: '', numero_rea: '', nome_amministratore: '', via: '', cap: '', citta: '', provincia: '', specifica: '' };
-let aziendaRecordId = null;
+let profiloAzienda = { nome: '', telefono: '' };
+
 let ultimoErroreRete = false;
 
 async function rilevaTipoUtente(email) {
+  // Passa dal proxy Make (action: get_utente) — le chiamate dirette ad Airtable erano bloccate da CORS
+  // Riprova fino a 3 volte prima di arrendersi: un fallimento di rete/timeout non deve
+  // essere confuso con "utente non registrato", altrimenti si mostra un messaggio sbagliato.
   ultimoErroreRete = false;
   let d = null;
   for (let tentativo = 1; tentativo <= 3 && !d; tentativo++) {
@@ -1575,15 +1384,17 @@ async function rilevaTipoUtente(email) {
     ultimoErroreRete = true;
     return null;
   }
+
   const trasportatori = (d && d.trasportatore) || [];
   const aziende = (d && d.azienda) || [];
+
   if (trasportatori.length > 0) {
     tipoUtente = 'trasportatore';
     capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
-    aggiornaRiepilogoProfiloTrasportatore();
-    document.getElementById('dash-nav-wrap').style.display = 'block';
+    document.getElementById('btn-profilo-trasp').style.display = 'inline-block';
+    document.getElementById('hero-quick-icons').classList.add('visible');
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'block';
@@ -1595,28 +1406,14 @@ async function rilevaTipoUtente(email) {
   }
   if (aziende.length > 0) {
     tipoUtente = 'azienda';
-    aziendaRecordId = aziende[0].id;
-    const af = aziende[0].fields;
-    profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
-    profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
-    profiloAzienda.codice_fiscale = af.codice_fiscale || '';
-    profiloAzienda.partita_iva = af.partita_iva || '';
-    profiloAzienda.pec = af.pec || '';
-    profiloAzienda.codice_sdi = af.codice_sdi || '';
-    profiloAzienda.camera_commerciale = af.camera_commerciale || '';
-    profiloAzienda.numero_rea = af.numero_rea || '';
-    profiloAzienda.nome_amministratore = af.nome_amministratore || '';
-    profiloAzienda.via = af.via || '';
-    profiloAzienda.cap = af.cap || '';
-    profiloAzienda.citta = af.citta || '';
-    profiloAzienda.provincia = af.provincia || '';
-    profiloAzienda.specifica = af.specifica || '';
-    document.getElementById('dash-nav-wrap').style.display = 'block';
+    profiloAzienda.nome = aziende[0].fields.nome_azienda || aziende[0].fields.nome_referente || aziende[0].fields.nome || '';
+    profiloAzienda.telefono = aziende[0].fields.telefono_azienda || aziende[0].fields.telefono || '';
+    document.getElementById('hero-quick-icons').classList.remove('visible');
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
     renderCheckboxGroup('mezzoRichiesto', []);
-    renderAutorizzazioniAccordion('autRichiesta', []);
+    renderCheckboxGroup('autRichiesta', []);
     aggiornaEtichettaTendina('mezzoRichiesto');
     aggiornaEtichettaTendina('autRichiesta');
     return aziende[0].id;
@@ -1624,6 +1421,7 @@ async function rilevaTipoUtente(email) {
   return null;
 }
 
+/* ——— CAP TEMPORANEO ——— */
 function aggiornaCap() {
   const cap = document.getElementById('cap-temp-input').value.trim();
   if (cap.length !== 5 || isNaN(cap)) {
@@ -1635,7 +1433,11 @@ function aggiornaCap() {
   renderCarichi(ultimiCarichi);
 }
 
+/* ——— CARICHI CLICCABILI ——— */
 let ultimiCarichi = [];
+// Punto 6 requisiti Gerlando — matching automatico per tipo mezzo + autorizzazioni, SENZA CAP.
+// Il trasportatore vede SOLO i carichi compatibili col proprio profilo (parco mezzi + autorizzazioni).
+// Un carico senza requisiti specificati resta visibile a tutti (compatibilità coi carichi vecchi/di test).
 function carichiCompatibiliPerTrasportatore(carichi) {
   const mieiMezzi = trasportatoreFieldsCorrenti.tipo_camion || [];
   const mieAutorizzazioni = trasportatoreFieldsCorrenti.autorizzazioni || [];
@@ -1649,12 +1451,18 @@ function carichiCompatibiliPerTrasportatore(carichi) {
 }
 function renderCarichi(carichi) {
   const lista = document.getElementById('carichi-lista');
+
+  // BLOCCO DI SICUREZZA: le aziende non devono mai vedere/poter cliccare "Prendi"
   if (tipoUtente === 'azienda') {
     lista.innerHTML = '<div class="carico-empty">Questa sezione è riservata ai trasportatori.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Usa "Pubblica un Carico" qui sopra per inserire i tuoi carichi.</span></div>';
     return;
   }
+
+ // Filtro CAP — DISATTIVATO su decisione Davide/Gerlando (6/8): il matching ora si basa
+  // solo su tipo mezzo + autorizzazioni. Il CAP resta qui, pronto da riattivare in futuro
+  // come opzione premium a pagamento (50-100€).
   let filtrati = carichi;
-  const FILTRO_CAP_ATTIVO = false;
+  const FILTRO_CAP_ATTIVO = false; // ← cambiare in true per riattivare il filtro CAP in futuro
   if (FILTRO_CAP_ATTIVO && tipoUtente === 'trasportatore' && capCorrente) {
     filtrati = carichi.filter(c => {
       const capPart = c.fields.cap_partenza || c.fields.CAP_partenza || '';
@@ -1662,10 +1470,12 @@ function renderCarichi(carichi) {
     });
     if (filtrati.length === 0) filtrati = carichi;
   }
+
   if (!filtrati.length) {
     lista.innerHTML = '<div class="carico-empty">Nessun carico disponibile in questo momento.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Riceverai una notifica su Telegram appena arriva un carico nella tua zona.</span></div>';
     return;
   }
+
   lista.innerHTML = filtrati.map(c => {
     const f = c.fields;
     const stato = (f.stato || 'DISPONIBILE').toUpperCase();
@@ -1694,6 +1504,11 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
     return;
   }
   if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}\n\nVerrai reindirizzato al pagamento.`)) return;
+
+  // CONTROLLO REALE DI DISPONIBILITÀ — prima di mandare a pagare, verifica che
+  // il carico esista ancora e sia DISPONIBILE. Senza questo controllo, due
+  // trasportatori che cliccano "Prendi" quasi insieme finirebbero entrambi a
+  // pagare, anche se il carico è già stato preso dal primo.
   try {
     const checkRes = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1710,6 +1525,8 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
     alert('⚠️ Non riesco a verificare la disponibilità del carico. Riprova.');
     return;
   }
+
+  // Blocca il carico su Airtable (stato IN PAGAMENTO) — passa dal proxy Make, mai Airtable diretto
   try {
     await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1721,30 +1538,17 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
         bloccato_da_nome: currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email
       })
     });
-    registraAttivita('Assegnazione', 'Carico accaparrato', `${partenza} → ${arrivo} (${merce}) preso in carico.`);
   } catch(e) { console.error(e); }
+
+  // Reindirizza a Shopify per il pagamento
   const url = `https://shop.synaimaxpro.com/products/accaparramento-carico-ecotruckconnect?cap_partenza=${capPart}&cap_arrivo=${capArr}&merce=${encodeURIComponent(merce)}&carico_id=${id}`;
   window.open(url, '_blank');
+
+  // Ricarica i carichi dopo 3 secondi
   setTimeout(() => caricaDati(currentUser.email), 3000);
 }
 
-let capCaricoLookupTimer = {};
-function autocompilaCittaCarico(tipo) {
-  const cap = document.getElementById('ins-cap-' + tipo).value.trim();
-  clearTimeout(capCaricoLookupTimer[tipo]);
-  if (cap.length !== 5 || isNaN(cap)) return;
-  capCaricoLookupTimer[tipo] = setTimeout(async () => {
-    try {
-      const res = await fetch(`https://comuni-ita.nicolorebaioli.dev/comuni?cap=${cap}&fields=nome&pagesize=5`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        document.getElementById('ins-citta-' + tipo).value = data[0].nome;
-      }
-    } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
-  }, 500);
-}
-
+/* ——— PUBBLICA CARICO (aziende) — passa dal proxy Make, non più Airtable diretto ——— */
 async function pubblicaCarico() {
   const capPart  = document.getElementById('ins-cap-part').value.trim();
   const capArr   = document.getElementById('ins-cap-arr').value.trim();
@@ -1758,12 +1562,13 @@ async function pubblicaCarico() {
   const pericoloso = document.getElementById('ins-pericoloso').checked;
   const codiceCer  = document.getElementById('ins-cer').value.trim();
   const mezzoRichiesto = Array.from(document.querySelectorAll('#checkbox-mezzo-richiesto input:checked')).map(el => el.value);
-  const specificaMezzoRichiesto = document.getElementById('specifica-mezzoRichiesto').value.trim();
   const autRichiesta   = Array.from(document.querySelectorAll('#checkbox-aut-richiesta input:checked')).map(el => el.value);
+
   const err = document.getElementById('ins-err');
   const ok  = document.getElementById('ins-ok');
   err.style.display = 'none';
   ok.style.display  = 'none';
+
   if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce || !specifica || !note) {
     err.textContent = '⚠️ Compila tutti i campi obbligatori.';
     err.style.display = 'block';
@@ -1789,6 +1594,7 @@ async function pubblicaCarico() {
     err.style.display = 'block';
     return;
   }
+
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1808,7 +1614,6 @@ async function pubblicaCarico() {
         pericoloso: pericoloso,
         codice_cer: codiceCer,
         tipo_mezzo_richiesto: mezzoRichiesto,
-        specifica_mezzo_richiesto: specificaMezzoRichiesto,
         autorizzazione_richiesta: autRichiesta,
         email_azienda: currentUser.email,
         nome_azienda: profiloAzienda.nome,
@@ -1817,21 +1622,18 @@ async function pubblicaCarico() {
     });
     if (res.ok) {
       ok.style.display = 'block';
-      registraAttivita('Nuovo Carico', 'Carico pubblicato', `${cittaPart} → ${cittaArr} (${merce}) pubblicato da ${profiloAzienda.nome || 'azienda'}.`);
       document.getElementById('ins-cap-part').value = '';
       document.getElementById('ins-cap-arr').value  = '';
       document.getElementById('ins-citta-part').value = '';
       document.getElementById('ins-citta-arr').value  = '';
       document.getElementById('ins-data').value  = '';
       document.getElementById('ins-merce').value = '';
-      document.getElementById('ins-merce-ricerca').value = '';
       document.getElementById('ins-specifica').value = '';
       document.getElementById('ins-note').value  = '';
       document.getElementById('ins-rifiuto').checked = false;
       document.getElementById('ins-pericoloso').checked = false;
       document.getElementById('ins-cer').value = '';
       document.getElementById('ins-cer-wrap').style.display = 'none';
-      document.getElementById('specifica-mezzoRichiesto').value = '';
       resetTendina('mezzoRichiesto');
       resetTendina('autRichiesta');
       setTimeout(() => caricaDati(currentUser.email), 2000);
@@ -1845,17 +1647,27 @@ async function pubblicaCarico() {
   }
 }
 
+/* ——— CARICAMENTO DATI ——— */
 async function caricaDati(email) {
   try {
+    // Barra CAP rimossa definitivamente: il matching non dipende più dal CAP
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
+
+    // 0. Rileva tipo utente — PRIMA di tutto il resto. Il calendario e la lista
+    // carichi diventano cliccabili subito dopo, quindi tipoUtente deve già essere
+    // impostato correttamente per evitare il falso errore "account non registrato"
+    // su click rapidi (es. tornando da un'altra tab del browser).
     const recId = await rilevaTipoUtente(email);
+
+    // 1. Carichi DISPONIBILI — via webhook Make (bypassa blocco CORS di Airtable)
     let rawCarichi = [];
     let erroreCarichi = false;
     try {
       const r1 = await fetch('https://hook.eu1.make.com/ntu5l19xd1gu6kw5ri2bbb6soe5jyy6q');
       if (!r1.ok) throw new Error(`Il webhook ha risposto con errore ${r1.status}`);
       const d1 = await r1.json();
+      // Make può restituire un oggetto singolo o un array; normalizziamo sempre ad array
       if (d1.carichi) {
         rawCarichi = Array.isArray(d1.carichi) ? d1.carichi : [d1.carichi];
       }
@@ -1866,6 +1678,7 @@ async function caricaDati(email) {
         `<div class="carico-empty">⚠️ Non riesco a caricare i carichi in questo momento.<br>
         <span style="font-size:11px;color:rgba(255,255,255,0.3);">Dettaglio tecnico: ${(errCarichi && errCarichi.message) || errCarichi}</span></div>`;
     }
+    // I campi arrivano "piatti" (senza .fields) — li riportiamo nel formato {id, fields} atteso dal resto del codice
     ultimiCarichi = rawCarichi
       .map(r => ({ id: r.id, fields: r }))
       .filter(r => (r.fields.stato||'').toUpperCase() !== 'PRESO');
@@ -1876,7 +1689,13 @@ async function caricaDati(email) {
     aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
-    if (!recId) { azzeraStats(); renderStorico([]); return; }
+
+    if (!recId) {
+      document.getElementById('hero-quick-icons').classList.remove('visible');
+      azzeraStats(); renderStorico([]); return;
+    }
+
+    // 3. Candidature del trasportatore — passa dal proxy Make, mai Airtable diretto
     let cands = [];
     try {
       const r3 = await fetch(PROXY_WEBHOOK, {
@@ -1887,25 +1706,33 @@ async function caricaDati(email) {
       const d3 = await r3.json();
       cands = d3.candidature || [];
     } catch(e) { console.error(e); }
+
+    // 4. Statistiche
     const now = new Date();
     const mese = now.getMonth(), anno = now.getFullYear();
+
     const completate = cands.filter(c => {
       const s = (c.fields.stato || '').toLowerCase();
       return s.includes('complet') || s.includes('accett') || s.includes('pagat');
     });
+
     const questoMese = completate.filter(c => {
       const d = c.fields.data_candidatura || c.fields.data_risposta || '';
       if (!d) return false;
       const dt = new Date(d);
       return dt.getMonth() === mese && dt.getFullYear() === anno;
     });
+
     const guadagno = questoMese.length * PREZZO;
     const totali   = cands.length;
+
     aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
     aggiorna('st-tot',  totali);
     aggiorna('c-guad',  `€ ${guadagno.toLocaleString('it-IT')}`);
     aggiorna('c-tot',   totali);
+
     renderStorico(cands);
+
   } catch(err) {
     console.error('Errore dati:', err);
     azzeraStats();
@@ -1922,10 +1749,7 @@ function azzeraStats() {
   ['st-disp','st-guad','st-tot','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
 }
 
-let ultimeCandidature = [];
-
 function renderStorico(cands) {
-  ultimeCandidature = cands || [];
   const body = document.getElementById('storico-body');
   if (!cands.length) {
     body.innerHTML = `<tr><td colspan="4" class="empty">
@@ -1936,6 +1760,7 @@ function renderStorico(cands) {
     </td></tr>`;
     return;
   }
+
   body.innerHTML = cands
     .sort((a, b) => {
       const da = a.fields.data_candidatura || '';
@@ -1960,38 +1785,7 @@ function renderStorico(cands) {
     }).join('');
 }
 
-// Timbro data/ora su ogni stampa — stesso principio già usato sulla Dashboard Gestori
-function stampaConTimbro() {
-  const ora = new Date();
-  const testo = 'EcoTruckConnect — Documento stampato il ' +
-    ora.toLocaleDateString('it-IT') + ' alle ' +
-    ora.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
-  document.getElementById('timbro-stampa').textContent = testo;
-  window.print();
-}
-
-function scaricaStoricoCSV() {
-  if (!ultimeCandidature.length) return;
-  const righe = [['Data', 'ID Richiesta', 'Stato', 'Importo (€)']];
-  ultimeCandidature
-    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
-    .forEach(c => {
-      const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '';
-      righe.push([data, f.richiesta_id || '', f.stato || '', PREZZO]);
-    });
-  const csv = righe.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `storico_ecotruckconnect_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
+/* ——— FORM SCRIVICI ——— */
 async function inviaForm(e) {
   e.preventDefault();
   const fd = new FormData();
@@ -2007,6 +1801,7 @@ async function inviaForm(e) {
   } catch(err) { alert('Errore nell\'invio. Riprova.'); }
 }
 
+/* ——— BOT CLAUDE ——— */
 function toggleBot() {
   botOpen = !botOpen;
   document.getElementById('bot-panel').classList.toggle('open', botOpen);
@@ -2017,9 +1812,12 @@ async function sendBot() {
   const msg = inp.value.trim();
   if (!msg) return;
   inp.value = '';
+
   addMsg(msg, 'user');
   botHistory.push({ role: 'user', content: msg });
+
   const typing = addMsg('Sto scrivendo...', 'bot typing');
+
   const chiamaProxy = () => fetch(PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2028,22 +1826,32 @@ async function sendBot() {
       message: msg
     })
   });
+
   try {
+    // Il bot passa dal Proxy sicuro su Make (azione "chat_bot"): niente chiavi AI
+    // esposte nel codice del sito. Mandiamo solo l'ultimo messaggio (non tutta
+    // la cronologia) per evitare problemi di formato con Make.
+    // Se il primo tentativo fallisce (rete instabile), riprova una volta prima
+    // di mostrare l'errore.
     let res;
     try {
       res = await chiamaProxy();
     } catch (primoTentativoErr) {
       res = await chiamaProxy();
     }
+
     if (!res.ok) {
       const testoGrezzo = await res.text();
       throw new Error('HTTP ' + res.status + ' — ' + testoGrezzo.slice(0, 200));
     }
+
     const data = await res.json();
     const reply = data.reply || 'Mi dispiace, non ho capito. Riprova.';
+
     typing.remove();
     botHistory.push({ role: 'assistant', content: reply });
     addMsg(reply, 'bot');
+
   } catch(err) {
     typing.remove();
     addMsg('DEBUG TEMPORANEO — errore reale: ' + (err && err.message ? err.message : String(err)), 'bot');
@@ -2060,6 +1868,9 @@ function addMsg(text, cls) {
   return d;
 }
 
+/* ====================================================
+   ——— CALENDARIO MENSILE INTERATTIVO ———
+   ==================================================== */
 let meseCalendario = new Date();
 const NOMI_MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
@@ -2073,27 +1884,32 @@ function dataLocaleYMD(d) {
   return `${y}-${m}-${day}`;
 }
 
-function renderCalendarioMensile(gridId, titleId) {
-  gridId = gridId || 'cal-grid';
-  titleId = titleId || 'cal-nav-title';
-  const grid = document.getElementById(gridId);
+function renderCalendarioMensile() {
+  const grid = document.getElementById('cal-grid');
   if (!grid) return;
+
   const anno = meseCalendario.getFullYear();
   const mese = meseCalendario.getMonth();
-  document.getElementById(titleId).textContent = `${NOMI_MESI[mese]} ${anno}`;
+  document.getElementById('cal-nav-title').textContent = `${NOMI_MESI[mese]} ${anno}`;
+
+  // Rimuove solo le celle giorno, mantiene l'intestazione Lun-Dom (prime 7 già in HTML)
   const celleEsistenti = grid.querySelectorAll('.cal-cell, .cal-cell-empty');
   celleEsistenti.forEach(c => c.remove());
+
   const primoGiorno = new Date(anno, mese, 1);
   const ultimoGiorno = new Date(anno, mese + 1, 0);
-  const offset = (primoGiorno.getDay() + 6) % 7;
+  const offset = (primoGiorno.getDay() + 6) % 7; // lunedì = 0
   const oggiStr = dataLocaleYMD(new Date());
+
   let html = '';
   for (let i = 0; i < offset; i++) html += `<div class="cal-cell cal-cell-empty"></div>`;
+
   for (let giorno = 1; giorno <= ultimoGiorno.getDate(); giorno++) {
     const dataCella = new Date(anno, mese, giorno);
     const dataStr = dataLocaleYMD(dataCella);
     const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
     const isOggi = dataStr === oggiStr ? 'cal-cell-oggi' : '';
+
     let badgesHtml = '';
     if (carichiGiorno.length > 0) {
       const puntini = carichiGiorno.slice(0, 6).map(c => {
@@ -2103,6 +1919,7 @@ function renderCalendarioMensile(gridId, titleId) {
       }).join('');
       badgesHtml = `<div class="cal-cell-badges">${puntini}</div><div class="cal-cell-count">${carichiGiorno.length} ${carichiGiorno.length===1?'carico':'carichi'}</div>`;
     }
+
     html += `
       <div class="cal-cell ${isOggi}" onclick="apriGiornoCalendario('${dataStr}')">
         <div class="cal-cell-num">${giorno}</div>
@@ -2110,11 +1927,14 @@ function renderCalendarioMensile(gridId, titleId) {
       </div>
     `;
   }
+
   grid.insertAdjacentHTML('beforeend', html);
 }
 
 async function apriGiornoCalendario(dataStr) {
   if (!tipoUtente && currentUser && currentUser.email) {
+    // Rete di sicurezza: se tipoUtente non è ancora impostato (es. rilevamento
+    // non ancora concluso), riprova una volta prima di dare l'errore definitivo.
     await rilevaTipoUtente(currentUser.email);
   }
   if (!tipoUtente) {
@@ -2126,13 +1946,17 @@ async function apriGiornoCalendario(dataStr) {
     return;
   }
   if (tipoUtente === 'azienda') {
+    // Riusa il form "Pubblica un Carico" già esistente, precompilando la data
     document.getElementById('ins-data').value = dataStr;
     document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'center' });
     document.getElementById('ins-cap-part').focus();
     return;
   }
+
+  // Trasportatore: mostra i carichi di quel giorno in un modal, riusando prendiCarico() già esistente
   const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
   const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
+
   let corpo;
   if (carichiGiorno.length === 0) {
     corpo = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno nella tua zona.</div>`;
@@ -2154,6 +1978,7 @@ async function apriGiornoCalendario(dataStr) {
       </div>`;
     }).join('');
   }
+
   const html = `
     <div class="cal-modal-overlay" id="cal-modal-overlay" onclick="if(event.target===this)chiudiModaleCalendario()">
       <div class="cal-modal">
