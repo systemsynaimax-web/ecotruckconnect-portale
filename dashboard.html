@@ -483,6 +483,7 @@ async function caricaNotificheRegistrazioni() {
       body: JSON.stringify({ action: 'get_utenti_da_verificare' })
     });
     const data = await res.json();
+    if (modalitaAnteprima) return; // l'anteprima è stata aperta mentre questa chiamata era in corso: non sovrascrivere i dati finti
     const trasp = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', fields: r.fields || r }));
     const azie  = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', fields: r.fields || r }));
     registrazioniInAttesa = [...trasp, ...azie];
