@@ -673,8 +673,10 @@ async function eseguiAttivazione() {
   const btn = document.getElementById('btn-attiva-conferma');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Attivo…'; }
 
-  // Modalità anteprima: nessuna chiamata reale, solo simulazione visiva
-  if (modalitaAnteprima) {
+  // Modalità anteprima: nessuna chiamata reale, solo simulazione visiva.
+  // Controllo doppio (flag + prefisso ID finto) così anche in caso di
+  // problemi di sincronizzazione la richiesta finta non parte mai verso Make/Airtable.
+  if (modalitaAnteprima || String(r.id).startsWith('anteprima-')) {
     await new Promise(res => setTimeout(res, 700));
     registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
     aggiornaCampanello();
