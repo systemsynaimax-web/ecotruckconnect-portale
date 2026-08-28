@@ -1122,6 +1122,31 @@ function precompilaDashDati() {
   document.getElementById('dd-email').value = (currentUser && currentUser.email) || '';
 }
 
+// ===== REGISTRO ATTIVITÀ — chi ha fatto cosa, quando =====
+// Manda ogni azione importante (modifica dati, pubblicazione carico, presa
+// carico, eliminazioni) al proxy Make, che la scrive sulla tabella Airtable
+// "Registro Attività" (data/ora assegnata automaticamente da Airtable stesso,
+// non modificabile via API — è la prova che non può essere alterata).
+// Non bloccante: se questa chiamata fallisce, l'azione principale dell'utente
+// (salvataggio, pubblicazione, ecc.) NON viene comunque interrotta.
+function registraAttivita(tipo, titolo, dettaglio) {
+  const chi = tipoUtente === 'azienda'
+    ? (profiloAzienda.nome || (currentUser && currentUser.email) || 'Azienda')
+    : ((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim() || (currentUser && currentUser.email) || 'Trasportatore';
+  fetch(PROXY_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'log_attivita',
+      tipo_attivita: tipo,
+      titolo_attivita: titolo,
+      descrizione_attivita: dettaglio,
+      autore: chi,
+      email_autore: (currentUser && currentUser.email) || ''
+    })
+  }).catch(e => console.error('Registro attività non raggiunto (non bloccante):', e));
+}
+
 async function salvaDashDati() {
   const dati = {
     action: tipoUtente === 'azienda' ? 'salva_anagrafica_azienda' : 'salva_anagrafica_trasportatore',
@@ -1150,6 +1175,7 @@ async function salvaDashDati() {
     });
     if (tipoUtente === 'azienda') { Object.assign(profiloAzienda, dati); }
     else { Object.assign(trasportatoreFieldsCorrenti, dati); }
+    registraAttivita('Modifica Dati', 'Anagrafica modificata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha aggiornato i propri dati anagrafici.`);
     document.getElementById('dd-salvato-msg').style.display = 'inline';
     document.getElementById('dd-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
     setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
@@ -1221,6 +1247,7 @@ async function rigeneraPassword() {
     });
     document.getElementById('rigenera-pw-msg').style.display = 'block';
     document.getElementById('pw-ultima-modifica').textContent = 'Ultima rigenerazione: ' + formatDataOra();
+    registraAttivita('Modifica Dati', 'Password rigenerata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha richiesto una nuova password.`);
   } catch(e) {
     console.error('Errore rigenerazione password:', e);
     alert('Errore, riprova tra un momento.');
@@ -1245,6 +1272,7 @@ async function salvaNotifiche() {
       body: JSON.stringify({ action: 'salva_preferenze_notifiche', email: (currentUser && currentUser.email) || '', ...preferenzeNotifiche })
     });
   } catch(e) { console.error('Errore salvataggio notifiche (non bloccante):', e); }
+  registraAttivita('Modifica Dati', 'Preferenze notifiche aggiornate', `Notifiche ${preferenzeNotifiche.attive ? 'attive' : 'disattivate'}.`);
   document.getElementById('notif-salvato-msg').style.display = 'inline';
   document.getElementById('notif-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
   setTimeout(() => { document.getElementById('notif-salvato-msg').style.display = 'none'; }, 3000);
@@ -1294,6 +1322,7 @@ async function salvaProfiloTrasportatore() {
     trasportatoreFieldsCorrenti.tipo_camion = mezziSelezionati;
     trasportatoreFieldsCorrenti.autorizzazioni = autSelezionate;
     trasportatoreFieldsCorrenti.specifica = specificaMezzo;
+    registraAttivita('Modifica Dati', 'Profilo mezzi/autorizzazioni aggiornato', `Mezzi: ${mezziSelezionati.join(', ') || 'nessuno'}. Autorizzazioni: ${autSelezionate.join(', ') || 'nessuna'}.`);
     document.getElementById('profilo-salvato-msg').style.display = 'inline';
     setTimeout(() => { document.getElementById('profilo-salvato-msg').style.display = 'none'; }, 3000);
   } catch(e) {
@@ -1641,6 +1670,7 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
         bloccato_da_nome: currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email
       })
     });
+    registraAttivita('Assegnazione', 'Carico accaparrato', `${partenza} → ${arrivo} (${merce}) preso in carico.`);
   } catch(e) { console.error(e); }
   const url = `https://shop.synaimaxpro.com/products/accaparramento-carico-ecotruckconnect?cap_partenza=${capPart}&cap_arrivo=${capArr}&merce=${encodeURIComponent(merce)}&carico_id=${id}`;
   window.open(url, '_blank');
@@ -1736,6 +1766,7 @@ async function pubblicaCarico() {
     });
     if (res.ok) {
       ok.style.display = 'block';
+      registraAttivita('Nuovo Carico', 'Carico pubblicato', `${cittaPart} → ${cittaArr} (${merce}) pubblicato da ${profiloAzienda.nome || 'azienda'}.`);
       document.getElementById('ins-cap-part').value = '';
       document.getElementById('ins-cap-arr').value  = '';
       document.getElementById('ins-citta-part').value = '';
