@@ -70,6 +70,31 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .btn-approva:hover{background:#16a34a;}
 .btn-approva:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:default;}
 .notif-empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
+
+/* SCHEDA DETTAGLIO CONNOTATI — nuovo */
+.dett-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:14px;font-family:var(--font-b);}
+.dett-back:hover{color:var(--text);}
+.dett-nome{font-family:var(--font-h);font-size:17px;font-weight:700;margin-bottom:2px;}
+.dett-tipo{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.btn-scarica{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.2s;}
+.btn-scarica:hover{background:rgba(255,255,255,0.09);}
+.dett-table{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:20px;}
+.dett-table td{padding:8px 0;border-top:1px solid var(--border);}
+.dett-table td:first-child{color:var(--muted);width:44%;}
+.dett-table td:last-child{text-align:right;font-weight:500;}
+.dett-azioni{display:flex;gap:10px;}
+.btn-attiva{flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:background 0.2s;}
+.btn-attiva:hover{background:#16a34a;}
+.btn-non-attiva{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:background 0.2s;}
+.btn-non-attiva:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+
+/* POP-UP CONFERMA STAMPA — nuovo, riusa lo schema di confirm-overlay */
+.stampa-box{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:340px;width:100%;text-align:center;}
+.stampa-title{font-family:var(--font-h);font-size:16px;font-weight:700;margin-bottom:8px;}
+.stampa-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+.stampa-actions{display:flex;gap:10px;}
+.btn-stampa-si{flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);}
+.btn-stampa-no{flex:1;background:rgba(255,255,255,0.06);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);}
 .hero-tagline{position:relative;z-index:2;padding:8px 32px 28px;font-size:13px;color:var(--muted);}
 
 .wrap{max-width:1400px;margin:0 auto;padding:32px;}
@@ -349,10 +374,22 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 <div class="notif-panel" id="notif-panel" onclick="if(event.target===this)chiudiNotifiche();">
   <div class="notif-box">
     <div class="notif-box-header">
-      <div class="notif-box-title">🆕 Registrazioni da approvare</div>
+      <div class="notif-box-title" id="notif-box-title">🆕 Registrazioni da approvare</div>
       <button class="modal-close" onclick="chiudiNotifiche()">×</button>
     </div>
     <div id="notif-lista"><div class="notif-empty">Caricamento…</div></div>
+    <div id="notif-dettaglio" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="stampa-overlay" style="display:none;">
+  <div class="stampa-box">
+    <div class="stampa-title">🖨️ Stampare l'anagrafica?</div>
+    <div class="stampa-text" id="stampa-testo">Vuoi stampare l'anagrafica di questo utente prima di continuare?</div>
+    <div class="stampa-actions">
+      <button class="btn-stampa-no" onclick="rispostaStampa(false)">No, continua</button>
+      <button class="btn-stampa-si" onclick="rispostaStampa(true)">🖨️ Sì, stampa</button>
+    </div>
   </div>
 </div>
 
@@ -430,12 +467,19 @@ function aggiornaCampanello() {
     bell.classList.remove('attiva');
     count.classList.remove('show');
   }
-  // Se il pop-up è già aperto, tienilo aggiornato in tempo reale
-  if (document.getElementById('notif-panel').classList.contains('open')) renderNotifiche();
+  // Se il pop-up è aperto sulla lista, tienila aggiornata in tempo reale.
+  // Se invece è aperta una scheda dettaglio, non la tocca: non deve interrompere
+  // chi sta controllando l'anagrafica di qualcuno.
+  const panelOpen = document.getElementById('notif-panel').classList.contains('open');
+  const inDettaglio = document.getElementById('notif-dettaglio').style.display === 'block';
+  if (panelOpen && !inDettaglio) renderNotifiche();
 }
 
 function apriNotifiche() {
   document.getElementById('notif-panel').classList.add('open');
+  document.getElementById('notif-lista').style.display = 'block';
+  document.getElementById('notif-dettaglio').style.display = 'none';
+  document.getElementById('notif-box-title').textContent = '🆕 Registrazioni da approvare';
   renderNotifiche();
 }
 function chiudiNotifiche() {
@@ -453,41 +497,151 @@ function renderNotifiche() {
     const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
     const tagClasse = r.tipo === 'azienda' ? 'azie' : 'trasp';
     const tagTesto = r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore';
-    return `<div class="notif-row" id="notif-row-${r.id}">
+    return `<div class="notif-row" id="notif-row-${r.id}" onclick="apriDettaglioUtente('${r.id}')" style="cursor:pointer;">
       <div class="notif-row-info">
         <div class="notif-row-nome">${nome}<span class="tipo-tag ${tagClasse}">${tagTesto}</span></div>
         <div class="notif-row-sub">✉️ ${f.email || '—'} &nbsp; 📞 ${f.telefono || '—'}</div>
       </div>
-      <button class="btn-approva" onclick="approvaRegistrazione('${r.id}','${r.tipo}',this)">✅ Approva</button>
+      <span style="color:var(--muted);font-size:16px;">›</span>
     </div>`;
   }).join('');
 }
 
-async function approvaRegistrazione(recordId, tipo, btn) {
-  btn.disabled = true;
-  btn.textContent = '⏳ Approvo…';
-  const action = tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
+/* Campi da mostrare nella scheda anagrafica — nome campo Airtable → etichetta leggibile */
+const CAMPI_TRASPORTATORE = [
+  ['Nome', 'nome'], ['Cognome', 'cognome'], ['Email', 'email'], ['Telefono', 'telefono'],
+  ['Data di nascita', 'data_nascita'], ['Partita IVA', 'partita_iva'], ['Codice fiscale', 'codice_fiscale'],
+  ['Forma giuridica', 'forma_giuridica'], ['Camera di commercio', 'camera_commerciale'], ['Numero REA', 'numero_rea'],
+  ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'], ['Indirizzo', 'via'], ['CAP', 'cap'], ['Città', 'citta'],
+  ['Provincia', 'provincia'], ['Nazione', 'nazione'], ['Specifica mezzo', 'specifica'], ['Note', 'note']
+];
+const CAMPI_AZIENDA = [
+  ['Ragione sociale', 'ragione_sociale'], ['Email', 'email'], ['Telefono', 'telefono'],
+  ['Partita IVA', 'partita_iva'], ['Codice fiscale', 'codice_fiscale'], ['Forma giuridica', 'forma_giuridica'],
+  ['Camera di commercio', 'camera_commerciale'], ['Numero REA', 'numero_rea'], ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'],
+  ['Indirizzo', 'via'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
+  ['Specifica attività', 'specifica_azienda']
+];
+
+let recordApertoCorrente = null;
+
+function apriDettaglioUtente(recordId) {
+  const r = registrazioniInAttesa.find(x => x.id === recordId);
+  if (!r) return;
+  recordApertoCorrente = r;
+  const f = r.fields;
+  const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+  const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
+  const righe = campi.map(([label, chiave]) =>
+    `<tr><td>${label}</td><td>${f[chiave] || '—'}</td></tr>`
+  ).join('');
+
+  document.getElementById('notif-box-title').textContent = '📋 Anagrafica';
+  document.getElementById('notif-dettaglio').innerHTML = `
+    <button class="dett-back" onclick="tornaListaNotifiche()">← Torna alla lista</button>
+    <div class="dett-nome">${nome}</div>
+    <div class="dett-tipo">${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</div>
+    <button class="btn-scarica" onclick="scaricaAnagrafica()">📥 Scarica anagrafica</button>
+    <table class="dett-table">${righe}</table>
+    <div class="dett-azioni">
+      <button class="btn-non-attiva" onclick="tornaListaNotifiche()">Non attivare ora</button>
+      <button class="btn-attiva" id="btn-attiva-conferma" onclick="richiediConfermaAttivazione()">✅ Attiva</button>
+    </div>
+  `;
+  document.getElementById('notif-lista').style.display = 'none';
+  document.getElementById('notif-dettaglio').style.display = 'block';
+}
+
+function tornaListaNotifiche() {
+  recordApertoCorrente = null;
+  document.getElementById('notif-box-title').textContent = '🆕 Registrazioni da approvare';
+  document.getElementById('notif-dettaglio').style.display = 'none';
+  document.getElementById('notif-lista').style.display = 'block';
+  renderNotifiche();
+}
+
+/* Scarica anagrafica — file di testo con tutti i dati inseriti, per controllarli
+   prima di attivare l'utente. */
+function scaricaAnagrafica() {
+  if (!recordApertoCorrente) return;
+  const r = recordApertoCorrente;
+  const f = r.fields;
+  const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || 'utente') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || 'utente';
+  const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
+  let testo = `EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}\n`;
+  testo += `Scaricato il ${new Date().toLocaleString('it-IT')}\n`;
+  testo += '='.repeat(50) + '\n\n';
+  campi.forEach(([label, chiave]) => { testo += `${label}: ${f[chiave] || '—'}\n`; });
+  const blob = new Blob([testo], { type: 'text/plain;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `anagrafica_${nome.replace(/\s+/g,'_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* Attivazione: prima chiede se stampare l'anagrafica, poi procede in ogni caso */
+function richiediConfermaAttivazione() {
+  if (!recordApertoCorrente) return;
+  const nome = recordApertoCorrente.tipo === 'azienda'
+    ? (recordApertoCorrente.fields.ragione_sociale || '—')
+    : ((recordApertoCorrente.fields.nome || '') + ' ' + (recordApertoCorrente.fields.cognome || '')).trim();
+  document.getElementById('stampa-testo').textContent = `Vuoi stampare l'anagrafica di ${nome} prima di attivarlo?`;
+  document.getElementById('stampa-overlay').style.display = 'flex';
+}
+
+function rispostaStampa(vuoleStampare) {
+  document.getElementById('stampa-overlay').style.display = 'none';
+  if (vuoleStampare) stampaAnagrafica();
+  eseguiAttivazione();
+}
+
+function stampaAnagrafica() {
+  if (!recordApertoCorrente) return;
+  const r = recordApertoCorrente;
+  const f = r.fields;
+  const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+  const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
+  const righe = campi.map(([label, chiave]) => `<tr><td style="padding:6px 10px;color:#555;">${label}</td><td style="padding:6px 10px;font-weight:600;">${f[chiave] || '—'}</td></tr>`).join('');
+  const win = window.open('', '_blank', 'width=700,height=800');
+  win.document.write(`
+    <html><head><title>Anagrafica ${nome}</title></head>
+    <body style="font-family:sans-serif;padding:30px;">
+      <h2>EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</h2>
+      <p style="color:#888;font-size:12px;">Stampato il ${new Date().toLocaleString('it-IT')}</p>
+      <h3>${nome}</h3>
+      <table style="border-collapse:collapse;width:100%;">${righe}</table>
+    </body></html>
+  `);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
+/* Attivazione vera e propria — chiama il proxy Make, l'email con la password
+   parte da sola entro 5 minuti tramite lo scenario "Approva Utente" già attivo. */
+async function eseguiAttivazione() {
+  if (!recordApertoCorrente) return;
+  const r = recordApertoCorrente;
+  const btn = document.getElementById('btn-attiva-conferma');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Attivo…'; }
+  const action = r.tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: action, record_id: recordId })
+      body: JSON.stringify({ action: action, record_id: r.id })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    btn.textContent = '✅ Approvato';
-    // Rimuove dalla lista in attesa — l'email con la password parte da sola
-    // entro 5 minuti tramite lo scenario "Approva Utente" già attivo.
-    registrazioniInAttesa = registrazioniInAttesa.filter(r => r.id !== recordId);
+    registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
     aggiornaCampanello();
-    setTimeout(() => {
-      const row = document.getElementById('notif-row-' + recordId);
-      if (row) row.remove();
-      if (!registrazioniInAttesa.length) renderNotifiche();
-    }, 900);
+    tornaListaNotifiche();
   } catch (e) {
-    console.error('Errore approvazione:', e);
-    btn.disabled = false;
-    btn.textContent = '⚠️ Riprova';
+    console.error('Errore attivazione:', e);
+    if (btn) { btn.disabled = false; btn.textContent = '⚠️ Riprova'; }
   }
 }
 
