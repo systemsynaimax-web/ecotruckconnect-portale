@@ -247,7 +247,11 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 @media(max-width:600px){
   .toolbar-grid{grid-template-columns:repeat(2,1fr);}
   .cal-cell{min-height:60px;padding:4px;}
-  .header-right{flex-wrap:wrap;justify-content:flex-end;gap:8px;}
+  .header{flex-wrap:wrap;row-gap:12px;}
+  .header-left{width:100%;justify-content:space-between;}
+  .header-right{width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px;}
+  .refresh-info{display:none;}
+  .logo{font-size:16px;}
 }.print-timestamp{display:none;}
 @media print{
   .hero,.toolbar-grid,.portali-grid,.feed-search,.feed-actions,button{display:none !important;}
@@ -265,7 +269,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
 <div class="hero">
   <div class="header">
-    <div style="display:flex;align-items:center;">
+    <div class="header-left" style="display:flex;align-items:center;">
       <div class="logo">Eco<span>Truck</span>Connect</div>
       <div class="notif-bell" id="alert-bell" onclick="apriAlertScadenze()" title="Scadenze e avvisi" style="margin-left:20px;">
         ⏰
