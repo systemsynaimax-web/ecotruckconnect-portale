@@ -1290,8 +1290,8 @@ async function aggiornaDashFatture() {
   const btnPdf = document.getElementById('btn-scarica-fatture-pdf');
 
   if (tipoUtente === 'azienda') {
-    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th>';
-    body.innerHTML = '<tr><td colspan="4" class="empty">Caricamento...</td></tr>';
+    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
+    body.innerHTML = '<tr><td colspan="5" class="empty">Caricamento...</td></tr>';
     btnCsv.style.display = 'none';
     btnPdf.style.display = 'none';
     /* PREINSTALLATO — chiamata vera e già pronta verso il proxy Make.
@@ -1312,9 +1312,10 @@ async function aggiornaDashFatture() {
       carichiPubblicatiAzienda = [];
     }
     if (!carichiPubblicatiAzienda.length) {
-      body.innerHTML = '<tr><td colspan="4" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
       return;
     }
+    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
     btnCsv.style.display = 'inline-flex';
     btnPdf.style.display = 'inline-flex';
     body.innerHTML = carichiPubblicatiAzienda
@@ -1322,7 +1323,7 @@ async function aggiornaDashFatture() {
       .map(c => {
         const f = c.fields;
         const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.assegnato_a_nome || '—'}</td></tr>`;
+        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.assegnato_a_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
       }).join('');
     const elAgg = document.getElementById('fatture-ultimo-agg');
     if (elAgg) elAgg.textContent = formatDataOra();
@@ -2151,6 +2152,34 @@ function scaricaFattureAziendaPDF() {
     headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: 'bold' }
   });
   doc.save(`carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda (stesso
+   principio delle fatture: appare da sola quando carichiPubblicatiAzienda
+   ha dati veri, oggi resta invisibile perché l'elenco è vuoto).
+   Precompila il form "Pubblica un Carico" con gli stessi dati di un
+   carico già pubblicato, per non doverli riscrivere ogni volta. */
+function duplicaCarico(recordId) {
+  const c = carichiPubblicatiAzienda.find(x => x.id === recordId);
+  if (!c) return;
+  const f = c.fields;
+
+  // Esce dalla Dashboard e torna al portale normale, dove si trova il form
+  document.getElementById('sezione-dashboard').style.display = 'none';
+  document.getElementById('contenuto-normale-portale').style.display = 'block';
+  document.getElementById('sezione-azienda').style.display = 'block';
+
+  document.getElementById('ins-cap-part').value = f.cap_partenza || '';
+  document.getElementById('ins-cap-arr').value = f.cap_arrivo || '';
+  document.getElementById('ins-citta-part').value = f.citta_partenza || '';
+  document.getElementById('ins-citta-arr').value = f.citta_arrivo || '';
+  document.getElementById('ins-merce').value = f.tipo_merce || '';
+  const ricercaMerce = document.getElementById('ins-merce-ricerca');
+  if (ricercaMerce) ricercaMerce.value = f.tipo_merce || '';
+  document.getElementById('ins-specifica').value = f.specifica || '';
+  document.getElementById('ins-note').value = f.note || '';
+
+  document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function inviaForm(e) {
