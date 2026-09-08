@@ -305,13 +305,23 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </div>
 
   <div class="sec-title">🎭 Modalità Demo 🔔 (solo per mostrare, dati finti)</div>
-  <div style="background:rgba(249,115,22,0.08);border:1.5px dashed rgba(249,115,22,0.5);border-radius:14px;padding:20px 22px;margin-bottom:32px;">
+  <div style="background:rgba(249,115,22,0.08);border:1.5px dashed rgba(249,115,22,0.5);border-radius:14px;padding:20px 22px;margin-bottom:20px;">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
       <div style="flex:1;min-width:240px;">
         <div style="font-weight:700;color:#f97316;font-size:14px;margin-bottom:4px;">⚠️ Questa NON è la campanella reale</div>
         <div style="font-size:13px;color:var(--muted);">Apre un esempio con due nomi finti (Marco Russo, Trasporti Belfiore Srl) solo per far vedere a Gerlando come funziona l'approvazione. Non tocca mai richieste vere.</div>
       </div>
       <button onclick="apriAnteprimaNotifiche()" style="background:#f97316;border:none;color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;">👁️ Apri Demo 🔔 (dati finti)</button>
+    </div>
+  </div>
+
+  <div style="background:rgba(0,136,204,0.08);border:1.5px dashed rgba(0,136,204,0.5);border-radius:14px;padding:20px 22px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:240px;">
+        <div style="font-weight:700;color:#0088cc;font-size:14px;margin-bottom:4px;">✈️ Questi NON sono messaggi Telegram veri</div>
+        <div style="font-size:13px;color:var(--muted);">Mostra un esempio di cosa riceve un trasportatore quando c'è un nuovo carico, e cosa riceve un'azienda quando il suo carico viene preso — con la spiegazione di cosa deve fare ognuno. Tutto privato: nessuno vede le notifiche degli altri. Non tocca mai Telegram vero.</div>
+      </div>
+      <button onclick="apriAnteprimaTelegram()" style="background:#0088cc;border:none;color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;">✈️ Apri Demo Telegram (dati finti)</button>
     </div>
   </div>
 
@@ -393,6 +403,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     </div>
     <div id="notif-lista"><div class="notif-empty">Caricamento…</div></div>
     <div id="notif-dettaglio" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="notif-panel" id="telegram-panel" onclick="if(event.target===this)chiudiAnteprimaTelegram();">
+  <div class="notif-box">
+    <div class="notif-box-header">
+      <div class="notif-box-title">✈️ Anteprima Notifiche Telegram</div>
+      <button class="modal-close" onclick="chiudiAnteprimaTelegram()">×</button>
+    </div>
+    <div id="telegram-lista"></div>
   </div>
 </div>
 
@@ -479,6 +499,54 @@ const ANTEPRIMA_REGISTRAZIONI = [
       specifica_azienda: 'Logistica generale — esempio'
   }}
 ];
+
+/* ==================================================
+   ANTEPRIMA NOTIFICHE TELEGRAM — completamente separata
+   dal sistema campanella/registrazioni. Solo messaggi finti
+   di esempio, per far vedere a Gerlando cosa riceve ogni
+   persona sul bot e cosa deve fare in ogni caso.
+   Ogni notifica arriva in privato, solo all'interessato —
+   nessuno vede quella degli altri. Non legge mai Telegram vero.
+   ================================================== */
+const ANTEPRIMA_TELEGRAM = [
+  {
+    titolo: '📦 Scenario 1 — L\'azienda pubblica un nuovo carico',
+    chi_riceve: 'Il trasportatore compatibile (Marco Russo)',
+    messaggio: '🚚 Nuovo carico disponibile compatibile con il tuo profilo!\nFavara → Palermo · Alimentare\nApri il portale per i dettagli e per accaparrarlo.',
+    cosa_deve_fare: 'Il trasportatore riceve questo messaggio in privato, solo lui — nessun altro trasportatore lo vede se non ha lo stesso mezzo/autorizzazione compatibile. Deve aprire il portale, guardare i dettagli del carico (partenza, arrivo, merce, data) e decidere se prenderlo cliccando "Prendi". Se non gli interessa, non deve fare nulla: il carico resta visibile per lui finché qualcun altro compatibile non lo prende.'
+  },
+  {
+    titolo: '✅ Scenario 2 — Il trasportatore prende il carico',
+    chi_riceve: 'L\'azienda che ha pubblicato (Trasporti Belfiore Srl)',
+    messaggio: '✅ Il tuo carico Favara → Palermo è stato accaparrato da un trasportatore verificato.',
+    cosa_deve_fare: 'L\'azienda riceve la conferma che il suo carico è stato preso in carico. Non deve fare nulla di attivo: è solo un avviso che il trasporto è stato organizzato. Il carico sparisce automaticamente dalla lista dei disponibili per tutti gli altri trasportatori, così non c\'è rischio che due persone lo prendano insieme.'
+  },
+  {
+    titolo: '⏳ Scenario 3 — Promemoria pagamento in corso',
+    chi_riceve: 'Il trasportatore che ha cliccato "Prendi" (Marco Russo)',
+    messaggio: '⏳ Promemoria: hai 5 minuti per completare il pagamento del carico bloccato, altrimenti torna disponibile per altri.',
+    cosa_deve_fare: 'Il trasportatore ha già cliccato "Prendi" ed è stato reindirizzato al pagamento di 20€. Ha 5 minuti di tempo per completarlo. Se non paga in tempo, il carico si sblocca automaticamente e torna visibile agli altri trasportatori compatibili — così nessun carico resta bloccato per sempre da chi ha cambiato idea.'
+  }
+];
+
+function apriAnteprimaTelegram() {
+  const el = document.getElementById('telegram-lista');
+  const banner = '<div class="anteprima-banner" style="font-size:14px;font-weight:800;padding:14px 16px;text-align:center;">✈️ ATTENZIONE — MESSAGGI FINTI DI ESEMPIO, NON NOTIFICHE VERE ✈️</div>';
+  el.innerHTML = banner + ANTEPRIMA_TELEGRAM.map(s => `
+    <div style="padding:18px 20px;border-bottom:1px solid var(--border);">
+      <div style="font-weight:800;color:#0088cc;font-size:14px;margin-bottom:10px;">${s.titolo}</div>
+      <div style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">📨 Chi riceve questo messaggio</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:14px;">${s.chi_riceve} — in privato, solo lui</div>
+      <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;white-space:pre-line;font-size:13px;color:rgba(241,245,249,0.9);line-height:1.5;">${s.messaggio}</div>
+      <div style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">👉 Cosa deve fare</div>
+      <div style="font-size:13px;color:rgba(241,245,249,0.75);line-height:1.6;">${s.cosa_deve_fare}</div>
+    </div>
+  `).join('');
+  document.getElementById('telegram-panel').classList.add('open');
+}
+function chiudiAnteprimaTelegram() {
+  document.getElementById('telegram-panel').classList.remove('open');
+}
 
 function apriAnteprimaNotifiche() {
   modalitaAnteprima = true;
