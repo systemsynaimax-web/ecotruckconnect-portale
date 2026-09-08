@@ -2316,9 +2316,41 @@ async function apriGiornoCalendario(dataStr) {
     return;
   }
   if (tipoUtente === 'azienda') {
-    document.getElementById('ins-data').value = dataStr;
-    document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('ins-cap-part').focus();
+    const carichiGiornoAzienda = (ultimiCarichi || []).filter(c =>
+      (c.fields.data_consegna || '').slice(0,10) === dataStr &&
+      (c.fields.nome_azienda || '') === (profiloAzienda.nome || '')
+    );
+    const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
+    let corpo;
+    if (carichiGiornoAzienda.length === 0) {
+      corpo = `<div class="cal-modal-empty">Nessun carico tuo pubblicato in questa data.</div>`;
+    } else {
+      corpo = carichiGiornoAzienda.map(c => {
+        const f = c.fields;
+        const stato = (f.stato || 'DISPONIBILE').toUpperCase();
+        const partenza = f.citta_partenza || f.cap_partenza || '—';
+        const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
+        const merce = f.tipo_merce || f.merce || '—';
+        const badgeColore = stato === 'DISPONIBILE' ? 'var(--blue)' : stato.includes('PAGAMENTO') ? 'var(--amber)' : 'var(--green)';
+        return `<div class="carico-item" style="border-radius:10px;border:1px solid var(--border);margin-bottom:10px;">
+          <div class="carico-info">
+            <div class="carico-tratta">${partenza} → ${arrivo}</div>
+            <div class="carico-det">${merce} · <span style="color:${badgeColore};font-weight:600;">${stato}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    const html = `
+      <div class="cal-modal-overlay" id="cal-modal-overlay" onclick="if(event.target===this)chiudiModaleCalendario()">
+        <div class="cal-modal">
+          <button class="cal-modal-close" onclick="chiudiModaleCalendario()">✕</button>
+          <h3 style="text-transform:capitalize;">${dataLeggibile}</h3>
+          ${corpo}
+          <button class="btn-prendi" style="width:100%;margin-top:6px;" onclick="chiudiModaleCalendario();document.getElementById('ins-data').value='${dataStr}';document.getElementById('sezione-azienda').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('ins-cap-part').focus();">+ Pubblica un carico in questo giorno</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
     return;
   }
   const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
