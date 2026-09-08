@@ -1944,6 +1944,10 @@ async function caricaDati(email) {
     aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
+    // Precarica in silenzio i carichi pubblicati dall'azienda (serve al calendario
+    // per mostrare tutto, PRESO compreso, anche prima che apra "Le mie fatture").
+    // Preinstallato come il resto: oggi resta vuoto finché Make non risponde.
+    if (tipoUtente === 'azienda') aggiornaDashFatture();
     if (!recId) { azzeraStats(); renderStorico([]); return; }
     let cands = [];
     try {
@@ -2316,9 +2320,11 @@ async function apriGiornoCalendario(dataStr) {
     return;
   }
   if (tipoUtente === 'azienda') {
-    const carichiGiornoAzienda = (ultimiCarichi || []).filter(c =>
-      (c.fields.data_consegna || '').slice(0,10) === dataStr &&
-      (c.fields.nome_azienda || '') === (profiloAzienda.nome || '')
+    // Usa carichiPubblicatiAzienda (tutti i carichi, compresi quelli già PRESO)
+    // invece di ultimiCarichi (che mostra solo quelli ancora prendibili) —
+    // così l'azienda vede davvero tutto quello che ha pubblicato quel giorno.
+    const carichiGiornoAzienda = (carichiPubblicatiAzienda || []).filter(c =>
+      (c.fields.data_consegna || c.fields.data_pubblicazione || '').slice(0,10) === dataStr
     );
     const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
     let corpo;
