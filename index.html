@@ -11,6 +11,8 @@ if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || 
 }
 </script>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -496,13 +498,14 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <span>🧾 Le mie fatture</span>
           <span style="display:flex;gap:8px;">
-            <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaStoricoCSV()" style="display:none;">⬇️ Scarica CSV</button>
+            <button class="btn-cap" id="btn-scarica-fatture-pdf" onclick="scaricaFatturePDF()" style="display:none;">📄 Scarica PDF</button>
+            <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaFattureCSV()" style="display:none;">⬇️ Scarica CSV</button>
             <button class="btn-cap" onclick="stampaConTimbro()">🖨️ Stampa</button>
           </span>
         </h4>
         <div class="table-box" style="margin-bottom:0;">
           <table>
-            <thead><tr><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
+            <thead><tr id="dash-fatture-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
             <tbody id="dash-fatture-body"><tr><td colspan="4" class="empty">Caricamento...</td></tr></tbody>
           </table>
         </div>
@@ -1280,20 +1283,61 @@ function autocompilaCittaDaDashboard() {
   }, 500);
 }
 
-function aggiornaDashFatture() {
+async function aggiornaDashFatture() {
   const body = document.getElementById('dash-fatture-body');
-  const btn = document.getElementById('btn-scarica-fatture');
+  const thead = document.getElementById('dash-fatture-thead');
+  const btnCsv = document.getElementById('btn-scarica-fatture');
+  const btnPdf = document.getElementById('btn-scarica-fatture-pdf');
+
   if (tipoUtente === 'azienda') {
-    body.innerHTML = '<tr><td colspan="4" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
-    btn.style.display = 'none';
+    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th>';
+    body.innerHTML = '<tr><td colspan="4" class="empty">Caricamento...</td></tr>';
+    btnCsv.style.display = 'none';
+    btnPdf.style.display = 'none';
+    /* PREINSTALLATO — chiamata vera e già pronta verso il proxy Make.
+       Oggi non risponde (o risponde vuota) perché l'azione
+       "get_carichi_pubblicati_azienda" non esiste ancora sullo scenario
+       Make (segnata nei documenti come mancante). Appena viene aggiunta
+       su Make (pochi minuti di lavoro), questa parte del portale funziona
+       da sola, senza toccare più nulla qui. */
+    try {
+      const res = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
+      });
+      const data = await res.json();
+      carichiPubblicatiAzienda = data.carichi || [];
+    } catch (e) {
+      carichiPubblicatiAzienda = [];
+    }
+    if (!carichiPubblicatiAzienda.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
+      return;
+    }
+    btnCsv.style.display = 'inline-flex';
+    btnPdf.style.display = 'inline-flex';
+    body.innerHTML = carichiPubblicatiAzienda
+      .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
+      .map(c => {
+        const f = c.fields;
+        const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
+        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.assegnato_a_nome || '—'}</td></tr>`;
+      }).join('');
+    const elAgg = document.getElementById('fatture-ultimo-agg');
+    if (elAgg) elAgg.textContent = formatDataOra();
     return;
   }
+
+  thead.innerHTML = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th>';
   if (!ultimeCandidature || !ultimeCandidature.length) {
     body.innerHTML = '<tr><td colspan="4" class="empty">Nessun carico ancora.</td></tr>';
-    btn.style.display = 'none';
+    btnCsv.style.display = 'none';
+    btnPdf.style.display = 'none';
     return;
   }
-  btn.style.display = 'inline-flex';
+  btnCsv.style.display = 'inline-flex';
+  btnPdf.style.display = 'inline-flex';
   body.innerHTML = ultimeCandidature
     .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
     .map(c => {
@@ -1946,6 +1990,7 @@ function azzeraStats() {
 }
 
 let ultimeCandidature = [];
+let carichiPubblicatiAzienda = []; // preinstallato: pronto per l'azienda, in attesa dell'azione Make "get_carichi_pubblicati_azienda"
 
 function renderStorico(cands) {
   ultimeCandidature = cands || [];
@@ -2013,6 +2058,99 @@ function scaricaStoricoCSV() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ==================================================
+   SCARICO PDF/CSV — trasportatore già vero e funzionante oggi.
+   Azienda PREINSTALLATA: la funzione è scritta e pronta, ma resta
+   inutilizzata finché carichiPubblicatiAzienda non ha dati veri
+   (cioè finché l'azione Make "get_carichi_pubblicati_azienda" non
+   viene aggiunta). Appena c'è quel pezzo, tutto qui sotto funziona
+   subito, senza bisogno di toccare altro codice.
+   ================================================== */
+function scaricaFattureCSV() {
+  if (tipoUtente === 'azienda') { scaricaFattureAziendaCSV(); return; }
+  scaricaStoricoCSV();
+}
+function scaricaFatturePDF() {
+  if (tipoUtente === 'azienda') { scaricaFattureAziendaPDF(); return; }
+  scaricaStoricoPDF();
+}
+
+function scaricaStoricoPDF() {
+  if (!ultimeCandidature.length) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(15);
+  doc.text('EcoTruckConnect — Le mie fatture', 14, 18);
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
+  const righe = ultimeCandidature
+    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
+    .map(c => {
+      const f = c.fields;
+      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+      return [data, f.richiesta_id || '—', f.stato || '—', `€ ${PREZZO}`];
+    });
+  doc.autoTable({
+    head: [['Data', 'ID Richiesta', 'Stato', 'Importo']],
+    body: righe,
+    startY: 30,
+    styles: { fontSize: 9, cellPadding: 4 },
+    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' }
+  });
+  doc.save(`fatture_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda */
+function scaricaFattureAziendaCSV() {
+  if (!carichiPubblicatiAzienda.length) return;
+  const righe = [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']];
+  carichiPubblicatiAzienda
+    .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
+    .forEach(c => {
+      const f = c.fields;
+      const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '';
+      righe.push([data, f.numero_ordine || '', f.stato || '', f.assegnato_a_nome || '']);
+    });
+  const csv = righe.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `carichi_pubblicati_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda */
+function scaricaFattureAziendaPDF() {
+  if (!carichiPubblicatiAzienda.length) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(15);
+  doc.text('EcoTruckConnect — Carichi Pubblicati', 14, 18);
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
+  const righe = carichiPubblicatiAzienda
+    .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
+    .map(c => {
+      const f = c.fields;
+      const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
+      return [data, f.numero_ordine || '—', f.stato || '—', f.assegnato_a_nome || '—'];
+    });
+  doc.autoTable({
+    head: [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']],
+    body: righe,
+    startY: 30,
+    styles: { fontSize: 9, cellPadding: 4 },
+    headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: 'bold' }
+  });
+  doc.save(`carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 async function inviaForm(e) {
