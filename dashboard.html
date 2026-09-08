@@ -420,6 +420,114 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
+  <div class="sec-title">📋 Cosa Manca Ancora — Tutto Spiegato, Punto per Punto</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Clicca su ogni punto per aprirlo e vedere: cosa fa, a cosa serve, cosa è già pronto ("preinstallato") e cosa manca davvero, e perché oggi non si vede ancora nulla a schermo.</div>
+
+  <style>
+    .accordion-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+    .accordion-item summary{padding:16px 20px;cursor:pointer;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;list-style:none;}
+    .accordion-item summary::-webkit-details-marker{display:none;}
+    .accordion-item summary::before{content:'▸';color:var(--muted);transition:transform 0.2s;}
+    .accordion-item[open] summary::before{transform:rotate(90deg);}
+    .accordion-body{padding:0 20px 18px 46px;font-size:13px;color:rgba(241,245,249,0.8);line-height:1.7;}
+    .accordion-body b{color:var(--text);}
+    .accordion-tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:10px;margin-left:auto;white-space:nowrap;}
+    .tag-pronto{background:rgba(34,197,94,0.15);color:var(--green);}
+    .tag-parziale{background:rgba(245,158,11,0.15);color:var(--amber);}
+    .tag-zero{background:rgba(239,68,68,0.15);color:var(--red);}
+  </style>
+
+  <details class="accordion-item">
+    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-parziale">Quasi pronto</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> scrive ogni azione importante (carico pubblicato, carico preso, utente approvato) dentro a una tabella Airtable, creando uno storico vero e ricercabile.<br><br>
+      <b>A cosa serve:</b> è la base che sblocca anche il punto 2 (Telegram vero) e il punto 4 (grafico andamento) — costruirlo prima fa risparmiare tempo dopo.<br><br>
+      <b>Preinstallato:</b> tabella Airtable "Registro Attività" già creata con tutti i campi. Il portale chiama già la funzione <code>registraAttivita()</code> in più punti (es. quando si salvano le preferenze notifiche).<br><br>
+      <b>Manca:</b> un modulo dentro allo scenario Make che riceve quello che il portale manda e lo scrive davvero. <b>Stima: ~5 minuti</b>, ma serve Make acceso per costruirlo e testarlo.<br><br>
+      <b>Perché non si vede:</b> il pezzo mancante è proprio quello che collega i due lati — senza, i dati non arrivano da nessuna parte.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Serve il punto 1</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> mostra i messaggi Telegram davvero inviati ai trasportatori/aziende, al posto della demo finta di stasera.<br><br>
+      <b>A cosa serve:</b> verificare che le notifiche arrivino per davvero, senza dover aprire Telegram per controllare.<br><br>
+      <b>Preinstallato:</b> no — dipende in toto dal punto 1.<br><br>
+      <b>Manca:</b> prima il Registro Attività (punto 1), poi collegare la dashboard a leggerlo.<br><br>
+      <b>Perché non si vede:</b> non esiste ancora una fonte dati da cui leggere.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>3. 🧾 Portale Azienda — Fatture, PDF, CSV, Duplica Carico <span class="accordion-tag tag-pronto">100% pronto</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> l'azienda vede tutti i carichi che ha pubblicato, li scarica in PDF o CSV, e può duplicare un carico con un click per non riscriverlo da zero.<br><br>
+      <b>A cosa serve:</b> dare all'azienda tutto a portata di mano nel proprio portale, senza dover chiedere info al team.<br><br>
+      <b>Preinstallato:</b> tutto al 100% — tabella, bottoni PDF/CSV, bottone Duplica, tutti scritti e pronti dentro al codice del portale (index.html).<br><br>
+      <b>Manca:</b> un'azione su Make ("get_carichi_pubblicati_azienda") che dia i dati veri — stesso tipo di lavoro del punto 1, <b>~5-10 minuti</b> quando Make è acceso.<br><br>
+      <b>Perché non si vede:</b> senza quell'azione, l'elenco resta vuoto e i bottoni restano nascosti apposta — per non mostrare mai un bottone che non funziona davvero.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>4. 📈 Grafico andamento nel tempo <span class="accordion-tag tag-zero">Serve il punto 1</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> un grafico che mostra quanti carichi sono stati pubblicati/presi per settimana o mese.<br><br>
+      <b>A cosa serve:</b> capire a colpo d'occhio se il traffico sulla piattaforma sta crescendo, utile soprattutto dopo il lancio vero.<br><br>
+      <b>Preinstallato:</b> no — dipende dai dati del Registro Attività (punto 1).<br><br>
+      <b>Perché non si vede:</b> stessa causa del punto 2, manca la fonte dati a monte.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>5. ✏️ Modifica profilo utente dalla dashboard <span class="accordion-tag tag-zero">Da zero</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> un pulsante "Modifica" nella scheda anagrafica (quella che si apre dalla campanella) per correggere email, telefono o altri dati senza dover andare su Airtable a mano.<br><br>
+      <b>A cosa serve:</b> risparmiare tempo quando un utente sbaglia un dato in fase di registrazione.<br><br>
+      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
+      <b>Stima:</b> ~20-30 minuti, serve Make per salvare le modifiche su Airtable.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>6. 🔢 Contatore trasportatori compatibili <span class="accordion-tag tag-zero">Confermato da Gerlando</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> quando l'azienda pubblica un carico, vede subito quanti trasportatori sono compatibili con quel mezzo/autorizzazione — <b>mai nomi, solo il numero</b>.<br><br>
+      <b>A cosa serve:</b> dà fiducia all'azienda che il carico verrà davvero preso, invece di pubblicare nel dubbio (confermato da Gerlando l'8/9 sera).<br><br>
+      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
+      <b>Stima:</b> ~35-50 minuti (nuova azione Make + modifica al form + test).
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>7. 📍 Filtro/Mappa per zona (CAP) <span class="accordion-tag tag-parziale">Dati già pronti</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> far vedere solo i carichi vicini alla propria zona, con o senza una mappa visiva.<br><br>
+      <b>A cosa serve:</b> utile quando ci saranno molti trasportatori, per filtrare anche per vicinanza oltre che per mezzo/autorizzazione.<br><br>
+      <b>Preinstallato:</b> il dato del CAP esiste già su ogni carico (partenza e arrivo) e su ogni trasportatore — è già salvato, semplicemente il filtro è spento (matching oggi basato solo su mezzo+autorizzazioni, deciso il 6/8).<br><br>
+      <b>Perché non si vede:</b> disattivato di proposito, non è un pezzo mancante — è un interruttore già pronto da riaccendere quando serve davvero.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>8. 🔌 Controllo salute di tutti i collegamenti <span class="accordion-tag tag-zero">Il più lungo</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> un'icona che controlla davvero, uno per uno, se Airtable, Make, Telegram, Shopify rispondono — e dice la verità sempre, anche se qualcosa è spento.<br><br>
+      <b>A cosa serve:</b> prima di ogni test con Gerlando, un click e sai subito cosa è rotto, invece di scoprirlo a metà prova.<br><br>
+      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
+      <b>Stima:</b> ~45-60 minuti, il lavoro più lungo di tutti — richiede diverse chiamate di test verso ogni servizio.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>9. 💡 Idea: funzioni premium a pagamento <span class="accordion-tag tag-zero">Solo idea, non decisa</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> alcune funzioni avanzate (storico esteso, Ritorno a Vuoto, grafici per l'azienda) potrebbero diventare un abbonamento a pagamento invece che gratuite per tutti.<br><br>
+      <b>Stato:</b> solo un'idea buttata lì l'8/9 sera, nessun prezzo deciso, da discutere con Gerlando quando il modello base è stabile e lanciato.
+    </div>
+  </details>
+
 </div>
 
 <div class="notif-panel" id="notif-panel" onclick="if(event.target===this)chiudiNotifiche();">
