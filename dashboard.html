@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoTruckConnect — Dashboard Gestori</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
   --bg:       #080d16;
@@ -400,7 +402,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="section">
     <input type="text" class="feed-search" id="feed-cerca" placeholder="🔍 Cerca per nome azienda o trasportatore..." oninput="filtraFeed()">
     <div class="feed-actions">
-      <button onclick="stampaConTimbro()">📄 Scarica Report (PDF)</button>
+      <button onclick="scaricaPDF('feed')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('feed')">⬇️ Esporta CSV</button>
       <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="feed-list"><div class="feed-empty">Caricamento…</div></div>
@@ -410,7 +413,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="section">
     <input type="text" class="feed-search" id="az-cerca" placeholder="🔍 Cerca per nome azienda..." oninput="filtraAziende()">
     <div class="feed-actions">
-      <button onclick="stampaConTimbro()">📄 Scarica Report (PDF)</button>
+      <button onclick="scaricaPDF('aziende')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('aziende')">⬇️ Esporta CSV</button>
       <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
@@ -793,27 +797,35 @@ function tornaListaNotifiche() {
   renderNotifiche();
 }
 
-/* Scarica anagrafica — file di testo con tutti i dati inseriti, per controllarli
-   prima di attivare l'utente. */
+/* Scarica anagrafica — vero PDF, non più file .txt. Serve per controllare
+   tutti i dati inseriti prima di attivare l'utente. */
 function scaricaAnagrafica() {
   if (!recordApertoCorrente) return;
   const r = recordApertoCorrente;
   const f = r.fields;
   const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || 'utente') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || 'utente';
   const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
-  let testo = `EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}\n`;
-  testo += `Scaricato il ${new Date().toLocaleString('it-IT')}\n`;
-  testo += '='.repeat(50) + '\n\n';
-  campi.forEach(([label, chiave]) => { testo += `${label}: ${f[chiave] || '—'}\n`; });
-  const blob = new Blob([testo], { type: 'text/plain;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `anagrafica_${nome.replace(/\s+/g,'_')}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(15);
+  doc.text(`EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}`, 14, 18);
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
+  doc.setFontSize(12);
+  doc.setTextColor(0);
+  doc.text(nome, 14, 34);
+
+  const righe = campi.map(([label, chiave]) => [label, f[chiave] || '—']);
+  doc.autoTable({
+    body: righe,
+    startY: 40,
+    styles: { fontSize: 10, cellPadding: 5 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60, textColor: [100,100,100] } }
+  });
+
+  doc.save(`anagrafica_${nome.replace(/\s+/g,'_')}.pdf`);
 }
 
 /* Attivazione: prima chiede se stampare l'anagrafica, poi procede in ogni caso */
@@ -1064,6 +1076,120 @@ function filtraAziende() {
   const q = document.getElementById('az-cerca').value.trim().toLowerCase();
   if (!q) { renderAziende(tuttiCarichi); return; }
   renderAziende(tuttiCarichi.filter(c => (c.fields.nome_azienda||'').toLowerCase().includes(q)));
+}
+
+/* ==================================================
+   ESPORTAZIONE VERA — PDF e CSV
+   Sostituisce il vecchio bottone che apriva solo la stampa del
+   browser. Ora genera un file scaricato in automatico, senza
+   passaggi manuali. Rispetta il filtro di ricerca attivo: se hai
+   cercato un nome, esporta solo quello che vedi a schermo.
+   ================================================== */
+function getFeedFiltrati() {
+  const q = (document.getElementById('feed-cerca').value || '').trim().toLowerCase();
+  let lista = tuttiCarichi.filter(c => c.fields.data_pubblicazione || c.fields.data_assegnato);
+  if (q) {
+    lista = lista.filter(c => {
+      const f = c.fields;
+      return (f.nome_azienda || '').toLowerCase().includes(q) || (f.assegnato_a_nome || '').toLowerCase().includes(q);
+    });
+  }
+  return lista.sort((a, b) => {
+    const da = new Date(a.fields.data_assegnato || a.fields.data_pubblicazione);
+    const db = new Date(b.fields.data_assegnato || b.fields.data_pubblicazione);
+    return db - da;
+  });
+}
+function getAziendeFiltrate() {
+  const q = (document.getElementById('az-cerca').value || '').trim().toLowerCase();
+  let lista = tuttiCarichi.filter(c => c.fields.nome_azienda);
+  if (q) lista = lista.filter(c => (c.fields.nome_azienda || '').toLowerCase().includes(q));
+  return lista;
+}
+
+function scaricaPDF(tipo) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let titolo, headers, righe;
+
+  if (tipo === 'feed') {
+    titolo = 'EcoTruckConnect — Report Attività Recente';
+    const lista = getFeedFiltrati();
+    headers = [['Tratta', 'Azione', 'Data']];
+    righe = lista.map(c => {
+      const f = c.fields;
+      const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
+      const data = f.data_assegnato || f.data_pubblicazione;
+      const dataFmt = data ? new Date(data).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      return [`${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, azione, dataFmt];
+    });
+  } else {
+    titolo = 'EcoTruckConnect — Report Aziende';
+    const lista = getAziendeFiltrate();
+    headers = [['Azienda', 'Tratta', 'Merce', 'Stato', 'Data']];
+    righe = lista.map(c => {
+      const f = c.fields;
+      const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
+      return [f.nome_azienda || '—', `${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, f.tipo_merce || '—', f.stato || '—', data];
+    });
+  }
+
+  doc.setFontSize(15);
+  doc.text(titolo, 14, 18);
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text('Generato il ' + new Date().toLocaleString('it-IT'), 14, 24);
+
+  if (!righe.length) {
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text('Nessun dato disponibile con il filtro attuale.', 14, 38);
+  } else {
+    doc.autoTable({
+      head: headers,
+      body: righe,
+      startY: 30,
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 247, 250] }
+    });
+  }
+
+  doc.save(`ecotruckconnect_${tipo}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+function scaricaCSV(tipo) {
+  let headers, righe;
+  if (tipo === 'feed') {
+    const lista = getFeedFiltrati();
+    headers = ['Tratta', 'Azione', 'Data'];
+    righe = lista.map(c => {
+      const f = c.fields;
+      const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
+      const data = f.data_assegnato || f.data_pubblicazione;
+      const dataFmt = data ? new Date(data).toLocaleString('it-IT') : '—';
+      return [`${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, azione, dataFmt];
+    });
+  } else {
+    const lista = getAziendeFiltrate();
+    headers = ['Azienda', 'Tratta', 'Merce', 'Stato', 'Data'];
+    righe = lista.map(c => {
+      const f = c.fields;
+      const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
+      return [f.nome_azienda || '—', `${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, f.tipo_merce || '—', f.stato || '—', data];
+    });
+  }
+  let csv = headers.join(';') + '\n';
+  righe.forEach(r => { csv += r.map(v => String(v).replace(/;/g, ',')).join(';') + '\n'; });
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ecotruckconnect_${tipo}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function stampaConTimbro() {
