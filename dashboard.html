@@ -450,8 +450,15 @@ async function caricaDashboard() {
    rosso con il conteggio. Approvazione diretta da qui, un click,
    niente Airtable.
    ================================================== */
-let registrazioniInAttesa = [];
+let registrazioniReali = [];   // SOLO dati veri, da Make/Airtable — la campanella guarda sempre e solo questa
+let registrazioniDemo = [];    // SOLO dati finti, copia di lavoro usata mentre la demo è aperta
 let modalitaAnteprima = false;
+
+/* Ritorna la lista giusta da mostrare nel pannello, in base a dove ci troviamo.
+   Non è mai un mix delle due: o è tutta reale, o è tutta finta. */
+function listaAttuale() {
+  return modalitaAnteprima ? registrazioniDemo : registrazioniReali;
+}
 
 /* Dati di esempio per l'anteprima — non toccano mai Airtable, servono solo
    per mostrare a Gerlando come funziona il pannello, dal click sulla
@@ -475,10 +482,11 @@ const ANTEPRIMA_REGISTRAZIONI = [
 
 function apriAnteprimaNotifiche() {
   modalitaAnteprima = true;
-  registrazioniInAttesa = ANTEPRIMA_REGISTRAZIONI;
-  // NON chiamare aggiornaCampanello() qui: la campanella in alto deve
-  // continuare a mostrare solo il numero VERO di richieste reali,
-  // mai il numero della demo. La demo si vede solo dentro al pannello.
+  // Copia fresca ogni volta che si apre la demo, così un'attivazione fatta
+  // in una sessione precedente non lascia residui nella prossima.
+  registrazioniDemo = JSON.parse(JSON.stringify(ANTEPRIMA_REGISTRAZIONI));
+  // NON tocca mai registrazioniReali né la campanella in alto: sono due
+  // mondi separati, la demo non può mai influenzare i dati veri.
   document.getElementById('notif-panel').classList.add('open');
   document.getElementById('notif-lista').style.display = 'block';
   document.getElementById('notif-dettaglio').style.display = 'none';
@@ -487,7 +495,6 @@ function apriAnteprimaNotifiche() {
 }
 
 async function caricaNotificheRegistrazioni() {
-  if (modalitaAnteprima) return; // non toccare i dati finti mentre l'anteprima è aperta
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -495,18 +502,23 @@ async function caricaNotificheRegistrazioni() {
       body: JSON.stringify({ action: 'get_utenti_da_verificare' })
     });
     const data = await res.json();
-    if (modalitaAnteprima) return; // l'anteprima è stata aperta mentre questa chiamata era in corso: non sovrascrivere i dati finti
     const trasp = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', fields: r.fields || r }));
     const azie  = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', fields: r.fields || r }));
-    registrazioniInAttesa = [...trasp, ...azie];
+    registrazioniReali = [...trasp, ...azie];
     aggiornaCampanello();
+    // Se il pannello è aperto, siamo in modalità reale (non demo) e non stiamo
+    // guardando il dettaglio di qualcuno, aggiorna la lista visibile con i dati freschi.
+    const panelOpen = document.getElementById('notif-panel').classList.contains('open');
+    const inDettaglio = document.getElementById('notif-dettaglio').style.display === 'block';
+    if (panelOpen && !modalitaAnteprima && !inDettaglio) renderNotifiche();
   } catch (e) {
     console.error('Errore caricamento notifiche registrazioni:', e);
   }
 }
 
 function aggiornaCampanello() {
-  const n = registrazioniInAttesa.length;
+  // SEMPRE e SOLO registrazioniReali — mai la lista demo, in nessun caso.
+  const n = registrazioniReali.length;
   const bell = document.getElementById('notif-bell');
   const count = document.getElementById('notif-count');
   if (n > 0) {
@@ -517,20 +529,20 @@ function aggiornaCampanello() {
     bell.classList.remove('attiva');
     count.classList.remove('show');
   }
-  // Se il pop-up è aperto sulla lista, tienila aggiornata in tempo reale.
-  // Se invece è aperta una scheda dettaglio, non la tocca: non deve interrompere
-  // chi sta controllando l'anagrafica di qualcuno.
-  const panelOpen = document.getElementById('notif-panel').classList.contains('open');
-  const inDettaglio = document.getElementById('notif-dettaglio').style.display === 'block';
-  if (panelOpen && !inDettaglio) renderNotifiche();
 }
 
 function apriNotifiche() {
+  // Uscita di sicurezza: cliccando la campanella vera si esce sempre dalla
+  // modalità demo, non si eredita mai la lista finta.
+  modalitaAnteprima = false;
   document.getElementById('notif-panel').classList.add('open');
   document.getElementById('notif-lista').style.display = 'block';
   document.getElementById('notif-dettaglio').style.display = 'none';
   document.getElementById('notif-box-title').textContent = '🆕 Registrazioni da approvare';
+  // Mostra subito quello che abbiamo in cache, poi lo riconferma con un fetch fresco:
+  // così non si vede mai per sbaglio un residuo di dati vecchi o finti.
   renderNotifiche();
+  caricaNotificheRegistrazioni();
 }
 function chiudiNotifiche() {
   document.getElementById('notif-panel').classList.remove('open');
@@ -543,11 +555,12 @@ function chiudiNotifiche() {
 function renderNotifiche() {
   const el = document.getElementById('notif-lista');
   const banner = modalitaAnteprima ? '<div class="anteprima-banner" style="font-size:14px;font-weight:800;padding:14px 16px;text-align:center;">🎭 ATTENZIONE — STAI VEDENDO DATI FINTI DI ESEMPIO, NON RICHIESTE VERE 🎭</div>' : '';
-  if (!registrazioniInAttesa.length) {
+  const lista = listaAttuale();
+  if (!lista.length) {
     el.innerHTML = banner + '<div class="notif-empty">✅ Nessuna registrazione in attesa. Tutto approvato.</div>';
     return;
   }
-  el.innerHTML = banner + registrazioniInAttesa.map(r => {
+  el.innerHTML = banner + lista.map(r => {
     const f = r.fields;
     const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
     const tagClasse = r.tipo === 'azienda' ? 'azie' : 'trasp';
@@ -581,7 +594,7 @@ const CAMPI_AZIENDA = [
 let recordApertoCorrente = null;
 
 function apriDettaglioUtente(recordId) {
-  const r = registrazioniInAttesa.find(x => x.id === recordId);
+  const r = listaAttuale().find(x => x.id === recordId);
   if (!r) return;
   recordApertoCorrente = r;
   const f = r.fields;
@@ -693,7 +706,7 @@ async function eseguiAttivazione() {
   // che si clicca dentro alla demo.
   if (modalitaAnteprima || String(r.id).startsWith('anteprima-')) {
     await new Promise(res => setTimeout(res, 700));
-    registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
+    registrazioniDemo = registrazioniDemo.filter(x => x.id !== r.id);
     tornaListaNotifiche();
     return;
   }
@@ -706,7 +719,7 @@ async function eseguiAttivazione() {
       body: JSON.stringify({ action: action, record_id: r.id })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
+    registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
     aggiornaCampanello();
     tornaListaNotifiche();
   } catch (e) {
