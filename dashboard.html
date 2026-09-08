@@ -265,7 +265,13 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
 <div class="hero">
   <div class="header">
-    <div class="logo">Eco<span>Truck</span>Connect</div>
+    <div style="display:flex;align-items:center;">
+      <div class="logo">Eco<span>Truck</span>Connect</div>
+      <div class="notif-bell" id="alert-bell" onclick="apriAlertScadenze()" title="Scadenze e avvisi" style="margin-left:20px;">
+        ⏰
+        <span class="notif-count" id="alert-count">0</span>
+      </div>
+    </div>
     <div class="header-right">
       <span class="refresh-info"><span class="dot-live"></span>Aggiornato automaticamente</span>
       <div class="notif-bell" id="notif-bell" onclick="apriNotifiche()" title="Registrazioni da approvare">
@@ -292,6 +298,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
   </div>
 
+  <div style="background:rgba(239,68,68,0.08);border:1.5px dashed rgba(239,68,68,0.5);border-radius:14px;padding:20px 22px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:240px;">
+        <div style="font-weight:700;color:#ef4444;font-size:14px;margin-bottom:4px;">⏰ Questo È REALE — l'orologio ⏰ accanto al logo, in alto</div>
+        <div style="font-size:13px;color:var(--muted);">Controlla scadenze vere (oggi: rischio sospensione Netlify) e calcola da solo, ogni volta che apri la pagina, quanti giorni mancano davvero. Se una scadenza è entro 30 giorni, l'orologio si accende con un numero — verde se c'è tempo, arancione se si avvicina, rosso se è urgente o già passata. Per aggiungere o aggiornare una scadenza in futuro, basta chiederlo in una prossima sessione, senza bisogno di toccare il codice da soli.</div>
+      </div>
+      <button onclick="apriAlertScadenze()" style="background:#ef4444;border:none;color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;">⏰ Vedi le Scadenze (dati veri)</button>
+    </div>
+  </div>
+
   <div class="sec-title">📦 Portali personali — anteprima</div>
   <div class="portali-grid">
     <div class="portale-card">
@@ -302,6 +318,12 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <h3>🏢 Portale azienda</h3>
       <a class="btn-anteprima" href="https://ecotruckconnect-portale.netlify.app/?preview=azienda" target="_blank">Apri anteprima <small>(dati test)</small></a>
     </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:14px;margin:36px 0 20px;">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></div>
+    <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">🎭 Da qui in giù: solo dimostrazioni, dati finti</div>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></div>
   </div>
 
   <div class="sec-title">🎭 Modalità Demo 🔔 (solo per mostrare, dati finti)</div>
@@ -413,6 +435,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <button class="modal-close" onclick="chiudiAnteprimaTelegram()">×</button>
     </div>
     <div id="telegram-lista"></div>
+  </div>
+</div>
+
+<div class="notif-panel" id="alert-panel" onclick="if(event.target===this)chiudiAlertScadenze();">
+  <div class="notif-box">
+    <div class="notif-box-header">
+      <div class="notif-box-title">⏰ Scadenze e Avvisi</div>
+      <button class="modal-close" onclick="chiudiAlertScadenze()">×</button>
+    </div>
+    <div id="alert-lista"></div>
   </div>
 </div>
 
@@ -546,6 +578,69 @@ function apriAnteprimaTelegram() {
 }
 function chiudiAnteprimaTelegram() {
   document.getElementById('telegram-panel').classList.remove('open');
+}
+
+/* ==================================================
+   SCADENZE E AVVISI — dati REALI, non demo.
+   Ogni scadenza qui sotto va aggiornata a mano quando cambia
+   qualcosa (basta chiedere a Claude "aggiungi/aggiorna questa
+   scadenza" in una prossima sessione — non serve toccare il
+   codice da soli). I giorni rimanenti si calcolano da soli,
+   ogni volta che la pagina è aperta, confrontando la data di
+   oggi con la data della scadenza: quindi il numero è sempre
+   vero e aggiornato, anche se la lista sotto è scritta a mano.
+   ================================================== */
+const SCADENZE_REALI = [
+  { titolo: 'Netlify — rischio sospensione pagamento', data: '2026-09-13', dettaglio: 'Pagamento fallito segnalato il 16 agosto. Verificare lo stato prima di questa data per evitare che i siti vengano sospesi.' }
+];
+
+function aggiornaAlertBell() {
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const attive = SCADENZE_REALI.map(s => {
+    const d = new Date(s.data + 'T00:00:00');
+    const giorni = Math.ceil((d - oggi) / 86400000);
+    return { ...s, giorni };
+  }).filter(s => s.giorni <= 30); // avvisa solo se entro 30 giorni (passate incluse)
+
+  const bell = document.getElementById('alert-bell');
+  const count = document.getElementById('alert-count');
+  if (attive.length > 0) {
+    bell.classList.add('attiva');
+    count.textContent = attive.length > 9 ? '9+' : attive.length;
+    count.classList.add('show');
+  } else {
+    bell.classList.remove('attiva');
+    count.classList.remove('show');
+  }
+  return attive;
+}
+
+function apriAlertScadenze() {
+  const attive = aggiornaAlertBell();
+  const tutte = SCADENZE_REALI.map(s => {
+    const oggi = new Date(); oggi.setHours(0,0,0,0);
+    const d = new Date(s.data + 'T00:00:00');
+    const giorni = Math.ceil((d - oggi) / 86400000);
+    return { ...s, giorni };
+  });
+  const el = document.getElementById('alert-lista');
+  if (!tutte.length) {
+    el.innerHTML = '<div class="notif-empty">✅ Nessuna scadenza registrata al momento.</div>';
+  } else {
+    el.innerHTML = tutte.map(s => {
+      const urgenza = s.giorni <= 3 ? '#ef4444' : s.giorni <= 14 ? '#f59e0b' : '#22c55e';
+      const testoGiorni = s.giorni < 0 ? `scaduta da ${Math.abs(s.giorni)} giorni` : s.giorni === 0 ? 'scade OGGI' : `tra ${s.giorni} giorni`;
+      return `<div style="padding:16px 20px;border-bottom:1px solid var(--border);border-left:3px solid ${urgenza};">
+        <div style="font-weight:700;color:var(--text);font-size:14px;margin-bottom:4px;">${s.titolo}</div>
+        <div style="font-size:12px;color:${urgenza};font-weight:700;margin-bottom:6px;">${testoGiorni} — ${s.data}</div>
+        <div style="font-size:13px;color:rgba(241,245,249,0.75);line-height:1.5;">${s.dettaglio}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('alert-panel').classList.add('open');
+}
+function chiudiAlertScadenze() {
+  document.getElementById('alert-panel').classList.remove('open');
 }
 
 function apriAnteprimaNotifiche() {
@@ -980,6 +1075,7 @@ function stampaConTimbro() {
 }
 
 caricaDashboard();
+aggiornaAlertBell();
 setInterval(caricaDashboard, 30000);
 </script>
 </body>
