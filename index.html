@@ -81,16 +81,20 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height
 .btn-esci:hover{background:rgba(239,68,68,0.16);}
 .hero{position:relative;padding:72px 48px 56px;overflow:hidden;}
 .hero::after{content:'';position:absolute;inset:-20px;z-index:0;background:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80') center/cover;filter:blur(10px) brightness(0.85);}
-.hero.tipo-trasportatore::after{background-image:url('https://images.unsplash.com/photo-1602607771743-9f829d8419e9?w=1400&q=80');}
+.hero.tipo-trasportatore::after{background-image:url('https://images.unsplash.com/photo-1602607771743-9f829d8419e9?w=1400&q=80');filter:blur(4px) brightness(1.05) saturate(1.2) contrast(1.05);}
 .hero.tipo-azienda::after{background-image:url('https://images.unsplash.com/photo-1675578689944-49f09637c2e0?w=1400&q=80');filter:blur(4px) brightness(1.15) saturate(1.3) contrast(1.1);}
 .hero::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(to right,rgba(8,13,22,0.97) 45%,rgba(8,13,22,0.65) 100%);}
 .hero-blink{position:absolute;z-index:1;width:10px;height:10px;border-radius:50%;pointer-events:none;display:none;}
 .hero.tipo-trasportatore .hero-blink{display:block;}
-.hero.tipo-trasportatore .hero-blink-a{right:14%;bottom:30%;background:radial-gradient(circle,rgba(255,170,60,0.95),rgba(255,170,60,0) 70%);animation:heroBlinkAmber 1s steps(2,end) infinite;}
-.hero.tipo-trasportatore .hero-blink-b{right:9%;bottom:30%;background:radial-gradient(circle,rgba(255,170,60,0.95),rgba(255,170,60,0) 70%);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-trasportatore .hero-blink-a{right:20%;top:34%;background:radial-gradient(circle,rgba(255,170,60,1),rgba(255,140,0,0) 70%);box-shadow:0 0 12px 4px rgba(255,150,30,0.75);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-trasportatore .hero-blink-b{right:16%;bottom:32%;background:radial-gradient(circle,rgba(255,170,60,1),rgba(255,140,0,0) 70%);box-shadow:0 0 12px 4px rgba(255,150,30,0.75);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-trasportatore .hero-blink-c{right:44%;top:30%;background:radial-gradient(circle,rgba(255,170,60,1),rgba(255,140,0,0) 70%);box-shadow:0 0 12px 4px rgba(255,150,30,0.75);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-trasportatore .hero-blink-d{right:40%;bottom:36%;width:14px;height:14px;background:radial-gradient(circle,rgba(255,240,200,0.9),rgba(255,240,200,0) 70%);animation:heroLightPulse 3s ease-in-out infinite;}
 .hero.tipo-azienda .hero-blink{display:block;}
 .hero.tipo-azienda .hero-blink-a{right:26%;top:30%;width:14px;height:14px;background:radial-gradient(circle,rgba(255,190,30,1),rgba(255,140,0,0) 70%);box-shadow:0 0 18px 6px rgba(255,170,20,0.9);animation:heroSirenPulse 1.1s ease-in-out infinite;}
 .hero.tipo-azienda .hero-blink-b{display:none;}
+.hero.tipo-azienda .hero-blink-c{display:none;}
+.hero.tipo-azienda .hero-blink-d{display:none;}
 @keyframes heroBlinkAmber{0%,49%{opacity:1;}50%,100%{opacity:0;}}
 @keyframes heroLightPulse{0%,100%{opacity:0.15;}50%{opacity:0.8;}}
 @keyframes heroSirenPulse{0%,100%{opacity:0.35;transform:scale(0.85);}50%{opacity:1;transform:scale(1.15);}}
@@ -396,6 +400,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
   <section class="hero" id="hero-personale">
     <div class="hero-blink hero-blink-a"></div>
     <div class="hero-blink hero-blink-b"></div>
+    <div class="hero-blink hero-blink-c"></div>
+    <div class="hero-blink hero-blink-d"></div>
     <div class="hero-content">
       <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
