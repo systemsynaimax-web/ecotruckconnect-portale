@@ -476,7 +476,9 @@ const ANTEPRIMA_REGISTRAZIONI = [
 function apriAnteprimaNotifiche() {
   modalitaAnteprima = true;
   registrazioniInAttesa = ANTEPRIMA_REGISTRAZIONI;
-  aggiornaCampanello();
+  // NON chiamare aggiornaCampanello() qui: la campanella in alto deve
+  // continuare a mostrare solo il numero VERO di richieste reali,
+  // mai il numero della demo. La demo si vede solo dentro al pannello.
   document.getElementById('notif-panel').classList.add('open');
   document.getElementById('notif-lista').style.display = 'block';
   document.getElementById('notif-dettaglio').style.display = 'none';
