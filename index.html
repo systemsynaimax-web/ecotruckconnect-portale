@@ -81,7 +81,18 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height
 .btn-esci:hover{background:rgba(239,68,68,0.16);}
 .hero{position:relative;padding:72px 48px 56px;overflow:hidden;}
 .hero::after{content:'';position:absolute;inset:-20px;z-index:0;background:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80') center/cover;filter:blur(10px) brightness(0.85);}
+.hero.tipo-trasportatore::after{background-image:url('https://images.unsplash.com/photo-1602607771743-9f829d8419e9?w=1400&q=80');}
+.hero.tipo-azienda::after{background-image:url('https://images.unsplash.com/photo-1751054554594-85de2fe63e6b?w=1400&q=80');}
 .hero::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(to right,rgba(8,13,22,0.97) 45%,rgba(8,13,22,0.65) 100%);}
+.hero-blink{position:absolute;z-index:1;width:10px;height:10px;border-radius:50%;pointer-events:none;display:none;}
+.hero.tipo-trasportatore .hero-blink{display:block;}
+.hero.tipo-trasportatore .hero-blink-a{right:14%;bottom:30%;background:radial-gradient(circle,rgba(255,170,60,0.95),rgba(255,170,60,0) 70%);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-trasportatore .hero-blink-b{right:9%;bottom:30%;background:radial-gradient(circle,rgba(255,170,60,0.95),rgba(255,170,60,0) 70%);animation:heroBlinkAmber 1s steps(2,end) infinite;}
+.hero.tipo-azienda .hero-blink{display:block;}
+.hero.tipo-azienda .hero-blink-a{right:22%;top:32%;background:radial-gradient(circle,rgba(180,220,255,0.9),rgba(180,220,255,0) 70%);animation:heroLightPulse 2.4s ease-in-out infinite;}
+.hero.tipo-azienda .hero-blink-b{right:38%;top:44%;background:radial-gradient(circle,rgba(180,220,255,0.9),rgba(180,220,255,0) 70%);animation:heroLightPulse 2.4s ease-in-out infinite 0.9s;}
+@keyframes heroBlinkAmber{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+@keyframes heroLightPulse{0%,100%{opacity:0.15;}50%{opacity:0.8;}}
 .hero-content{position:relative;z-index:2;max-width:580px;}
 .hero-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:5px 12px;border-radius:20px;margin-bottom:22px;}
 .hero-pill::before{content:'●';font-size:7px;animation:pulse 2s infinite;}
@@ -381,7 +392,9 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <button class="btn-esci" onclick="doLogout()">⏻ Esci</button>
     </div>
   </nav>
-  <section class="hero">
+  <section class="hero" id="hero-personale">
+    <div class="hero-blink hero-blink-a"></div>
+    <div class="hero-blink hero-blink-b"></div>
     <div class="hero-content">
       <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
@@ -1410,6 +1423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-name').textContent = previewParam === 'azienda' ? 'Azienda Anteprima' : 'Trasportatore Anteprima';
     document.getElementById('nav-av').textContent = previewParam === 'azienda' ? 'A' : 'T';
     tipoUtente = previewParam;
+    document.getElementById('hero-personale').classList.add(previewParam === 'azienda' ? 'tipo-azienda' : 'tipo-trasportatore');
     if (previewParam === 'trasportatore') {
       capCorrente = '92026';
       currentUser = { email: 'anteprima.trasportatore@test.it' };
@@ -1579,6 +1593,7 @@ async function rilevaTipoUtente(email) {
   const aziende = (d && d.azienda) || [];
   if (trasportatori.length > 0) {
     tipoUtente = 'trasportatore';
+    document.getElementById('hero-personale').classList.add('tipo-trasportatore');
     capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
@@ -1595,6 +1610,7 @@ async function rilevaTipoUtente(email) {
   }
   if (aziende.length > 0) {
     tipoUtente = 'azienda';
+    document.getElementById('hero-personale').classList.add('tipo-azienda');
     aziendaRecordId = aziende[0].id;
     const af = aziende[0].fields;
     profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
