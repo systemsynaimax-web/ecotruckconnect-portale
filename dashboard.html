@@ -688,10 +688,12 @@ async function eseguiAttivazione() {
   // Modalità anteprima: nessuna chiamata reale, solo simulazione visiva.
   // Controllo doppio (flag + prefisso ID finto) così anche in caso di
   // problemi di sincronizzazione la richiesta finta non parte mai verso Make/Airtable.
+  // IMPORTANTE: non chiamare mai aggiornaCampanello() qui — la campanella in
+  // alto deve restare sempre e solo sul numero VERO, mai influenzata da quello
+  // che si clicca dentro alla demo.
   if (modalitaAnteprima || String(r.id).startsWith('anteprima-')) {
     await new Promise(res => setTimeout(res, 700));
     registrazioniInAttesa = registrazioniInAttesa.filter(x => x.id !== r.id);
-    aggiornaCampanello();
     tornaListaNotifiche();
     return;
   }
