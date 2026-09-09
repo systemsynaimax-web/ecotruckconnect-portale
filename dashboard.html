@@ -437,94 +437,105 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     .tag-zero{background:rgba(239,68,68,0.15);color:var(--red);}
   </style>
 
+  <div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
+    <b style="color:#ef4444;">⚠️ Stato reale di Make (aggiornato 9/9 sera):</b> crediti disponibili 10.000/10.000, ma lo scenario è ancora <b>SPENTO</b> (nessuna delle funzioni sotto funziona finché non lo accendi). Rischio sospensione pagamento entro il 14/9 — vedi l'orologio ⏰ in alto.
+  </div>
+
   <details class="accordion-item">
-    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-parziale">Quasi pronto</span></summary>
+    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-pronto">100% pronto</span></summary>
     <div class="accordion-body">
       <b>Cosa fa:</b> scrive ogni azione importante (carico pubblicato, carico preso, utente approvato) dentro a una tabella Airtable, creando uno storico vero e ricercabile.<br><br>
-      <b>A cosa serve:</b> è la base che sblocca anche il punto 2 (Telegram vero) e il punto 4 (grafico andamento) — costruirlo prima fa risparmiare tempo dopo.<br><br>
-      <b>Preinstallato:</b> tabella Airtable "Registro Attività" già creata con tutti i campi. Il portale chiama già la funzione <code>registraAttivita()</code> in più punti (es. quando si salvano le preferenze notifiche).<br><br>
-      <b>Manca:</b> un modulo dentro allo scenario Make che riceve quello che il portale manda e lo scrive davvero. <b>Stima: ~5 minuti</b>, ma serve Make acceso per costruirlo e testarlo.<br><br>
-      <b>Perché non si vede:</b> il pezzo mancante è proprio quello che collega i due lati — senza, i dati non arrivano da nessuna parte.
+      <b>A cosa serve:</b> è la base che sblocca anche il punto 2 (Telegram vero) e il punto 4 (grafico andamento).<br><br>
+      <b>Preinstallato:</b> tabella Airtable "Registro Attività" pronta. Il portale chiama già <code>registraAttivita()</code>. <b>Correzione 9/9:</b> controllando lo scenario Make vero, la route <code>log_attivita</code> esiste già, completa e funzionante — non mancava nulla.<br><br>
+      <b>Manca:</b> solo accendere lo scenario Make.<br><br>
+      <b>Perché non si vede:</b> lo scenario è spento.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Serve il punto 1</span></summary>
+    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Da costruire</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> mostra i messaggi Telegram davvero inviati ai trasportatori/aziende, al posto della demo finta di stasera.<br><br>
-      <b>A cosa serve:</b> verificare che le notifiche arrivino per davvero, senza dover aprire Telegram per controllare.<br><br>
-      <b>Preinstallato:</b> no — dipende in toto dal punto 1.<br><br>
-      <b>Manca:</b> prima il Registro Attività (punto 1), poi collegare la dashboard a leggerlo.<br><br>
-      <b>Perché non si vede:</b> non esiste ancora una fonte dati da cui leggere.
+      <b>Cosa fa:</b> mostra i messaggi Telegram davvero inviati ai trasportatori/aziende, al posto della demo finta.<br><br>
+      <b>A cosa serve:</b> verificare che le notifiche arrivino per davvero, senza aprire Telegram.<br><br>
+      <b>Preinstallato:</b> la fonte dati (Registro Attività, punto 1) ora è confermata pronta e funzionante.<br><br>
+      <b>Manca:</b> collegare la dashboard a leggere quei dati e mostrarli — questa parte va ancora costruita.
     </div>
   </details>
 
   <details class="accordion-item">
     <summary>3. 🧾 Portale Azienda — Fatture, PDF, CSV, Duplica, Calendario completo <span class="accordion-tag tag-pronto">100% pronto</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> l'azienda vede tutti i carichi che ha pubblicato, li scarica in PDF o CSV, può duplicare un carico con un click, e cliccando un giorno sul calendario vede tutti i carichi di quella data — <b>compresi quelli già presi</b>, non solo quelli ancora disponibili.<br><br>
-      <b>A cosa serve:</b> dare all'azienda tutto a portata di mano nel proprio portale, senza dover chiedere info al team.<br><br>
-      <b>Preinstallato:</b> tutto al 100% — tabella, bottoni PDF/CSV, bottone Duplica, e il calendario giorno-per-giorno, tutti scritti e pronti dentro al codice del portale (index.html).<br><br>
-      <b>Manca:</b> un'azione su Make ("get_carichi_pubblicati_azienda") che dia i dati veri — stesso tipo di lavoro del punto 1, <b>~5-10 minuti</b> quando Make è acceso.<br><br>
-      <b>Perché non si vede:</b> senza quell'azione, tutto resta vuoto e nascosto apposta — per non mostrare mai un bottone o un calendario che non funziona davvero.
+      <b>Cosa fa:</b> l'azienda vede tutti i carichi pubblicati, li scarica in PDF/CSV, duplica un carico con un click, e il calendario mostra tutto — <b>compresi i carichi già presi</b>.<br><br>
+      <b>A cosa serve:</b> dare all'azienda tutto a portata di mano, senza chiedere info al team.<br><br>
+      <b>Preinstallato:</b> tutto — tabella, bottoni, calendario nel portale. <b>Correzione 9/9:</b> l'azione Make <code>get_carichi_pubblicati_azienda</code> esiste già, completa.<br><br>
+      <b>Manca:</b> solo accendere lo scenario Make.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>4. 📈 Grafico andamento nel tempo <span class="accordion-tag tag-zero">Serve il punto 1</span></summary>
+    <summary>4. 📈 Grafico andamento nel tempo <span class="accordion-tag tag-zero">Serve il punto 2</span></summary>
     <div class="accordion-body">
       <b>Cosa fa:</b> un grafico che mostra quanti carichi sono stati pubblicati/presi per settimana o mese.<br><br>
-      <b>A cosa serve:</b> capire a colpo d'occhio se il traffico sulla piattaforma sta crescendo, utile soprattutto dopo il lancio vero.<br><br>
-      <b>Preinstallato:</b> no — dipende dai dati del Registro Attività (punto 1).<br><br>
-      <b>Perché non si vede:</b> stessa causa del punto 2, manca la fonte dati a monte.
+      <b>A cosa serve:</b> capire a colpo d'occhio l'andamento dopo il lancio.<br><br>
+      <b>Preinstallato:</b> i dati grezzi (Registro Attività) sono pronti, ma serve prima costruire la lettura in dashboard (punto 2).
     </div>
   </details>
 
   <details class="accordion-item">
     <summary>5. ✏️ Modifica profilo utente dalla dashboard <span class="accordion-tag tag-zero">Da zero</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> un pulsante "Modifica" nella scheda anagrafica (quella che si apre dalla campanella) per correggere email, telefono o altri dati senza dover andare su Airtable a mano.<br><br>
-      <b>A cosa serve:</b> risparmiare tempo quando un utente sbaglia un dato in fase di registrazione.<br><br>
+      <b>Cosa fa:</b> un pulsante "Modifica" nella scheda anagrafica per correggere email/telefono senza andare su Airtable a mano.<br><br>
+      <b>A cosa serve:</b> risparmiare tempo quando un utente sbaglia un dato.<br><br>
       <b>Preinstallato:</b> no, tutto da costruire.<br><br>
-      <b>Stima:</b> ~20-30 minuti, serve Make per salvare le modifiche su Airtable.
+      <b>Stima:</b> ~20-30 minuti.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>6. 🔢 Contatore trasportatori compatibili <span class="accordion-tag tag-zero">Confermato da Gerlando</span></summary>
+    <summary>6. 🔢 Contatore trasportatori compatibili <span class="accordion-tag tag-pronto">100% pronto</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> quando l'azienda pubblica un carico, vede subito quanti trasportatori sono compatibili con quel mezzo/autorizzazione — <b>mai nomi, solo il numero</b>.<br><br>
-      <b>A cosa serve:</b> dà fiducia all'azienda che il carico verrà davvero preso, invece di pubblicare nel dubbio (confermato da Gerlando l'8/9 sera).<br><br>
-      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
-      <b>Stima:</b> ~35-50 minuti (nuova azione Make + modifica al form + test).
+      <b>Cosa fa:</b> quando l'azienda pubblica un carico, vede subito quanti trasportatori sono compatibili — <b>mai nomi, solo il numero</b>.<br><br>
+      <b>A cosa serve:</b> dà fiducia all'azienda che il carico verrà preso (confermato da Gerlando l'8/9 sera).<br><br>
+      <b>Preinstallato:</b> costruito la notte del 9/9 — azione Make <code>conta_trasportatori_compatibili</code> e riquadro nel form del portale, entrambi pronti.<br><br>
+      <b>Manca:</b> solo accendere lo scenario Make.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>7. 📍 Filtro/Mappa per zona (CAP) <span class="accordion-tag tag-parziale">Dati già pronti</span></summary>
+    <summary>7. 🔔 Preferenze notifiche <span class="accordion-tag tag-pronto">100% pronto</span></summary>
+    <div class="accordion-body">
+      <b>Cosa fa:</b> ogni trasportatore/azienda può scegliere quali notifiche ricevere (nuovo carico, pagamento, promemoria), a che ore, e con che tono.<br><br>
+      <b>A cosa serve:</b> personalizzare l'esperienza, evitare di sommergere di notifiche chi non le vuole tutte.<br><br>
+      <b>Preinstallato:</b> campi Airtable <code>preferenze_notifiche</code> creati su Trasportatori e Aziende il 9/9, azione Make <code>salva_preferenze_notifiche</code> costruita la stessa notte, portale già mandava i dati da prima.<br><br>
+      <b>Manca:</b> solo accendere lo scenario Make.
+    </div>
+  </details>
+
+  <details class="accordion-item">
+    <summary>8. 📍 Filtro/Mappa per zona (CAP) <span class="accordion-tag tag-parziale">Dati già pronti</span></summary>
     <div class="accordion-body">
       <b>Cosa fa:</b> far vedere solo i carichi vicini alla propria zona, con o senza una mappa visiva.<br><br>
-      <b>A cosa serve:</b> utile quando ci saranno molti trasportatori, per filtrare anche per vicinanza oltre che per mezzo/autorizzazione.<br><br>
-      <b>Preinstallato:</b> il dato del CAP esiste già su ogni carico (partenza e arrivo) e su ogni trasportatore — è già salvato, semplicemente il filtro è spento (matching oggi basato solo su mezzo+autorizzazioni, deciso il 6/8).<br><br>
-      <b>Perché non si vede:</b> disattivato di proposito, non è un pezzo mancante — è un interruttore già pronto da riaccendere quando serve davvero.
+      <b>A cosa serve:</b> utile con molti trasportatori, per filtrare anche per vicinanza.<br><br>
+      <b>Preinstallato:</b> il CAP esiste già su ogni carico e trasportatore — il filtro è solo spento di proposito (deciso il 6/8).<br><br>
+      <b>Perché non si vede:</b> disattivato apposta, non manca nulla — è un interruttore pronto da riaccendere.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>8. 🔌 Controllo salute di tutti i collegamenti <span class="accordion-tag tag-zero">Il più lungo</span></summary>
+    <summary>9. 🔌 Controllo salute di tutti i collegamenti <span class="accordion-tag tag-zero">Il più lungo</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> un'icona che controlla davvero, uno per uno, se Airtable, Make, Telegram, Shopify rispondono — e dice la verità sempre, anche se qualcosa è spento.<br><br>
-      <b>A cosa serve:</b> prima di ogni test con Gerlando, un click e sai subito cosa è rotto, invece di scoprirlo a metà prova.<br><br>
+      <b>Cosa fa:</b> un'icona che controlla davvero, uno per uno, se Airtable, Make, Telegram, Shopify rispondono.<br><br>
+      <b>A cosa serve:</b> prima di ogni test con Gerlando, un click e sai subito cosa è rotto.<br><br>
       <b>Preinstallato:</b> no, tutto da costruire.<br><br>
-      <b>Stima:</b> ~45-60 minuti, il lavoro più lungo di tutti — richiede diverse chiamate di test verso ogni servizio.
+      <b>Stima:</b> ~45-60 minuti, il più lungo di tutti.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>9. 💡 Idea: funzioni premium a pagamento <span class="accordion-tag tag-zero">Solo idea, non decisa</span></summary>
+    <summary>10. 💡 Idea: funzioni premium a pagamento <span class="accordion-tag tag-zero">Solo idea, non decisa</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> alcune funzioni avanzate (storico esteso, Ritorno a Vuoto, grafici per l'azienda) potrebbero diventare un abbonamento a pagamento invece che gratuite per tutti.<br><br>
-      <b>Stato:</b> solo un'idea buttata lì l'8/9 sera, nessun prezzo deciso, da discutere con Gerlando quando il modello base è stabile e lanciato.
+      <b>Cosa fa:</b> alcune funzioni avanzate potrebbero diventare un abbonamento a pagamento invece che gratuite.<br><br>
+      <b>Stato:</b> solo un'idea dell'8/9 sera, nessun prezzo deciso.
     </div>
   </details>
 
@@ -704,7 +715,8 @@ function chiudiAnteprimaTelegram() {
    vero e aggiornato, anche se la lista sotto è scritta a mano.
    ================================================== */
 const SCADENZE_REALI = [
-  { titolo: 'Netlify — rischio sospensione pagamento', data: '2026-09-13', dettaglio: 'Pagamento fallito segnalato il 16 agosto. Verificare lo stato prima di questa data per evitare che i siti vengano sospesi.' }
+  { titolo: 'Netlify — rischio sospensione pagamento', data: '2026-09-13', dettaglio: 'Pagamento fallito segnalato il 16 agosto. Verificare lo stato prima di questa data per evitare che i siti vengano sospesi.' },
+  { titolo: 'Make — rischio sospensione pagamento', data: '2026-09-14', dettaglio: 'Pagamento fallito confermato da screenshot il 9/9. Sospensione prevista alle 16:26 del 14/09 se non si sistema il metodo di pagamento. Se Make viene sospeso, nessuno scenario può più girare, anche con crediti disponibili (oggi: 10.000/10.000). Priorità massima: sistemare il pagamento prima di questa data.' }
 ];
 
 function aggiornaAlertBell() {
