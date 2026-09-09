@@ -715,8 +715,8 @@ function chiudiAnteprimaTelegram() {
    vero e aggiornato, anche se la lista sotto è scritta a mano.
    ================================================== */
 const SCADENZE_REALI = [
-  { titolo: 'Netlify — rischio sospensione pagamento', data: '2026-09-13', dettaglio: 'Pagamento fallito segnalato il 16 agosto. Verificare lo stato prima di questa data per evitare che i siti vengano sospesi.' },
-  { titolo: 'Make — rischio sospensione pagamento', data: '2026-09-14', dettaglio: 'Pagamento fallito confermato da screenshot il 9/9. Sospensione prevista alle 16:26 del 14/09 se non si sistema il metodo di pagamento. Se Make viene sospeso, nessuno scenario può più girare, anche con crediti disponibili (oggi: 10.000/10.000). Priorità massima: sistemare il pagamento prima di questa data.' }
+  { titolo: 'Make — pagamento da sistemare', data: '2026-09-14', dettaglio: 'Email ufficiale Make del 7/9: "Your scenarios will run as scheduled until 2026-09-14 01:26pm" — dopo quell\'orario rischio di perdere l\'accesso alle funzioni Core. Link di pagamento valido fino allo stesso momento. Nota: lo scenario è già spento, quindi anche in caso di sospensione non si perde nulla che sta girando — semplicemente non si potrà riaccendere finché non è risolto. Se i fondi arrivano solo dal 23, contattare il supporto Make per chiedere una proroga (link "Contact us" nell\'email).' },
+  { titolo: 'Netlify — promemoria rinnovo mensile', data: '2026-09-14', dettaglio: 'Verificato il 9/9: nessuna fattura scaduta, metodo di pagamento valido (Visa •••6375), ricarica automatica crediti attiva. Il periodo di fatturazione attuale termina il 14/9 — è solo un promemoria per controllare che il rinnovo vada a buon fine, non un allarme. Dato lo stesso periodo di difficoltà di liquidità di Make, vale la pena ricontrollare a ridosso di questa data.' }
 ];
 
 function aggiornaAlertBell() {
