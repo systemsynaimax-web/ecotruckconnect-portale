@@ -673,6 +673,11 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
+      <div id="box-contatore-trasportatori" style="margin-top:18px;padding:14px 18px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;font-size:13px;color:#fff;">
+        📊 <span id="testo-contatore-trasportatori">Seleziona mezzo e autorizzazione per vedere quanti trasportatori sono disponibili</span>
+      </div>
+
       <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica Carico</button>
       <div class="ins-ok" id="ins-ok">✅ Carico pubblicato! I trasportatori nella zona riceveranno la notifica.</div>
       <div class="ins-err" id="ins-err"></div>
@@ -868,6 +873,58 @@ function toggleAutFoglia(which) {
   aggiornaEtichettaTendina(which);
 }
 
+/* ==================================================
+   CONTATORE TRASPORTATORI COMPATIBILI — per l'azienda.
+   Mostra SOLO un numero, mai nomi o dati identificativi, come
+   confermato da Gerlando l'8/9. Riusa la stessa logica di
+   compatibilità già usata per far vedere i carichi giusti ai
+   trasportatori (mezzoOk/autOk), solo al contrario.
+   ================================================== */
+let ultimoContatoreRichiesta = 0;
+async function aggiornaContatoreTrasportatori() {
+  const mezziRichiesti = Array.from(document.querySelectorAll('#checkbox-mezzo-richiesto input:checked')).map(el => el.value);
+  const autRichieste = Array.from(document.querySelectorAll('#checkbox-aut-richiesta input:checked')).map(el => el.value);
+  const testoEl = document.getElementById('testo-contatore-trasportatori');
+  if (!testoEl) return;
+
+  if (mezziRichiesti.length === 0 && autRichieste.length === 0) {
+    testoEl.textContent = 'Seleziona mezzo e autorizzazione per vedere quanti trasportatori sono disponibili';
+    return;
+  }
+
+  const richiestaCorrente = ++ultimoContatoreRichiesta; // evita che risposte lente e disordinate si sovrascrivano a sproposito
+  testoEl.textContent = 'Sto contando i trasportatori disponibili...';
+
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'conta_trasportatori_compatibili' })
+    });
+    const data = await res.json();
+    if (richiestaCorrente !== ultimoContatoreRichiesta) return; // arrivata una richiesta più recente nel frattempo, ignora questa
+
+    const trasportatori = (data.trasportatori || []).map(r => r.fields || r);
+    const compatibili = trasportatori.filter(t => {
+      const suoiMezzi = t.tipo_camion || [];
+      const sueAut = t.autorizzazioni || [];
+      const mezzoOk = mezziRichiesti.length === 0 || mezziRichiesti.some(m => suoiMezzi.includes(m));
+      const autOk = autRichieste.length === 0 || autRichieste.some(a => sueAut.includes(a));
+      return mezzoOk && autOk;
+    });
+
+    const n = compatibili.length;
+    testoEl.textContent = n === 0
+      ? 'Nessun trasportatore compatibile al momento con questi requisiti'
+      : n === 1
+      ? '1 trasportatore disponibile per questo tipo di carico'
+      : `${n} trasportatori disponibili per questo tipo di carico`;
+  } catch (e) {
+    console.error('Errore conteggio trasportatori (non bloccante):', e);
+    testoEl.textContent = 'Non riesco a calcolare il numero in questo momento';
+  }
+}
+
 let OPZIONI_MERCE = ["Alimentare","Mobili e arredi","Elettrodomestici","Materiali edili/inerti (17 09 04)","Ferrosi (17 04 05)","Non ferrosi (17 04 07)","Legno (17 02 01)","Carta e cartone (20 01 01)","Vetro (17 02 02)","Materiale plastico (19 12 04)","Rifiuti pericolosi","Rifiuti non pericolosi","Rifiuti urbani (20 03 01)","Rifiuti elettronici/RAEE (20 01 36)","Rifiuti organici (20 01 08)","Prodotti chimici","Macchinari/attrezzature","Merci deperibili/frigo","Merci generiche/pallettizzate","Abbigliamento/tessile"];
 
 let OPZIONI_MEZZO_RICHIESTO = [...TIPO_CAMION_OPZIONI];
@@ -1047,6 +1104,7 @@ function aggiornaEtichettaTendina(which) {
     const wrap = document.getElementById(SPECIFICA_WRAP_ID[which]);
     if (wrap) wrap.style.display = altroSelezionato ? 'block' : 'none';
   }
+  if (which === 'mezzoRichiesto' || which === 'autRichiesta') aggiornaContatoreTrasportatori();
 }
 
 function chiediConfermaRimozione(nomeElemento, onConferma) {
