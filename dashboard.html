@@ -411,6 +411,19 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
+  <div class="sec-title">📜 Registro Attività — chi ha fatto cosa, quando</div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Ogni modifica dati, rigenerazione password, richiesta di eliminazione account fatta da trasportatori e aziende. Data/ora assegnata automaticamente da Airtable — non modificabile, fa fede. Caricamento manuale: si aggiorna solo quando clicchi, come tutto il resto della dashboard.</div>
+    <input type="text" class="feed-search" id="registro-cerca" placeholder="🔍 Cerca per nome, tipo o descrizione..." oninput="filtraRegistroAttivita()">
+    <div class="feed-actions">
+      <button onclick="caricaRegistroAttivita()">🔄 Carica registro</button>
+      <button onclick="scaricaPDF('registro')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('registro')">⬇️ Esporta CSV</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
+    </div>
+    <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
+  </div>
+
   <div class="sec-title">📋 Cosa Manca Ancora — Tutto Spiegato, Punto per Punto</div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Clicca su ogni punto per aprirlo e vedere: cosa fa, a cosa serve, cosa è già pronto ("preinstallato") e cosa manca davvero, e perché oggi non si vede ancora nulla a schermo.</div>
 
@@ -1142,8 +1155,8 @@ function apriGiorno(key) {
   } else {
     body.innerHTML = carichiGiorno.map(c => {
       const f = c.fields;
-      const trasportatore = f.assegnato_a_nome ? `
-        <div class="carico-row"><b>Trasportatore:</b> ${f.assegnato_a_nome}</div>
+      const trasportatore = f.bloccato_da_nome ? `
+        <div class="carico-row"><b>Trasportatore:</b> ${f.bloccato_da_nome}</div>
         <div class="carico-row"><b>Telefono:</b> ${f.assegnato_a_telefono || '—'}</div>` : '';
       return `<div class="carico-card">
         <div class="carico-tratta">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
@@ -1176,7 +1189,7 @@ function renderFeed(lista) {
     const f = c.fields;
     const data = f.data_assegnato || f.data_pubblicazione;
     const dataFmt = data ? new Date(data).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome||'trasportatore'}` : `Pubblicato da ${f.nome_azienda||'azienda'}`;
+    const azione = f.stato === 'PRESO' ? `Preso da ${f.bloccato_da_nome||'trasportatore'}` : `Pubblicato da ${f.nome_azienda||'azienda'}`;
     return `<div class="feed-item">
       <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
       <div class="feed-info">
@@ -1195,7 +1208,7 @@ function filtraFeed() {
   const filtrati = tuttiCarichi.filter(c => {
     const f = c.fields;
     const azienda = (f.nome_azienda || '').toLowerCase();
-    const trasportatore = (f.assegnato_a_nome || '').toLowerCase();
+    const trasportatore = (f.bloccato_da_nome || '').toLowerCase();
     return azienda.includes(q) || trasportatore.includes(q);
   });
   renderFeed(filtrati);
@@ -1251,7 +1264,7 @@ function getFeedFiltrati() {
   if (q) {
     lista = lista.filter(c => {
       const f = c.fields;
-      return (f.nome_azienda || '').toLowerCase().includes(q) || (f.assegnato_a_nome || '').toLowerCase().includes(q);
+      return (f.nome_azienda || '').toLowerCase().includes(q) || (f.bloccato_da_nome || '').toLowerCase().includes(q);
     });
   }
   return lista.sort((a, b) => {
@@ -1278,10 +1291,19 @@ function scaricaPDF(tipo) {
     headers = [['Tratta', 'Azione', 'Data']];
     righe = lista.map(c => {
       const f = c.fields;
-      const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
+      const azione = f.stato === 'PRESO' ? `Preso da ${f.bloccato_da_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
       const data = f.data_assegnato || f.data_pubblicazione;
       const dataFmt = data ? new Date(data).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
       return [`${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, azione, dataFmt];
+    });
+  } else if (tipo === 'registro') {
+    titolo = 'EcoTruckConnect — Registro Attività';
+    const lista = getRegistroFiltrato();
+    headers = [['Data/ora', 'Tipo', 'Titolo', 'Autore']];
+    righe = lista.map(r => {
+      const f = r.fields;
+      const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      return [dataFmt, f.tipo_attivita || '—', f.titolo_attivita || '—', f.autore || '—'];
     });
   } else {
     titolo = 'EcoTruckConnect — Report Aziende';
@@ -1325,10 +1347,18 @@ function scaricaCSV(tipo) {
     headers = ['Tratta', 'Azione', 'Data'];
     righe = lista.map(c => {
       const f = c.fields;
-      const azione = f.stato === 'PRESO' ? `Preso da ${f.assegnato_a_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
+      const azione = f.stato === 'PRESO' ? `Preso da ${f.bloccato_da_nome || 'trasportatore'}` : `Pubblicato da ${f.nome_azienda || 'azienda'}`;
       const data = f.data_assegnato || f.data_pubblicazione;
       const dataFmt = data ? new Date(data).toLocaleString('it-IT') : '—';
       return [`${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, azione, dataFmt];
+    });
+  } else if (tipo === 'registro') {
+    const lista = getRegistroFiltrato();
+    headers = ['Data/ora', 'Tipo', 'Titolo', 'Descrizione', 'Autore'];
+    righe = lista.map(r => {
+      const f = r.fields;
+      const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT') : '—';
+      return [dataFmt, f.tipo_attivita || '—', f.titolo_attivita || '—', f.descrizione_attivita || '—', f.autore || '—'];
     });
   } else {
     const lista = getAziendeFiltrate();
@@ -1350,6 +1380,74 @@ function scaricaCSV(tipo) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ==================================================
+   REGISTRO ATTIVITÀ — solo su richiesta (bottone), mai da solo,
+   stesso principio "meno crediti possibile" di tutta la dashboard.
+   ================================================== */
+let registroAttivitaCorrente = [];
+const COLORE_TIPO_ATTIVITA = {
+  'Nuovo Carico': '#3b82f6', 'Assegnazione': '#22c55e', 'Aggiornamento Stato': '#f59e0b',
+  'Comunicazione': '#8b5cf6', 'Nota Generale': '#6b7280', 'Modifica Dati': '#06b6d4',
+  'Eliminazione': '#ef4444', 'Richiesta Eliminazione Account': '#ef4444',
+  'Registrazione': '#22c55e', 'Approvazione': '#22c55e'
+};
+
+async function caricaRegistroAttivita() {
+  const el = document.getElementById('registro-lista');
+  el.innerHTML = '<div class="feed-empty">Caricamento…</div>';
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_registro_attivita' })
+    });
+    const data = await res.json();
+    registroAttivitaCorrente = data.attivita || [];
+    renderRegistroAttivita(registroAttivitaCorrente);
+  } catch (e) {
+    console.error('Errore caricamento registro attività:', e);
+    el.innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare il registro — probabile che Make sia spento in questo momento.</div>';
+  }
+}
+
+function getRegistroFiltrato() {
+  const q = (document.getElementById('registro-cerca').value || '').trim().toLowerCase();
+  let lista = [...registroAttivitaCorrente];
+  if (q) {
+    lista = lista.filter(r => {
+      const f = r.fields;
+      return (f.autore || '').toLowerCase().includes(q) ||
+             (f.tipo_attivita || '').toLowerCase().includes(q) ||
+             (f.titolo_attivita || '').toLowerCase().includes(q) ||
+             (f.descrizione_attivita || '').toLowerCase().includes(q);
+    });
+  }
+  return lista.sort((a, b) => new Date(b.createdTime || 0) - new Date(a.createdTime || 0));
+}
+
+function renderRegistroAttivita() {
+  const lista = getRegistroFiltrato();
+  const el = document.getElementById('registro-lista');
+  if (!lista.length) { el.innerHTML = '<div class="feed-empty">Nessuna attività trovata.</div>'; return; }
+  el.innerHTML = lista.slice(0, 100).map(r => {
+    const f = r.fields;
+    const colore = COLORE_TIPO_ATTIVITA[f.tipo_attivita] || '#6b7280';
+    const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div class="feed-item">
+      <span class="feed-dot" style="background:${colore};"></span>
+      <div class="feed-info">
+        <div class="feed-title">${f.titolo_attivita || '(senza titolo)'} <span style="font-size:11px;color:${colore};font-weight:600;">· ${f.tipo_attivita || '—'}</span></div>
+        <div class="feed-sub">${f.descrizione_attivita || ''} ${f.autore ? '— <b>' + f.autore + '</b>' : ''}</div>
+      </div>
+      <div class="feed-date">${dataFmt}</div>
+    </div>`;
+  }).join('');
+}
+
+function filtraRegistroAttivita() {
+  renderRegistroAttivita();
 }
 
 function stampaConTimbro() {
