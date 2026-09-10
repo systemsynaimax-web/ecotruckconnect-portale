@@ -446,23 +446,22 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </div>
 
   <details class="accordion-item">
-    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-pronto">100% pronto</span></summary>
+    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-pronto">100% pronto — TESTATO 10/9</span></summary>
     <div class="accordion-body">
-      <b>Cosa fa:</b> scrive ogni azione importante (carico pubblicato, carico preso, utente approvato) dentro a una tabella Airtable, creando uno storico vero e ricercabile.<br><br>
+      <b>Cosa fa:</b> scrive ogni azione importante (modifica dati, password rigenerata, richiesta eliminazione account) dentro a una tabella Airtable, e la dashboard la mostra con un bottone "Carica registro".<br><br>
       <b>A cosa serve:</b> è la base che sblocca anche il punto 2 (Telegram vero) e il punto 4 (grafico andamento).<br><br>
-      <b>Preinstallato:</b> tabella Airtable "Registro Attività" pronta. Il portale chiama già <code>registraAttivita()</code>. <b>Correzione 9/9:</b> controllando lo scenario Make vero, la route <code>log_attivita</code> esiste già, completa e funzionante — non mancava nulla.<br><br>
-      <b>Manca:</b> solo accendere lo scenario Make.<br><br>
-      <b>Perché non si vede:</b> lo scenario è spento.
+      <b>Fatto e testato il 10/9:</b> costruita l'azione Make <code>get_registro_attivita</code>, collegata la sezione nella dashboard, trovato e corretto un bug reale (il modulo Airtable di Make non leggeva questa tabella per via dei campi collegati ad altre tabelle — risolto passando a una chiamata HTTP diretta alle API di Airtable). Test dal vivo riuscito: azione vera dal portale ("Rigenera password") comparsa subito nel registro.<br><br>
+      <b>Perché non si vede adesso:</b> lo scenario Make è spento di default (strategia risparmio crediti) — va acceso solo per test reali.
     </div>
   </details>
 
   <details class="accordion-item">
-    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Da costruire</span></summary>
+    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Prossimo passo — sbloccato</span></summary>
     <div class="accordion-body">
       <b>Cosa fa:</b> mostra i messaggi Telegram davvero inviati ai trasportatori/aziende, al posto della demo finta.<br><br>
       <b>A cosa serve:</b> verificare che le notifiche arrivino per davvero, senza aprire Telegram.<br><br>
-      <b>Preinstallato:</b> la fonte dati (Registro Attività, punto 1) ora è confermata pronta e funzionante.<br><br>
-      <b>Manca:</b> collegare la dashboard a leggere quei dati e mostrarli — questa parte va ancora costruita.
+      <b>Preinstallato:</b> la fonte dati (Registro Attività, punto 1) è ora confermata pronta, testata e funzionante — punto di partenza solido per costruire questo.<br><br>
+      <b>Manca:</b> collegare la dashboard a leggere quei dati e mostrarli — questa parte va ancora costruita da zero.
     </div>
   </details>
 
@@ -471,7 +470,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div class="accordion-body">
       <b>Cosa fa:</b> l'azienda vede tutti i carichi pubblicati, li scarica in PDF/CSV, duplica un carico con un click, e il calendario mostra tutto — <b>compresi i carichi già presi</b>.<br><br>
       <b>A cosa serve:</b> dare all'azienda tutto a portata di mano, senza chiedere info al team.<br><br>
-      <b>Preinstallato:</b> tutto — tabella, bottoni, calendario nel portale. <b>Correzione 9/9:</b> l'azione Make <code>get_carichi_pubblicati_azienda</code> esiste già, completa.<br><br>
+      <b>Preinstallato:</b> tutto — tabella, bottoni, calendario nel portale. <b>Correzione 10/9:</b> trovato e corretto un nome di campo Airtable sbagliato (<code>assegnato_a_nome</code> → <code>bloccato_da_nome</code>) che avrebbe lasciato sempre vuota la colonna "Trasportatore".<br><br>
       <b>Manca:</b> solo accendere lo scenario Make.
     </div>
   </details>
@@ -481,7 +480,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div class="accordion-body">
       <b>Cosa fa:</b> un grafico che mostra quanti carichi sono stati pubblicati/presi per settimana o mese.<br><br>
       <b>A cosa serve:</b> capire a colpo d'occhio l'andamento dopo il lancio.<br><br>
-      <b>Preinstallato:</b> i dati grezzi (Registro Attività) sono pronti, ma serve prima costruire la lettura in dashboard (punto 2).
+      <b>Preinstallato:</b> i dati grezzi (Registro Attività) sono pronti e testati, ma serve prima costruire la lettura in dashboard (punto 2) prima di fare il grafico sopra quei dati.
     </div>
   </details>
 
