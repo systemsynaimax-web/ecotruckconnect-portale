@@ -1429,7 +1429,7 @@ async function aggiornaDashFatture() {
       .map(c => {
         const f = c.fields;
         const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.assegnato_a_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
+        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
       }).join('');
     const elAgg = document.getElementById('fatture-ultimo-agg');
     if (elAgg) elAgg.textContent = formatDataOra();
@@ -1634,8 +1634,8 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', assegnato_a_nome:'Mario Rossi' } },
-        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', assegnato_a_nome:'' } }
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi' } },
+        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'' } }
       ];
       renderCalendarioMensile();
     }
@@ -2285,7 +2285,7 @@ function scaricaFattureAziendaCSV() {
     .forEach(c => {
       const f = c.fields;
       const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '';
-      righe.push([data, f.numero_ordine || '', f.stato || '', f.assegnato_a_nome || '']);
+      righe.push([data, f.numero_ordine || '', f.stato || '', f.bloccato_da_nome || '']);
     });
   const csv = righe.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2314,7 +2314,7 @@ function scaricaFattureAziendaPDF() {
     .map(c => {
       const f = c.fields;
       const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-      return [data, f.numero_ordine || '—', f.stato || '—', f.assegnato_a_nome || '—'];
+      return [data, f.numero_ordine || '—', f.stato || '—', f.bloccato_da_nome || '—'];
     });
   doc.autoTable({
     head: [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']],
