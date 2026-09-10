@@ -787,6 +787,7 @@ const PREZZO    = 20;
 const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
 
 let currentUser = null;
+let modalitaAnteprimaAttiva = false; // true solo con ?preview=... nell'URL — evita chiamate vere a Make coi dati finti
 let trasportatoreRecordId = null;
 let trasportatoreFieldsCorrenti = {};
 
@@ -1401,17 +1402,20 @@ async function aggiornaDashFatture() {
     body.innerHTML = '<tr><td colspan="5" class="empty">Caricamento...</td></tr>';
     btnCsv.style.display = 'none';
     btnPdf.style.display = 'none';
-    /* Collegato al proxy Make — azione get_carichi_pubblicati_azienda attiva. */
-    try {
-      const res = await fetch(PROXY_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
-      });
-      const data = await res.json();
-      carichiPubblicatiAzienda = data.carichi || [];
-    } catch (e) {
-      carichiPubblicatiAzienda = [];
+    /* Collegato al proxy Make — azione get_carichi_pubblicati_azienda attiva.
+       In modalità anteprima non chiamiamo Make: usiamo i dati finti già pronti. */
+    if (!modalitaAnteprimaAttiva) {
+      try {
+        const res = await fetch(PROXY_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
+        });
+        const data = await res.json();
+        carichiPubblicatiAzienda = data.carichi || [];
+      } catch (e) {
+        carichiPubblicatiAzienda = [];
+      }
     }
     if (!carichiPubblicatiAzienda.length) {
       body.innerHTML = '<tr><td colspan="5" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
@@ -1585,6 +1589,7 @@ let __recoveryType  = null;
 document.addEventListener('DOMContentLoaded', () => {
   const previewParam = new URLSearchParams(window.location.search).get('preview');
   if (previewParam === 'trasportatore' || previewParam === 'azienda') {
+    modalitaAnteprimaAttiva = true;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app').style.display = 'block';
@@ -1628,6 +1633,10 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('mezzoRichiesto');
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
+      carichiPubblicatiAzienda = [
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', assegnato_a_nome:'Mario Rossi' } },
+        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', assegnato_a_nome:'' } }
+      ];
       renderCalendarioMensile();
     }
     return;
@@ -2230,12 +2239,7 @@ function scaricaStoricoCSV() {
 }
 
 /* ==================================================
-   SCARICO PDF/CSV — trasportatore già vero e funzionante oggi.
-   Azienda PREINSTALLATA: la funzione è scritta e pronta, ma resta
-   inutilizzata finché carichiPubblicatiAzienda non ha dati veri
-   (cioè finché l'azione Make "get_carichi_pubblicati_azienda" non
-   viene aggiunta). Appena c'è quel pezzo, tutto qui sotto funziona
-   subito, senza bisogno di toccare altro codice.
+   SCARICO PDF/CSV — funzionante per trasportatore e azienda.
    ================================================== */
 function scaricaFattureCSV() {
   if (tipoUtente === 'azienda') { scaricaFattureAziendaCSV(); return; }
