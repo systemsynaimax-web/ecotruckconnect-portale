@@ -307,16 +307,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
   </div>
 
-  <div style="background:rgba(239,68,68,0.08);border:1.5px dashed rgba(239,68,68,0.5);border-radius:14px;padding:20px 22px;margin-bottom:32px;">
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:240px;">
-        <div style="font-weight:700;color:#ef4444;font-size:14px;margin-bottom:4px;">⏰ Questo È REALE — l'orologio ⏰ accanto al logo, in alto</div>
-        <div style="font-size:13px;color:var(--muted);">Controlla scadenze vere (oggi: rischio sospensione Netlify) e calcola da solo, ogni volta che apri la pagina, quanti giorni mancano davvero. Se una scadenza è entro 30 giorni, l'orologio si accende con un numero — verde se c'è tempo, arancione se si avvicina, rosso se è urgente o già passata. Per aggiungere o aggiornare una scadenza in futuro, basta chiederlo in una prossima sessione, senza bisogno di toccare il codice da soli.</div>
-      </div>
-      <button onclick="apriAlertScadenze()" style="background:#ef4444;border:none;color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;">⏰ Vedi le Scadenze (dati veri)</button>
-    </div>
-  </div>
-
   <div class="sec-title">📦 Portali personali — anteprima</div>
   <div class="portali-grid">
     <div class="portale-card">
@@ -438,7 +428,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </style>
 
   <div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-    <b style="color:#ef4444;">⚠️ Stato reale di Make (aggiornato 9/9 sera):</b> crediti disponibili 10.000/10.000, ma lo scenario è ancora <b>SPENTO</b> (nessuna delle funzioni sotto funziona finché non lo accendi). Rischio sospensione pagamento entro il 14/9 — vedi l'orologio ⏰ in alto.
+    <b style="color:#f59e0b;">ℹ️ Stato reale di Make (aggiornato 10/9):</b> pagamento sistemato (piano Core pagato, periodo 7/9–7/10/2026), lo scenario resta comunque <b>SPENTO</b> di default (nessuna delle funzioni sotto funziona finché non lo accendi) — così com'è la strategia decisa: si accende solo durante i test reali con Gerlando, poi si spegne, per non consumare crediti a vuoto.
   </div>
 
   <details class="accordion-item">
@@ -705,65 +695,104 @@ function chiudiAnteprimaTelegram() {
 }
 
 /* ==================================================
-   SCADENZE E AVVISI — dati REALI, non demo.
-   Ogni scadenza qui sotto va aggiornata a mano quando cambia
-   qualcosa (basta chiedere a Claude "aggiungi/aggiorna questa
-   scadenza" in una prossima sessione — non serve toccare il
-   codice da soli). I giorni rimanenti si calcolano da soli,
-   ogni volta che la pagina è aperta, confrontando la data di
-   oggi con la data della scadenza: quindi il numero è sempre
-   vero e aggiornato, anche se la lista sotto è scritta a mano.
+   SCADENZE E AVVISI — dati REALI, vivi da Airtable (tabella
+   Scadenze_Sistema, base app0TGG8f4ARpdlbl, via proxy Make).
+   Non più un array scritto a mano: si legge da Airtable ogni
+   volta che apri la campanella. Ogni scadenza ha un bottone
+   "✅ Pagato" — un click, la marca Risolta su Airtable, sparisce
+   subito, per sempre. Zero consumo di crediti Make a vuoto: il
+   proxy è un webhook, costa solo quando lo chiami tu (aprendo
+   il pannello o cliccando il bottone) — non gira mai in background.
    ================================================== */
-const SCADENZE_REALI = [
-  { titolo: 'Make — pagamento da sistemare', data: '2026-09-14', dettaglio: 'Email ufficiale Make del 7/9: "Your scenarios will run as scheduled until 2026-09-14 01:26pm" — dopo quell\'orario rischio di perdere l\'accesso alle funzioni Core. Link di pagamento valido fino allo stesso momento. Nota: lo scenario è già spento, quindi anche in caso di sospensione non si perde nulla che sta girando — semplicemente non si potrà riaccendere finché non è risolto. Se i fondi arrivano solo dal 23, contattare il supporto Make per chiedere una proroga (link "Contact us" nell\'email).' },
-  { titolo: 'Netlify — promemoria rinnovo mensile', data: '2026-09-14', dettaglio: 'Verificato il 9/9: nessuna fattura scaduta, metodo di pagamento valido (Visa •••6375), ricarica automatica crediti attiva. Il periodo di fatturazione attuale termina il 14/9 — è solo un promemoria per controllare che il rinnovo vada a buon fine, non un allarme. Dato lo stesso periodo di difficoltà di liquidità di Make, vale la pena ricontrollare a ridosso di questa data.' }
-];
+let ULTIME_SCADENZE = [];
+
+async function caricaScadenze() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_scadenze' })
+    });
+    const data = await res.json();
+    ULTIME_SCADENZE = (data.scadenze || []).map(r => ({
+      id: r.id,
+      titolo: (r.fields && r.fields.Titolo) || '(senza titolo)',
+      data: (r.fields && r.fields.Data) || null,
+      dettaglio: (r.fields && r.fields.Dettaglio) || ''
+    }));
+  } catch (e) {
+    console.error('Errore caricamento scadenze:', e);
+    ULTIME_SCADENZE = null; // null = errore di rete, diverso da "nessuna scadenza"
+  }
+  aggiornaAlertBell();
+}
 
 function aggiornaAlertBell() {
-  const oggi = new Date(); oggi.setHours(0,0,0,0);
-  const attive = SCADENZE_REALI.map(s => {
-    const d = new Date(s.data + 'T00:00:00');
-    const giorni = Math.ceil((d - oggi) / 86400000);
-    return { ...s, giorni };
-  }).filter(s => s.giorni <= 30); // avvisa solo se entro 30 giorni (passate incluse)
-
   const bell = document.getElementById('alert-bell');
   const count = document.getElementById('alert-count');
-  if (attive.length > 0) {
+  const n = ULTIME_SCADENZE ? ULTIME_SCADENZE.length : 0;
+  if (n > 0) {
     bell.classList.add('attiva');
-    count.textContent = attive.length > 9 ? '9+' : attive.length;
+    count.textContent = n > 9 ? '9+' : n;
     count.classList.add('show');
   } else {
     bell.classList.remove('attiva');
     count.classList.remove('show');
   }
-  return attive;
 }
 
-function apriAlertScadenze() {
-  const attive = aggiornaAlertBell();
-  const tutte = SCADENZE_REALI.map(s => {
-    const oggi = new Date(); oggi.setHours(0,0,0,0);
-    const d = new Date(s.data + 'T00:00:00');
-    const giorni = Math.ceil((d - oggi) / 86400000);
-    return { ...s, giorni };
-  });
-  const el = document.getElementById('alert-lista');
-  if (!tutte.length) {
-    el.innerHTML = '<div class="notif-empty">✅ Nessuna scadenza registrata al momento.</div>';
-  } else {
-    el.innerHTML = tutte.map(s => {
-      const urgenza = s.giorni <= 3 ? '#ef4444' : s.giorni <= 14 ? '#f59e0b' : '#22c55e';
-      const testoGiorni = s.giorni < 0 ? `scaduta da ${Math.abs(s.giorni)} giorni` : s.giorni === 0 ? 'scade OGGI' : `tra ${s.giorni} giorni`;
-      return `<div style="padding:16px 20px;border-bottom:1px solid var(--border);border-left:3px solid ${urgenza};">
-        <div style="font-weight:700;color:var(--text);font-size:14px;margin-bottom:4px;">${s.titolo}</div>
-        <div style="font-size:12px;color:${urgenza};font-weight:700;margin-bottom:6px;">${testoGiorni} — ${s.data}</div>
-        <div style="font-size:13px;color:rgba(241,245,249,0.75);line-height:1.5;">${s.dettaglio}</div>
-      </div>`;
-    }).join('');
-  }
-  document.getElementById('alert-panel').classList.add('open');
+function calcolaGiorni(s) {
+  if (!s.data) return null;
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const d = new Date(s.data + 'T00:00:00');
+  return Math.ceil((d - oggi) / 86400000);
 }
+
+async function apriAlertScadenze() {
+  const el = document.getElementById('alert-lista');
+  el.innerHTML = '<div class="notif-empty">Caricamento scadenze...</div>';
+  document.getElementById('alert-panel').classList.add('open');
+  await caricaScadenze();
+
+  if (ULTIME_SCADENZE === null) {
+    el.innerHTML = '<div class="notif-empty">⚠️ Non riesco a caricare le scadenze in questo momento. Riprova tra poco.</div>';
+    return;
+  }
+  if (!ULTIME_SCADENZE.length) {
+    el.innerHTML = '<div class="notif-empty">✅ Nessuna scadenza attiva al momento.</div>';
+    return;
+  }
+  el.innerHTML = ULTIME_SCADENZE.map(s => {
+    const giorni = calcolaGiorni(s);
+    const urgenza = giorni === null ? '#22c55e' : giorni <= 3 ? '#ef4444' : giorni <= 14 ? '#f59e0b' : '#22c55e';
+    const testoGiorni = giorni === null ? '' : giorni < 0 ? `scaduta da ${Math.abs(giorni)} giorni — ${s.data}` : giorni === 0 ? `scade OGGI — ${s.data}` : `tra ${giorni} giorni — ${s.data}`;
+    return `<div style="padding:16px 20px;border-bottom:1px solid var(--border);border-left:3px solid ${urgenza};">
+      <div style="font-weight:700;color:var(--text);font-size:14px;margin-bottom:4px;">${s.titolo}</div>
+      ${testoGiorni ? `<div style="font-size:12px;color:${urgenza};font-weight:700;margin-bottom:6px;">${testoGiorni}</div>` : ''}
+      <div style="font-size:13px;color:rgba(241,245,249,0.75);line-height:1.5;margin-bottom:12px;">${s.dettaglio}</div>
+      <button onclick="segnaScadenzaPagata('${s.id}', this)" style="background:#22c55e;border:none;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);">✅ Pagato</button>
+    </div>`;
+  }).join('');
+}
+
+async function segnaScadenzaPagata(recordId, btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = '...';
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'risolvi_scadenza', record_id: recordId })
+    });
+    apriAlertScadenze(); // ricarica la lista: la scadenza pagata sparisce subito
+  } catch (e) {
+    console.error('Errore nel segnare la scadenza come pagata:', e);
+    btnEl.disabled = false;
+    btnEl.textContent = '✅ Pagato';
+    alert('Errore di connessione, riprova.');
+  }
+}
+
 function chiudiAlertScadenze() {
   document.getElementById('alert-panel').classList.remove('open');
 }
@@ -1322,7 +1351,7 @@ function stampaConTimbro() {
 }
 
 caricaDashboard();
-aggiornaAlertBell();
+caricaScadenze();
 setInterval(caricaDashboard, 30000);
 </script>
 </body>
