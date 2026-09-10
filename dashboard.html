@@ -1403,12 +1403,23 @@ async function caricaRegistroAttivita() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_registro_attivita' })
     });
-    const data = await res.json();
+    const testoGrezzo = await res.text();
+    let data;
+    try {
+      data = JSON.parse(testoGrezzo);
+    } catch (erroreParse) {
+      el.innerHTML = `<div class="feed-empty">⚠️ DEBUG — Make non ha risposto con JSON valido. Risposta grezza ricevuta (${res.status}):<br><br><code style="font-size:11px;word-break:break-all;">${testoGrezzo.slice(0, 500).replace(/</g,'&lt;')}</code></div>`;
+      return;
+    }
     registroAttivitaCorrente = data.attivita || [];
-    renderRegistroAttivita(registroAttivitaCorrente);
+    if (!registroAttivitaCorrente.length) {
+      el.innerHTML = `<div class="feed-empty">⚠️ DEBUG — Make ha risposto correttamente ma senza righe. Risposta completa ricevuta:<br><br><code style="font-size:11px;word-break:break-all;">${JSON.stringify(data).slice(0, 500).replace(/</g,'&lt;')}</code></div>`;
+      return;
+    }
+    renderRegistroAttivita();
   } catch (e) {
     console.error('Errore caricamento registro attività:', e);
-    el.innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare il registro — probabile che Make sia spento in questo momento.</div>';
+    el.innerHTML = `<div class="feed-empty">⚠️ DEBUG — Errore di rete/fetch: ${String(e)}</div>`;
   }
 }
 
