@@ -345,7 +345,17 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
         <button class="btn-accedi" onclick="doLogin()">Accedi &rarr;</button>
         <div id="li-err" class="lf-error"></div>
-        <div class="lf-privacy"><a href="https://legal.synaimaxpro.com" target="_blank">Privacy Policy</a></div>
+        <div style="text-align:right;margin:14px 0 0;">
+          <a href="#" onclick="toggleForgotPw(event)" style="color:var(--blue);font-size:12px;text-decoration:none;">Password dimenticata?</a>
+        </div>
+        <div id="forgot-pw-box" style="display:none;margin-top:14px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Inserisci la tua email: se è registrata, ti mandiamo subito una nuova password.</div>
+          <input type="email" id="forgot-pw-email" class="lf-input" placeholder="la-tua@email.com" style="margin-bottom:10px;" onkeydown="if(event.key==='Enter')richiediPasswordDimenticata()">
+          <button class="btn-accedi" onclick="richiediPasswordDimenticata()" style="padding:10px;font-size:13px;" id="forgot-pw-btn">Invia nuova password</button>
+          <div id="forgot-pw-msg" style="display:none;margin-top:10px;font-size:12px;color:var(--green);">✅ Se l'email è registrata, a breve ricevi le nuove credenziali. Controlla anche lo spam.</div>
+          <div id="forgot-pw-err" style="display:none;margin-top:10px;font-size:12px;color:var(--red);"></div>
+        </div>
+        <div class="lf-privacy" style="margin-top:24px;"><a href="https://legal.synaimaxpro.com" target="_blank">Privacy Policy</a></div>
       </div>
     </div>
   </div>
@@ -1671,6 +1681,53 @@ async function doLogin() {
 }
 
 function doLogout() { netlifyIdentity.logout(); }
+
+/* ——— PASSWORD DIMENTICATA (dalla pagina di login, prima di entrare) ———
+   Usa la stessa azione Make 'rigenera_password' già usata dal bottone dentro
+   il portale: il sistema genera una nuova password lato server e la manda
+   per email. Nessun link, nessun token — zero rischio "link scaduto". */
+function toggleForgotPw(e) {
+  e.preventDefault();
+  const box = document.getElementById('forgot-pw-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('forgot-pw-msg').style.display = 'none';
+  document.getElementById('forgot-pw-err').style.display = 'none';
+}
+
+async function richiediPasswordDimenticata() {
+  const email = document.getElementById('forgot-pw-email').value.trim();
+  const err = document.getElementById('forgot-pw-err');
+  const msg = document.getElementById('forgot-pw-msg');
+  const btn = document.getElementById('forgot-pw-btn');
+  err.style.display = 'none';
+  msg.style.display = 'none';
+
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    err.textContent = '⚠️ Inserisci un\'email valida.';
+    err.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Invio in corso...';
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rigenera_password', email: email })
+    });
+  } catch (e) {
+    console.error('Errore richiesta password dimenticata:', e);
+    // Messaggio identico anche in caso di errore di rete: non sveliamo mai se
+    // l'email esiste o no nel sistema, per motivi di sicurezza/privacy.
+  }
+  // Messaggio sempre uguale, esista o no l'email — evita di far capire a chi
+  // prova email a caso quali indirizzi sono davvero registrati sulla piattaforma.
+  msg.style.display = 'block';
+  document.getElementById('forgot-pw-email').value = '';
+  btn.disabled = false;
+  btn.textContent = 'Invia nuova password';
+}
 
 let tipoUtente = null;
 let capCorrente = null;
