@@ -523,6 +523,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </details>
 
   <details class="accordion-item">
+    <summary>11. 🧾 Perché Scarica PDF/CSV compare per il trasportatore ma non per l'azienda <span class="accordion-tag tag-parziale">Spiegazione, non un bug</span></summary>
+    <div class="accordion-body">
+      <b>Cosa si vede oggi nel portale (Dashboard personale → Le mie fatture):</b> il trasportatore vede i bottoni "Scarica PDF" e "Scarica CSV" accanto a "Stampa"; l'azienda vede solo "Stampa".<br><br>
+      <b>Perché — non è un errore, è voluto:</b> i bottoni Scarica compaiono solo quando c'è almeno una riga da scaricare. Il trasportatore ha già delle candidature (anche solo di test), quindi la tabella non è vuota. L'azienda, invece, non ha ancora pubblicato nessun carico reale — le tabelle Trasportatori e Aziende su Airtable sono ancora a 0 record — quindi la tabella è vuota e i bottoni restano nascosti di proposito, per non far scaricare un file vuoto e inutile.<br><br>
+      <b>Il meccanismo per l'azienda è già collegato e pronto:</b> l'azione Make <code>get_carichi_pubblicati_azienda</code> esiste ed è attiva, le funzioni <code>scaricaFattureAziendaCSV</code>/<code>PDF</code> sono scritte e testate. Appena un'azienda vera pubblica il primo carico, questa sezione si riempie da sola e i bottoni "Scarica PDF"/"Scarica CSV" compaiono automaticamente, identici a quelli del trasportatore — senza bisogno di toccare altro codice.<br><br>
+      <b>Manca:</b> solo il primo carico vero pubblicato da un'azienda vera. Nessun intervento tecnico da fare.
+    </div>
+  </details>
+
+  <details class="accordion-item">
     <summary>10. 💡 Idea: funzioni premium a pagamento <span class="accordion-tag tag-zero">Solo idea, non decisa</span></summary>
     <div class="accordion-body">
       <b>Cosa fa:</b> alcune funzioni avanzate potrebbero diventare un abbonamento a pagamento invece che gratuite.<br><br>
