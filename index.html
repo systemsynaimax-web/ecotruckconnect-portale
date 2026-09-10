@@ -500,7 +500,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <button class="btn-cap" onclick="salvaDashDati()" style="margin-top:16px;">💾 Salva i miei dati</button>
         <span id="dd-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
         <div id="dd-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Il salvataggio non è ancora collegato al sistema centrale (Make è in pausa) — la richiesta parte già correttamente, ma va abbinata a un'azione lato Make non ancora creata. Quando è collegato, ogni modifica avviserà automaticamente anche il team EcoTruckConnect.</div>
         <h4 style="color:#fff;font-family:var(--font-h);margin:28px 0 6px;">📎 I miei documenti</h4>
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
       </div>
@@ -522,8 +521,9 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <div style="font-size:12px;color:var(--muted);margin-top:10px;">Aggiornato al: <span id="fatture-ultimo-agg">—</span></div>
       </div>
       <div id="dash-sezione-report" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:10px;">📈 I miei report</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — dettaglio delle tratte effettuate, tempi, distanze.</div>
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">📈 I miei report</h4>
+        <div class="cards" id="report-cards" style="margin-bottom:10px;"></div>
+        <div style="color:var(--muted);font-size:12px;margin-top:6px;">Calcolato sui dati già caricati in questa sessione. Dettaglio tratte/tempi/distanze: 🔜 in arrivo.</div>
       </div>
       <div id="dash-sezione-notifiche" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔔 Notifiche</h4>
@@ -558,7 +558,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <button class="btn-cap" onclick="salvaNotifiche()" style="margin-top:6px;">💾 Salva preferenze notifiche</button>
         <span id="notif-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
         <div id="notif-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">⚠️ Preferenze salvate solo in questa sessione per ora — il salvataggio permanente arriva quando colleghiamo Make.</div>
       </div>
       <div id="dash-sezione-sicurezza" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔒 Sicurezza</h4>
@@ -566,7 +565,6 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
         <div id="rigenera-pw-msg" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;">✅ A breve riceverai un'email con i tuoi dati di accesso.</div>
         <div id="pw-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima rigenerazione: mai</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px;">⚠️ Non ancora collegato al sistema centrale (Make è in pausa) — pronto da attivare quando Make riparte.</div>
         <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(239,68,68,0.2);">
           <div style="color:var(--red);font-size:13px;font-weight:600;margin-bottom:8px;">Elimina il mio account</div>
           <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Questa azione è definitiva: perderai l'accesso al portale e ai tuoi dati.</div>
@@ -1219,6 +1217,7 @@ function apriDashSezione(nome) {
   }
   if (nome === 'dati') precompilaDashDati();
   if (nome === 'fatture') aggiornaDashFatture();
+  if (nome === 'report') aggiornaDashReport();
   document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -1351,6 +1350,46 @@ function autocompilaCittaDaDashboard() {
   }, 500);
 }
 
+function aggiornaDashReport() {
+  const el = document.getElementById('report-cards');
+  if (!el) return;
+
+  if (tipoUtente === 'azienda') {
+    const tutti = carichiPubblicatiAzienda || [];
+    const totale = tutti.length;
+    const presi = tutti.filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO').length;
+    const disponibili = tutti.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE').length;
+    const percPresi = totale ? Math.round((presi / totale) * 100) : 0;
+    el.innerHTML = `
+      <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Carichi pubblicati totali</h3><div class="card-num">${totale}</div></div>
+      <div class="card" style="cursor:default;"><div class="card-icon">✅</div><h3>Carichi presi</h3><div class="card-num green">${presi}</div><div class="card-sub">${percPresi}% del totale</div></div>
+      <div class="card" style="cursor:default;"><div class="card-icon">⏳</div><h3>Ancora disponibili</h3><div class="card-num">${disponibili}</div></div>
+    `;
+    return;
+  }
+
+  const cands = ultimeCandidature || [];
+  const completate = cands.filter(c => {
+    const s = (c.fields.stato || '').toLowerCase();
+    return s.includes('complet') || s.includes('accett') || s.includes('pagat');
+  });
+  const now = new Date();
+  const questoMese = completate.filter(c => {
+    const d = c.fields.data_candidatura || '';
+    if (!d) return false;
+    const dt = new Date(d);
+    return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+  });
+  const guadagnoTotale = completate.length * PREZZO;
+  const guadagnoMese = questoMese.length * PREZZO;
+  const mediaPerCarico = completate.length ? Math.round(guadagnoTotale / completate.length) : 0;
+  el.innerHTML = `
+    <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Carichi completati totali</h3><div class="card-num">${completate.length}</div></div>
+    <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Guadagno totale</h3><div class="card-num green">€ ${guadagnoTotale.toLocaleString('it-IT')}</div></div>
+    <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Guadagno questo mese</h3><div class="card-num blue">€ ${guadagnoMese.toLocaleString('it-IT')}</div></div>
+  `;
+}
+
 async function aggiornaDashFatture() {
   const body = document.getElementById('dash-fatture-body');
   const thead = document.getElementById('dash-fatture-thead');
@@ -1362,12 +1401,7 @@ async function aggiornaDashFatture() {
     body.innerHTML = '<tr><td colspan="5" class="empty">Caricamento...</td></tr>';
     btnCsv.style.display = 'none';
     btnPdf.style.display = 'none';
-    /* PREINSTALLATO — chiamata vera e già pronta verso il proxy Make.
-       Oggi non risponde (o risponde vuota) perché l'azione
-       "get_carichi_pubblicati_azienda" non esiste ancora sullo scenario
-       Make (segnata nei documenti come mancante). Appena viene aggiunta
-       su Make (pochi minuti di lavoro), questa parte del portale funziona
-       da sola, senza toccare più nulla qui. */
+    /* Collegato al proxy Make — azione get_carichi_pubblicati_azienda attiva. */
     try {
       const res = await fetch(PROXY_WEBHOOK, {
         method: 'POST',
@@ -1467,19 +1501,34 @@ function chiediEliminazioneAccount() {
       <div class="confirm-box">
         <div class="confirm-icon">⚠️</div>
         <div class="confirm-title">Eliminare il tuo account?</div>
-        <div class="confirm-text">Questa azione è <strong>definitiva</strong>: perderai l'accesso al portale, ai tuoi carichi e ai tuoi dati. Non si può annullare.</div>
+        <div class="confirm-text">Questa azione è <strong>definitiva</strong>: perderai l'accesso al portale, ai tuoi carichi e ai tuoi dati. Non si può annullare. La richiesta viene gestita da una persona del team entro i tempi previsti dal GDPR (max 30 giorni), non è istantanea.</div>
         <div class="confirm-actions">
           <button class="confirm-btn confirm-btn-cancel" id="confirm-annulla">Annulla</button>
-          <button class="confirm-btn confirm-btn-remove" id="confirm-rimuovi">Sì, elimina il mio account</button>
+          <button class="confirm-btn confirm-btn-remove" id="confirm-rimuovi">Sì, richiedi l'eliminazione</button>
         </div>
       </div>
     </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
   const overlay = document.getElementById('confirm-overlay');
   document.getElementById('confirm-annulla').onclick = () => overlay.remove();
-  document.getElementById('confirm-rimuovi').onclick = () => {
+  document.getElementById('confirm-rimuovi').onclick = async () => {
     overlay.remove();
-    alert('⚠️ Funzione non ancora collegata al sistema centrale (Make è in pausa) — la conferma funziona, l\'eliminazione vera arriva quando Make riparte.');
+    const email = (currentUser && currentUser.email) || '';
+    const nomeUtente = tipoUtente === 'azienda'
+      ? (profiloAzienda.nome || email)
+      : ((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim() || email;
+    // 1. Log ufficiale e non modificabile sul Registro Attività — prova che la richiesta è stata fatta, con data/ora vera assegnata da Airtable.
+    registraAttivita('Richiesta Eliminazione Account', 'Richiesta cancellazione account (GDPR)', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ${nomeUtente} (${email}) ha richiesto la cancellazione del proprio account.`);
+    // 2. Notifica reale al team via lo stesso canale email già usato da "Scrivici" — così arriva davvero a chi deve gestirla, non solo scritta su una tabella.
+    try {
+      const fd = new FormData();
+      fd.append('form-name', 'supporto');
+      fd.append('nome', nomeUtente);
+      fd.append('email', email);
+      fd.append('messaggio', `⚠️ RICHIESTA ELIMINAZIONE ACCOUNT (GDPR) — ${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'}: ${nomeUtente}, email: ${email}. Da gestire entro 30 giorni.`);
+      await fetch('/', { method: 'POST', body: fd });
+    } catch(e) { console.error('Errore invio notifica eliminazione account:', e); }
+    alert('✅ Richiesta inviata. Il team EcoTruckConnect la gestirà entro 30 giorni, come previsto dal GDPR. Riceverai una conferma via email quando l\'account sarà stato cancellato.');
   };
   overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 }
