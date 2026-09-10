@@ -282,7 +282,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       </a>
     </div>
     <div class="header-right">
-      <span class="refresh-info"><span class="dot-live"></span>Aggiornato automaticamente</span>
+      <span class="refresh-info" id="refresh-info-testo"><span class="dot-live"></span>Aggiornato ogni 15 min</span>
+      <button onclick="aggiornaOra()" id="btn-aggiorna-ora" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-right:10px;">🔄 Aggiorna ora</button>
       <div class="notif-bell" id="notif-bell" onclick="apriNotifiche()" title="Registrazioni da approvare">
         🔔
         <span class="notif-count" id="notif-count">0</span>
@@ -1352,7 +1353,26 @@ function stampaConTimbro() {
 
 caricaDashboard();
 caricaScadenze();
-setInterval(caricaDashboard, 30000);
+
+/* Aggiornamento automatico ogni 15 minuti (non più ogni 30 secondi) — ogni
+   chiamata al proxy Make è un'esecuzione vera che consuma crediti, quindi
+   se questa tab resta aperta per ore non ha senso interrogarla ogni 30
+   secondi per dati che non cambiano così spesso (numeri, carichi totali,
+   scadenze). Chi vuole vedere subito l'ultimo dato ha il bottone
+   "🔄 Aggiorna ora" qui sopra, che chiama tutto all'istante quando serve
+   davvero — le azioni realmente urgenti (prendere un carico, bloccarlo)
+   restano comunque istantanee perché scattano dal click dell'utente, mai
+   da un timer. */
+setInterval(caricaDashboard, 900000); // 15 minuti
+
+async function aggiornaOra() {
+  const btn = document.getElementById('btn-aggiorna-ora');
+  btn.disabled = true;
+  btn.textContent = '⏳ Aggiorno...';
+  await Promise.all([caricaDashboard(), caricaScadenze()]);
+  btn.textContent = '✅ Aggiornato';
+  setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
+}
 </script>
 </body>
 </html>
