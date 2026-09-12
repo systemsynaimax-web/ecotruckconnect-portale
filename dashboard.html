@@ -1474,20 +1474,29 @@ function stampaConTimbro() {
   window.print();
 }
 
-/* CARICAMENTO INIZIALE — IN FILA, MAI IN PARALLELO.
-   Prima si chiamava caricaDashboard() e caricaScadenze() insieme (in parallelo),
-   e caricaDashboard() al suo interno chiamava subito anche caricaNotificheRegistrazioni().
-   Risultato: 2-3 chiamate al Proxy Make nello stesso istante. Il piano Make
-   attuale non regge più di una richiesta alla volta su questo scenario — le
-   chiamate in eccesso restavano in coda e la risposta tornava troppo tardi
-   per essere letta dal browser (da qui l'errore Make "Response can't be
-   processed when scenario is not executed immediately on data arrival",
-   e la campanella/i numeri che non si aggiornavano mai). Ora ogni chiamata
-   aspetta che la precedente sia finita prima di partire. */
-(async () => {
-  await caricaDashboard();
-  await caricaScadenze();
-})();
+/* LUCCHETTO GLOBALE — impedisce a due cicli di caricamento di girare insieme.
+   Il fix precedente metteva in fila le chiamate DENTRO un singolo ciclo
+   (caricaDashboard → caricaScadenze), ma non impediva a DUE CICLI DIVERSI
+   di partire uno sopra l'altro — es. il caricamento automatico all'apertura
+   della pagina + un click su "Aggiorna ora" arrivato mentre il primo stava
+   ancora girando. Controllato nel registro Make: le chiamate arrivavano
+   ancora a 100-800ms di distanza l'una dall'altra, prova che due cicli
+   partivano insieme. Ora un secondo tentativo, mentre uno è già in corso,
+   viene semplicemente ignorato invece di scontrarsi con quello attivo. */
+let caricamentoInCorso = false;
+
+async function caricaTutto() {
+  if (caricamentoInCorso) return;
+  caricamentoInCorso = true;
+  try {
+    await caricaDashboard();
+    await caricaScadenze();
+  } finally {
+    caricamentoInCorso = false;
+  }
+}
+
+caricaTutto();
 
 /* NESSUN timer automatico — decisione esplicita 10/9: questa dashboard la
    aprono solo Davide e Gerlando, e se sono dentro se ne accorgono da soli.
@@ -1496,12 +1505,11 @@ function stampaConTimbro() {
    o di notte, con o senza la tab aperta — zero crediti Make sprecati. */
 
 async function aggiornaOra() {
+  if (caricamentoInCorso) return; // un caricamento è già in corso, ignora
   const btn = document.getElementById('btn-aggiorna-ora');
   btn.disabled = true;
   btn.textContent = '⏳ Aggiorno...';
-  // In fila, non in parallelo — stesso motivo di sopra.
-  await caricaDashboard();
-  await caricaScadenze();
+  await caricaTutto();
   btn.textContent = '✅ Aggiornato';
   setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
 }
