@@ -629,7 +629,10 @@ async function caricaDashboard() {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
   }
-  caricaNotificheRegistrazioni();
+  // Aspetta che finisca prima di restituire il controllo — mai in corsa
+  // insieme alla chiamata successiva (get_scadenze), stesso motivo del
+  // fix generale spiegato più sotto nel file.
+  await caricaNotificheRegistrazioni();
 }
 
 /* ==================================================
@@ -1471,8 +1474,20 @@ function stampaConTimbro() {
   window.print();
 }
 
-caricaDashboard();
-caricaScadenze();
+/* CARICAMENTO INIZIALE — IN FILA, MAI IN PARALLELO.
+   Prima si chiamava caricaDashboard() e caricaScadenze() insieme (in parallelo),
+   e caricaDashboard() al suo interno chiamava subito anche caricaNotificheRegistrazioni().
+   Risultato: 2-3 chiamate al Proxy Make nello stesso istante. Il piano Make
+   attuale non regge più di una richiesta alla volta su questo scenario — le
+   chiamate in eccesso restavano in coda e la risposta tornava troppo tardi
+   per essere letta dal browser (da qui l'errore Make "Response can't be
+   processed when scenario is not executed immediately on data arrival",
+   e la campanella/i numeri che non si aggiornavano mai). Ora ogni chiamata
+   aspetta che la precedente sia finita prima di partire. */
+(async () => {
+  await caricaDashboard();
+  await caricaScadenze();
+})();
 
 /* NESSUN timer automatico — decisione esplicita 10/9: questa dashboard la
    aprono solo Davide e Gerlando, e se sono dentro se ne accorgono da soli.
@@ -1484,7 +1499,9 @@ async function aggiornaOra() {
   const btn = document.getElementById('btn-aggiorna-ora');
   btn.disabled = true;
   btn.textContent = '⏳ Aggiorno...';
-  await Promise.all([caricaDashboard(), caricaScadenze()]);
+  // In fila, non in parallelo — stesso motivo di sopra.
+  await caricaDashboard();
+  await caricaScadenze();
   btn.textContent = '✅ Aggiornato';
   setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
 }
