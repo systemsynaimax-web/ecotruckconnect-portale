@@ -1066,7 +1066,6 @@ async function eseguiAttivazione() {
   }
 
   const action = r.tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
-  const actionInvia = r.tipo === 'azienda' ? 'azienda_approvata' : 'trasportatore_approvato';
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1075,13 +1074,10 @@ async function eseguiAttivazione() {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
-    // Seconda chiamata: manda davvero l'email con le credenziali
-    const res2 = await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: actionInvia, record_id: r.id })
-    });
-    if (!res2.ok) throw new Error('HTTP invio email ' + res2.status);
+    // L'invio dell'email con le credenziali lo fa da sola l'automazione dentro
+    // Airtable (si attiva quando questo stesso "approva_azienda/trasportatore"
+    // porta lo stato a Approvato) — qui NON richiamiamo più azienda_approvata/
+    // trasportatore_approvato: farlo anche da qui mandava l'email due volte.
 
     registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
     aggiornaCampanello();
