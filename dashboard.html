@@ -442,7 +442,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </style>
 
   <div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-    <b style="color:#f59e0b;">ℹ️ Stato reale di Make (aggiornato 10/9):</b> pagamento sistemato (piano Core pagato, periodo 7/9–7/10/2026), lo scenario resta comunque <b>SPENTO</b> di default (nessuna delle funzioni sotto funziona finché non lo accendi) — così com'è la strategia decisa: si accende solo durante i test reali con Gerlando, poi si spegne, per non consumare crediti a vuoto.
+    <b style="color:#f59e0b;">ℹ️ Stato reale di Make (aggiornato 12/9):</b> pagamento sistemato (piano Core pagato), lo scenario resta comunque <b>SPENTO</b> di default (nessuna delle funzioni sotto funziona finché non lo accendi) — così com'è la strategia decisa: si accende solo durante i test reali con Gerlando, poi si spegne, per non consumare crediti a vuoto.
   </div>
 
   <details class="accordion-item">
@@ -1038,8 +1038,11 @@ function stampaAnagrafica() {
   setTimeout(() => win.print(), 400);
 }
 
-/* Attivazione vera e propria — chiama il proxy Make, l'email con la password
-   parte da sola entro 5 minuti tramite lo scenario "Approva Utente" già attivo. */
+/* Attivazione vera e propria — chiama il proxy Make DUE volte in sequenza:
+   1) segna lo stato "Approvato" su Airtable
+   2) chiama l'azione che genera la password vera e manda l'email con le
+      credenziali — questa seconda chiamata prima NON partiva mai da qui,
+      ed era il motivo per cui l'email non arrivava dopo l'approvazione. */
 async function eseguiAttivazione() {
   if (!recordApertoCorrente) return;
   const r = recordApertoCorrente;
@@ -1060,6 +1063,7 @@ async function eseguiAttivazione() {
   }
 
   const action = r.tipo === 'azienda' ? 'approva_azienda' : 'approva_trasportatore';
+  const actionInvia = r.tipo === 'azienda' ? 'azienda_approvata' : 'trasportatore_approvato';
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1067,6 +1071,15 @@ async function eseguiAttivazione() {
       body: JSON.stringify({ action: action, record_id: r.id })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Seconda chiamata: manda davvero l'email con le credenziali
+    const res2 = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: actionInvia, record_id: r.id })
+    });
+    if (!res2.ok) throw new Error('HTTP invio email ' + res2.status);
+
     registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
     aggiornaCampanello();
     tornaListaNotifiche();
