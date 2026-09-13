@@ -233,11 +233,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="header">
     <div class="header-left" style="display:flex;align-items:center;">
       <div class="logo">Eco<span>Truck</span>Connect</div>
-      <div class="notif-bell" id="alert-bell" onclick="apriAlertScadenze()" title="Scadenze e avvisi" style="margin-left:20px;">
-        ⏰
-        <span class="notif-count" id="alert-count">0</span>
-      </div>
-      <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="notif-bell" title="Apri inbox system.synaimax@gmail.com" style="margin-left:12px;text-decoration:none;">
+      <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="notif-bell" title="Apri inbox system.synaimax@gmail.com" style="margin-left:20px;text-decoration:none;">
         📬
       </a>
     </div>
@@ -384,226 +380,13 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
   </div>
 
-  <div class="sec-title">📋 Cosa Manca Ancora — Tutto Spiegato, Punto per Punto</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Clicca su ogni punto per aprirlo e vedere: cosa fa, a cosa serve, cosa è già pronto ("preinstallato") e cosa manca davvero, e perché oggi non si vede ancora nulla a schermo.</div>
-
-  <style>
-    .accordion-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
-    .accordion-item summary{padding:16px 20px;cursor:pointer;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;list-style:none;}
-    .accordion-item summary::-webkit-details-marker{display:none;}
-    .accordion-item summary::before{content:'▸';color:var(--muted);transition:transform 0.2s;}
-    .accordion-item[open] summary::before{transform:rotate(90deg);}
-    .accordion-body{padding:0 20px 18px 46px;font-size:13px;color:rgba(241,245,249,0.8);line-height:1.7;}
-    .accordion-body b{color:var(--text);}
-    .accordion-tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:10px;margin-left:auto;white-space:nowrap;}
-    .tag-pronto{background:rgba(34,197,94,0.15);color:var(--green);}
-    .tag-parziale{background:rgba(245,158,11,0.15);color:var(--amber);}
-    .tag-zero{background:rgba(239,68,68,0.15);color:var(--red);}
-    .tag-domanda{background:rgba(139,92,246,0.18);color:#a78bfa;}
-  </style>
-
-  <div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-    <b style="color:#f59e0b;">ℹ️ Stato reale di Make (aggiornato 12/9):</b> pagamento sistemato (piano Core pagato), lo scenario resta comunque <b>SPENTO</b> di default (nessuna delle funzioni sotto funziona finché non lo accendi) — così com'è la strategia decisa: si accende solo durante i test reali con Gerlando, poi si spegne, per non consumare crediti a vuoto.
+  <div class="sec-title">❓ Unico punto aperto</div>
+  <div style="background:rgba(139,92,246,0.08);border:1.5px dashed rgba(139,92,246,0.4);border-radius:14px;padding:20px 22px;">
+    <div style="font-weight:700;color:#a78bfa;font-size:14px;margin-bottom:6px;">Il trasportatore deve vedere quanto viene pagato PRIMA di accettare il carico?</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;">Oggi i due campi "Importo pattuito" e "Termini di pagamento" (nel form Pubblica Carico) li vede solo l'azienda, come nota interna. Nelle piattaforme del settore (Uber Freight, Convoy, Transfix, DAT) il trasportatore vede sempre il prezzo prima di accettare — è uno dei criteri principali con cui decide. Serve una risposta di Gerlando: sì, lo mostriamo anche al trasportatore, o resta un dato privato dell'azienda?</div>
   </div>
 
-  <div class="sec-title" style="margin-top:44px;">✅ Checklist Lancio — aggiornata al 13/9, dopo la sessione di oggi</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Tutto quello fatto oggi (13/9) sui punti della checklist di Gerlando, spiegato punto per punto: cosa è stato costruito, cosa è stato testato dal vivo, e cosa resta da testare con un caso reale. Nessuno di questi punti gira in automatico su Make in background — sono tutti verificabili aprendo il portale quando serve, coerente con la linea "solo aggiornamento manuale" di tutta questa dashboard.</div>
-
-  <details class="accordion-item" open>
-    <summary>❓ Domanda per Gerlando — Il trasportatore deve vedere quanto viene pagato PRIMA di accettare il carico? <span class="accordion-tag tag-domanda">Decisione da prendere</span></summary>
-    <div class="accordion-body">
-      <b>Cosa esiste oggi:</b> nel form "Pubblica un Carico" (lato azienda) ci sono due campi facoltativi — <code>importo_pattuito</code> e <code>termini_pagamento</code> — dove l'azienda può scrivere quanto ha concordato di pagare il trasportatore e come. Oggi questi due campi sono <b>visibili solo all'azienda</b> (una nota per uso interno), il trasportatore non li vede quando decide se prendere il carico.<br><br>
-      <b>Come fanno le altre piattaforme del settore:</b> abbiamo controllato Uber Freight, Convoy, Transfix, DAT (le piattaforme di matching camion-carico più usate al mondo) — in tutte, il trasportatore vede il prezzo/i termini di pagamento <b>PRIMA</b> di accettare, non dopo. È uno dei due-tre criteri principali con cui decide se prendere un carico, insieme a dove parte/arriva. Uber Freight, per esempio, mostra il prezzo in anticipo proprio per questo motivo.<br><br>
-      <b>Perché è una domanda e non una scelta già fatta:</b> se resta solo un appunto interno dell'azienda, il trasportatore continua a decidere "alla cieca" (solo su tratta e merce, non su quanto guadagna) — diverso da come funziona il resto del mercato. Ma è comunque una scelta di prodotto, non tecnica: cambiare risposta significa spostare questi due campi dal form azienda-privato al calendario/lista carichi che vede il trasportatore.<br><br>
-      <b>Cosa serve da Gerlando:</b> una risposta netta — sì, il trasportatore lo vede prima di accettare (come il resto del mercato), o no, resta un dato privato dell'azienda per ora. Appena decide, il cambiamento tecnico è piccolo (i dati esistono già, si tratta solo di deciderne la visibilità).
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>1. 🔔 Promemoria scadenza accesso (15gg / 7gg / 1gg) <span class="accordion-tag tag-pronto">100% pronto — TESTATO 13/9</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> ogni trasportatore/azienda che paga l'iscrizione ha un accesso valido 365 giorni. Lo scenario Make gira una volta al giorno (08:00) e manda tre avvisi via email nel corso del tempo: a 15 giorni dalla scadenza, a 7 giorni, e un ultimo avviso urgente il giorno prima ("ULTIMO AVVISO: accesso disattivato domani"). Se non rinnova, l'accesso si disattiva da solo alla scadenza.<br><br>
-      <b>A cosa serve:</b> evitare che qualcuno perda l'accesso senza preavviso, e recuperare rinnovi prima che sia troppo tardi.<br><br>
-      <b>Testato oggi (13/9):</b> creato un record di prova e verificate tutte e 3 le soglie una per una (15gg, 7gg, 1gg) — email arrivate correttamente in ognuna, nessun doppione, nessun falso positivo sul ramo "scaduto" (bug trovato e corretto durante il test: una ricerca vuota generava un aggiornamento fantasma — risolto con un controllo "il record esiste davvero" prima di ogni scrittura).<br><br>
-      <b>Perché non gira ora:</b> lo scenario Make resta spento di default, stessa strategia di risparmio crediti di tutti gli altri.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>2. 🔔 Campanellina notifiche azienda <span class="accordion-tag tag-parziale">Costruito — da provare con un caso vero</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> sostituisce le vecchie notifiche via email/Telegram a ogni singolo carico preso (troppo invasive secondo Gerlando). Ora l'azienda ha una campanella 🔔 in alto nel suo portale: si aggiorna da sola ogni 10 minuti, più un bottone "Aggiorna ora". Dentro, l'elenco di ogni trasportatore che ha preso un suo carico — tratta, stato, chi, quando — con un tasto che porta dritto alle fatture per i dettagli.<br><br>
-      <b>A cosa serve:</b> l'azienda controlla quando vuole lei, senza essere sommersa di notifiche a ogni singolo carico.<br><br>
-      <b>Costruito e collegato oggi (13/9):</b> nuovo campo Airtable <code>notifica_letta</code> su Carichi, nuova azione Make <code>marca_notifiche_lette</code>, campanellina completa nel portale.<br><br>
-      <b>Manca:</b> solo il test dal vivo — pubblicare un carico vero, farlo prendere da un trasportatore vero, e verificare che la campanella si accenda con il numero giusto.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>3. 📊 Numeri home azienda — "Pubblicazione carichi" con filtro periodo <span class="accordion-tag tag-pronto">100% pronto — verificato con screenshot 13/9</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> tolto il numero "Carichi presi" dalla home azienda (deciso da Gerlando — l'azienda pubblica, non prende). Restano due numeri: "Pubblicazione carichi" (con un menu a tendina Tutti/Oggi/7/15/30 giorni) e "Pubblicazioni carichi totali" (sempre su tutto lo storico, senza filtro).<br><br>
-      <b>A cosa serve:</b> dare all'azienda un colpo d'occhio su quanto sta pubblicando, senza contare cose che non le competono.<br><br>
-      <b>Verificato oggi (13/9):</b> screenshot alla mano, il menu a tendina funziona correttamente sia lato azienda che lato trasportatore (stesso filtro riusato anche per le fatture, vedi punto 5).<br><br>
-      <b>Garanzia sui dati veri:</b> con un account appena registrato, senza nulla pubblicato, questo numero è 0 — i dati arrivano solo da una vera ricerca Airtable su quell'email, nessun valore finto può comparire.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>4. 💰 Termini economici nel form "Pubblica un Carico" <span class="accordion-tag tag-pronto">100% pronto — collegato oggi</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> due campi facoltativi nel form azienda — "Importo pattuito" e "Termini di pagamento" — per tenere nota di quanto/come è stato concordato con il trasportatore per quel trasporto. <b>Non fa girare soldi veri</b>: resta una nota scritta, il pagamento del trasporto vero avviene fuori piattaforma, direttamente tra azienda e trasportatore.<br><br>
-      <b>A cosa serve:</b> preparare il terreno per un futuro report "quanto devo a chi", senza dover ricordare gli accordi a memoria.<br><br>
-      <b>Fatto oggi (13/9):</b> campi Airtable creati (<code>importo_pattuito</code>, <code>termini_pagamento</code>), form aggiornato, azione Make <code>crea_carico</code> aggiornata per salvarli davvero.<br><br>
-      <b>Vedi anche:</b> la domanda aperta per Gerlando qui sopra su chi deve vedere questi dati.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>5. 🧾 Fatture con filtro periodo e Scarica PDF/CSV per entrambi i ruoli <span class="accordion-tag tag-pronto">100% pronto — verificato con screenshot 13/9</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> sia nella sezione "Storico Carichi" (home) sia in "Le mie fatture" (Dashboard), ora c'è lo stesso menu a tendina Tutti/Oggi/7/15/30 giorni, più i bottoni Scarica PDF, Scarica CSV e Stampa — <b>per entrambi</b>, trasportatore e azienda. I due punti sono collegati: cambiare il filtro in uno aggiorna anche l'altro.<br><br>
-      <b>A cosa serve:</b> vedere e scaricare solo il periodo che interessa, senza dover sempre guardare tutto lo storico.<br><br>
-      <b>Verificato oggi (13/9) con screenshot diretti:</b> il menu a tendina compare e funziona su entrambi i portali (anteprima azienda e anteprima trasportatore), bottoni PDF/CSV/Stampa tutti presenti e cliccabili.<br><br>
-      <b>Garanzia sui dati veri:</b> un account nuovo senza nulla fatto/pubblicato mostra "Nessun carico in questo periodo" e zero download disponibili — mai un file vuoto scaricabile per sbaglio.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>6. 📈 Contatore "Carichi completati" (trasportatore) <span class="accordion-tag tag-pronto">100% pronto</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> un quarto numero verde in home, solo per il trasportatore — "Carichi completati" — accanto agli altri tre già esistenti.<br><br>
-      <b>Come conta:</b> tutti i carichi con stato <code>PRESO</code> a suo nome. Decisione presa oggi: "preso" = "fatto", coerente col fatto che il trasportatore paga già la commissione di 20€ nel momento in cui prende il carico, non alla consegna — non serviva inventare un nuovo stato "consegnato" che oggi non esiste nel sistema.<br><br>
-      <b>A cosa serve:</b> dare al trasportatore un numero pulito e motivante su quanti lavori ha portato a termine.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>7. 🚫 Report automatici via email disattivati <span class="accordion-tag tag-pronto">Chiuso</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> i 3 vecchi scenari Make che mandavano report via email a orario fisso (giornaliero, quindicinale, mensile) sono stati verificati — erano già spenti — e rinominati con "⚠️ NON USARE" per evitare che vengano riaccesi per sbaglio in futuro, pensando servano ancora.<br><br>
-      <b>Perché non sono stati cancellati:</b> regola del progetto — niente si cancella mai, si mette da parte etichettato, potrebbe servire un giorno.<br><br>
-      <b>Cosa li sostituisce:</b> la sezione "I miei report" già esistente nel portale (menu Dashboard ▾), che calcola i numeri al momento, senza mandare nulla via email a nessuno.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>8. 🌐 Indicizzazione Google <span class="accordion-tag tag-zero">Non ancora iniziato</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> far comparire il sito EcoTruckConnect nei risultati di ricerca Google.<br><br>
-      <b>Cosa serve:</b> meta tag SEO sulla vetrina, registrazione su Google Search Console, file robots.txt e sitemap.xml.<br><br>
-      <b>Tempi realistici:</b> la ricerca per nome esatto dell'azienda può comparire in pochi giorni; le ricerche generiche (es. "trasporti Sicilia") richiedono mesi.<br><br>
-      <b>Stato:</b> prossimo punto della checklist, non ancora iniziato.
-    </div>
-  </details>
-
-  <div class="sec-title" style="margin-top:44px;">📋 Cosa Manca Ancora (dashboard) — Tutto Spiegato, Punto per Punto</div>
-
-  <details class="accordion-item">
-    <summary>1. 📋 Registro Attività reale <span class="accordion-tag tag-pronto">100% pronto — TESTATO 10/9</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> scrive ogni azione importante (modifica dati, password rigenerata, richiesta eliminazione account) dentro a una tabella Airtable, e la dashboard la mostra con un bottone "Carica registro".<br><br>
-      <b>A cosa serve:</b> è la base che sblocca anche il punto 2 (Telegram vero) e il punto 4 (grafico andamento).<br><br>
-      <b>Fatto e testato il 10/9:</b> costruita l'azione Make <code>get_registro_attivita</code>, collegata la sezione nella dashboard, trovato e corretto un bug reale (il modulo Airtable di Make non leggeva questa tabella per via dei campi collegati ad altre tabelle — risolto passando a una chiamata HTTP diretta alle API di Airtable). Test dal vivo riuscito: azione vera dal portale ("Rigenera password") comparsa subito nel registro.<br><br>
-      <b>Perché non si vede adesso:</b> lo scenario Make è spento di default (strategia risparmio crediti) — va acceso solo per test reali.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>2. ✈️ Telegram vero nella dashboard <span class="accordion-tag tag-zero">Prossimo passo — sbloccato</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> mostra i messaggi Telegram davvero inviati ai trasportatori/aziende, al posto della demo finta.<br><br>
-      <b>A cosa serve:</b> verificare che le notifiche arrivino per davvero, senza aprire Telegram.<br><br>
-      <b>Preinstallato:</b> la fonte dati (Registro Attività, punto 1) è ora confermata pronta, testata e funzionante — punto di partenza solido per costruire questo.<br><br>
-      <b>Manca:</b> collegare la dashboard a leggere quei dati e mostrarli — questa parte va ancora costruita da zero.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>3. 🧾 Portale Azienda — Fatture, PDF, CSV, Duplica, Calendario completo <span class="accordion-tag tag-pronto">100% pronto</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> l'azienda vede tutti i carichi pubblicati, li scarica in PDF/CSV, duplica un carico con un click, e il calendario mostra tutto — <b>compresi i carichi già presi</b>.<br><br>
-      <b>A cosa serve:</b> dare all'azienda tutto a portata di mano, senza chiedere info al team.<br><br>
-      <b>Preinstallato:</b> tutto — tabella, bottoni, calendario nel portale. <b>Correzione 10/9:</b> trovato e corretto un nome di campo Airtable sbagliato (<code>assegnato_a_nome</code> → <code>bloccato_da_nome</code>) che avrebbe lasciato sempre vuota la colonna "Trasportatore".<br><br>
-      <b>Manca:</b> solo accendere lo scenario Make.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>4. 📈 Grafico andamento nel tempo <span class="accordion-tag tag-zero">Serve il punto 2</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> un grafico che mostra quanti carichi sono stati pubblicati/presi per settimana o mese.<br><br>
-      <b>A cosa serve:</b> capire a colpo d'occhio l'andamento dopo il lancio.<br><br>
-      <b>Preinstallato:</b> i dati grezzi (Registro Attività) sono pronti e testati, ma serve prima costruire la lettura in dashboard (punto 2) prima di fare il grafico sopra quei dati.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>5. ✏️ Modifica profilo utente dalla dashboard <span class="accordion-tag tag-zero">Da zero</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> un pulsante "Modifica" nella scheda anagrafica per correggere email/telefono senza andare su Airtable a mano.<br><br>
-      <b>A cosa serve:</b> risparmiare tempo quando un utente sbaglia un dato.<br><br>
-      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
-      <b>Stima:</b> ~20-30 minuti.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>6. 🔢 Contatore trasportatori compatibili <span class="accordion-tag tag-pronto">100% pronto</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> quando l'azienda pubblica un carico, vede subito quanti trasportatori sono compatibili — <b>mai nomi, solo il numero</b>.<br><br>
-      <b>A cosa serve:</b> dà fiducia all'azienda che il carico verrà preso (confermato da Gerlando l'8/9 sera).<br><br>
-      <b>Preinstallato:</b> costruito la notte del 9/9 — azione Make <code>conta_trasportatori_compatibili</code> e riquadro nel form del portale, entrambi pronti.<br><br>
-      <b>Manca:</b> solo accendere lo scenario Make.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>7. 🔔 Preferenze notifiche <span class="accordion-tag tag-pronto">100% pronto</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> ogni trasportatore/azienda può scegliere quali notifiche ricevere (nuovo carico, pagamento, promemoria), a che ore, e con che tono.<br><br>
-      <b>A cosa serve:</b> personalizzare l'esperienza, evitare di sommergere di notifiche chi non le vuole tutte.<br><br>
-      <b>Preinstallato:</b> campi Airtable <code>preferenze_notifiche</code> creati su Trasportatori e Aziende il 9/9, azione Make <code>salva_preferenze_notifiche</code> costruita la stessa notte, portale già mandava i dati da prima.<br><br>
-      <b>Manca:</b> solo accendere lo scenario Make.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>8. 📍 Filtro/Mappa per zona (CAP) <span class="accordion-tag tag-parziale">Dati già pronti</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> far vedere solo i carichi vicini alla propria zona, con o senza una mappa visiva.<br><br>
-      <b>A cosa serve:</b> utile con molti trasportatori, per filtrare anche per vicinanza.<br><br>
-      <b>Preinstallato:</b> il CAP esiste già su ogni carico e trasportatore — il filtro è solo spento di proposito (deciso il 6/8).<br><br>
-      <b>Perché non si vede:</b> disattivato apposta, non manca nulla — è un interruttore pronto da riaccendere.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>9. 🔌 Controllo salute di tutti i collegamenti <span class="accordion-tag tag-zero">Il più lungo</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> un'icona che controlla davvero, uno per uno, se Airtable, Make, Telegram, Shopify rispondono.<br><br>
-      <b>A cosa serve:</b> prima di ogni test con Gerlando, un click e sai subito cosa è rotto.<br><br>
-      <b>Preinstallato:</b> no, tutto da costruire.<br><br>
-      <b>Stima:</b> ~45-60 minuti, il più lungo di tutti.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>10. 💡 Idea: funzioni premium a pagamento <span class="accordion-tag tag-zero">Solo idea, non decisa</span></summary>
-    <div class="accordion-body">
-      <b>Cosa fa:</b> alcune funzioni avanzate potrebbero diventare un abbonamento a pagamento invece che gratuite.<br><br>
-      <b>Stato:</b> solo un'idea dell'8/9 sera, nessun prezzo deciso.
-    </div>
-  </details>
-
-  <details class="accordion-item">
-    <summary>11. 🧾 Perché Scarica PDF/CSV compare per il trasportatore e ora anche per l'azienda <span class="accordion-tag tag-pronto">Risolto il 13/9</span></summary>
-    <div class="accordion-body">
-      <b>Situazione fino al 12/9:</b> il trasportatore vedeva i bottoni "Scarica PDF" e "Scarica CSV"; l'azienda vedeva solo "Stampa", perché i bottoni comparivano solo con almeno una riga da scaricare, e nessuna azienda aveva ancora pubblicato un carico vero.<br><br>
-      <b>Cosa è cambiato il 13/9:</b> non serve più aspettare il primo carico vero per vedere la struttura funzionare — verificato con screenshot diretti che il menu filtro periodo e i bottoni PDF/CSV/Stampa compaiono e funzionano correttamente per <b>entrambi</b> i ruoli, sia in anteprima che nella logica reale (con un account vero senza nulla pubblicato, la tabella resta a zero pulito, come deve essere, e i bottoni restano nascosti finché non c'è almeno un carico — comportamento corretto, non un bug).<br><br>
-      <b>Manca:</b> nulla dal lato tecnico — solo il primo carico vero pubblicato da un'azienda vera per vedere i bottoni comparire con dati reali.
-    </div>
-  </details>
+</div>
 
 </div>
 
@@ -625,16 +408,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <button class="modal-close" onclick="chiudiAnteprimaTelegram()">×</button>
     </div>
     <div id="telegram-lista"></div>
-  </div>
-</div>
-
-<div class="notif-panel" id="alert-panel" onclick="if(event.target===this)chiudiAlertScadenze();">
-  <div class="notif-box">
-    <div class="notif-box-header">
-      <div class="notif-box-title">⏰ Scadenze e Avvisi</div>
-      <button class="modal-close" onclick="chiudiAlertScadenze()">×</button>
-    </div>
-    <div id="alert-lista"></div>
   </div>
 </div>
 
@@ -1454,7 +1227,6 @@ async function caricaTutto() {
   caricamentoInCorso = true;
   try {
     await caricaDashboard();
-    await caricaScadenze();
   } finally {
     caricamentoInCorso = false;
   }
