@@ -460,6 +460,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         </div>
         <div id="hero-stat-guad-wrap"><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Guadagnato questo mese</div></div>
         <div><div class="hs-val" id="st-tot">—</div><div class="hs-label" id="st-tot-label">Carichi totali</div></div>
+        <div id="hero-stat-completati-wrap" style="display:none;"><div class="hs-val" style="color:var(--green);" id="st-completati">—</div><div class="hs-label">Carichi completati</div></div>
       </div>
     </div>
   </section>
@@ -1627,6 +1628,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('sezione-azienda').style.display = 'none';
       document.getElementById('carichi-disponibili-wrap').style.display = 'block';
       document.getElementById('dash-nav-wrap').style.display = 'block';
+      document.getElementById('hero-stat-completati-wrap').style.display = 'block';
       trasportatoreRecordId = 'preview-recid';
       trasportatoreFieldsCorrenti = { tipo_camion: [], autorizzazioni: [], nome:'Mario', cognome:'Rossi', telefono:'3331234567', via:'Via Roma 12', cap:'92026', citta:'Favara', provincia:'AG' };
       aggiornaRiepilogoProfiloTrasportatore();
@@ -1637,11 +1639,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString() } }
       ];
       ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'Completato' } }
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'PRESO' } }
       ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
       renderStorico(ultimeCandidature);
+      aggiorna('st-completati', 1);
     } else {
       profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567', codice_fiscale:'', partita_iva:'12345678901', pec:'azienda@pec.it', codice_sdi:'', camera_commerciale:'Agrigento', numero_rea:'', nome_amministratore:'', via:'Via Roma 1', cap:'92026', citta:'Favara', provincia:'AG', specifica:'Logistica' };
       aziendaRecordId = 'preview-recid-az';
@@ -1985,6 +1988,7 @@ async function rilevaTipoUtente(email) {
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
     document.getElementById('carichi-disponibili-wrap').style.display = 'block';
+    document.getElementById('hero-stat-completati-wrap').style.display = 'block';
     if (capCorrente) {
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
@@ -2314,9 +2318,15 @@ async function caricaDati(email) {
     });
     const guadagno = questoMese.length * PREZZO;
     const totali   = cands.length;
+    /* Punto 8 — "Carichi completati": conta i carichi con stato PRESO, senza
+       inventare uno stato di consegna che oggi non esiste (decisione 13/9:
+       "preso" = "fatto", coerente col fatto che i €20 si pagano gia' alla
+       presa in carico, non alla consegna). Solo per il trasportatore. */
+    const completatiVeri = cands.filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO').length;
     if (tipoUtente !== 'azienda') {
       aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
       aggiorna('st-tot',  totali);
+      aggiorna('st-completati', completatiVeri);
     }
     aggiorna('c-guad',  `€ ${guadagno.toLocaleString('it-IT')}`);
     aggiorna('c-tot',   totali);
@@ -2334,7 +2344,7 @@ function aggiorna(id, val) {
 }
 
 function azzeraStats() {
-  ['st-disp','st-guad','st-tot','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
+  ['st-disp','st-guad','st-tot','st-completati','c-disp','c-guad','c-tot'].forEach(id => aggiorna(id, '0'));
 }
 
 let ultimeCandidature = [];
