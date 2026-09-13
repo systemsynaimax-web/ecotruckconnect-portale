@@ -248,6 +248,19 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 .confirm-btn-cancel:hover{background:rgba(255,255,255,0.1);}
 .confirm-btn-remove{background:var(--red);color:#fff;}
 .confirm-btn-remove:hover{background:#dc2626;}
+.notif-bell-wrap{position:relative;display:none;}
+.notif-bell-btn{position:relative;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+.notif-bell-btn:hover{background:rgba(255,255,255,0.12);}
+.notif-bell-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.notif-bell-panel{display:none;position:absolute;top:120%;right:0;width:360px;max-height:440px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px;z-index:400;box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+.notif-bell-panel.open{display:block;}
+.notif-bell-head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 10px;border-bottom:1px solid var(--border);margin-bottom:8px;gap:8px;}
+.notif-bell-item{padding:10px;border-radius:8px;font-size:12px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.05);}
+.notif-bell-item:last-child{border-bottom:none;}
+.notif-bell-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
+.filtro-periodo{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;}
+.filtro-periodo button{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:20px;font-size:11px;font-family:var(--font-b);cursor:pointer;transition:all 0.2s;}
+.filtro-periodo button.attivo{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#93c5fd;}
 @media screen and (max-width: 900px) {
   .login-wrap{grid-template-columns:1fr;}
   .login-visual{min-height:220px;}
@@ -265,6 +278,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
   #bot-panel{width:calc(100vw - 32px);right:16px;left:16px;height:70vh;max-height:520px;}
   #bot-btn{right:16px;bottom:16px;}
   .dd-panel-camion, [id^="dd-panel-"]{max-width:100%;}
+  .notif-bell-panel{right:0;left:auto;width:calc(100vw - 40px);max-width:360px;}
 }
 @media screen and (max-width: 600px) {
   .hero{padding:36px 18px 32px;}
@@ -393,6 +407,19 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <span class="badge-ok">✓ Utente Verificato</span>
       <span class="nav-name" id="nav-name"></span>
       <div class="nav-av" id="nav-av"></div>
+      <div class="dd-wrap notif-bell-wrap" id="notif-bell-wrap">
+        <button class="notif-bell-btn" onclick="event.stopPropagation();toggleCampanellino()" title="Notifiche">
+          🔔
+          <span class="notif-bell-badge" id="notif-bell-badge" style="display:none;">0</span>
+        </button>
+        <div class="notif-bell-panel" id="notif-bell-panel">
+          <div class="notif-bell-head">
+            <span style="font-weight:700;font-size:13px;color:#fff;">Aggiornamenti carichi</span>
+            <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();aggiornaCampanellino(true)">🔄 Aggiorna ora</button>
+          </div>
+          <div id="notif-bell-lista"><div class="notif-bell-empty">Caricamento...</div></div>
+        </div>
+      </div>
       <div class="dd-wrap" style="position:relative;display:none;" id="dash-nav-wrap">
         <button class="btn-esci" id="btn-dashboard" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--blue);display:flex;align-items:center;gap:0;padding:0;overflow:hidden;">
           <span onclick="apriDashSezione('overview')" style="padding:5px 10px 5px 14px;cursor:pointer;">📊 Dashboard</span>
@@ -418,10 +445,16 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
       <p>Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
-      <div class="hero-stats">
-        <div><div class="hs-val" id="st-disp">—</div><div class="hs-label">Carichi disponibili oggi</div></div>
-        <div><div class="hs-val blue" id="st-guad">—</div><div class="hs-label">Guadagnato questo mese</div></div>
-        <div><div class="hs-val" id="st-tot">—</div><div class="hs-label">Carichi totali</div></div>
+      <div class="hero-stats" id="hero-stats-wrap">
+        <div><div class="hs-val" id="st-disp">—</div><div class="hs-label" id="st-disp-label">Carichi disponibili oggi</div></div>
+        <div><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Guadagnato questo mese</div></div>
+        <div><div class="hs-val" id="st-tot">—</div><div class="hs-label" id="st-tot-label">Carichi totali</div></div>
+      </div>
+      <div class="filtro-periodo" id="filtro-periodo-azienda" style="display:none;">
+        <button class="attivo" data-giorni="1" onclick="cambiaFiltroPeriodo(1,this)">Oggi</button>
+        <button data-giorni="7" onclick="cambiaFiltroPeriodo(7,this)">7 giorni</button>
+        <button data-giorni="15" onclick="cambiaFiltroPeriodo(15,this)">15 giorni</button>
+        <button data-giorni="30" onclick="cambiaFiltroPeriodo(30,this)">30 giorni</button>
       </div>
     </div>
   </section>
@@ -787,7 +820,7 @@ const PREZZO    = 20;
 const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
 
 let currentUser = null;
-let modalitaAnteprimaAttiva = false; // true solo con ?preview=... nell'URL — evita chiamate vere a Make coi dati finti
+let modalitaAnteprimaAttiva = false;
 let trasportatoreRecordId = null;
 let trasportatoreFieldsCorrenti = {};
 
@@ -816,10 +849,6 @@ function confermaSpecificaAltro(which) {
   document.getElementById(window.SPECIFICA_WRAP_ID[which]).style.display = 'none';
 }
 
-// AGGIORNATO 26/8 — autorizzazioni sostituite con le sotto-categorie ufficiali
-// reali (Albo Gestori Ambientali D.M. 120/2014, classi ADR, tipi Reg. CE 1/2005,
-// livelli ATP). Il matching (carichiCompatibiliPerTrasportatore) confronta le
-// stringhe esatte tra profilo trasportatore e requisiti del carico.
 const AUTORIZZAZIONI_STRUTTURA = [
   {nome:"Conto Terzi", sub:null},
   {nome:"Albo Gestori Ambientali (Rifiuti)", sub:["Categoria 1 (Rifiuti Urbani)","Categoria 2bis (Rifiuti propri)","Categoria 3bis (RAEE)","Categoria 4 (Speciali non pericolosi)","Categoria 5 (Speciali pericolosi)","Categoria 6 (Transfrontalieri)","Categoria 8 (Intermediazione)","Categoria 9 (Bonifica siti)","Categoria 10 (Bonifica amianto)"]},
@@ -882,13 +911,6 @@ function toggleAutFoglia(which) {
   aggiornaEtichettaTendina(which);
 }
 
-/* ==================================================
-   CONTATORE TRASPORTATORI COMPATIBILI — per l'azienda.
-   Mostra SOLO un numero, mai nomi o dati identificativi, come
-   confermato da Gerlando l'8/9. Riusa la stessa logica di
-   compatibilità già usata per far vedere i carichi giusti ai
-   trasportatori (mezzoOk/autOk), solo al contrario.
-   ================================================== */
 let ultimoContatoreRichiesta = 0;
 async function aggiornaContatoreTrasportatori() {
   const mezziRichiesti = Array.from(document.querySelectorAll('#checkbox-mezzo-richiesto input:checked')).map(el => el.value);
@@ -901,7 +923,7 @@ async function aggiornaContatoreTrasportatori() {
     return;
   }
 
-  const richiestaCorrente = ++ultimoContatoreRichiesta; // evita che risposte lente e disordinate si sovrascrivano a sproposito
+  const richiestaCorrente = ++ultimoContatoreRichiesta;
   testoEl.textContent = 'Sto contando i trasportatori disponibili...';
 
   try {
@@ -911,7 +933,7 @@ async function aggiornaContatoreTrasportatori() {
       body: JSON.stringify({ action: 'conta_trasportatori_compatibili' })
     });
     const data = await res.json();
-    if (richiestaCorrente !== ultimoContatoreRichiesta) return; // arrivata una richiesta più recente nel frattempo, ignora questa
+    if (richiestaCorrente !== ultimoContatoreRichiesta) return;
 
     const trasportatori = (data.trasportatori || []).map(r => r.fields || r);
     const compatibili = trasportatori.filter(t => {
@@ -1078,6 +1100,8 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.dd-wrap')) {
     Object.keys(DROPDOWN_CONFIG).forEach(w => { const p = document.getElementById('dd-panel-' + w); if (p) p.style.display = 'none'; });
+    const bellPanel = document.getElementById('notif-bell-panel');
+    if (bellPanel) bellPanel.classList.remove('open');
   }
 });
 
@@ -1167,10 +1191,6 @@ function apriProfiloTrasportatore() {
   document.getElementById('sezione-profilo-trasportatore').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-/* Riquadro grande "Prima di iniziare" in cima alla home — mostra sempre lo
-   stato reale di quello che il trasportatore ha già salvato (mezzi e
-   autorizzazioni), come una cassaforte aperta. Va richiamata ogni volta
-   che trasportatoreFieldsCorrenti cambia (caricamento dati o salvataggio). */
 function aggiornaRiepilogoProfiloTrasportatore() {
   const riquadro = document.getElementById('riquadro-profilo-trasp');
   if (!riquadro) return;
@@ -1261,13 +1281,6 @@ function precompilaDashDati() {
   document.getElementById('dd-email').value = (currentUser && currentUser.email) || '';
 }
 
-// ===== REGISTRO ATTIVITÀ — chi ha fatto cosa, quando =====
-// Manda ogni azione importante (modifica dati, pubblicazione carico, presa
-// carico, eliminazioni) al proxy Make, che la scrive sulla tabella Airtable
-// "Registro Attività" (data/ora assegnata automaticamente da Airtable stesso,
-// non modificabile via API — è la prova che non può essere alterata).
-// Non bloccante: se questa chiamata fallisce, l'azione principale dell'utente
-// (salvataggio, pubblicazione, ecc.) NON viene comunque interrotta.
 function registraAttivita(tipo, titolo, dettaglio) {
   const chi = tipoUtente === 'azienda'
     ? (profiloAzienda.nome || (currentUser && currentUser.email) || 'Azienda')
@@ -1402,8 +1415,6 @@ async function aggiornaDashFatture() {
     body.innerHTML = '<tr><td colspan="5" class="empty">Caricamento...</td></tr>';
     btnCsv.style.display = 'none';
     btnPdf.style.display = 'none';
-    /* Collegato al proxy Make — azione get_carichi_pubblicati_azienda attiva.
-       In modalità anteprima non chiamiamo Make: usiamo i dati finti già pronti. */
     if (!modalitaAnteprimaAttiva) {
       try {
         const res = await fetch(PROXY_WEBHOOK, {
@@ -1419,6 +1430,7 @@ async function aggiornaDashFatture() {
     }
     if (!carichiPubblicatiAzienda.length) {
       body.innerHTML = '<tr><td colspan="5" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
+      renderCampanellino();
       return;
     }
     thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
@@ -1433,6 +1445,7 @@ async function aggiornaDashFatture() {
       }).join('');
     const elAgg = document.getElementById('fatture-ultimo-agg');
     if (elAgg) elAgg.textContent = formatDataOra();
+    renderCampanellino();
     return;
   }
 
@@ -1521,9 +1534,7 @@ function chiediEliminazioneAccount() {
     const nomeUtente = tipoUtente === 'azienda'
       ? (profiloAzienda.nome || email)
       : ((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim() || email;
-    // 1. Log ufficiale e non modificabile sul Registro Attività — prova che la richiesta è stata fatta, con data/ora vera assegnata da Airtable.
     registraAttivita('Richiesta Eliminazione Account', 'Richiesta cancellazione account (GDPR)', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ${nomeUtente} (${email}) ha richiesto la cancellazione del proprio account.`);
-    // 2. Notifica reale al team via lo stesso canale email già usato da "Scrivici" — così arriva davvero a chi deve gestirla, non solo scritta su una tabella.
     try {
       const fd = new FormData();
       fd.append('form-name', 'supporto');
@@ -1628,16 +1639,21 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('sezione-azienda').style.display = 'block';
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
       document.getElementById('dash-nav-wrap').style.display = 'block';
+      document.getElementById('notif-bell-wrap').style.display = 'block';
+      document.getElementById('filtro-periodo-azienda').style.display = 'flex';
+      impostaEtichetteHeroAzienda();
       renderCheckboxGroup('mezzoRichiesto', []);
       renderAutorizzazioniAccordion('autRichiesta', []);
       aggiornaEtichettaTendina('mezzoRichiesto');
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi' } },
-        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'' } }
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
+        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania' } }
       ];
       renderCalendarioMensile();
+      aggiornaStatsAzienda();
+      renderCampanellino();
     }
     return;
   }
@@ -1740,10 +1756,6 @@ async function doLogin() {
 
 function doLogout() { netlifyIdentity.logout(); }
 
-/* ——— PASSWORD DIMENTICATA (dalla pagina di login, prima di entrare) ———
-   Usa la stessa azione Make 'rigenera_password' già usata dal bottone dentro
-   il portale: il sistema genera una nuova password lato server e la manda
-   per email. Nessun link, nessun token — zero rischio "link scaduto". */
 function toggleForgotPw(e) {
   e.preventDefault();
   const box = document.getElementById('forgot-pw-box');
@@ -1776,11 +1788,7 @@ async function richiediPasswordDimenticata() {
     });
   } catch (e) {
     console.error('Errore richiesta password dimenticata:', e);
-    // Messaggio identico anche in caso di errore di rete: non sveliamo mai se
-    // l'email esiste o no nel sistema, per motivi di sicurezza/privacy.
   }
-  // Messaggio sempre uguale, esista o no l'email — evita di far capire a chi
-  // prova email a caso quali indirizzi sono davvero registrati sulla piattaforma.
   msg.style.display = 'block';
   document.getElementById('forgot-pw-email').value = '';
   btn.disabled = false;
@@ -1792,6 +1800,127 @@ let capCorrente = null;
 let profiloAzienda = { nome: '', telefono: '', codice_fiscale: '', partita_iva: '', pec: '', codice_sdi: '', camera_commerciale: '', numero_rea: '', nome_amministratore: '', via: '', cap: '', citta: '', provincia: '', specifica: '' };
 let aziendaRecordId = null;
 let ultimoErroreRete = false;
+
+/* ==================================================
+   CAMPANELLINO AZIENDA — niente più notifiche push a ogni carico preso.
+   Poll ogni 10 minuti (deciso 13/9, da abbassare a 5 più avanti) + pulsante
+   manuale "Aggiorna ora". Riusa gli stessi dati di carichiPubblicatiAzienda
+   già caricati per "Le mie fatture" (azione get_carichi_pubblicati_azienda,
+   già esistente lato Make) — nessuna chiamata doppia.
+   ================================================== */
+let campanellinoInterval = null;
+
+function toggleCampanellino() {
+  const panel = document.getElementById('notif-bell-panel');
+  const staAprendo = !panel.classList.contains('open');
+  panel.classList.toggle('open', staAprendo);
+  if (staAprendo) marcaNotificheComeLette();
+}
+
+async function aggiornaCampanellino(manuale) {
+  if (tipoUtente !== 'azienda') return;
+  if (!modalitaAnteprimaAttiva) await aggiornaDashFatture();
+  else renderCampanellino();
+  if (manuale) aggiornaStatsAzienda();
+}
+
+function renderCampanellino() {
+  const lista = document.getElementById('notif-bell-lista');
+  const badge = document.getElementById('notif-bell-badge');
+  if (!lista || tipoUtente !== 'azienda') return;
+
+  const aggiornamenti = (carichiPubblicatiAzienda || [])
+    .filter(c => (c.fields.stato || '').toUpperCase() !== 'DISPONIBILE')
+    .sort((a,b) => (b.fields.data_assegnato || b.fields.data_pubblicazione || '').localeCompare(a.fields.data_assegnato || a.fields.data_pubblicazione || ''));
+
+  const nonLette = aggiornamenti.filter(c => !c.fields.notifica_letta);
+  if (badge) {
+    if (nonLette.length > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = nonLette.length > 9 ? '9+' : nonLette.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (!aggiornamenti.length) {
+    lista.innerHTML = '<div class="notif-bell-empty">Nessun aggiornamento sui tuoi carichi per ora.</div>';
+    return;
+  }
+
+  lista.innerHTML = aggiornamenti.map(c => {
+    const f = c.fields;
+    const stato = (f.stato || '').toUpperCase();
+    const testoStato = stato === 'PRESO' ? '✅ Preso' : stato.includes('PAGAMENTO') ? '⏳ In pagamento' : stato;
+    const chi = f.bloccato_da_nome || '—';
+    const dataRif = f.data_assegnato || f.data_pubblicazione;
+    const data = dataRif ? new Date(dataRif).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div class="notif-bell-item">
+      <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
+      <div style="color:var(--muted);margin-bottom:6px;">${testoStato} da <b>${chi}</b> · ${data}</div>
+      <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi fattura/report</button>
+    </div>`;
+  }).join('');
+}
+
+async function marcaNotificheComeLette() {
+  if (modalitaAnteprimaAttiva) return;
+  const daMarcare = (carichiPubblicatiAzienda || []).filter(c => !c.fields.notifica_letta && (c.fields.stato||'').toUpperCase() !== 'DISPONIBILE');
+  if (!daMarcare.length) return;
+  try {
+    await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'marca_notifiche_lette', carico_ids: daMarcare.map(c => c.id) })
+    });
+    daMarcare.forEach(c => c.fields.notifica_letta = true);
+    const badge = document.getElementById('notif-bell-badge');
+    if (badge) badge.style.display = 'none';
+  } catch(e) { console.error('Errore marcatura notifiche lette (non bloccante):', e); }
+}
+
+function avviaPollingCampanellino() {
+  if (campanellinoInterval) clearInterval(campanellinoInterval);
+  campanellinoInterval = setInterval(() => aggiornaCampanellino(false), 10 * 60 * 1000);
+}
+
+/* ==================================================
+   FILTRO PERIODO PUBBLICAZIONI (solo azienda) — i numeri grandi sotto
+   "il tuo portale personale" diventano: Pubblicazioni / Carichi presi nel
+   periodo selezionato / Pubblicazioni totali (sempre, non filtrato).
+   ================================================== */
+let filtroPeriodoGiorni = 1;
+
+function impostaEtichetteHeroAzienda() {
+  const l1 = document.getElementById('st-disp-label');
+  const l2 = document.getElementById('st-guad-label');
+  const l3 = document.getElementById('st-tot-label');
+  if (l1) l1.textContent = 'Pubblicazioni';
+  if (l2) l2.textContent = 'Carichi presi';
+  if (l3) l3.textContent = 'Pubblicazioni totali';
+}
+
+function cambiaFiltroPeriodo(giorni, btn) {
+  filtroPeriodoGiorni = giorni;
+  document.querySelectorAll('#filtro-periodo-azienda button').forEach(b => b.classList.remove('attivo'));
+  btn.classList.add('attivo');
+  aggiornaStatsAzienda();
+}
+
+function aggiornaStatsAzienda() {
+  if (tipoUtente !== 'azienda') return;
+  const ora = new Date();
+  const sogliaMs = filtroPeriodoGiorni * 24 * 60 * 60 * 1000;
+  const tutti = carichiPubblicatiAzienda || [];
+  const nelPeriodo = tutti.filter(c => {
+    const d = c.fields.data_pubblicazione ? new Date(c.fields.data_pubblicazione) : null;
+    return d && (ora - d) >= 0 && (ora - d) <= sogliaMs;
+  });
+  const presiNelPeriodo = nelPeriodo.filter(c => (c.fields.stato||'').toUpperCase() === 'PRESO').length;
+  aggiorna('st-disp', nelPeriodo.length);
+  aggiorna('st-guad', presiNelPeriodo);
+  aggiorna('st-tot', tutti.length);
+}
 
 async function rilevaTipoUtente(email) {
   ultimoErroreRete = false;
@@ -1853,6 +1982,10 @@ async function rilevaTipoUtente(email) {
     profiloAzienda.provincia = af.provincia || '';
     profiloAzienda.specifica = af.specifica || '';
     document.getElementById('dash-nav-wrap').style.display = 'block';
+    document.getElementById('notif-bell-wrap').style.display = 'block';
+    document.getElementById('filtro-periodo-azienda').style.display = 'flex';
+    impostaEtichetteHeroAzienda();
+    avviaPollingCampanellino();
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'block';
     document.getElementById('carichi-disponibili-wrap').style.display = 'none';
@@ -2114,13 +2247,14 @@ async function caricaDati(email) {
       ultimiCarichi = carichiCompatibiliPerTrasportatore(ultimiCarichi);
     }
     const nDisp = ultimiCarichi.filter(c => (c.fields.stato||'').toUpperCase() === 'DISPONIBILE').length;
-    aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
+    if (tipoUtente !== 'azienda') { aggiorna('st-disp', nDisp); }
+    aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
-    // Precarica in silenzio i carichi pubblicati dall'azienda (serve al calendario
-    // per mostrare tutto, PRESO compreso, anche prima che apra "Le mie fatture").
-    // Preinstallato come il resto: oggi resta vuoto finché Make non risponde.
-    if (tipoUtente === 'azienda') aggiornaDashFatture();
+    if (tipoUtente === 'azienda') {
+      await aggiornaDashFatture();
+      aggiornaStatsAzienda();
+    }
     if (!recId) { azzeraStats(); renderStorico([]); return; }
     let cands = [];
     try {
@@ -2146,8 +2280,10 @@ async function caricaDati(email) {
     });
     const guadagno = questoMese.length * PREZZO;
     const totali   = cands.length;
-    aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
-    aggiorna('st-tot',  totali);
+    if (tipoUtente !== 'azienda') {
+      aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
+      aggiorna('st-tot',  totali);
+    }
     aggiorna('c-guad',  `€ ${guadagno.toLocaleString('it-IT')}`);
     aggiorna('c-tot',   totali);
     renderStorico(cands);
@@ -2168,7 +2304,7 @@ function azzeraStats() {
 }
 
 let ultimeCandidature = [];
-let carichiPubblicatiAzienda = []; // preinstallato: pronto per l'azienda, in attesa dell'azione Make "get_carichi_pubblicati_azienda"
+let carichiPubblicatiAzienda = [];
 
 function renderStorico(cands) {
   ultimeCandidature = cands || [];
@@ -2206,7 +2342,6 @@ function renderStorico(cands) {
     }).join('');
 }
 
-// Timbro data/ora su ogni stampa — stesso principio già usato sulla Dashboard Gestori
 function stampaConTimbro() {
   const ora = new Date();
   const testo = 'EcoTruckConnect — Documento stampato il ' +
@@ -2238,9 +2373,6 @@ function scaricaStoricoCSV() {
   URL.revokeObjectURL(url);
 }
 
-/* ==================================================
-   SCARICO PDF/CSV — funzionante per trasportatore e azienda.
-   ================================================== */
 function scaricaFattureCSV() {
   if (tipoUtente === 'azienda') { scaricaFattureAziendaCSV(); return; }
   scaricaStoricoCSV();
@@ -2276,7 +2408,6 @@ function scaricaStoricoPDF() {
   doc.save(`fatture_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda */
 function scaricaFattureAziendaCSV() {
   if (!carichiPubblicatiAzienda.length) return;
   const righe = [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']];
@@ -2299,7 +2430,6 @@ function scaricaFattureAziendaCSV() {
   URL.revokeObjectURL(url);
 }
 
-/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda */
 function scaricaFattureAziendaPDF() {
   if (!carichiPubblicatiAzienda.length) return;
   const { jsPDF } = window.jspdf;
@@ -2326,21 +2456,13 @@ function scaricaFattureAziendaPDF() {
   doc.save(`carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-/* PREINSTALLATA — pronta, in attesa dei dati veri dall'azienda (stesso
-   principio delle fatture: appare da sola quando carichiPubblicatiAzienda
-   ha dati veri, oggi resta invisibile perché l'elenco è vuoto).
-   Precompila il form "Pubblica un Carico" con gli stessi dati di un
-   carico già pubblicato, per non doverli riscrivere ogni volta. */
 function duplicaCarico(recordId) {
   const c = carichiPubblicatiAzienda.find(x => x.id === recordId);
   if (!c) return;
   const f = c.fields;
-
-  // Esce dalla Dashboard e torna al portale normale, dove si trova il form
   document.getElementById('sezione-dashboard').style.display = 'none';
   document.getElementById('contenuto-normale-portale').style.display = 'block';
   document.getElementById('sezione-azienda').style.display = 'block';
-
   document.getElementById('ins-cap-part').value = f.cap_partenza || '';
   document.getElementById('ins-cap-arr').value = f.cap_arrivo || '';
   document.getElementById('ins-citta-part').value = f.citta_partenza || '';
@@ -2350,7 +2472,6 @@ function duplicaCarico(recordId) {
   if (ricercaMerce) ricercaMerce.value = f.tipo_merce || '';
   document.getElementById('ins-specifica').value = f.specifica || '';
   document.getElementById('ins-note').value = f.note || '';
-
   document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2488,9 +2609,6 @@ async function apriGiornoCalendario(dataStr) {
     return;
   }
   if (tipoUtente === 'azienda') {
-    // Usa carichiPubblicatiAzienda (tutti i carichi, compresi quelli già PRESO)
-    // invece di ultimiCarichi (che mostra solo quelli ancora prendibili) —
-    // così l'azienda vede davvero tutto quello che ha pubblicato quel giorno.
     const carichiGiornoAzienda = (carichiPubblicatiAzienda || []).filter(c =>
       (c.fields.data_consegna || c.fields.data_pubblicazione || '').slice(0,10) === dataStr
     );
