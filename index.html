@@ -720,6 +720,12 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
 
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Termini economici <span style="opacity:.5;font-weight:400;font-size:12px;">(facoltativo — solo per tuo uso, non visibile al trasportatore)</span></h4>
+      <div class="ins-grid">
+        <div class="ins-field"><label>Importo pattuito</label><input type="text" id="ins-importo-pattuito" placeholder="es. €150"></div>
+        <div class="ins-field"><label>Termini di pagamento</label><input type="text" id="ins-termini-pagamento" placeholder="es. Bonifico a 30gg dalla consegna"></div>
+      </div>
+
       <div id="box-contatore-trasportatori" style="margin-top:18px;padding:14px 18px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;font-size:13px;color:#fff;">
         📊 <span id="testo-contatore-trasportatori">Seleziona mezzo e autorizzazione per vedere quanti trasportatori sono disponibili</span>
       </div>
@@ -2156,6 +2162,8 @@ async function pubblicaCarico() {
   const mezzoRichiesto = Array.from(document.querySelectorAll('#checkbox-mezzo-richiesto input:checked')).map(el => el.value);
   const specificaMezzoRichiesto = document.getElementById('specifica-mezzoRichiesto').value.trim();
   const autRichiesta   = Array.from(document.querySelectorAll('#checkbox-aut-richiesta input:checked')).map(el => el.value);
+  const importoPattuito = document.getElementById('ins-importo-pattuito').value.trim();
+  const terminiPagamento = document.getElementById('ins-termini-pagamento').value.trim();
   const err = document.getElementById('ins-err');
   const ok  = document.getElementById('ins-ok');
   err.style.display = 'none';
@@ -2206,6 +2214,8 @@ async function pubblicaCarico() {
         tipo_mezzo_richiesto: mezzoRichiesto,
         specifica_mezzo_richiesto: specificaMezzoRichiesto,
         autorizzazione_richiesta: autRichiesta,
+        importo_pattuito: importoPattuito,
+        termini_pagamento: terminiPagamento,
         email_azienda: currentUser.email,
         nome_azienda: profiloAzienda.nome,
         telefono_azienda: profiloAzienda.telefono
@@ -2228,6 +2238,8 @@ async function pubblicaCarico() {
       document.getElementById('ins-cer').value = '';
       document.getElementById('ins-cer-wrap').style.display = 'none';
       document.getElementById('specifica-mezzoRichiesto').value = '';
+      document.getElementById('ins-importo-pattuito').value = '';
+      document.getElementById('ins-termini-pagamento').value = '';
       resetTendina('mezzoRichiesto');
       resetTendina('autRichiesta');
       setTimeout(() => caricaDati(currentUser.email), 2000);
