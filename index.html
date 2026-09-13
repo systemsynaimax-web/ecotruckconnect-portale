@@ -543,9 +543,19 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
       </div>
       <div id="dash-sezione-fatture" style="display:none;margin-top:18px;">
-        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+        <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
           <span>🧾 Le mie fatture</span>
-          <span style="display:flex;gap:8px;">
+          <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <div style="position:relative;">
+              <button class="btn-cap" onclick="event.stopPropagation();toggleFiltroFatture('dash')">📅 <span id="filtro-fatture-label-dash">Tutti</span> ▾</button>
+              <div id="filtro-fatture-panel-dash" style="display:none;position:absolute;top:110%;right:0;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:250;min-width:130px;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
+                <div class="filtro-periodo-voce attivo" onclick="cambiaFiltroFatture(null,'dash',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Tutti</div>
+                <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(1,'dash',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Oggi</div>
+                <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(7,'dash',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">7 giorni</div>
+                <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(15,'dash',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">15 giorni</div>
+                <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(30,'dash',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">30 giorni</div>
+              </div>
+            </div>
             <button class="btn-cap" id="btn-scarica-fatture-pdf" onclick="scaricaFatturePDF()" style="display:none;">📄 Scarica PDF</button>
             <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaFattureCSV()" style="display:none;">⬇️ Scarica CSV</button>
             <button class="btn-cap" onclick="stampaConTimbro()">🖨️ Stampa</button>
@@ -775,10 +785,27 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <div class="card-num green" id="c-guad">—</div><div class="card-sub">guadagnato questo mese</div>
         </div>
       </div>
-      <div class="sec-head" style="justify-content:space-between;">📦 Storico Carichi <button class="btn-cap" onclick="stampaConTimbro()" style="font-size:12px;">🖨️ Stampa</button></div>
+      <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <span>📦 Storico Carichi</span>
+        <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div style="position:relative;">
+            <button class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();toggleFiltroFatture('storico')">📅 <span id="filtro-fatture-label-storico">Tutti</span> ▾</button>
+            <div id="filtro-fatture-panel-storico" style="display:none;position:absolute;top:110%;right:0;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:250;min-width:130px;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
+              <div class="filtro-periodo-voce attivo" onclick="cambiaFiltroFatture(null,'storico',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Tutti</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(1,'storico',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Oggi</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(7,'storico',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">7 giorni</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(15,'storico',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">15 giorni</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroFatture(30,'storico',this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">30 giorni</div>
+            </div>
+          </div>
+          <button class="btn-cap" id="btn-scarica-storico-pdf" onclick="scaricaFatturePDF()" style="font-size:12px;display:none;">📄 PDF</button>
+          <button class="btn-cap" id="btn-scarica-storico-csv" onclick="scaricaFattureCSV()" style="font-size:12px;display:none;">⬇️ CSV</button>
+          <button class="btn-cap" onclick="stampaConTimbro()" style="font-size:12px;">🖨️ Stampa</button>
+        </span>
+      </div>
       <div class="table-box">
         <table>
-          <thead><tr><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
+          <thead><tr id="storico-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
           <tbody id="storico-body"><tr><td colspan="4" class="empty">Caricamento storico...</td></tr></tbody>
         </table>
       </div>
@@ -1417,68 +1444,20 @@ function aggiornaDashReport() {
 }
 
 async function aggiornaDashFatture() {
-  const body = document.getElementById('dash-fatture-body');
-  const thead = document.getElementById('dash-fatture-thead');
-  const btnCsv = document.getElementById('btn-scarica-fatture');
-  const btnPdf = document.getElementById('btn-scarica-fatture-pdf');
-
-  if (tipoUtente === 'azienda') {
-    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
-    body.innerHTML = '<tr><td colspan="5" class="empty">Caricamento...</td></tr>';
-    btnCsv.style.display = 'none';
-    btnPdf.style.display = 'none';
-    if (!modalitaAnteprimaAttiva) {
-      try {
-        const res = await fetch(PROXY_WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
-        });
-        const data = await res.json();
-        carichiPubblicatiAzienda = data.carichi || [];
-      } catch (e) {
-        carichiPubblicatiAzienda = [];
-      }
+  if (tipoUtente === 'azienda' && !modalitaAnteprimaAttiva) {
+    try {
+      const res = await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
+      });
+      const data = await res.json();
+      carichiPubblicatiAzienda = data.carichi || [];
+    } catch (e) {
+      carichiPubblicatiAzienda = [];
     }
-    if (!carichiPubblicatiAzienda.length) {
-      body.innerHTML = '<tr><td colspan="5" class="empty">🔜 Storico fatture azienda in arrivo — non ancora collegato a una fonte dati.</td></tr>';
-      renderCampanellino();
-      return;
-    }
-    thead.innerHTML = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
-    btnCsv.style.display = 'inline-flex';
-    btnPdf.style.display = 'inline-flex';
-    body.innerHTML = carichiPubblicatiAzienda
-      .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
-      .map(c => {
-        const f = c.fields;
-        const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-        return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
-      }).join('');
-    const elAgg = document.getElementById('fatture-ultimo-agg');
-    if (elAgg) elAgg.textContent = formatDataOra();
-    renderCampanellino();
-    return;
   }
-
-  thead.innerHTML = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th>';
-  if (!ultimeCandidature || !ultimeCandidature.length) {
-    body.innerHTML = '<tr><td colspan="4" class="empty">Nessun carico ancora.</td></tr>';
-    btnCsv.style.display = 'none';
-    btnPdf.style.display = 'none';
-    return;
-  }
-  btnCsv.style.display = 'inline-flex';
-  btnPdf.style.display = 'inline-flex';
-  body.innerHTML = ultimeCandidature
-    .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
-    .map(c => {
-      const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
-      return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td>${f.stato || '—'}</td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
-    }).join('');
-  const elAgg = document.getElementById('fatture-ultimo-agg');
-  if (elAgg) elAgg.textContent = formatDataOra();
+  renderTabelleFatture();
 }
 
 async function rigeneraPassword() {
@@ -1666,7 +1645,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       renderCalendarioMensile();
       aggiornaStatsAzienda();
-      renderCampanellino();
+      renderTabelleFatture();
     }
     return;
   }
@@ -2348,42 +2327,121 @@ function azzeraStats() {
 }
 
 let ultimeCandidature = [];
+let ultimeCandidatureRaw = [];
 let carichiPubblicatiAzienda = [];
+let carichiFatturaAziendaFiltrati = [];
+let filtroFatturePeriodoGiorni = null; // null = "Tutti"
 
-function renderStorico(cands) {
-  ultimeCandidature = cands || [];
-  const body = document.getElementById('storico-body');
-  if (!cands.length) {
-    body.innerHTML = `<tr><td colspan="4" class="empty">
-      Nessun carico ancora.<br>
-      <span style="font-size:12px;color:rgba(255,255,255,0.25);">
-        Il tuo storico apparirà qui non appena accaparri il primo carico.
-      </span>
-    </td></tr>`;
+function filtraPerPeriodo(lista, campoData, giorni) {
+  if (!giorni) return lista || [];
+  const ora = new Date();
+  const sogliaMs = giorni * 24 * 60 * 60 * 1000;
+  return (lista || []).filter(c => {
+    const d = c.fields[campoData] ? new Date(c.fields[campoData]) : null;
+    return d && (ora - d) >= 0 && (ora - d) <= sogliaMs;
+  });
+}
+
+function etichettaFiltroFatture(giorni) {
+  return giorni === 1 ? 'Oggi' : giorni === 7 ? '7 giorni' : giorni === 15 ? '15 giorni' : giorni === 30 ? '30 giorni' : 'Tutti';
+}
+
+function toggleFiltroFatture(ctx) {
+  const panel = document.getElementById('filtro-fatture-panel-' + ctx);
+  if (!panel) return;
+  const altro = ctx === 'storico' ? 'dash' : 'storico';
+  const altroPanel = document.getElementById('filtro-fatture-panel-' + altro);
+  if (altroPanel) altroPanel.style.display = 'none';
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#filtro-fatture-panel-storico') && !e.target.closest('#filtro-fatture-panel-dash')) {
+    ['filtro-fatture-panel-storico', 'filtro-fatture-panel-dash'].forEach(id => {
+      const p = document.getElementById(id);
+      if (p) p.style.display = 'none';
+    });
+  }
+});
+
+/* Un solo filtro condiviso, applicato in entrambi i punti dove si vedono le
+   fatture (la sezione "Storico Carichi" della home e "Le mie fatture" nella
+   Dashboard) — cosi' i due restano sempre coerenti tra loro, qualunque dei
+   due si usi per cambiare il periodo. */
+function cambiaFiltroFatture(giorni, ctx) {
+  filtroFatturePeriodoGiorni = giorni;
+  const etichetta = etichettaFiltroFatture(giorni);
+  ['filtro-fatture-label-storico', 'filtro-fatture-label-dash'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = etichetta;
+  });
+  ['filtro-fatture-panel-storico', 'filtro-fatture-panel-dash'].forEach(panelId => {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.querySelectorAll('.filtro-periodo-voce').forEach(v => {
+      v.classList.toggle('attivo', v.textContent.trim() === etichetta);
+    });
+    panel.style.display = 'none';
+  });
+  renderTabelleFatture();
+}
+
+/* Costruisce SIA la tabella "Storico Carichi" (home) SIA "Le mie fatture"
+   (Dashboard) dalla stessa fonte dati filtrata — un utente nuovo senza
+   nulla pubblicato/accaparrato vede sempre "Nessun carico", mai numeri
+   finti: i dati grezzi (ultimeCandidatureRaw / carichiPubblicatiAzienda)
+   arrivano solo da una vera ricerca Airtable per quell'email specifica. */
+function renderTabelleFatture() {
+  if (tipoUtente === 'azienda') {
+    carichiFatturaAziendaFiltrati = filtraPerPeriodo(carichiPubblicatiAzienda, 'data_pubblicazione', filtroFatturePeriodoGiorni);
+    const headerHtml = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
+    const bodyHtml = !carichiFatturaAziendaFiltrati.length
+      ? '<tr><td colspan="5" class="empty">Nessun carico in questo periodo.</td></tr>'
+      : carichiFatturaAziendaFiltrati
+          .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
+          .map(c => {
+            const f = c.fields;
+            const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
+            return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
+          }).join('');
+    ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
+    ['dash-fatture-body', 'storico-body'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = bodyHtml; });
+    const mostraBottoni = carichiPubblicatiAzienda.length > 0;
+    ['btn-scarica-fatture', 'btn-scarica-storico-csv'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = mostraBottoni ? 'inline-flex' : 'none'; });
+    ['btn-scarica-fatture-pdf', 'btn-scarica-storico-pdf'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = mostraBottoni ? 'inline-flex' : 'none'; });
+    const elAgg = document.getElementById('fatture-ultimo-agg');
+    if (elAgg) elAgg.textContent = formatDataOra();
+    renderCampanellino();
     return;
   }
-  body.innerHTML = cands
-    .sort((a, b) => {
-      const da = a.fields.data_candidatura || '';
-      const db = b.fields.data_candidatura || '';
-      return db.localeCompare(da);
-    })
-    .map(c => {
-      const f = c.fields;
-      const data  = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
-      const rId   = f.richiesta_id || '—';
-      const stato = f.stato || '—';
-      const cls   = stato.toLowerCase().includes('complet') || stato.toLowerCase().includes('accett') || stato.toLowerCase().includes('pagat')
-                  ? 's-ok'
-                  : stato.toLowerCase().includes('attesa') || stato.toLowerCase().includes('corso')
-                  ? 's-wait' : 's-no';
-      return `<tr>
-        <td>${data}</td>
-        <td style="font-family:monospace;font-size:12px;">${rId}</td>
-        <td><span class="badge-stato ${cls}">${stato}</span></td>
-        <td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>
-      </tr>`;
-    }).join('');
+
+  ultimeCandidature = filtraPerPeriodo(ultimeCandidatureRaw, 'data_candidatura', filtroFatturePeriodoGiorni);
+  const headerHtml = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th>';
+  const bodyHtml = !ultimeCandidature.length
+    ? `<tr><td colspan="4" class="empty">Nessun carico in questo periodo.${ultimeCandidatureRaw.length === 0 ? '<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Il tuo storico apparira\' qui non appena accaparri il primo carico.</span>' : ''}</td></tr>`
+    : ultimeCandidature
+        .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
+        .map(c => {
+          const f = c.fields;
+          const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+          const stato = f.stato || '—';
+          const cls = stato.toLowerCase().includes('complet') || stato.toLowerCase().includes('accett') || stato.toLowerCase().includes('pagat') || stato.toUpperCase() === 'PRESO'
+            ? 's-ok'
+            : stato.toLowerCase().includes('attesa') || stato.toLowerCase().includes('corso')
+            ? 's-wait' : 's-no';
+          return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td><span class="badge-stato ${cls}">${stato}</span></td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
+        }).join('');
+  ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
+  ['dash-fatture-body', 'storico-body'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = bodyHtml; });
+  const mostraBottoni = ultimeCandidatureRaw.length > 0;
+  ['btn-scarica-fatture', 'btn-scarica-storico-csv'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = mostraBottoni ? 'inline-flex' : 'none'; });
+  ['btn-scarica-fatture-pdf', 'btn-scarica-storico-pdf'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = mostraBottoni ? 'inline-flex' : 'none'; });
+  const elAgg = document.getElementById('fatture-ultimo-agg');
+  if (elAgg) elAgg.textContent = formatDataOra();
+}
+
+function renderStorico(cands) {
+  ultimeCandidatureRaw = cands || [];
+  renderTabelleFatture();
 }
 
 function stampaConTimbro() {
@@ -2434,7 +2492,7 @@ function scaricaStoricoPDF() {
   doc.text('EcoTruckConnect — Le mie fatture', 14, 18);
   doc.setFontSize(9);
   doc.setTextColor(120);
-  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
+  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
   const righe = ultimeCandidature
     .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
     .map(c => {
@@ -2453,9 +2511,9 @@ function scaricaStoricoPDF() {
 }
 
 function scaricaFattureAziendaCSV() {
-  if (!carichiPubblicatiAzienda.length) return;
+  if (!carichiFatturaAziendaFiltrati.length) return;
   const righe = [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']];
-  carichiPubblicatiAzienda
+  carichiFatturaAziendaFiltrati
     .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
     .forEach(c => {
       const f = c.fields;
@@ -2475,15 +2533,15 @@ function scaricaFattureAziendaCSV() {
 }
 
 function scaricaFattureAziendaPDF() {
-  if (!carichiPubblicatiAzienda.length) return;
+  if (!carichiFatturaAziendaFiltrati.length) return;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   doc.setFontSize(15);
   doc.text('EcoTruckConnect — Carichi Pubblicati', 14, 18);
   doc.setFontSize(9);
   doc.setTextColor(120);
-  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
-  const righe = carichiPubblicatiAzienda
+  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
+  const righe = carichiFatturaAziendaFiltrati
     .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
     .map(c => {
       const f = c.fields;
