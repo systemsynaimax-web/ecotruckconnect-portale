@@ -258,9 +258,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 .notif-bell-item{padding:10px;border-radius:8px;font-size:12px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.05);}
 .notif-bell-item:last-child{border-bottom:none;}
 .notif-bell-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
-.filtro-periodo{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;}
-.filtro-periodo button{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:20px;font-size:11px;font-family:var(--font-b);cursor:pointer;transition:all 0.2s;}
-.filtro-periodo button.attivo{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#93c5fd;}
+.filtro-periodo-voce:hover{background:rgba(255,255,255,0.08);}
+.filtro-periodo-voce.attivo{background:rgba(59,130,246,0.15);color:#93c5fd;font-weight:600;}
 @media screen and (max-width: 900px) {
   .login-wrap{grid-template-columns:1fr;}
   .login-visual{min-height:220px;}
@@ -446,15 +445,21 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
       <p>Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
       <div class="hero-stats" id="hero-stats-wrap">
-        <div><div class="hs-val" id="st-disp">—</div><div class="hs-label" id="st-disp-label">Carichi disponibili oggi</div></div>
-        <div><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Guadagnato questo mese</div></div>
+        <div>
+          <div class="hs-val" id="st-disp">—</div>
+          <div style="display:flex;align-items:center;gap:4px;position:relative;" id="st-disp-label-wrap">
+            <span class="hs-label" id="st-disp-label">Carichi disponibili oggi</span>
+            <span id="filtro-periodo-toggle" style="display:none;cursor:pointer;font-size:11px;color:var(--muted);padding:2px 4px;" onclick="event.stopPropagation();toggleFiltroPeriodo()">▾</span>
+            <div id="filtro-periodo-panel" style="display:none;position:absolute;top:120%;left:0;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:250;min-width:130px;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
+              <div class="filtro-periodo-voce attivo" data-giorni="1" onclick="cambiaFiltroPeriodo(1,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Oggi</div>
+              <div class="filtro-periodo-voce" data-giorni="7" onclick="cambiaFiltroPeriodo(7,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">7 giorni</div>
+              <div class="filtro-periodo-voce" data-giorni="15" onclick="cambiaFiltroPeriodo(15,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">15 giorni</div>
+              <div class="filtro-periodo-voce" data-giorni="30" onclick="cambiaFiltroPeriodo(30,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">30 giorni</div>
+            </div>
+          </div>
+        </div>
+        <div id="hero-stat-guad-wrap"><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Guadagnato questo mese</div></div>
         <div><div class="hs-val" id="st-tot">—</div><div class="hs-label" id="st-tot-label">Carichi totali</div></div>
-      </div>
-      <div class="filtro-periodo" id="filtro-periodo-azienda" style="display:none;">
-        <button class="attivo" data-giorni="1" onclick="cambiaFiltroPeriodo(1,this)">Oggi</button>
-        <button data-giorni="7" onclick="cambiaFiltroPeriodo(7,this)">7 giorni</button>
-        <button data-giorni="15" onclick="cambiaFiltroPeriodo(15,this)">15 giorni</button>
-        <button data-giorni="30" onclick="cambiaFiltroPeriodo(30,this)">30 giorni</button>
       </div>
     </div>
   </section>
@@ -1640,7 +1645,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('carichi-disponibili-wrap').style.display = 'none';
       document.getElementById('dash-nav-wrap').style.display = 'block';
       document.getElementById('notif-bell-wrap').style.display = 'block';
-      document.getElementById('filtro-periodo-azienda').style.display = 'flex';
       impostaEtichetteHeroAzienda();
       renderCheckboxGroup('mezzoRichiesto', []);
       renderAutorizzazioniAccordion('autRichiesta', []);
@@ -1893,20 +1897,41 @@ let filtroPeriodoGiorni = 1;
 
 function impostaEtichetteHeroAzienda() {
   const l1 = document.getElementById('st-disp-label');
-  const l2 = document.getElementById('st-guad-label');
   const l3 = document.getElementById('st-tot-label');
-  if (l1) l1.textContent = 'Pubblicazioni';
-  if (l2) l2.textContent = 'Carichi presi';
-  if (l3) l3.textContent = 'Pubblicazioni totali';
+  if (l1) l1.textContent = 'Pubblicazione carichi';
+  if (l3) l3.textContent = 'Pubblicazioni carichi totali';
+  const guadWrap = document.getElementById('hero-stat-guad-wrap');
+  if (guadWrap) guadWrap.style.display = 'none';
+  const toggle = document.getElementById('filtro-periodo-toggle');
+  if (toggle) toggle.style.display = 'inline';
 }
 
-function cambiaFiltroPeriodo(giorni, btn) {
+function toggleFiltroPeriodo() {
+  const panel = document.getElementById('filtro-periodo-panel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#st-disp-label-wrap')) {
+    const p = document.getElementById('filtro-periodo-panel');
+    if (p) p.style.display = 'none';
+  }
+});
+
+function cambiaFiltroPeriodo(giorni, voce) {
   filtroPeriodoGiorni = giorni;
-  document.querySelectorAll('#filtro-periodo-azienda button').forEach(b => b.classList.remove('attivo'));
-  btn.classList.add('attivo');
+  document.querySelectorAll('.filtro-periodo-voce').forEach(v => v.classList.remove('attivo'));
+  voce.classList.add('attivo');
+  document.getElementById('filtro-periodo-panel').style.display = 'none';
   aggiornaStatsAzienda();
 }
 
+/* Per l'azienda restano solo 2 numeri: quante pubblicazioni nel periodo
+   scelto (default: oggi) e quante in totale da sempre. Niente più "carichi
+   presi" (rimosso su decisione di Gerlando — l'azienda pubblica, non prende
+   carichi). Con un account reale senza nulla pubblicato questi risultano
+   correttamente 0, perché carichiPubblicatiAzienda arriva vuoto dalla
+   ricerca Airtable per quella email — nessun dato finto si mescola qui. */
 function aggiornaStatsAzienda() {
   if (tipoUtente !== 'azienda') return;
   const ora = new Date();
@@ -1916,9 +1941,7 @@ function aggiornaStatsAzienda() {
     const d = c.fields.data_pubblicazione ? new Date(c.fields.data_pubblicazione) : null;
     return d && (ora - d) >= 0 && (ora - d) <= sogliaMs;
   });
-  const presiNelPeriodo = nelPeriodo.filter(c => (c.fields.stato||'').toUpperCase() === 'PRESO').length;
   aggiorna('st-disp', nelPeriodo.length);
-  aggiorna('st-guad', presiNelPeriodo);
   aggiorna('st-tot', tutti.length);
 }
 
@@ -1983,7 +2006,6 @@ async function rilevaTipoUtente(email) {
     profiloAzienda.specifica = af.specifica || '';
     document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('notif-bell-wrap').style.display = 'block';
-    document.getElementById('filtro-periodo-azienda').style.display = 'flex';
     impostaEtichetteHeroAzienda();
     avviaPollingCampanellino();
     document.getElementById('cap-bar-section').style.display = 'none';
