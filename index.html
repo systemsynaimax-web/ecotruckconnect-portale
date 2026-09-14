@@ -188,6 +188,18 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 .btn-prendi:active{transform:scale(0.97);}
 .btn-prendi:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:not-allowed;}
 .carico-empty{padding:48px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
+.carichi-griglia{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+.carico-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;}
+.carico-percorso{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.carico-percorso-linea{flex:1;height:2px;background:rgba(255,255,255,0.15);position:relative;min-width:24px;}
+.carico-percorso-dot{position:absolute;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;}
+.carico-badge-top{display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.15);color:var(--green);font-size:11px;padding:2px 8px;border-radius:20px;}
+.btn-vedi-dettagli{font-size:13px;padding:8px 14px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background 0.2s;white-space:nowrap;font-family:var(--font-b);}
+.btn-vedi-dettagli:hover{background:rgba(255,255,255,0.12);}
+.sort-carichi-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:background 0.2s,color 0.2s;font-family:var(--font-b);}
+.sort-carichi-btn.attivo{background:var(--blue);border-color:var(--blue);color:#fff;}
+.carico-dettaglio-overlay{min-height:320px;background:rgba(0,0,0,0.55);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:20px;}
+.carico-dettaglio-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:380px;width:100%;}
 #bot-btn{position:fixed;bottom:28px;right:28px;z-index:500;width:54px;height:54px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--blue),#6366f1);cursor:pointer;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(59,130,246,0.45);transition:transform 0.2s,box-shadow 0.2s;}
 #bot-btn.visible{display:flex;}
 #bot-btn:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(59,130,246,0.55);}
@@ -748,7 +760,13 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     <div id="contenuto-normale-portale">
       <div id="carichi-disponibili-wrap">
         <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
-        <div class="carichi-lista" id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
+        <div id="carichi-stat-riga" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+        <div id="sortbar-carichi" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="sort-carichi-btn attivo" data-sort="recenti" onclick="cambiaOrdinamentoCarichi('recenti', this)">🕐 Più recenti</button>
+          <button class="sort-carichi-btn" data-sort="alto" onclick="cambiaOrdinamentoCarichi('alto', this)">⬆️ Prezzo più alto</button>
+          <button class="sort-carichi-btn" data-sort="basso" onclick="cambiaOrdinamentoCarichi('basso', this)">⬇️ Prezzo più basso</button>
+        </div>
+        <div id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
       </div>
       <div id="calendario-carichi-wrap">
         <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
@@ -2076,12 +2094,138 @@ function carichiCompatibiliPerTrasportatore(carichi) {
     return mezzoOk && autOk;
   });
 }
+function escAttr(v) {
+  return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+let ordinamentoCarichi = 'recenti'; // 'recenti' | 'alto' | 'basso'
+let dettaglioCaricoAperto = null;   // id del carico aperto nel popup dettagli, o null
+let ultimiCarichiVisibili = [];     // ultima lista filtrata mostrata al trasportatore (per riaprire i dettagli)
+
+/* Testo tipo "pubblicato 2h fa" a partire dal campo data_pubblicazione già
+   esistente su Airtable (lo stesso usato per il report azienda). */
+function tempoTrascorso(iso) {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minuti = Math.floor(diffMs / 60000);
+  if (minuti < 1) return 'pubblicato ora';
+  if (minuti < 60) return `pubblicato ${minuti} min fa`;
+  const ore = Math.floor(minuti / 60);
+  if (ore < 24) return `pubblicato ${ore}h fa`;
+  const giorni = Math.floor(ore / 24);
+  if (giorni === 1) return 'pubblicato ieri';
+  return `pubblicato ${giorni} giorni fa`;
+}
+
+function percorsoHTML(da, arrivo, grande) {
+  const dim = grande ? '16px' : '14px';
+  return `<div class="carico-percorso">
+    <span style="font-size:${dim};font-weight:700;">${da}</span>
+    <div class="carico-percorso-linea">
+      <span class="carico-percorso-dot" style="left:0;background:var(--blue);"></span>
+      <span class="carico-percorso-dot" style="right:0;background:var(--green);"></span>
+    </div>
+    <span style="font-size:${dim};font-weight:700;">${arrivo}</span>
+  </div>`;
+}
+
+function ordinaCarichi(lista) {
+  const arr = lista.slice();
+  if (ordinamentoCarichi === 'alto') arr.sort((a, b) => parseImportoPattuito(b.fields.importo_pattuito) - parseImportoPattuito(a.fields.importo_pattuito));
+  else if (ordinamentoCarichi === 'basso') arr.sort((a, b) => parseImportoPattuito(a.fields.importo_pattuito) - parseImportoPattuito(b.fields.importo_pattuito));
+  else arr.sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''));
+  return arr;
+}
+
+function cambiaOrdinamentoCarichi(tipo, btn) {
+  ordinamentoCarichi = tipo;
+  document.querySelectorAll('.sort-carichi-btn').forEach(b => b.classList.remove('attivo'));
+  if (btn) btn.classList.add('attivo');
+  renderCarichiContenuto();
+}
+
+/* Card "essenziale": tratta, data del carico, merce, prezzo — niente mezzo
+   o autorizzazione qui, perché se il carico compare è già compatibile col
+   profilo del trasportatore (deciso 14/9). Mezzo/autorizzazione/termini
+   compaiono solo dentro il popup "Vedi dettagli". */
+function renderCardCarico(c, prezzoMax) {
+  const f = c.fields;
+  const stato = (f.stato || 'DISPONIBILE').toUpperCase();
+  const importo = parseImportoPattuito(f.importo_pattuito);
+  const top = prezzoMax !== null && importo === prezzoMax && stato === 'DISPONIBILE';
+  const partenza = f.citta_partenza || f.cap_partenza || '—';
+  const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
+  const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', {day:'numeric', month:'long'}) : '—';
+  const merce = f.tipo_merce || f.merce || '—';
+  return `<div class="carico-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px;">
+      ${top ? '<span class="carico-badge-top">⭐ Migliore</span>' : '<span></span>'}
+      <span style="font-size:11px;color:var(--muted);">${tempoTrascorso(f.data_pubblicazione)}</span>
+    </div>
+    ${percorsoHTML(partenza, arrivo, false)}
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:12px;">
+      <span style="font-size:13px;">📅</span>
+      <span style="font-size:13px;color:var(--text);font-weight:600;">${data}</span>
+      <span style="font-size:12px;color:var(--muted);">· ${merce}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">€ ${f.importo_pattuito}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
+      <button class="btn-vedi-dettagli" data-id="${c.id}">Vedi dettagli ›</button>
+    </div>
+  </div>`;
+}
+
+/* Popup dettagli: qui sì che compaiono mezzo richiesto, autorizzazione
+   richiesta e termini di pagamento — tutto quello che serve per decidere
+   davvero, prima di premere "Prendi questo carico". */
+function renderDettaglioCarico(c) {
+  const f = c.fields;
+  const stato = (f.stato || 'DISPONIBILE').toUpperCase();
+  const testoBtn = stato === 'DISPONIBILE' ? 'Prendi questo carico' : stato.includes('PAGAMENTO') ? 'In pagamento' : 'Già preso';
+  const disabilitato = stato !== 'DISPONIBILE' ? 'disabled' : '';
+  const partenza = f.citta_partenza || f.cap_partenza || '—';
+  const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
+  const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'}) : '—';
+  const merce = f.tipo_merce || f.merce || '—';
+  const mezzoRichiesto = (f.tipo_mezzo_richiesto || []).join(', ') || 'Nessun mezzo specifico richiesto';
+  const autRichiesta = (f.autorizzazione_richiesta || []).join(', ') || 'Nessuna autorizzazione specifica richiesta';
+  return `<div class="carico-dettaglio-overlay">
+    <div class="carico-dettaglio-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="font-size:11px;color:var(--muted);">${tempoTrascorso(f.data_pubblicazione)}</span>
+        <button id="btn-chiudi-dettaglio-carico" class="btn-esci" style="font-size:12px;">✕ Chiudi</button>
+      </div>
+      ${percorsoHTML(partenza, arrivo, true)}
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:14px;">
+        <span style="font-size:14px;">📅</span>
+        <span style="font-size:14px;color:var(--text);font-weight:600;">${data}</span>
+        <span style="font-size:13px;color:var(--muted);">· ${merce}</span>
+      </div>
+      <div style="text-align:center;padding:14px;background:rgba(34,197,94,0.1);border-radius:8px;margin-bottom:14px;">
+        <span style="font-size:28px;font-weight:800;color:var(--green);">${f.importo_pattuito ? '€ ' + f.importo_pattuito : 'Non specificato'}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">🚚 ${mezzoRichiesto}</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">📋 ${autRichiesta}</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">💳 ${f.termini_pagamento || 'Termini non specificati'}</span>
+      </div>
+      <button class="btn-pubblica" ${disabilitato} style="width:100%;justify-content:center;" onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${escAttr(partenza)}','${escAttr(arrivo)}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${escAttr(merce)}','${escAttr(f.importo_pattuito||'')}','${escAttr(f.termini_pagamento||'')}')">${testoBtn}</button>
+    </div>
+  </div>`;
+}
+
 function renderCarichi(carichi) {
   const lista = document.getElementById('carichi-lista');
+  const statRiga = document.getElementById('carichi-stat-riga');
+  const sortbar = document.getElementById('sortbar-carichi');
   if (tipoUtente === 'azienda') {
     lista.innerHTML = '<div class="carico-empty">Questa sezione è riservata ai trasportatori.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Usa "Pubblica un Carico" qui sopra per inserire i tuoi carichi.</span></div>';
+    if (statRiga) statRiga.style.display = 'none';
+    if (sortbar) sortbar.style.display = 'none';
     return;
   }
+  if (statRiga) statRiga.style.display = 'block';
+  if (sortbar) sortbar.style.display = 'flex';
   let filtrati = carichi;
   const FILTRO_CAP_ATTIVO = false;
   if (FILTRO_CAP_ATTIVO && tipoUtente === 'trasportatore' && capCorrente) {
@@ -2091,38 +2235,57 @@ function renderCarichi(carichi) {
     });
     if (filtrati.length === 0) filtrati = carichi;
   }
+  ultimiCarichiVisibili = filtrati;
   if (!filtrati.length) {
     lista.innerHTML = '<div class="carico-empty">Nessun carico disponibile in questo momento.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Riceverai una notifica su Telegram appena arriva un carico nella tua zona.</span></div>';
+    if (statRiga) statRiga.innerHTML = '';
     return;
   }
-  lista.innerHTML = filtrati.map(c => {
-    const f = c.fields;
-    const stato = (f.stato || 'DISPONIBILE').toUpperCase();
-    const dotClass = stato === 'DISPONIBILE' ? 'dot-blue' : stato.includes('PAGAMENTO') ? 'dot-amber' : 'dot-red';
-    const disabilitato = stato !== 'DISPONIBILE' ? 'disabled' : '';
-    const testoBtn = stato === 'DISPONIBILE' ? 'Prendi →' : stato.includes('PAGAMENTO') ? 'In pagamento' : 'Preso';
-    const partenza = f.citta_partenza || f.cap_partenza || '—';
-    const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
-    const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
-    const merce = f.tipo_merce || f.merce || '—';
-    return `<div class="carico-item">
-      <div class="carico-dot ${dotClass}"></div>
-      <div class="carico-info">
-        <div class="carico-tratta">${partenza} → ${arrivo}</div>
-        <div class="carico-det">${merce} · CAP ${f.cap_partenza || '—'} → ${f.cap_arrivo || '—'}</div>
-      </div>
-      <div class="carico-data">${data}</div>
-      <button class="btn-prendi" ${disabilitato} onclick="prendiCarico('${c.id}','${partenza}','${arrivo}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${merce}')">${testoBtn}</button>
-    </div>`;
-  }).join('');
+  renderCarichiContenuto();
 }
 
-async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce) {
+function renderCarichiContenuto() {
+  const lista = document.getElementById('carichi-lista');
+  const statRiga = document.getElementById('carichi-stat-riga');
+  if (!lista) return;
+  if (dettaglioCaricoAperto !== null) {
+    const c = ultimiCarichiVisibili.find(x => x.id === dettaglioCaricoAperto);
+    if (c) {
+      lista.innerHTML = renderDettaglioCarico(c);
+      if (statRiga) statRiga.innerHTML = '';
+      const btnChiudi = document.getElementById('btn-chiudi-dettaglio-carico');
+      if (btnChiudi) btnChiudi.onclick = () => { dettaglioCaricoAperto = null; renderCarichiContenuto(); };
+      return;
+    }
+    dettaglioCaricoAperto = null;
+  }
+  const disponibili = ultimiCarichiVisibili.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE');
+  const prezzi = disponibili.map(c => parseImportoPattuito(c.fields.importo_pattuito)).filter(p => p > 0);
+  if (statRiga) {
+    statRiga.innerHTML = prezzi.length
+      ? `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'} · da € ${Math.min(...prezzi)} a € ${Math.max(...prezzi)}`
+      : `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'}`;
+  }
+  const prezzoMax = prezzi.length ? Math.max(...prezzi) : null;
+  const ordinati = ordinaCarichi(ultimiCarichiVisibili);
+  lista.innerHTML = `<div class="carichi-griglia">${ordinati.map(c => renderCardCarico(c, prezzoMax)).join('')}</div>`;
+  document.querySelectorAll('.btn-vedi-dettagli').forEach(b => {
+    b.addEventListener('click', () => {
+      dettaglioCaricoAperto = b.getAttribute('data-id');
+      renderCarichiContenuto();
+    });
+  });
+}
+
+async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce, importoPattuito, terminiPagamento) {
   if (tipoUtente === 'azienda') {
     alert('Le aziende non possono accaparrare carichi. Questa funzione è riservata ai trasportatori.');
     return;
   }
-  if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}\n\nVerrai reindirizzato al pagamento.`)) return;
+  let dettagliPrezzo = '';
+  if (importoPattuito) dettagliPrezzo += `\n\n💶 Importo pattuito: € ${importoPattuito}`;
+  if (terminiPagamento) dettagliPrezzo += `\n💳 Termini di pagamento: ${terminiPagamento}`;
+  if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}${dettagliPrezzo}\n\nVerrai reindirizzato al pagamento.`)) return;
   try {
     const checkRes = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -2911,39 +3074,52 @@ async function apriGiornoCalendario(dataStr) {
     document.body.insertAdjacentHTML('beforeend', html);
     return;
   }
-  const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
+  capModaleGiornoCarichi = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
+  dettaglioModaleGiornoAperto = null;
   const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
-  let corpo;
-  if (carichiGiorno.length === 0) {
-    corpo = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno nella tua zona.</div>`;
-  } else {
-    corpo = carichiGiorno.map(c => {
-      const f = c.fields;
-      const stato = (f.stato || 'DISPONIBILE').toUpperCase();
-      const disabilitato = stato !== 'DISPONIBILE' ? 'disabled' : '';
-      const testoBtn = stato === 'DISPONIBILE' ? 'Prendi →' : stato.includes('PAGAMENTO') ? 'In pagamento' : 'Preso';
-      const partenza = f.citta_partenza || f.cap_partenza || '—';
-      const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
-      const merce = f.tipo_merce || f.merce || '—';
-      return `<div class="carico-item" style="border-radius:10px;border:1px solid var(--border);margin-bottom:10px;">
-        <div class="carico-info">
-          <div class="carico-tratta">${partenza} → ${arrivo}</div>
-          <div class="carico-det">${merce} · CAP ${f.cap_partenza||'—'} → ${f.cap_arrivo||'—'}</div>
-        </div>
-        <button class="btn-prendi" ${disabilitato} onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${partenza}','${arrivo}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${merce}')">${testoBtn}</button>
-      </div>`;
-    }).join('');
-  }
   const html = `
     <div class="cal-modal-overlay" id="cal-modal-overlay" onclick="if(event.target===this)chiudiModaleCalendario()">
-      <div class="cal-modal">
+      <div class="cal-modal" style="max-width:640px;">
         <button class="cal-modal-close" onclick="chiudiModaleCalendario()">✕</button>
         <h3 style="text-transform:capitalize;">${dataLeggibile}</h3>
-        ${corpo}
+        <div id="cal-modal-corpo-carichi"></div>
       </div>
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', html);
+  renderModaleGiorno();
+}
+
+let capModaleGiornoCarichi = [];
+let dettaglioModaleGiornoAperto = null;
+
+function renderModaleGiorno() {
+  const corpo = document.getElementById('cal-modal-corpo-carichi');
+  if (!corpo) return;
+  if (dettaglioModaleGiornoAperto !== null) {
+    const c = capModaleGiornoCarichi.find(x => x.id === dettaglioModaleGiornoAperto);
+    if (c) {
+      corpo.innerHTML = renderDettaglioCarico(c);
+      const btnChiudi = document.getElementById('btn-chiudi-dettaglio-carico');
+      if (btnChiudi) btnChiudi.onclick = () => { dettaglioModaleGiornoAperto = null; renderModaleGiorno(); };
+      return;
+    }
+    dettaglioModaleGiornoAperto = null;
+  }
+  if (!capModaleGiornoCarichi.length) {
+    corpo.innerHTML = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno nella tua zona.</div>`;
+    return;
+  }
+  const disponibili = capModaleGiornoCarichi.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE');
+  const prezzi = disponibili.map(c => parseImportoPattuito(c.fields.importo_pattuito)).filter(p => p > 0);
+  const prezzoMax = prezzi.length ? Math.max(...prezzi) : null;
+  corpo.innerHTML = `<div class="carichi-griglia">${capModaleGiornoCarichi.map(c => renderCardCarico(c, prezzoMax)).join('')}</div>`;
+  document.querySelectorAll('#cal-modal-corpo-carichi .btn-vedi-dettagli').forEach(b => {
+    b.addEventListener('click', () => {
+      dettaglioModaleGiornoAperto = b.getAttribute('data-id');
+      renderModaleGiorno();
+    });
+  });
 }
 
 function chiudiModaleCalendario() {
