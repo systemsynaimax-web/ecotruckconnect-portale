@@ -443,7 +443,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
     <div class="hero-content">
       <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
-      <p>Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
+      <p id="hero-desc-testo">Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
       <div class="hero-stats" id="hero-stats-wrap">
         <div>
           <div class="hs-val" id="st-disp">—</div>
@@ -1886,12 +1886,14 @@ let filtroPeriodoGiorni = 1;
 function impostaEtichetteHeroAzienda() {
   const l1 = document.getElementById('st-disp-label');
   const l3 = document.getElementById('st-tot-label');
-  if (l1) l1.textContent = 'Pubblicazione carichi';
-  if (l3) l3.textContent = 'Pubblicazioni carichi totali';
+  if (l1) l1.textContent = 'Pubblicati oggi';
+  if (l3) l3.textContent = 'Pubblicati totali';
   const guadWrap = document.getElementById('hero-stat-guad-wrap');
   if (guadWrap) guadWrap.style.display = 'none';
   const toggle = document.getElementById('filtro-periodo-toggle');
   if (toggle) toggle.style.display = 'inline';
+  const desc = document.getElementById('hero-desc-testo');
+  if (desc) desc.innerHTML = 'Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> pubblica la tua prima richiesta di trasporto qui sotto — è così che il sistema trova subito il trasportatore giusto, in base al mezzo e all\'autorizzazione richiesti. Storico e fatture: tutto organizzato, tutto privato.';
 }
 
 function toggleFiltroPeriodo() {
