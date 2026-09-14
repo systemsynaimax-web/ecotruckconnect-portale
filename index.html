@@ -731,9 +731,9 @@ textarea.sc-input{resize:vertical;min-height:96px;}
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
 
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Termini economici <span style="opacity:.5;font-weight:400;font-size:12px;">(facoltativo — solo per tuo uso, non visibile al trasportatore)</span></h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Termini economici <span style="opacity:.5;font-weight:400;font-size:12px;">(non visibile al trasportatore, solo per tuo uso)</span></h4>
       <div class="ins-grid">
-        <div class="ins-field"><label>Importo pattuito</label><input type="text" id="ins-importo-pattuito" placeholder="es. €150"></div>
+        <div class="ins-field"><label>Importo pattuito *</label><input type="text" id="ins-importo-pattuito" placeholder="es. 150"></div>
         <div class="ins-field"><label>Termini di pagamento</label><input type="text" id="ins-termini-pagamento" placeholder="es. Bonifico a 30gg dalla consegna"></div>
       </div>
 
@@ -750,25 +750,27 @@ textarea.sc-input{resize:vertical;min-height:96px;}
         <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
         <div class="carichi-lista" id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
       </div>
-      <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
-      <div class="cal-box">
-        <div class="cal-legend">
-          <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
-          <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
-          <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
-          <span style="margin-left:auto;">Clicca un giorno per vedere o inserire carichi</span>
-        </div>
-        <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1)">←</button>
-          <div class="cal-nav-title" id="cal-nav-title">—</div>
-          <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1)">→</button>
-        </div>
-        <div class="cal-grid" id="cal-grid">
-          <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
-          <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
+      <div id="calendario-carichi-wrap">
+        <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
+        <div class="cal-box">
+          <div class="cal-legend">
+            <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
+            <span><span class="cal-dot-inline" style="background:#f59e0b;"></span>In pagamento</span>
+            <span><span class="cal-dot-inline" style="background:#ef4444;"></span>Preso</span>
+            <span style="margin-left:auto;">Clicca un giorno per vedere o inserire carichi</span>
+          </div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(-1)">←</button>
+            <div class="cal-nav-title" id="cal-nav-title">—</div>
+            <button class="cal-nav-btn" onclick="cambiaMeseCalendario(1)">→</button>
+          </div>
+          <div class="cal-grid" id="cal-grid">
+            <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div>
+            <div class="cal-day-name">Gio</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sab</div><div class="cal-day-name">Dom</div>
+          </div>
         </div>
       </div>
-      <div class="cards">
+      <div class="cards" id="cards-riepilogo-wrap">
         <div class="card" onclick="document.getElementById('calendario-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
           <div class="card-icon">📅</div><h3>Calendario Carichi</h3>
           <p>Carichi disponibili in tempo reale. Blu = disponibile, Arancione = in pagamento, Rosso = preso.</p>
@@ -785,7 +787,35 @@ textarea.sc-input{resize:vertical;min-height:96px;}
           <div class="card-num green" id="c-guad">—</div><div class="card-sub">guadagnato questo mese</div>
         </div>
       </div>
-      <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div class="cards" id="cards-riepilogo-azienda" style="display:none;">
+        <div class="card" style="cursor:default;">
+          <div class="card-icon">📦</div><h3>Carichi Pubblicati</h3>
+          <p>Tutti i carichi che hai pubblicato: accaparrati e ancora liberi.</p>
+          <div class="card-num" id="az-c-pubblicati">—</div><div class="card-sub">pubblicati totali</div>
+        </div>
+        <div class="card" onclick="document.getElementById('report-trasportatore-wrap').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
+          <div class="card-icon">💶</div><h3>Da Pagare</h3>
+          <p>Quanto devi ai trasportatori, diviso per ciascuno. Clicca per il dettaglio.</p>
+          <div class="card-num green" id="az-c-dapagare">—</div><div class="card-sub">totale da pagare</div>
+        </div>
+      </div>
+      <div id="report-trasportatore-wrap" style="display:none;">
+        <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <span>💶 Report Pagamenti per Trasportatore</span>
+          <div style="position:relative;">
+            <button class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();toggleFiltroReportTrasp()">📅 <span id="filtro-report-trasp-label">Tutti</span> ▾</button>
+            <div id="filtro-report-trasp-panel" style="display:none;position:absolute;top:110%;right:0;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:250;min-width:130px;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
+              <div class="filtro-periodo-voce attivo" onclick="cambiaFiltroReportTrasp(null,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">Tutti</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroReportTrasp(7,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">7 giorni</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroReportTrasp(30,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">30 giorni</div>
+              <div class="filtro-periodo-voce" onclick="cambiaFiltroReportTrasp(60,this)" style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">60 giorni</div>
+            </div>
+          </div>
+        </div>
+        <div style="color:var(--muted);font-size:12px;margin:-10px 0 16px;">Un riquadro per ogni trasportatore, con i carichi presi e l'importo pattuito al momento della pubblicazione. Somma dei singoli importi — verifica sempre col trasportatore prima di pagare.</div>
+        <div id="report-trasportatore-body"></div>
+      </div>
+      <div class="sec-head" id="storico-sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <span>📦 Storico Carichi</span>
         <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <div style="position:relative;">
@@ -1893,7 +1923,19 @@ function impostaEtichetteHeroAzienda() {
   const toggle = document.getElementById('filtro-periodo-toggle');
   if (toggle) toggle.style.display = 'inline';
   const desc = document.getElementById('hero-desc-testo');
-  if (desc) desc.innerHTML = 'Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> pubblica la tua prima richiesta di trasporto qui sotto — è così che il sistema trova subito il trasportatore giusto, in base al mezzo e all\'autorizzazione richiesti. Storico e fatture: tutto organizzato, tutto privato.';
+  if (desc) desc.innerHTML = 'Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> pubblica la tua prima richiesta di trasporto qui sotto — è così che il sistema trova subito il trasportatore giusto, in base al mezzo e all\'autorizzazione richiesti. Storico e pagamenti: tutto organizzato, tutto privato.';
+  /* Il calendario e le 3 card sopra sono pensate per il trasportatore (carichi
+     disponibili in giro, storico accaparramenti, guadagno) — non hanno senso
+     per l'azienda, che pubblica e non prende. Al loro posto: le sue card
+     (pubblicati / da pagare) e il report pagamenti per trasportatore. */
+  const calWrap = document.getElementById('calendario-carichi-wrap');
+  if (calWrap) calWrap.style.display = 'none';
+  const cardsTrasp = document.getElementById('cards-riepilogo-wrap');
+  if (cardsTrasp) cardsTrasp.style.display = 'none';
+  const cardsAz = document.getElementById('cards-riepilogo-azienda');
+  if (cardsAz) cardsAz.style.display = 'grid';
+  const reportWrap = document.getElementById('report-trasportatore-wrap');
+  if (reportWrap) reportWrap.style.display = 'block';
 }
 
 function toggleFiltroPeriodo() {
@@ -2178,6 +2220,17 @@ async function pubblicaCarico() {
     err.style.display = 'block';
     return;
   }
+  if (!importoPattuito) {
+    err.textContent = '⚠️ Inserisci l\'importo pattuito con il trasportatore — è obbligatorio per ogni carico.';
+    err.style.display = 'block';
+    return;
+  }
+  const importoNumerico = parseFloat(importoPattuito.replace(/[^\d,.-]/g, '').replace(',', '.'));
+  if (isNaN(importoNumerico) || importoNumerico <= 0) {
+    err.textContent = '⚠️ L\'importo pattuito deve essere un numero valido maggiore di zero (es. 150 o €150).';
+    err.style.display = 'block';
+    return;
+  }
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -2413,6 +2466,7 @@ function renderTabelleFatture() {
     const elAgg = document.getElementById('fatture-ultimo-agg');
     if (elAgg) elAgg.textContent = formatDataOra();
     renderCampanellino();
+    renderReportTrasportatori();
     return;
   }
 
@@ -2444,6 +2498,114 @@ function renderTabelleFatture() {
 function renderStorico(cands) {
   ultimeCandidatureRaw = cands || [];
   renderTabelleFatture();
+}
+
+/* ==================================================
+   REPORT PAGAMENTI PER TRASPORTATORE (solo azienda) — richiesto da
+   Gerlando (via Davide) il 14/9: l'azienda non emette fatture, le riceve.
+   Quello che le serve è vedere, per ciascun trasportatore che ha preso
+   suoi carichi, l'elenco dei carichi presi con l'importo pattuito fissato
+   al momento della pubblicazione (campo importo_pattuito) e il totale da
+   pagargli. Si basa sui carichi con stato PRESO tra quelli pubblicati
+   dall'azienda (carichiPubblicatiAzienda), niente di nuovo da Airtable.
+   ================================================== */
+let filtroReportTraspGiorni = null; // null = "Tutti"
+
+function toggleFiltroReportTrasp() {
+  const panel = document.getElementById('filtro-report-trasp-panel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#filtro-report-trasp-panel') && !e.target.closest('[onclick*="toggleFiltroReportTrasp"]')) {
+    const p = document.getElementById('filtro-report-trasp-panel');
+    if (p) p.style.display = 'none';
+  }
+});
+
+function cambiaFiltroReportTrasp(giorni, voce) {
+  filtroReportTraspGiorni = giorni;
+  const etichetta = giorni === 7 ? '7 giorni' : giorni === 30 ? '30 giorni' : giorni === 60 ? '60 giorni' : 'Tutti';
+  const label = document.getElementById('filtro-report-trasp-label');
+  if (label) label.textContent = etichetta;
+  const panel = document.getElementById('filtro-report-trasp-panel');
+  if (panel) {
+    panel.querySelectorAll('.filtro-periodo-voce').forEach(v => v.classList.remove('attivo'));
+    if (voce) voce.classList.add('attivo');
+    panel.style.display = 'none';
+  }
+  renderReportTrasportatori();
+}
+
+/* Converte un importo pattuito salvato come testo libero (es. "€150",
+   "150", "150,00") in un numero utilizzabile per la somma. Un importo non
+   numerico o vuoto conta come 0 nel totale, ma resta visibile per esteso
+   nella riga del singolo carico — non nascondiamo mai il dato originale. */
+function parseImportoPattuito(v) {
+  if (!v) return 0;
+  const pulito = String(v).replace(/[^\d,.-]/g, '').replace(',', '.');
+  const n = parseFloat(pulito);
+  return isNaN(n) ? 0 : n;
+}
+
+function renderReportTrasportatori() {
+  if (tipoUtente !== 'azienda') return;
+  const bodyEl = document.getElementById('report-trasportatore-body');
+  if (!bodyEl) return;
+
+  const tuttiPubblicati = carichiPubblicatiAzienda || [];
+  aggiorna('az-c-pubblicati', tuttiPubblicati.length);
+
+  const presi = tuttiPubblicati.filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO' && c.fields.bloccato_da_nome);
+  const filtrati = filtraPerPeriodo(presi, 'data_assegnato', filtroReportTraspGiorni);
+
+  const totaleGenerale = filtrati.reduce((s, c) => s + parseImportoPattuito(c.fields.importo_pattuito), 0);
+  aggiorna('az-c-dapagare', `€ ${totaleGenerale.toLocaleString('it-IT', {minimumFractionDigits: 2})}`);
+
+  if (!filtrati.length) {
+    bodyEl.innerHTML = `<div class="carico-empty">Nessun carico accaparrato in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Appena un trasportatore prende un tuo carico, comparirà qui con l'importo pattuito.</span></div>`;
+    return;
+  }
+
+  const gruppi = {};
+  filtrati.forEach(c => {
+    const nome = c.fields.bloccato_da_nome || 'Trasportatore sconosciuto';
+    if (!gruppi[nome]) gruppi[nome] = [];
+    gruppi[nome].push(c);
+  });
+
+  bodyEl.innerHTML = Object.keys(gruppi).sort((a, b) => a.localeCompare(b)).map(nome => {
+    const righe = gruppi[nome].sort((a, b) => (b.fields.data_assegnato || '').localeCompare(a.fields.data_assegnato || ''));
+    const totaleTrasp = righe.reduce((s, c) => s + parseImportoPattuito(c.fields.importo_pattuito), 0);
+    const righeHtml = righe.map(c => {
+      const f = c.fields;
+      const data = f.data_assegnato ? new Date(f.data_assegnato).toLocaleDateString('it-IT') : '—';
+      const importoTesto = f.importo_pattuito ? `€ ${f.importo_pattuito}` : 'non specificato';
+      return `<tr>
+        <td style="padding:10px 18px;font-size:13px;">${data}</td>
+        <td style="padding:10px 18px;font-size:13px;">${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}</td>
+        <td style="padding:10px 18px;font-size:12px;font-family:monospace;">${f.numero_ordine || '—'}</td>
+        <td style="padding:10px 18px;font-size:13px;text-align:right;color:${f.importo_pattuito ? 'var(--green)' : 'var(--muted)'};">${importoTesto}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:20px;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="background:rgba(255,255,255,0.03);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <span style="font-family:var(--font-h);font-weight:700;color:#fff;">🚚 ${nome}</span>
+        <span style="color:var(--green);font-weight:700;">Totale: € ${totaleTrasp.toLocaleString('it-IT', {minimumFractionDigits: 2})}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding:8px 18px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Data</th>
+            <th style="padding:8px 18px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Tratta</th>
+            <th style="padding:8px 18px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Ordine</th>
+            <th style="padding:8px 18px;text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Importo pattuito</th>
+          </tr>
+        </thead>
+        <tbody>${righeHtml}</tbody>
+      </table>
+    </div>`;
+  }).join('');
 }
 
 function stampaConTimbro() {
