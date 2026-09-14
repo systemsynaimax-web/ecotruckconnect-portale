@@ -380,6 +380,28 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
   </div>
 
+  <div class="sec-title">👥 Anagrafica Trasportatori e Aziende</div>
+  <div class="stats-row" style="margin-bottom:20px;">
+    <div class="stat-card">
+      <div class="stat-label">Trasportatori Registrati</div>
+      <div class="stat-value blue" id="st-trasportatori-tot">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Aziende Registrate</div>
+      <div class="stat-value amber" id="st-aziende-tot">—</div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tutti i trasportatori e le aziende registrati (approvati o ancora in attesa), coi loro mezzi e autorizzazioni. Cerca per nome, email, tipo di mezzo o autorizzazione — clicca su un risultato per vedere la scheda completa. Si aggiorna insieme al resto premendo "🔄 Aggiorna ora" in alto.</div>
+    <input type="text" class="feed-search" id="anagrafica-cerca" placeholder="🔍 Cerca per nome, email, mezzo o autorizzazione..." oninput="filtraAnagrafica()">
+    <div class="feed-actions">
+      <button onclick="scaricaPDF('anagrafica')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('anagrafica')">⬇️ Esporta CSV</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
+    </div>
+    <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
   <div class="sec-title">❓ Suggerimenti aperti (da Claude)</div>
   <div style="background:rgba(139,92,246,0.08);border:1.5px dashed rgba(139,92,246,0.4);border-radius:14px;padding:20px 22px;margin-bottom:16px;">
     <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Suggerimento di Claude · 14/09/2026</div>
@@ -467,6 +489,7 @@ async function caricaDashboard() {
     document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
   }
   await caricaNotificheRegistrazioni();
+  await caricaAnagraficaCompleta();
 }
 
 let registrazioniReali = [];
@@ -725,6 +748,93 @@ const CAMPI_AZIENDA = [
   ['Indirizzo', 'via'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
   ['Specifica attività', 'specifica_azienda']
 ];
+
+/* ==================================================
+   ANAGRAFICA COMPLETA — tutti i trasportatori e le aziende
+   registrati (non solo quelli da approvare), coi loro mezzi e
+   autorizzazioni. Richiesto da Davide il 14/9: bisogna poter
+   cercare "chi ha questo tipo di furgone/autorizzazione" senza
+   aprire Airtable. Si aggiorna insieme al resto della dashboard
+   con lo stesso bottone "Aggiorna ora" — nessuna automazione a
+   orario fisso, come deciso il 14/9.
+   ================================================== */
+let tuttiTrasportatoriAnagrafica = [];
+let tutteAziendeAnagrafica = [];
+
+async function caricaAnagraficaCompleta() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_anagrafica_completa' })
+    });
+    const data = await res.json();
+    tuttiTrasportatoriAnagrafica = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', fields: r.fields || r }));
+    tutteAziendeAnagrafica = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', fields: r.fields || r }));
+    document.getElementById('st-trasportatori-tot').textContent = tuttiTrasportatoriAnagrafica.length;
+    document.getElementById('st-aziende-tot').textContent = tutteAziendeAnagrafica.length;
+    renderAnagrafica();
+  } catch (e) {
+    console.error('Errore caricamento anagrafica completa:', e);
+    document.getElementById('anagrafica-lista').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare l\'anagrafica — probabile che Make sia spento in questo momento.</div>';
+  }
+}
+
+function getAnagraficaFiltrata() {
+  const q = (document.getElementById('anagrafica-cerca').value || '').trim().toLowerCase();
+  let lista = [...tuttiTrasportatoriAnagrafica, ...tutteAziendeAnagrafica];
+  if (q) {
+    lista = lista.filter(r => {
+      const f = r.fields;
+      const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '') : ((f.nome || '') + ' ' + (f.cognome || ''));
+      const mezzi = (f.tipo_camion || []).join(' ');
+      const aut = (f.autorizzazioni || []).join(' ');
+      const email = f.email || '';
+      return nome.toLowerCase().includes(q) || mezzi.toLowerCase().includes(q) || aut.toLowerCase().includes(q) || email.toLowerCase().includes(q);
+    });
+  }
+  return lista;
+}
+
+function renderAnagrafica() {
+  const lista = getAnagraficaFiltrata();
+  const el = document.getElementById('anagrafica-lista');
+  if (!lista.length) { el.innerHTML = '<div class="feed-empty">Nessun risultato con questa ricerca.</div>'; return; }
+  el.innerHTML = lista.map(r => {
+    const f = r.fields;
+    const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+    const tagClasse = r.tipo === 'azienda' ? 'azie' : 'trasp';
+    const tagTesto = r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore';
+    const mezzi = r.tipo === 'trasportatore' && f.tipo_camion ? f.tipo_camion.slice(0, 2).join(', ') : '';
+    return `<div class="feed-item" onclick="apriDettaglioAnagrafica('${r.id}','${r.tipo}')" style="cursor:pointer;">
+      <span class="feed-dot" style="background:${r.tipo === 'azienda' ? 'var(--amber)' : 'var(--blue)'};"></span>
+      <div class="feed-info">
+        <div class="feed-title">${nome} <span class="tipo-tag ${tagClasse}" style="margin-left:6px;">${tagTesto}</span></div>
+        <div class="feed-sub">${f.email || '—'}${mezzi ? ' · ' + mezzi : ''}${f.stato ? ' · ' + f.stato : ''}</div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;">›</span>
+    </div>`;
+  }).join('');
+}
+
+function filtraAnagrafica() { renderAnagrafica(); }
+
+function apriDettaglioAnagrafica(recordId, tipo) {
+  const lista = tipo === 'azienda' ? tutteAziendeAnagrafica : tuttiTrasportatoriAnagrafica;
+  const r = lista.find(x => x.id === recordId);
+  if (!r) return;
+  const f = r.fields;
+  const nome = tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+  const campi = tipo === 'azienda' ? [...CAMPI_AZIENDA] : [...CAMPI_TRASPORTATORE, ['Mezzi posseduti', 'tipo_camion'], ['Autorizzazioni possedute', 'autorizzazioni']];
+  const righe = campi.map(([label, chiave]) => {
+    let val = f[chiave];
+    if (Array.isArray(val)) val = val.length ? val.join(', ') : null;
+    return `<tr><td style="color:var(--muted);padding:8px 0;border-top:1px solid var(--border);width:44%;">${label}</td><td style="text-align:right;font-weight:500;padding:8px 0;border-top:1px solid var(--border);">${val || '—'}</td></tr>`;
+  }).join('');
+  document.getElementById('modal-title').textContent = nome;
+  document.getElementById('modal-body').innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
 
 let recordApertoCorrente = null;
 
@@ -1081,6 +1191,16 @@ function scaricaPDF(tipo) {
       const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
       return [dataFmt, f.tipo_attivita || '—', f.titolo_attivita || '—', f.autore || '—'];
     });
+  } else if (tipo === 'anagrafica') {
+    titolo = 'EcoTruckConnect — Anagrafica Trasportatori e Aziende';
+    const lista = getAnagraficaFiltrata();
+    headers = [['Tipo', 'Nome', 'Email', 'Telefono', 'Mezzi/Attività']];
+    righe = lista.map(r => {
+      const f = r.fields;
+      const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
+    });
   } else {
     titolo = 'EcoTruckConnect — Report Aziende';
     const lista = getAziendeFiltrate();
@@ -1091,8 +1211,6 @@ function scaricaPDF(tipo) {
       return [f.nome_azienda || '—', `${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, f.tipo_merce || '—', f.stato || '—', data];
     });
   }
-
-  doc.setFontSize(15);
   doc.text(titolo, 14, 18);
   doc.setFontSize(9);
   doc.setTextColor(120);
@@ -1135,6 +1253,15 @@ function scaricaCSV(tipo) {
       const f = r.fields;
       const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT') : '—';
       return [dataFmt, f.tipo_attivita || '—', f.titolo_attivita || '—', f.descrizione_attivita || '—', f.autore || '—'];
+    });
+  } else if (tipo === 'anagrafica') {
+    const lista = getAnagraficaFiltrata();
+    headers = ['Tipo', 'Nome', 'Email', 'Telefono', 'Mezzi/Attività'];
+    righe = lista.map(r => {
+      const f = r.fields;
+      const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
+      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
     });
   } else {
     const lista = getAziendeFiltrate();
