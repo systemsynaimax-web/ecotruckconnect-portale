@@ -162,6 +162,8 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 .ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .ins-field label{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
 .ins-field input,.ins-field select,.ins-field textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.2s;}
+.ins-field input::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:pointer;}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:pointer;}
 .ins-field input:focus,.ins-field select:focus,.ins-field textarea:focus{border-color:var(--blue);}
 .ins-field input::placeholder,.ins-field textarea::placeholder{color:rgba(255,255,255,0.2);}
 .ins-field select option{background:var(--surface);color:var(--text);}
@@ -745,7 +747,7 @@ textarea.sc-input{resize:vertical;min-height:96px;}
 
       <div style="margin-top:20px;"></div>
       <div class="ins-grid">
-        <div class="ins-field"><label>Importo pattuito *</label><input type="text" id="ins-importo-pattuito" placeholder="es. 150"></div>
+        <div class="ins-field"><label>Importo pattuito *</label><div style="position:relative;"><span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none;">€</span><input type="text" id="ins-importo-pattuito" placeholder="150" style="padding-left:28px;"></div></div>
         <div class="ins-field"><label>Termini di pagamento *</label><input type="text" id="ins-termini-pagamento" placeholder="es. Bonifico a 30gg dalla consegna"></div>
       </div>
 
@@ -1721,7 +1723,9 @@ function mostraRecovery() {
 
 function toggleRcPw() {
   const f = document.getElementById('rc-pw');
+  const icona = document.querySelector('#rc-pw + .pw-eye');
   f.type = f.type === 'password' ? 'text' : 'password';
+  if (icona) icona.textContent = f.type === 'password' ? '👁' : '🙈';
 }
 
 function mostraRcErr(msg) {
@@ -1772,7 +1776,9 @@ function avviaApp() {
 
 function togglePw() {
   const f = document.getElementById('li-pw');
+  const icona = document.querySelector('#li-pw + .pw-eye');
   f.type = f.type === 'password' ? 'text' : 'password';
+  if (icona) icona.textContent = f.type === 'password' ? '👁' : '🙈';
 }
 
 function mostraErr(msg) {
@@ -1794,7 +1800,11 @@ async function doLogin() {
   }
 }
 
-function doLogout() { netlifyIdentity.logout(); }
+function doLogout() {
+  const btn = document.querySelector('.btn-esci[onclick="doLogout()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Uscita...'; btn.style.opacity = '0.6'; }
+  netlifyIdentity.logout();
+}
 
 function toggleForgotPw(e) {
   e.preventDefault();
@@ -2334,6 +2344,32 @@ function autocompilaCittaCarico(tipo) {
         document.getElementById('ins-citta-' + tipo).value = data[0].nome;
       }
     } catch(e) { console.error('Autocompletamento CAP non riuscito:', e); }
+  }, 500);
+}
+
+// Autocompletamento città da CAP (Pubblica un Carico) — API pubblica ISTAT,
+// nessuna chiave richiesta. Debounce 500ms per non interrogare ad ogni tasto.
+const CAP_API_CARICO = 'https://comuni-ita.nicolorebaioli.dev/comuni';
+let capCaricoTimer = null;
+function autocompilaCittaCarico(prefix) {
+  const capInp = document.getElementById('ins-cap-' + prefix);
+  const cittaInp = document.getElementById('ins-citta-' + prefix);
+  const cap = capInp.value.trim();
+  clearTimeout(capCaricoTimer);
+  if (cap.length !== 5 || isNaN(cap)) return;
+  capCaricoTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`${CAP_API_CARICO}?cap=${cap}&fields=nome&pagesize=5`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        // Più comuni possono condividere lo stesso CAP: prendiamo il primo,
+        // l'utente può sempre correggere a mano se non è quello giusto.
+        cittaInp.value = data[0].nome;
+      }
+    } catch (e) {
+      console.error('Autocompletamento CAP non riuscito:', e);
+    }
   }, 500);
 }
 
