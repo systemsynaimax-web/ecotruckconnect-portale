@@ -2467,7 +2467,7 @@ async function caricaDati(email) {
     let rawCarichi = [];
     let erroreCarichi = false;
     try {
-      const r1 = await fetch('https://hook.eu1.make.com/ntu5l19xd1gu6kw5ri2bbb6soe5jyy6q');
+      const r1 = await fetch('https://hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm');
       if (!r1.ok) throw new Error(`Il webhook ha risposto con errore ${r1.status}`);
       const d1 = await r1.json();
       if (d1.carichi) {
