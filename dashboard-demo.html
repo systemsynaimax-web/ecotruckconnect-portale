@@ -422,7 +422,22 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     Il rimborso è "a un clic": lo fa il sistema, ma parte solo quando il gestore preme. Dopo un periodo di prova si può rendere automatico, con limiti anti-abuso (es. oltre 2 annullamenti al mese → torna al gestore).<br><br>
     <b>3. Portale trasportatore.</b> Nell'<a href="https://ecotruckconnect-portale.netlify.app/?preview=trasportatore" target="_blank" style="color:var(--blue);">anteprima trasportatore</a>, in Riepilogo movimenti, compare una riga "RIMBORSATO" con "€ 20 rimborsati": così vede che i soldi gli tornano.<br><br>
     <b>4. Fatturazione elettronica.</b> Pagamento Shopify → Make prende i dati fiscali già in Airtable (P.IVA, PEC, SDI) → il software di fatturazione crea la fattura → la invia allo SDI dell'Agenzia delle Entrate. Rimborso → nota di credito. La fattura si fa dall'<b>ordine Shopify</b>, non dall'estratto conto (in banca i soldi arrivano tutti insieme). SynAIMAX fattura solo i 150 € e i 20 €: il trasporto lo fattura il trasportatore all'azienda, fuori piattaforma.<br><br>
+    <div style="font-weight:700;color:#ef4444;font-size:14px;margin:6px 0 8px;">⚖️ Penalità per annullamento — PROPOSTA (❓❓❓ da decidere con Gerlando)</div>
+    <b>Cosa fanno gli altri:</b> Uber Freight lascia annullare gratis fino a 24 ore prima del ritiro; entro le 24 ore, se c'è già un trasportatore assegnato, l'azienda paga un indennizzo al trasportatore (negli USA si chiama TONU, "camion prenotato e non usato", di solito tra 150 e 300 dollari, più alto per mezzi speciali o se il camion è già sul posto). In Italia il codice civile (art. 1685) permette al mittente di annullare il trasporto, ma con l'obbligo di rimborsare le spese e i danni al trasportatore (da verificare con un legale).<br><br>
+    <b>Proposta per EcoTruckConnect:</b><br>
+    <div style="overflow-x:auto;margin:8px 0 10px;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr style="text-align:left;color:var(--muted);"><th style="padding:6px;">Quando l'azienda annulla</th><th style="padding:6px;">Penale azienda</th><th style="padding:6px;">Trasportatore</th></tr>
+      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Carico non ancora preso da nessuno</td><td style="padding:6px;color:var(--green);">Nessuna</td><td style="padding:6px;">Nessun effetto (avviso Telegram)</td></tr>
+      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Preso, più di 24 ore prima del ritiro</td><td style="padding:6px;color:var(--green);">Nessuna</td><td style="padding:6px;">Rimborso 20 €</td></tr>
+      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Preso, meno di 24 ore prima del ritiro</td><td style="padding:6px;color:var(--red);">❓❓❓ Penale piattaforma 20 € (Shopify) + indennizzo al trasportatore</td><td style="padding:6px;">Rimborso 20 € + indennizzo pagato dall'azienda</td></tr>
+      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Trasportatore già partito o sul posto</td><td style="padding:6px;color:var(--red);">❓❓❓ Come sopra + spese di viaggio documentate</td><td style="padding:6px;">Rimborso 20 € + indennizzo + spese</td></tr>
+    </table></div>
+    • <b>Recidiva:</b> 3 annullamenti tardivi in 30 giorni → account sospeso, decidono i gestori.<br>
+    • <b>Chi incassa cosa:</b> la penale di 20 € la incassa SynAIMAX su Shopify (è una vostra commissione, copre il rimborso al trasportatore). L'indennizzo del trasportatore lo paga l'azienda <b>direttamente a lui</b>, come l'importo del trasporto: SynAIMAX non gestisce soldi del trasporto (decisione dell'11/9).<br>
+    • <b>Serve un campo nuovo:</b> oggi il carico ha solo la data. Per calcolare le 24 ore serve anche l'<b>orario di ritiro</b> nel modulo "Pubblica un Carico".<br>
+    • Va scritto nei <b>Termini e Condizioni su Iubenda</b> e l'azienda lo vede nel popup prima di annullare.<br><br>
     <div style="font-weight:700;color:#f59e0b;font-size:14px;margin:6px 0 8px;">❓❓❓ Da decidere con Gerlando</div>
+    &nbsp;• ❓❓❓ <b>Penale all'azienda</b> se annulla un carico già preso a meno di 24 ore dal ritiro: sì o no? Quanto (penale piattaforma e indennizzo al trasportatore)? Soglia 24 ore o altra?<br>
     &nbsp;• ❓❓❓ Se il <b>trasportatore ci ripensa</b> dopo aver pagato 20 €: rimborso mai, sempre, o solo entro 2 ore (e almeno 24 ore prima del carico, max 2 volte al mese)?<br>
     &nbsp;• ❓❓❓ Pagamenti su Shopify e fatture: quale <b>software di fatturazione</b> usa il commercialista, e fattura per ogni pagamento o riepilogo mensile?<br>
     &nbsp;• ❓❓❓ Va bene che il rimborso lo confermi sempre un gestore, o preferisce subito l'automatico?<br>
@@ -1470,8 +1485,8 @@ async function aggiornaOra() {
 
 /* ===== DEMO: ANNULLAMENTI, RIMBORSI, FATTURAZIONE (tutto finto, nessuna chiamata) ===== */
 const DEMO_ANNULLAMENTI = [
-  { id:'ann-1', azienda:'Trasporti Belfiore Srl (DEMO)', tratta:'Canicattì → Trapani', ordine:'ORD-DEMO-003', trasportatore:'Giuseppe Lo Bue (DEMO)', shopify:'#1042', motivo:'Il cliente finale ha rinviato la consegna di un mese.', annullamentiMese:1, esito:null },
-  { id:'ann-2', azienda:'Eco Recuperi Sicilia (DEMO)', tratta:'Licata → Siracusa', ordine:'ORD-DEMO-004', trasportatore:'Marco Russo (DEMO)', shopify:'#1045', motivo:'Materiale non più disponibile in magazzino.', annullamentiMese:3, esito:null }
+  { id:'ann-1', azienda:'Trasporti Belfiore Srl (DEMO)', tratta:'Canicattì → Trapani', ordine:'ORD-DEMO-003', trasportatore:'Giuseppe Lo Bue (DEMO)', shopify:'#1042', motivo:'Il cliente finale ha rinviato la consegna di un mese.', annullamentiMese:1, oreAlRitiro:72, esito:null },
+  { id:'ann-2', azienda:'Eco Recuperi Sicilia (DEMO)', tratta:'Licata → Siracusa', ordine:'ORD-DEMO-004', trasportatore:'Marco Russo (DEMO)', shopify:'#1045', motivo:'Materiale non più disponibile in magazzino.', annullamentiMese:3, oreAlRitiro:6, esito:null }
 ];
 const DEMO_FATTURE = [
   { num:'2026/0101', data:'20/09/2026', cliente:'Marco Russo (DEMO)', piva:'00000000000', desc:'Iscrizione annuale EcoTruckConnect', importo:150, tipo:'Fattura', sdi:'Consegnata' },
@@ -1498,6 +1513,9 @@ function renderDemoAnnullamenti() {
       <div style="font-size:12px;color:var(--muted);margin-top:4px;">Richiesta da <b style="color:var(--text);">${a.azienda}</b>${allarme}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px;">Trasportatore che l'aveva preso: <b style="color:var(--text);">${a.trasportatore}</b> (ha pagato 20 €)</div>
       <div style="font-size:12px;margin-top:6px;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">Motivo: ${a.motivo}</div>
+      ${a.oreAlRitiro >= 24
+        ? `<div style="font-size:12px;margin-top:6px;color:var(--green);">🕒 Annullato ${a.oreAlRitiro} ore prima del ritiro → <b>nessuna penale</b> per l'azienda</div>`
+        : `<div style="font-size:12px;margin-top:6px;color:var(--red);">🕒 Annullato solo ${a.oreAlRitiro} ore prima del ritiro → <b>penale per l'azienda</b> (proposta, vedi sotto ❓❓❓)</div>`}
       ${esito}
     </div>`;
   }).join('');
@@ -1524,6 +1542,11 @@ function demoEsitoAnnullamento(id, tipo) {
       'Telegram a ' + a.trasportatore + ': "Il carico ' + a.tratta + ' è stato annullato dall\'azienda. Ti abbiamo rimborsato 20 €."',
       'Campanellina azienda: "Annullamento approvato"',
       'Fatturazione: creata ' + numNota + ' e inviata allo SDI (vedi sotto)',
+      ...(a.oreAlRitiro < 24 ? [
+        'PENALE (proposta): annullato a meno di 24 ore dal ritiro → all\'azienda arriva il link Shopify per pagare la penale piattaforma di 20 € (copre il rimborso al trasportatore)',
+        'PENALE (proposta): nel Report pagamenti dell\'azienda compare l\'indennizzo da pagare direttamente al trasportatore (importo da decidere)',
+        'Il contatore "annullamenti tardivi" dell\'azienda sale: al 3° in 30 giorni l\'account viene sospeso e decidono i gestori'
+      ] : []),
       'Registro attività: nuova riga con data e ora'
     ]);
   } else if (tipo === 'senza') {
