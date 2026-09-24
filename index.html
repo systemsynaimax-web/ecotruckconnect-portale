@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoTruckConnect — Il Tuo Portale</title>
 <script>
+/* SCUDO ANTEPRIMA (24/9/2026) — con ?preview=... NESSUNA chiamata reale parte:
+   niente Make, niente form Netlify, niente checkout Shopify. Solo dati finti. */
+(function(){
+  var pv = new URLSearchParams(window.location.search).get('preview');
+  if (pv !== 'trasportatore' && pv !== 'azienda') return;
+  window.__ANTEPRIMA_SCUDO = true;
+  var fetchOriginale = window.fetch.bind(window);
+  window.fetch = function(url, opts){
+    var u = String(url || '');
+    if (u.indexOf('comuni-ita.nicolorebaioli.dev') !== -1) return fetchOriginale(url, opts); // solo ricerca città da CAP (pubblica, nessun dato nostro)
+    var finto = { ok:true, anteprima:true, trovato:true, stato:'DISPONIBILE', reply:'Questa è un\'anteprima con dati finti: il bot non è collegato.' };
+    return Promise.resolve(new Response(JSON.stringify(finto), { status:200, headers:{ 'Content-Type':'application/json' } }));
+  };
+  var openOriginale = window.open.bind(window);
+  window.open = function(url){
+    if (String(url||'').indexOf('shop.synaimaxpro.com') !== -1) { alert('🎭 ANTEPRIMA — qui si aprirebbe il pagamento Shopify. In anteprima non parte nessun pagamento.'); return null; }
+    return openOriginale.apply(window, arguments);
+  };
+})();
 window.__rawAuthHash = window.location.hash;
 if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || window.__rawAuthHash.includes('invite_token') || window.__rawAuthHash.includes('confirmation_token'))) {
   history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -356,7 +375,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       <div class="login-visual-content">
         <div class="lv-badge">Sistema Privato Certificato</div>
         <h1 class="lv-title">Entra nel tuo<br><span style="color:var(--blue);">Portale Personale.</span></h1>
-        <p class="lv-sub">Accedi al tuo spazio personale EcoTruckConnect. Carichi, calendario, storico e fatture — tutto in un posto, tutto privato.</p>
+        <p class="lv-sub">Accedi al tuo spazio personale EcoTruckConnect. Carichi, calendario, storico e riepiloghi — tutto in un posto, tutto privato.</p>
       </div>
     </div>
     <div class="login-form-side">
@@ -440,7 +459,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         </button>
         <div id="dash-nav-panel" style="display:none;position:absolute;top:115%;right:0;min-width:210px;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px;z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
           <div class="dash-nav-voce" onclick="apriDashSezione('dati')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">✏️ Modifica i miei dati</div>
-          <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Le mie fatture</div>
+          <div class="dash-nav-voce" onclick="apriDashSezione('fatture')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🧾 Riepilogo movimenti</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('report')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">📈 I miei report</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('notifiche')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔔 Notifiche</div>
           <div class="dash-nav-voce" onclick="apriDashSezione('sicurezza')" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">🔒 Sicurezza</div>
@@ -457,7 +476,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
     <div class="hero-content">
       <div class="hero-pill">IL TUO SPAZIO PERSONALE</div>
       <h1>Benvenuto nel tuo<br><span>Spazio Personale.</span></h1>
-      <p id="hero-desc-testo">Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e fatture: tutto organizzato, tutto privato.</p>
+      <p id="hero-desc-testo">Questo è il tuo angolo privato, creato solo per te. <b>La prima cosa da fare:</b> inserisci i tuoi mezzi e le tue autorizzazioni nel riquadro qui sotto e salva — è così che il sistema ti fa trovare dalle aziende giuste, al momento giusto, con il carico adatto al mezzo che hai. Una volta salvato, il calendario più in basso ti mostra in tempo reale tutti i carichi compatibili con il tuo profilo. Carichi, storico e riepiloghi: tutto organizzato, tutto privato.</p>
       <div class="hero-stats" id="hero-stats-wrap">
         <div>
           <div class="hs-val" id="st-disp">—</div>
@@ -558,7 +577,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
       <div id="dash-sezione-fatture" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-          <span>🧾 Le mie fatture</span>
+          <span>🧾 Riepilogo movimenti</span>
           <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <div style="position:relative;">
               <button class="btn-cap" onclick="event.stopPropagation();toggleFiltroFatture('dash')">📅 <span id="filtro-fatture-label-dash">Tutti</span> ▾</button>
@@ -577,7 +596,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         </h4>
         <div class="table-box" style="margin-bottom:0;">
           <table>
-            <thead><tr id="dash-fatture-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
+            <thead><tr id="dash-fatture-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th></tr></thead>
             <tbody id="dash-fatture-body"><tr><td colspan="4" class="empty">Caricamento...</td></tr></tbody>
           </table>
         </div>
@@ -756,6 +775,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
 
       <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica Carico</button>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;">✏️ Hai sbagliato qualcosa dopo la pubblicazione? Per <b>modificare o annullare</b> un carico già pubblicato scrivici dal modulo <b>"Scrivici"</b> in fondo alla pagina, indicando il <b>numero ordine</b>: lo sistemiamo noi e avvisiamo i trasportatori.</div>
       <div class="ins-ok" id="ins-ok">✅ Carico pubblicato! I trasportatori nella zona riceveranno la notifica.</div>
       <div class="ins-err" id="ins-err"></div>
     </div>
@@ -802,8 +822,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
           <div class="card-num" id="c-tot">—</div><div class="card-sub">carichi totali</div>
         </div>
         <div class="card">
-          <div class="card-icon">🧾</div><h3>Le Tue Fatture</h3>
-          <p>Ogni accaparramento registrato. Pronto quando ti serve per la contabilità.</p>
+          <div class="card-icon">🧾</div><h3>Riepilogo Movimenti</h3>
+          <p>Ogni accaparramento registrato, con data e commissione pagata. È un riepilogo: non sostituisce la fattura fiscale.</p>
           <div class="card-num green" id="c-guad">—</div><div class="card-sub">guadagnato questo mese</div>
         </div>
       </div>
@@ -855,7 +875,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
       <div class="table-box">
         <table>
-          <thead><tr id="storico-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th></tr></thead>
+          <thead><tr id="storico-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th></tr></thead>
           <tbody id="storico-body"><tr><td colspan="4" class="empty">Caricamento storico...</td></tr></tbody>
         </table>
       </div>
@@ -863,7 +883,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div class="assist-txt">
           <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
           <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
-          <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo le fatture?</p>
+          <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo il riepilogo dei miei movimenti?</p>
           <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
         </div>
         <div>
@@ -1908,7 +1928,7 @@ function renderCampanellino() {
     return `<div class="notif-bell-item">
       <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
       <div style="color:var(--muted);margin-bottom:6px;">${testoStato} da <b>${chi}</b> · ${data}</div>
-      <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi fattura/report</button>
+      <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>
     </div>`;
   }).join('');
 }
@@ -2671,11 +2691,13 @@ function renderTabelleFatture() {
     if (elAgg) elAgg.textContent = formatDataOra();
     renderCampanellino();
     renderReportTrasportatori();
+    renderCalendarioMensile();
+    renderCalendarioMensile('cal-grid-dash', 'cal-nav-title-dash');
     return;
   }
 
   ultimeCandidature = filtraPerPeriodo(ultimeCandidatureRaw, 'data_candidatura', filtroFatturePeriodoGiorni);
-  const headerHtml = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Importo</th>';
+  const headerHtml = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th>';
   const bodyHtml = !ultimeCandidature.length
     ? `<tr><td colspan="4" class="empty">Nessun carico in questo periodo.${ultimeCandidatureRaw.length === 0 ? '<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Il tuo storico apparira\' qui non appena accaparri il primo carico.</span>' : ''}</td></tr>`
     : ultimeCandidature
@@ -2857,7 +2879,7 @@ function scaricaStoricoPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   doc.setFontSize(15);
-  doc.text('EcoTruckConnect — Le mie fatture', 14, 18);
+  doc.text('EcoTruckConnect — Riepilogo movimenti (non è una fattura fiscale)', 14, 18);
   doc.setFontSize(9);
   doc.setTextColor(120);
   doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
@@ -2875,7 +2897,7 @@ function scaricaStoricoPDF() {
     styles: { fontSize: 9, cellPadding: 4 },
     headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' }
   });
-  doc.save(`fatture_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`);
+  doc.save(`riepilogo_movimenti_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 function scaricaFattureAziendaCSV() {
@@ -3045,7 +3067,9 @@ function renderCalendarioMensile(gridId, titleId) {
   for (let giorno = 1; giorno <= ultimoGiorno.getDate(); giorno++) {
     const dataCella = new Date(anno, mese, giorno);
     const dataStr = dataLocaleYMD(dataCella);
-    const carichiGiorno = (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
+    const carichiGiorno = tipoUtente === 'azienda'
+      ? (carichiPubblicatiAzienda || []).filter(c => (c.fields.data_consegna || c.fields.data_pubblicazione || '').slice(0,10) === dataStr)
+      : (ultimiCarichi || []).filter(c => (c.fields.data_consegna || '').slice(0,10) === dataStr);
     const isOggi = dataStr === oggiStr ? 'cal-cell-oggi' : '';
     let badgesHtml = '';
     if (carichiGiorno.length > 0) {
