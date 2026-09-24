@@ -1688,7 +1688,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
       ];
       ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'PRESO' } }
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'PRESO' } },
+        { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', stato:'RIMBORSATO' } }
       ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
@@ -1710,8 +1711,9 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
-        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania' } }
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+172800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
+        { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg', note:'Ritiro dalle 8 alle 12', data_consegna:new Date(Date.now()+345600000).toISOString() } },
+        { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } }
       ];
       renderCalendarioMensile();
       aggiornaStatsAzienda();
@@ -2680,7 +2682,8 @@ function renderTabelleFatture() {
           .map(c => {
             const f = c.fields;
             const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-            return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button></td></tr>`;
+            const azioniAnteprima = window.__ANTEPRIMA_SCUDO ? pulsantiAnteprimaCarico(c) : '';
+            return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td style="white-space:nowrap;"><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button>${azioniAnteprima}</td></tr>`;
           }).join('');
     ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
     ['dash-fatture-body', 'storico-body'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = bodyHtml; });
@@ -2710,7 +2713,11 @@ function renderTabelleFatture() {
             ? 's-ok'
             : stato.toLowerCase().includes('attesa') || stato.toLowerCase().includes('corso')
             ? 's-wait' : 's-no';
-          return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td><span class="badge-stato ${cls}">${stato}</span></td><td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td></tr>`;
+          const rimborsato = stato.toUpperCase() === 'RIMBORSATO';
+          const cellaImporto = rimborsato
+            ? `<td style="color:var(--amber);font-weight:500;">€ ${PREZZO} rimborsati</td>`
+            : `<td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>`;
+          return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td><span class="badge-stato ${rimborsato ? 's-wait' : cls}">${stato}</span></td>${cellaImporto}</tr>`;
         }).join('');
   ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
   ['dash-fatture-body', 'storico-body'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = bodyHtml; });
@@ -2946,6 +2953,125 @@ function scaricaFattureAziendaPDF() {
     headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: 'bold' }
   });
   doc.save(`carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* ==================================================
+   ANTEPRIMA — MODIFICA / ELIMINA / RICHIEDI ANNULLAMENTO (25/9/2026)
+   Visibili SOLO con ?preview=azienda (window.__ANTEPRIMA_SCUDO).
+   Nessuna chiamata a Make/Airtable: modificano solo i dati finti
+   in memoria, per far vedere a Gerlando come funzionerà.
+   ================================================== */
+function pulsantiAnteprimaCarico(c) {
+  const stato = (c.fields.stato || '').toUpperCase();
+  const st = 'padding:5px 10px;font-size:11px;margin-left:6px;';
+  if (stato === 'DISPONIBILE') {
+    return `<button class="btn-cap" style="${st}" onclick="anteprimaModificaCarico('${c.id}')">✏️ Modifica</button><button class="btn-cap" style="${st}background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#ef4444;" onclick="anteprimaEliminaCarico('${c.id}')">🗑️ Elimina</button>`;
+  }
+  if (stato === 'IN PAGAMENTO') {
+    return `<button class="btn-cap" style="${st}opacity:0.45;cursor:not-allowed;" title="Un trasportatore sta pagando: riprova tra 5 minuti" onclick="alert('⏳ Un trasportatore sta pagando proprio ora questo carico. Modifica ed elimina sono bloccati per 5 minuti.')">🔒 Bloccato</button>`;
+  }
+  if (stato === 'PRESO') {
+    return `<button class="btn-cap" style="${st}background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b;" onclick="anteprimaRichiediAnnullamento('${c.id}')">↩️ Richiedi annullamento</button>`;
+  }
+  if (stato === 'ANNULLAMENTO RICHIESTO') return `<span style="font-size:11px;color:#f59e0b;margin-left:6px;">⏳ In attesa dei gestori</span>`;
+  if (stato === 'ANNULLATO') return `<span style="font-size:11px;color:var(--muted);margin-left:6px;">Annullato</span>`;
+  return '';
+}
+
+function anteprimaFinestra(titolo, corpoHtml, testoConferma, onConferma) {
+  const vecchia = document.getElementById('anteprima-finestra'); if (vecchia) vecchia.remove();
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="anteprima-finestra" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#0e1623;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:24px;max-width:460px;width:100%;color:#f1f5f9;">
+        <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;margin-bottom:14px;text-align:center;">🎭 ANTEPRIMA — nessun dato reale viene modificato</div>
+        <h3 style="font-family:var(--font-h);font-size:17px;margin-bottom:12px;">${titolo}</h3>
+        <div style="font-size:13px;line-height:1.6;">${corpoHtml}</div>
+        <div id="anteprima-finestra-err" style="color:#ef4444;font-size:12px;margin-top:8px;display:none;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+          <button class="btn-cap" style="background:rgba(255,255,255,0.08);" onclick="document.getElementById('anteprima-finestra').remove()">Annulla</button>
+          <button class="btn-cap" id="anteprima-finestra-ok">${testoConferma}</button>
+        </div>
+      </div>
+    </div>`);
+  document.getElementById('anteprima-finestra-ok').onclick = () => {
+    const errore = onConferma();
+    if (errore) { const e = document.getElementById('anteprima-finestra-err'); e.textContent = errore; e.style.display = 'block'; return; }
+    document.getElementById('anteprima-finestra').remove();
+  };
+}
+
+function anteprimaAvviso(righe) {
+  alert('🎭 ANTEPRIMA — nella versione reale succederebbe questo:\n\n• ' + righe.join('\n• '));
+}
+
+function anteprimaModificaCarico(id) {
+  const c = carichiPubblicatiAzienda.find(x => x.id === id); if (!c) return;
+  const f = c.fields;
+  const campo = (lab, idc, val, tipo) => `<label style="display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;">${lab}</label><input id="${idc}" type="${tipo||'text'}" value="${val||''}" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;">`;
+  anteprimaFinestra('✏️ Modifica carico ' + (f.numero_ordine||''),
+    `<div style="color:var(--muted);">${f.citta_partenza} → ${f.citta_arrivo}</div>` +
+    campo('Data del carico', 'mod-data', (f.data_consegna||'').slice(0,10), 'date') +
+    campo('Importo pattuito (€)', 'mod-importo', f.importo_pattuito) +
+    campo('Termini di pagamento', 'mod-termini', f.termini_pagamento) +
+    campo('Note', 'mod-note', f.note),
+    '💾 Salva modifiche',
+    () => {
+      const data = document.getElementById('mod-data').value;
+      const imp = document.getElementById('mod-importo').value.trim();
+      if (!data || !imp) return 'Data e importo sono obbligatori.';
+      if (c.fields.stato.toUpperCase() !== 'DISPONIBILE') return 'Nel frattempo un trasportatore ha preso il carico: non si può più modificare.';
+      f.data_consegna = data + 'T09:00:00.000Z'; f.importo_pattuito = imp;
+      f.termini_pagamento = document.getElementById('mod-termini').value.trim();
+      f.note = document.getElementById('mod-note').value.trim();
+      renderTabelleFatture();
+      setTimeout(() => anteprimaAvviso([
+        'Il sistema ricontrolla che il carico sia ancora DISPONIBILE, poi salva le modifiche in Airtable',
+        'I trasportatori compatibili che avevano ricevuto il Telegram ricevono: "Carico ' + f.citta_partenza + ' → ' + f.citta_arrivo + ' modificato"',
+        'Nel Registro attività dei gestori resta scritto cosa è stato cambiato e quando'
+      ]), 50);
+      return null;
+    });
+}
+
+function anteprimaEliminaCarico(id) {
+  const c = carichiPubblicatiAzienda.find(x => x.id === id); if (!c) return;
+  const f = c.fields;
+  anteprimaFinestra('🗑️ Sei sicuro?',
+    `Vuoi eliminare il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> (${f.numero_ordine})?<br><br>Sparirà per tutti i trasportatori. Resterà nel tuo storico come <b>ANNULLATO</b>.`,
+    '🗑️ Sì, elimina',
+    () => {
+      if (c.fields.stato.toUpperCase() !== 'DISPONIBILE') return 'Nel frattempo un trasportatore ha preso il carico: usa "Richiedi annullamento".';
+      f.stato = 'ANNULLATO';
+      renderTabelleFatture(); aggiornaStatsAzienda();
+      setTimeout(() => anteprimaAvviso([
+        'Il sistema ricontrolla che il carico sia ancora DISPONIBILE, poi lo mette ANNULLATO in Airtable (il record non viene cancellato)',
+        'Il carico sparisce dal portale di tutti i trasportatori',
+        'Chi aveva ricevuto il Telegram riceve: "Carico ' + f.citta_partenza + ' → ' + f.citta_arrivo + ' non più disponibile"',
+        'Nessun rimborso: nessuno aveva pagato'
+      ]), 50);
+      return null;
+    });
+}
+
+function anteprimaRichiediAnnullamento(id) {
+  const c = carichiPubblicatiAzienda.find(x => x.id === id); if (!c) return;
+  const f = c.fields;
+  anteprimaFinestra('↩️ Richiedi annullamento',
+    `Il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> è già stato preso da <b>${f.bloccato_da_nome}</b>, che ha pagato 20 €.<br>La richiesta arriva ai gestori, che decidono se annullarlo e se rimborsare il trasportatore.<label style="display:block;font-size:11px;color:var(--muted);margin:12px 0 4px;">Motivo (obbligatorio)</label><textarea id="ann-motivo" rows="3" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;"></textarea>`,
+    '📨 Invia richiesta',
+    () => {
+      const motivo = document.getElementById('ann-motivo').value.trim();
+      if (motivo.length < 5) return 'Scrivi il motivo della richiesta.';
+      f.stato = 'ANNULLAMENTO RICHIESTO'; f.motivo_annullamento = motivo;
+      renderTabelleFatture();
+      setTimeout(() => anteprimaAvviso([
+        'In Airtable il carico viene segnato con la richiesta di annullamento e il motivo',
+        'Nella Dashboard dei gestori compare la richiesta con 3 pulsanti: Conferma rimborso 20 € / Annulla senza rimborso / Rifiuta',
+        'Il trasportatore ' + f.bloccato_da_nome + ' riceve il Telegram con l\'esito; se rimborsato, i 20 € tornano sulla sua carta',
+        'Tu vedi l\'esito nella campanellina 🔔'
+      ]), 50);
+      return null;
+    });
 }
 
 function duplicaCarico(recordId) {
