@@ -2999,7 +2999,7 @@ async function sendBot() {
     addMsg(reply, 'bot');
   } catch(err) {
     typing.remove();
-    addMsg('DEBUG TEMPORANEO — errore reale: ' + (err && err.message ? err.message : String(err)), 'bot');
+    addMsg('Mi dispiace, c\'è stato un problema di connessione. Riprova tra un momento.', 'bot');
   }
 }
 
