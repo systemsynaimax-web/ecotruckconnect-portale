@@ -395,6 +395,41 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
+  <div class="sec-title">🧾 Annullamenti e rimborsi — NUOVO (DEMO, da approvare con Gerlando)</div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Qui arrivano le richieste di annullamento dei carichi già PRESI (pagati 20 € dal trasportatore). Il gestore decide: rimborsa, annulla senza rimborso o rifiuta. Dati finti: prova a cliccare.</div>
+    <div id="demo-annullamenti"></div>
+    <div id="demo-annullamenti-log" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="sec-title">🏛️ Fatturazione elettronica — NUOVO (DEMO, da decidere con il commercialista)</div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Ogni pagamento Shopify (150 € iscrizione, 20 € carico) genera da solo la fattura elettronica e la invia allo SDI dell'Agenzia delle Entrate. Ogni rimborso genera una nota di credito. Dati finti.</div>
+    <div id="demo-fatture"></div>
+  </div>
+
+  <div class="sec-title">📖 Come funziona — spiegazione per Gerlando</div>
+  <div style="background:rgba(59,130,246,0.06);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;padding:22px 24px;margin-bottom:32px;font-size:13px;line-height:1.7;color:rgba(241,245,249,0.85);">
+    <div style="font-weight:700;color:var(--blue);font-size:15px;margin-bottom:10px;">Cosa ho costruito (solo in DEMO, niente di reale è stato toccato)</div>
+    <b>1. Portale azienda — Modifica ed Elimina carico.</b> Apri l'<a href="https://ecotruckconnect-portale.netlify.app/?preview=azienda" target="_blank" style="color:var(--blue);">anteprima azienda</a> → Dashboard ▾ → Riepilogo movimenti. Accanto a ogni carico ci sono pulsanti diversi secondo lo stato:<br>
+    &nbsp;• <b>DISPONIBILE</b> (nessuno l'ha preso): ✏️ Modifica e 🗑️ Elimina, con popup "Sei sicuro?". Eliminare non cancella: il carico diventa ANNULLATO e resta nello storico. I trasportatori che avevano ricevuto il Telegram vengono avvisati.<br>
+    &nbsp;• <b>IN PAGAMENTO</b> (un trasportatore sta pagando): pulsanti bloccati per 5 minuti.<br>
+    &nbsp;• <b>PRESO</b> (il trasportatore ha pagato 20 €): niente Elimina, solo "Richiedi annullamento" con motivo obbligatorio. La richiesta arriva qui sopra, in "Annullamenti e rimborsi".<br><br>
+    <b>2. Dashboard gestori — Annullamenti e rimborsi.</b> Per ogni richiesta il gestore vede azienda, carico, trasportatore, motivo, ordine Shopify e quante volte quell'azienda ha già annullato. Tre pulsanti:<br>
+    &nbsp;• <b>💶 Conferma rimborso 20 €</b> → Make chiede a Shopify di rimborsare l'ordine → i soldi tornano sulla carta del trasportatore → Telegram "rimborso eseguito" → nota di credito automatica.<br>
+    &nbsp;• <b>Annulla senza rimborso</b> → carico ANNULLATO, Telegram al trasportatore, nessun soldo restituito.<br>
+    &nbsp;• <b>Rifiuta</b> → il carico resta PRESO, l'azienda lo vede nella sua campanellina.<br>
+    Il rimborso è "a un clic": lo fa il sistema, ma parte solo quando il gestore preme. Dopo un periodo di prova si può rendere automatico, con limiti anti-abuso (es. oltre 2 annullamenti al mese → torna al gestore).<br><br>
+    <b>3. Portale trasportatore.</b> Nell'<a href="https://ecotruckconnect-portale.netlify.app/?preview=trasportatore" target="_blank" style="color:var(--blue);">anteprima trasportatore</a>, in Riepilogo movimenti, compare una riga "RIMBORSATO" con "€ 20 rimborsati": così vede che i soldi gli tornano.<br><br>
+    <b>4. Fatturazione elettronica.</b> Pagamento Shopify → Make prende i dati fiscali già in Airtable (P.IVA, PEC, SDI) → il software di fatturazione crea la fattura → la invia allo SDI dell'Agenzia delle Entrate. Rimborso → nota di credito. La fattura si fa dall'<b>ordine Shopify</b>, non dall'estratto conto (in banca i soldi arrivano tutti insieme). SynAIMAX fattura solo i 150 € e i 20 €: il trasporto lo fattura il trasportatore all'azienda, fuori piattaforma.<br><br>
+    <div style="font-weight:700;color:#f59e0b;font-size:14px;margin:6px 0 8px;">❓❓❓ Da decidere con Gerlando</div>
+    &nbsp;• ❓❓❓ Se il <b>trasportatore ci ripensa</b> dopo aver pagato 20 €: rimborso mai, sempre, o solo entro 2 ore (e almeno 24 ore prima del carico, max 2 volte al mese)?<br>
+    &nbsp;• ❓❓❓ Pagamenti su Shopify e fatture: quale <b>software di fatturazione</b> usa il commercialista, e fattura per ogni pagamento o riepilogo mensile?<br>
+    &nbsp;• ❓❓❓ Va bene che il rimborso lo confermi sempre un gestore, o preferisce subito l'automatico?<br>
+    &nbsp;• ❓❓❓ Iscrizione 150 €: non rimborsabile dopo l'attivazione, salvo errore nostro? (da scrivere nei Termini Iubenda)<br><br>
+    <div style="font-size:12px;color:var(--muted);">Se a Gerlando va bene, si porta tutto nella Dashboard REALE e nel portale vero, collegato ad Airtable, Make e Shopify.</div>
+  </div>
+
   <div class="sec-title">💡 Idee future — NON attive (solo proposte)</div>
   <div style="background:rgba(139,92,246,0.08);border:1.5px dashed rgba(139,92,246,0.4);border-radius:14px;padding:20px 22px;margin-bottom:16px;">
     <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Suggerimento di Claude · 14/09/2026</div>
@@ -1432,6 +1467,106 @@ async function aggiornaOra() {
   btn.textContent = '✅ Aggiornato';
   setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
 }
+
+/* ===== DEMO: ANNULLAMENTI, RIMBORSI, FATTURAZIONE (tutto finto, nessuna chiamata) ===== */
+const DEMO_ANNULLAMENTI = [
+  { id:'ann-1', azienda:'Trasporti Belfiore Srl (DEMO)', tratta:'Canicattì → Trapani', ordine:'ORD-DEMO-003', trasportatore:'Giuseppe Lo Bue (DEMO)', shopify:'#1042', motivo:'Il cliente finale ha rinviato la consegna di un mese.', annullamentiMese:1, esito:null },
+  { id:'ann-2', azienda:'Eco Recuperi Sicilia (DEMO)', tratta:'Licata → Siracusa', ordine:'ORD-DEMO-004', trasportatore:'Marco Russo (DEMO)', shopify:'#1045', motivo:'Materiale non più disponibile in magazzino.', annullamentiMese:3, esito:null }
+];
+const DEMO_FATTURE = [
+  { num:'2026/0101', data:'20/09/2026', cliente:'Marco Russo (DEMO)', piva:'00000000000', desc:'Iscrizione annuale EcoTruckConnect', importo:150, tipo:'Fattura', sdi:'Consegnata' },
+  { num:'2026/0102', data:'21/09/2026', cliente:'Edil Sud Srl (DEMO)', piva:'00000000002', desc:'Iscrizione annuale EcoTruckConnect', importo:150, tipo:'Fattura', sdi:'Consegnata' },
+  { num:'2026/0103', data:'23/09/2026', cliente:'Giuseppe Lo Bue (DEMO)', piva:'00000000003', desc:'Commissione carico ORD-DEMO-003', importo:20, tipo:'Fattura', sdi:'Consegnata' },
+  { num:'2026/0104', data:'24/09/2026', cliente:'Marco Russo (DEMO)', piva:'00000000000', desc:'Commissione carico ORD-DEMO-004', importo:20, tipo:'Fattura', sdi:'Inviata, in attesa' }
+];
+let demoNumNota = 1;
+
+function renderDemoAnnullamenti() {
+  const el = document.getElementById('demo-annullamenti');
+  if (!el) return;
+  el.innerHTML = DEMO_ANNULLAMENTI.map(a => {
+    const allarme = a.annullamentiMese >= 3 ? `<span style="color:var(--red);font-weight:700;"> ⚠️ ${a.annullamentiMese} annullamenti questo mese — controllare</span>` : `<span style="color:var(--muted);"> · ${a.annullamentiMese} annullamento questo mese</span>`;
+    const esito = a.esito
+      ? `<div style="margin-top:10px;font-weight:700;color:${a.esito.colore};">${a.esito.testo}</div>`
+      : `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button onclick="demoEsitoAnnullamento('${a.id}','rimborso')" style="background:var(--green);border:none;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">💶 Conferma rimborso 20 €</button>
+          <button onclick="demoEsitoAnnullamento('${a.id}','senza')" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:var(--amber);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">Annulla senza rimborso</button>
+          <button onclick="demoEsitoAnnullamento('${a.id}','rifiuta')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);color:var(--red);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">Rifiuta</button>
+        </div>`;
+    return `<div style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+      <div style="font-weight:700;">${a.tratta} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${a.ordine} · ordine Shopify ${a.shopify}</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Richiesta da <b style="color:var(--text);">${a.azienda}</b>${allarme}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Trasportatore che l'aveva preso: <b style="color:var(--text);">${a.trasportatore}</b> (ha pagato 20 €)</div>
+      <div style="font-size:12px;margin-top:6px;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">Motivo: ${a.motivo}</div>
+      ${esito}
+    </div>`;
+  }).join('');
+}
+
+function demoLog(righe) {
+  const el = document.getElementById('demo-annullamenti-log');
+  el.innerHTML = `<div style="border:1px dashed rgba(34,197,94,0.4);background:rgba(34,197,94,0.06);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.7;">
+    <div style="font-weight:700;margin-bottom:4px;">🎭 Cosa succederebbe davvero (simulazione):</div>${righe.map(r => '• ' + r).join('<br>')}</div>`;
+}
+
+function demoEsitoAnnullamento(id, tipo) {
+  const a = DEMO_ANNULLAMENTI.find(x => x.id === id);
+  if (!a || a.esito) return;
+  if (tipo === 'rimborso') {
+    if (!confirm('🎭 DEMO — Confermi il rimborso di 20 € a ' + a.trasportatore + '?\n\nNella versione reale parte il rimborso vero su Shopify.')) return;
+    a.esito = { testo:'✅ Carico ANNULLATO — 20 € rimborsati sulla carta del trasportatore', colore:'var(--green)' };
+    const numNota = 'NC 2026/000' + (demoNumNota++);
+    DEMO_FATTURE.push({ num:numNota, data:new Date().toLocaleDateString('it-IT'), cliente:a.trasportatore, piva:'—', desc:'Nota di credito — rimborso ' + a.ordine, importo:-20, tipo:'Nota di credito', sdi:'Inviata, in attesa' });
+    renderDemoFatture();
+    demoLog([
+      'Airtable: carico ' + a.ordine + ' → stato ANNULLATO, esito_rimborso = Rimborsato',
+      'Make → Shopify: rimborso dell\'ordine ' + a.shopify + ' (20 €) sul metodo di pagamento del trasportatore',
+      'Telegram a ' + a.trasportatore + ': "Il carico ' + a.tratta + ' è stato annullato dall\'azienda. Ti abbiamo rimborsato 20 €."',
+      'Campanellina azienda: "Annullamento approvato"',
+      'Fatturazione: creata ' + numNota + ' e inviata allo SDI (vedi sotto)',
+      'Registro attività: nuova riga con data e ora'
+    ]);
+  } else if (tipo === 'senza') {
+    if (!confirm('🎭 DEMO — Annullare il carico SENZA rimborsare il trasportatore?')) return;
+    a.esito = { testo:'⚠️ Carico ANNULLATO — nessun rimborso', colore:'var(--amber)' };
+    demoLog([
+      'Airtable: carico ' + a.ordine + ' → stato ANNULLATO, esito_rimborso = Nessun rimborso',
+      'Telegram a ' + a.trasportatore + ': "Il carico ' + a.tratta + ' è stato annullato. Per informazioni scrivici dal portale."',
+      'Campanellina azienda: "Annullamento approvato"',
+      'Nessun movimento su Shopify, nessuna nota di credito'
+    ]);
+  } else {
+    a.esito = { testo:'❌ Richiesta rifiutata — il carico resta PRESO', colore:'var(--red)' };
+    demoLog([
+      'Airtable: richiesta_annullamento tolta, il carico resta PRESO',
+      'Campanellina azienda: "Richiesta di annullamento non accettata"',
+      'Nessun messaggio al trasportatore, nessun movimento di soldi'
+    ]);
+  }
+  renderDemoAnnullamenti();
+}
+
+function renderDemoFatture() {
+  const el = document.getElementById('demo-fatture');
+  if (!el) return;
+  el.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="text-align:left;color:var(--muted);">
+      <th style="padding:8px;">Numero</th><th style="padding:8px;">Data</th><th style="padding:8px;">Tipo</th><th style="padding:8px;">Cliente</th><th style="padding:8px;">Descrizione</th><th style="padding:8px;">Importo</th><th style="padding:8px;">SDI</th>
+    </tr></thead><tbody>` +
+    DEMO_FATTURE.map(f => `<tr style="border-top:1px solid var(--border);">
+      <td style="padding:8px;font-family:monospace;">${f.num}</td>
+      <td style="padding:8px;">${f.data}</td>
+      <td style="padding:8px;color:${f.tipo === 'Nota di credito' ? 'var(--amber)' : 'var(--text)'};">${f.tipo}</td>
+      <td style="padding:8px;">${f.cliente}</td>
+      <td style="padding:8px;color:var(--muted);">${f.desc}</td>
+      <td style="padding:8px;font-weight:700;color:${f.importo < 0 ? 'var(--red)' : 'var(--green)'};">${f.importo < 0 ? '− € ' + Math.abs(f.importo) + ',00' : '€ ' + f.importo + ',00'}</td>
+      <td style="padding:8px;">${f.sdi === 'Consegnata' ? '✅ Consegnata' : '⏳ ' + f.sdi}</td>
+    </tr>`).join('') + `</tbody></table></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">IVA, numerazione e software da confermare con il commercialista. ❓❓❓</div>`;
+}
+
+renderDemoAnnullamenti();
+renderDemoFatture();
 </script>
 </body>
 </html>
