@@ -1711,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+172800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
         { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg', note:'Ritiro dalle 8 alle 12', data_consegna:new Date(Date.now()+345600000).toISOString() } },
         { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } }
       ];
@@ -3037,7 +3037,7 @@ function anteprimaEliminaCarico(id) {
   const c = carichiPubblicatiAzienda.find(x => x.id === id); if (!c) return;
   const f = c.fields;
   anteprimaFinestra('🗑️ Sei sicuro?',
-    `Vuoi eliminare il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> (${f.numero_ordine})?<br><br>Sparirà per tutti i trasportatori. Resterà nel tuo storico come <b>ANNULLATO</b>.`,
+    `Vuoi eliminare il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> (${f.numero_ordine})?<br><br>Sparirà per tutti i trasportatori. Resterà nel tuo storico come <b>ANNULLATO</b>.<div style="margin-top:10px;color:#22c55e;font-size:12px;">✅ Nessuna penale: nessun trasportatore ha ancora preso questo carico.</div>`,
     '🗑️ Sì, elimina',
     () => {
       if (c.fields.stato.toUpperCase() !== 'DISPONIBILE') return 'Nel frattempo un trasportatore ha preso il carico: usa "Richiedi annullamento".';
@@ -3056,8 +3056,12 @@ function anteprimaEliminaCarico(id) {
 function anteprimaRichiediAnnullamento(id) {
   const c = carichiPubblicatiAzienda.find(x => x.id === id); if (!c) return;
   const f = c.fields;
+  const oreAlRitiro = f.data_consegna ? Math.round((new Date(f.data_consegna) - Date.now()) / 3600000) : null;
+  const avvisoPenale = (oreAlRitiro !== null && oreAlRitiro < 24)
+    ? `<div style="margin-top:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);color:#ef4444;font-size:12px;padding:8px 10px;border-radius:8px;">⚠️ Mancano circa <b>${Math.max(oreAlRitiro,0)} ore</b> al ritiro. Annullando a meno di 24 ore da un carico già preso <b>rischi una penale</b> (importo da definire nei Termini).</div>`
+    : `<div style="margin-top:10px;color:#22c55e;font-size:12px;">✅ Mancano più di 24 ore al ritiro: nessuna penale.</div>`;
   anteprimaFinestra('↩️ Richiedi annullamento',
-    `Il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> è già stato preso da <b>${f.bloccato_da_nome}</b>, che ha pagato 20 €.<br>La richiesta arriva ai gestori, che decidono se annullarlo e se rimborsare il trasportatore.<label style="display:block;font-size:11px;color:var(--muted);margin:12px 0 4px;">Motivo (obbligatorio)</label><textarea id="ann-motivo" rows="3" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;"></textarea>`,
+    `Il carico <b>${f.citta_partenza} → ${f.citta_arrivo}</b> è già stato preso da <b>${f.bloccato_da_nome}</b>, che ha pagato 20 €.<br>La richiesta arriva ai gestori, che decidono se annullarlo e se rimborsare il trasportatore.${avvisoPenale}<label style="display:block;font-size:11px;color:var(--muted);margin:12px 0 4px;">Motivo (obbligatorio)</label><textarea id="ann-motivo" rows="3" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;"></textarea>`,
     '📨 Invia richiesta',
     () => {
       const motivo = document.getElementById('ann-motivo').value.trim();
