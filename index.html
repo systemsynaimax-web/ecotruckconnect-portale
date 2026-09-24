@@ -1356,13 +1356,13 @@ function precompilaDashDati() {
   document.getElementById('dd-cognome').value = f.cognome || '';
   document.getElementById('dd-ragione-sociale').value = f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '';
   document.getElementById('dd-cf').value = f.codice_fiscale || '';
-  document.getElementById('dd-piva').value = f.partita_iva || '';
+  document.getElementById('dd-piva').value = f.partita_iva || f.p_iva || '';
   document.getElementById('dd-pec').value = f.pec || '';
   document.getElementById('dd-sdi').value = f.codice_sdi || '';
-  document.getElementById('dd-cciaa').value = f.camera_commerciale || '';
+  document.getElementById('dd-cciaa').value = f.camera_commerciale || f.camera_commercio || '';
   document.getElementById('dd-rea').value = f.numero_rea || '';
   document.getElementById('dd-admin').value = f.nome_amministratore || '';
-  document.getElementById('dd-via').value = f.via || '';
+  document.getElementById('dd-via').value = f.via || f.indirizzo || '';
   document.getElementById('dd-cap').value = f.cap || '';
   document.getElementById('dd-citta').value = f.citta || '';
   document.getElementById('dd-provincia').value = f.provincia || '';
@@ -1474,7 +1474,7 @@ function aggiornaDashReport() {
   const cands = ultimeCandidature || [];
   const completate = cands.filter(c => {
     const s = (c.fields.stato || '').toLowerCase();
-    return s.includes('complet') || s.includes('accett') || s.includes('pagat');
+    return s.includes('complet') || s.includes('accett') || s.includes('pagat') || s === 'preso';
   });
   const now = new Date();
   const questoMese = completate.filter(c => {
@@ -1483,8 +1483,8 @@ function aggiornaDashReport() {
     const dt = new Date(d);
     return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
   });
-  const guadagnoTotale = completate.length * PREZZO;
-  const guadagnoMese = questoMese.length * PREZZO;
+  const guadagnoTotale = completate.reduce((tot, c) => tot + parseImportoPattuito(c.fields.importo_pattuito), 0);
+  const guadagnoMese = questoMese.reduce((tot, c) => tot + parseImportoPattuito(c.fields.importo_pattuito), 0);
   const mediaPerCarico = completate.length ? Math.round(guadagnoTotale / completate.length) : 0;
   el.innerHTML = `
     <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Carichi completati totali</h3><div class="card-num">${completate.length}</div></div>
@@ -1502,7 +1502,7 @@ async function aggiornaDashFatture() {
         body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
       });
       const data = await res.json();
-      carichiPubblicatiAzienda = data.carichi || [];
+      carichiPubblicatiAzienda = (data.carichi || []).map(r => ({ id: r.id, fields: r.fields || r }));
     } catch (e) {
       carichiPubblicatiAzienda = [];
     }
@@ -2054,13 +2054,13 @@ async function rilevaTipoUtente(email) {
     profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
     profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
     profiloAzienda.codice_fiscale = af.codice_fiscale || '';
-    profiloAzienda.partita_iva = af.partita_iva || '';
+    profiloAzienda.partita_iva = af.partita_iva || af.p_iva || '';
     profiloAzienda.pec = af.pec || '';
     profiloAzienda.codice_sdi = af.codice_sdi || '';
-    profiloAzienda.camera_commerciale = af.camera_commerciale || '';
+    profiloAzienda.camera_commerciale = af.camera_commerciale || af.camera_commercio || '';
     profiloAzienda.numero_rea = af.numero_rea || '';
     profiloAzienda.nome_amministratore = af.nome_amministratore || '';
-    profiloAzienda.via = af.via || '';
+    profiloAzienda.via = af.via || af.indirizzo || '';
     profiloAzienda.cap = af.cap || '';
     profiloAzienda.citta = af.citta || '';
     profiloAzienda.provincia = af.provincia || '';
@@ -2537,16 +2537,16 @@ async function caricaDati(email) {
       const r3 = await fetch(PROXY_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_candidature_trasportatore', trasportatore_id: recId })
+        body: JSON.stringify({ action: 'get_candidature_trasportatore', trasportatore_id: recId, email: email })
       });
       const d3 = await r3.json();
-      cands = d3.candidature || [];
+      cands = (d3.candidature || []).map(r => { const f = r.fields || r; return { id: r.id, fields: Object.assign({}, f, { data_candidatura: f.data_assegnato || f.data_pubblicazione, richiesta_id: f.numero_ordine }) }; });
     } catch(e) { console.error(e); }
     const now = new Date();
     const mese = now.getMonth(), anno = now.getFullYear();
     const completate = cands.filter(c => {
       const s = (c.fields.stato || '').toLowerCase();
-      return s.includes('complet') || s.includes('accett') || s.includes('pagat');
+      return s.includes('complet') || s.includes('accett') || s.includes('pagat') || s === 'preso';
     });
     const questoMese = completate.filter(c => {
       const d = c.fields.data_candidatura || c.fields.data_risposta || '';
@@ -2554,7 +2554,7 @@ async function caricaDati(email) {
       const dt = new Date(d);
       return dt.getMonth() === mese && dt.getFullYear() === anno;
     });
-    const guadagno = questoMese.length * PREZZO;
+    const guadagno = questoMese.reduce((tot, c) => tot + parseImportoPattuito(c.fields.importo_pattuito), 0);
     const totali   = cands.length;
     /* Punto 8 — "Carichi completati": conta i carichi con stato PRESO, senza
        inventare uno stato di consegna che oggi non esiste (decisione 13/9:
