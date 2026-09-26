@@ -426,7 +426,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
           <span class="pw-eye" onclick="toggleRcPw()">👁</span>
         </div>
         <label class="lf-label">CONFERMA PASSWORD</label>
-        <input type="password" id="rc-pw2" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSetPassword()">
+        <div class="pw-wrap"><input type="password" id="rc-pw2" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSetPassword()"><span class="pw-eye" onclick="const f=document.getElementById('rc-pw2');f.type=f.type==='password'?'text':'password';">👁</span></div>
         <button class="btn-accedi" onclick="doSetPassword()">Imposta password &rarr;</button>
         <div id="rc-err" class="lf-error"></div>
       </div>
@@ -446,7 +446,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       <label class="lf-label">NUOVA PASSWORD</label>
       <div class="pw-wrap"><input type="password" id="cpw-1" class="lf-input" placeholder="••••••••" autocomplete="new-password"><span class="pw-eye" onclick="const f=document.getElementById('cpw-1');f.type=f.type==='password'?'text':'password';">👁</span></div>
       <label class="lf-label">CONFERMA PASSWORD</label>
-      <input type="password" id="cpw-2" class="lf-input" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')salvaNuovaPassword()">
+      <div class="pw-wrap"><input type="password" id="cpw-2" class="lf-input" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')salvaNuovaPassword()"><span class="pw-eye" onclick="const f=document.getElementById('cpw-2');f.type=f.type==='password'?'text':'password';">👁</span></div>
       <div id="cpw-err" style="display:none;color:#ef4444;font-size:12px;margin:-6px 0 10px;"></div>
       <div id="cpw-ok" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:10px;">✅ Password salvata. Da ora entra con la tua nuova password.</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
@@ -1847,9 +1847,15 @@ async function doLogin() {
 }
 
 function doLogout() {
-  const btn = document.querySelector('.btn-esci[onclick="doLogout()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Uscita...'; btn.style.opacity = '0.6'; }
-  netlifyIdentity.logout();
+  // USCITA ISTANTANEA (26/9/2026): non aspetta piu' la risposta del widget Netlify
+  // (che a volte non arrivava e lasciava la clessidra "Uscita..." bloccata).
+  // Chiude la sessione nel browser e torna subito alla pagina di accesso.
+  const u = currentUser;
+  currentUser = null;
+  try { if (u && typeof u.logout === 'function') u.logout().catch(() => {}); } catch (e) {}
+  try { netlifyIdentity.logout(); } catch (e) {}
+  try { localStorage.removeItem('gotrue.user'); } catch (e) {}
+  window.location.replace(window.location.pathname);
 }
 
 /* ==================================================
