@@ -28,6 +28,19 @@
   var GESTORI = !!window.ECT_SOLO_GESTORI;
   var fetchOriginale = window.fetch.bind(window);
 
+  /* La finestra di accesso di Netlify (un riquadro trasparente grande quanto lo
+     schermo) a volte resta aperta da sola e si prende TUTTI i clic della pagina.
+     Noi non la usiamo (abbiamo le nostre schermate), quindi la rendiamo sempre
+     invisibile e non cliccabile, da subito. */
+  (function () {
+    var st = document.createElement('style');
+    st.textContent = '#netlify-identity-widget{visibility:hidden !important;pointer-events:none !important;}';
+    (document.head || document.documentElement).appendChild(st);
+    function chiudiNetlify() { try { if (window.netlifyIdentity && typeof netlifyIdentity.close === 'function') netlifyIdentity.close(); } catch (e) {} }
+    try { if (window.netlifyIdentity) { netlifyIdentity.on('init', chiudiNetlify); netlifyIdentity.on('login', chiudiNetlify); netlifyIdentity.on('open', function () { setTimeout(chiudiNetlify, 0); }); } } catch (e) {}
+    setTimeout(chiudiNetlify, 800); setTimeout(chiudiNetlify, 2500);
+  })();
+
   /* ================= UTENTE E PASS ================= */
   function utenteCorrente() {
     try { if (window.netlifyIdentity && typeof netlifyIdentity.currentUser === 'function') { var u = netlifyIdentity.currentUser(); if (u) return u; } } catch (e) {}
@@ -35,11 +48,18 @@
     try { if (typeof currentUser !== 'undefined' && currentUser) return currentUser; } catch (e) {}
     return null;
   }
+  /* aspetta che il sistema di accesso Netlify sia pronto. Attenzione: il sistema
+     di Netlify puo' avviarsi PRIMA di questo file, quindi non basta aspettare il
+     suo segnale "init": controllo anche direttamente, ogni 150 ms, fino a 5 secondi */
   var identitaPronta = new Promise(function (ok) {
     var fatto = false;
     function via() { if (!fatto) { fatto = true; ok(); } }
     try { if (window.netlifyIdentity) netlifyIdentity.on('init', via); } catch (e) {}
-    setTimeout(via, 5000);
+    var giri = 0;
+    var controllo = setInterval(function () {
+      giri++;
+      if (utenteCorrente() || giri > 33) { clearInterval(controllo); via(); }
+    }, 150);
   });
   async function tokenAccesso() {
     var u = utenteCorrente();
@@ -125,6 +145,7 @@
 
   /* ================= GRAFICA COMUNE ================= */
   var STILE = '' +
+    '#netlify-identity-widget{visibility:hidden !important;pointer-events:none !important;}' +
     '.ect-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(8,13,22,0.94);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",system-ui,sans-serif;color:#f1f5f9;padding:16px;overflow-y:auto;}' +
     '.ect-ov .box{background:#0e1623;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:26px;width:100%;max-width:420px;margin:auto;}' +
     '.ect-ov h2{font-size:19px;margin:0 0 6px;font-weight:800;}' +
@@ -269,6 +290,9 @@
       '<button class="sec" id="ect-att-chiudi">Più tardi</button>');
     if (disp === 'computer') { disegnaQr('ect-qr-and', LINK_ANDROID); disegnaQr('ect-qr-ios', LINK_IPHONE); }
     document.getElementById('ect-att-chiudi').onclick = function () { chiudi('ect-attiva'); };
+    // clic sullo sfondo scuro, fuori dal riquadro = chiude
+    var sfondo = document.getElementById('ect-attiva');
+    if (sfondo) sfondo.onclick = function (ev) { if (ev.target === sfondo) chiudi('ect-attiva'); };
     sicurezza('mfa_inizia').then(function (r) {
       var p2 = document.getElementById('ect-passo2'); if (!p2) return;
       if (!r || !r.ok) {
@@ -512,6 +536,22 @@
         if (a.getAttribute('href') !== giusto) a.setAttribute('href', giusto);
       });
     }, 1500);
+    // RETE DI SICUREZZA: se il sistema di Netlify si e' avviato prima della pagina,
+    // il portale puo' restare fermo su "Caricamento". Dopo 3 secondi lo sblocco io.
+    setTimeout(function () {
+      var car = document.getElementById('loading');
+      var app = document.getElementById('app');
+      var login = document.getElementById('login-page');
+      var fermo = car && getComputedStyle(car).display !== 'none' && (!app || getComputedStyle(app).display === 'none') && (!login || getComputedStyle(login).display === 'none');
+      if (!fermo) return;
+      if (document.getElementById('recovery-page') && getComputedStyle(document.getElementById('recovery-page')).display !== 'none') return;
+      var u = null;
+      try { u = netlifyIdentity.currentUser() || (netlifyIdentity.gotrue && netlifyIdentity.gotrue.currentUser()); } catch (e) {}
+      try {
+        if (u && typeof avviaApp === 'function') { currentUser = u; avviaApp(); }
+        else if (typeof mostraLogin === 'function') { mostraLogin(); }
+      } catch (e) {}
+    }, 3000);
     // appena si entra nel portale, controlla lo stato della protezione
     var app = document.getElementById('app');
     var controllo = setInterval(function () {
@@ -641,8 +681,21 @@
   function avvia() {
     mostraLucchetto('<h2>🔒 Area Gestori</h2><div class="sub">Verifica dell\'accesso in corso...</div>');
     if (!window.netlifyIdentity) { mostraLogin('Sistema di accesso non caricato. Ricarica la pagina.'); return; }
-    netlifyIdentity.on('init', function (u) { if (u) verificaGestore(); else mostraLogin(); });
-    netlifyIdentity.init();
+    var deciso = false;
+    function decidi(u) {
+      if (deciso) return; deciso = true;
+      if (u) verificaGestore(); else mostraLogin();
+    }
+    netlifyIdentity.on('init', function (u) { decidi(u || utenteCorrente()); });
+    try { netlifyIdentity.init(); } catch (e) {}
+    // il sistema di Netlify potrebbe essersi gia' avviato prima di noi: controllo direttamente
+    var giri = 0;
+    var controllo = setInterval(function () {
+      giri++;
+      var u = utenteCorrente();
+      if (u) { clearInterval(controllo); decidi(u); }
+      else if (giri > 13) { clearInterval(controllo); decidi(null); }
+    }, 150);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia);
   else avvia();
