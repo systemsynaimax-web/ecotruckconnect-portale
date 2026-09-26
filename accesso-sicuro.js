@@ -147,12 +147,12 @@
     '.ect-ov .err{color:#f87171;font-size:13px;margin-top:10px;display:none;text-align:center;}' +
     '.ect-ov .ok{color:#4ade80;font-size:14px;margin-top:10px;display:none;text-align:center;line-height:1.5;}' +
     '.ect-ov .piccolo{font-size:12px;color:rgba(241,245,249,0.5);margin-top:14px;text-align:center;line-height:1.5;}' +
-    '#ect-striscia-mfa{background:#f59e0b;color:#1c1917;padding:10px 44px 10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;font-family:"DM Sans",system-ui,sans-serif;}' +
+    '#ect-striscia-mfa{background:#f59e0b;color:#1c1917;padding:10px 44px 10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:2147481000;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-mfa button.att{margin-left:10px;background:#1c1917;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
     '#ect-striscia-mfa .x{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;font-weight:700;}' +
-    '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;font-family:"DM Sans",system-ui,sans-serif;}' +
+    '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:2147481001;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-rossa button{margin-left:10px;background:#fff;color:#b91c1c;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
-    '#banner-pw-temp{background:#dc2626 !important;color:#fff !important;}' +
+    '#banner-pw-temp{background:#dc2626 !important;color:#fff !important;position:relative;z-index:2147481001;}' +
     '#banner-pw-temp b{color:#fff !important;}' +
     '#banner-pw-temp button:first-of-type{background:#fff !important;color:#b91c1c !important;}' +
     '#banner-pw-temp button:nth-of-type(2){display:none !important;}' +
@@ -397,7 +397,10 @@
 
     // riquadro "Proteggi il tuo accesso" una volta per accesso, dopo la scelta della password
     var visto = false; try { visto = sessionStorage.getItem('ect_popup_mfa_visto') === '1'; } catch (e) {}
-    if (!st.mfa_attivo && !visto) {
+    var pwTemp = !!st.pw_temporanea;
+    var bannerPortale = document.getElementById('banner-pw-temp');
+    if (bannerPortale && bannerPortale.style.display !== 'none') pwTemp = true;
+    if (!st.mfa_attivo && !visto && !pwTemp) {
       try { sessionStorage.setItem('ect_popup_mfa_visto', '1'); } catch (e) {}
       var attendi = setInterval(function () {
         var m = document.getElementById('modal-cambia-pw');
