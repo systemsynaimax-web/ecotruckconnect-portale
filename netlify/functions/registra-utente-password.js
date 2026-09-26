@@ -12,6 +12,7 @@
 //
 // Come si chiama (da Make, HTTP module):
 // POST https://ecotruckconnect-portale.netlify.app/.netlify/functions/registra-utente-password
+// Header obbligatorio: x-ect-key: <chiave segreta ECT_FUNCTION_KEY>
 // Body JSON: { "email": "persona@esempio.com" }
 //   (il campo "password" è opzionale: se omesso viene generata automaticamente)
 //
@@ -22,6 +23,19 @@ exports.handler = async (event, context) => {
       statusCode: 405,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ok: false, errore: 'Metodo non permesso, usa POST' })
+    };
+  }
+
+  // PROTEZIONE (26/9/2026): la funzione risponde SOLO a chi conosce la chiave segreta.
+  // La chiave sta nelle variabili d'ambiente di Netlify (ECT_FUNCTION_KEY) e dentro Make,
+  // MAI nel codice del sito. Senza chiave: nessuna password viene creata o restituita.
+  const chiaveAttesa = process.env.ECT_FUNCTION_KEY;
+  const chiaveRicevuta = (event.headers && (event.headers['x-ect-key'] || event.headers['X-Ect-Key'])) || '';
+  if (!chiaveAttesa || chiaveRicevuta !== chiaveAttesa) {
+    return {
+      statusCode: 401,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: false, errore: 'Non autorizzato' })
     };
   }
 
