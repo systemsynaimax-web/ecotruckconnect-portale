@@ -382,6 +382,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       <div class="lf-box">
         <div class="lf-logo">Eco<span>Truck</span>Connect</div>
         <div class="lf-tagline">Accedi al tuo spazio personale</div>
+        <div id="login-hint-cambia-pw" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;font-size:12px;line-height:1.5;padding:10px 12px;border-radius:8px;margin-bottom:16px;">🔒 Accedi con la <b>password temporanea</b> che hai ricevuto via email: appena entri potrai sceglierne una tua.</div>
         <label class="lf-label">EMAIL</label>
         <input type="email" id="li-email" class="lf-input" placeholder="la-tua@email.com">
         <label class="lf-label">PASSWORD</label>
@@ -433,6 +434,27 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   </div>
 </div>
 <div id="app">
+  <div id="banner-pw-temp" style="display:none;background:#f59e0b;color:#1c1917;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;">
+    🔒 Stai usando una <b>password temporanea</b> creata dal sistema. Per sicurezza scegline una tua.
+    <button onclick="apriCambiaPassword()" style="margin-left:10px;background:#1c1917;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Scegli la tua password</button>
+    <button onclick="document.getElementById('banner-pw-temp').style.display='none'" style="margin-left:6px;background:transparent;color:#1c1917;border:1px solid #1c1917;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Più tardi</button>
+  </div>
+  <div id="modal-cambia-pw" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:4000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#0e1623;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:26px;max-width:420px;width:100%;color:#f1f5f9;">
+      <h3 style="font-family:var(--font-h);font-size:18px;margin-bottom:6px;">🔒 Scegli la tua password</h3>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">Da ora entrerai con questa password. Almeno 8 caratteri. Non la conosce nessun altro, nemmeno noi.</div>
+      <label class="lf-label">NUOVA PASSWORD</label>
+      <div class="pw-wrap"><input type="password" id="cpw-1" class="lf-input" placeholder="••••••••" autocomplete="new-password"><span class="pw-eye" onclick="const f=document.getElementById('cpw-1');f.type=f.type==='password'?'text':'password';">👁</span></div>
+      <label class="lf-label">CONFERMA PASSWORD</label>
+      <input type="password" id="cpw-2" class="lf-input" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')salvaNuovaPassword()">
+      <div id="cpw-err" style="display:none;color:#ef4444;font-size:12px;margin:-6px 0 10px;"></div>
+      <div id="cpw-ok" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:10px;">✅ Password salvata. Da ora entra con la tua nuova password.</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button id="cpw-annulla" class="btn-cap" style="background:rgba(255,255,255,0.08);" onclick="chiudiCambiaPassword()">Più tardi</button>
+        <button id="cpw-salva" class="btn-cap" onclick="salvaNuovaPassword()">💾 Salva password</button>
+      </div>
+    </div>
+  </div>
   <nav class="navbar">
     <div class="nav-logo">Eco<span>Truck</span>Connect</div>
     <div class="nav-right">
@@ -643,7 +665,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
       <div id="dash-sezione-sicurezza" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🔒 Sicurezza</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Se vuoi rigenerare la tua password per sicurezza, clicca qui sotto: il sistema ne genera una nuova e te la manda via email, senza che tu debba sceglierla.</div>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:10px;"><b style="color:#fff;">Cambia password:</b> scegli tu una password nuova, subito, senza email.</div>
+        <button class="btn-cap" onclick="apriCambiaPassword()">🔑 Cambia password</button>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin:18px 0 10px;"><b style="color:#fff;">Rigenera password:</b> il sistema crea una password temporanea nuova e te la manda via email. Poi potrai sceglierne una tua.</div>
         <button class="btn-cap" onclick="rigeneraPassword()">🔁 Rigenera password</button>
         <div id="rigenera-pw-msg" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;">✅ A breve riceverai un'email con i tuoi dati di accesso.</div>
         <div id="pw-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima rigenerazione: mai</div>
@@ -1828,6 +1852,74 @@ function doLogout() {
   netlifyIdentity.logout();
 }
 
+/* ==================================================
+   PASSWORD TEMPORANEA -> PASSWORD SCELTA DALL'UTENTE (26/9/2026)
+   Nessun link con chiave nelle email: il cambio avviene DENTRO il portale,
+   con l'utente gia' entrato (currentUser.update di Netlify Identity).
+   ================================================== */
+const PARAM_CAMBIA_PW = new URLSearchParams(window.location.search).get('cambia-password') === '1';
+if (PARAM_CAMBIA_PW) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const h = document.getElementById('login-hint-cambia-pw');
+    if (h) h.style.display = 'block';
+  });
+}
+
+function gestisciPasswordTemporanea(fields) {
+  if (window.__ANTEPRIMA_SCUDO) return;
+  const temporanea = !!(fields && fields.password_temporanea);
+  document.getElementById('banner-pw-temp').style.display = temporanea ? 'block' : 'none';
+  if (temporanea && PARAM_CAMBIA_PW) apriCambiaPassword();
+}
+
+function apriCambiaPassword() {
+  ['cpw-1','cpw-2'].forEach(id => { const f = document.getElementById(id); f.value = ''; f.type = 'password'; });
+  document.getElementById('cpw-err').style.display = 'none';
+  document.getElementById('cpw-ok').style.display = 'none';
+  const salva = document.getElementById('cpw-salva');
+  salva.disabled = false; salva.textContent = '💾 Salva password'; salva.style.display = '';
+  document.getElementById('cpw-annulla').textContent = 'Più tardi';
+  document.getElementById('modal-cambia-pw').style.display = 'flex';
+  setTimeout(() => document.getElementById('cpw-1').focus(), 50);
+}
+
+function chiudiCambiaPassword() {
+  document.getElementById('modal-cambia-pw').style.display = 'none';
+}
+
+async function salvaNuovaPassword() {
+  const p1 = document.getElementById('cpw-1').value;
+  const p2 = document.getElementById('cpw-2').value;
+  const err = document.getElementById('cpw-err');
+  err.style.display = 'none';
+  if (p1.length < 8) { err.textContent = 'La password deve avere almeno 8 caratteri.'; err.style.display = 'block'; return; }
+  if (p1 !== p2) { err.textContent = 'Le due password non coincidono.'; err.style.display = 'block'; return; }
+  const salva = document.getElementById('cpw-salva');
+  salva.disabled = true; salva.textContent = '⏳ Salvataggio...';
+  try {
+    const utente = (window.netlifyIdentity && netlifyIdentity.currentUser && netlifyIdentity.currentUser()) || currentUser;
+    if (!utente || typeof utente.update !== 'function') throw new Error('sessione non disponibile');
+    await utente.update({ password: p1 });
+    try {
+      await fetch(PROXY_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'password_scelta', email: currentUser.email })
+      });
+    } catch (e) { console.error('Avviso password_scelta non inviato:', e); }
+    document.getElementById('cpw-ok').style.display = 'block';
+    document.getElementById('banner-pw-temp').style.display = 'none';
+    salva.style.display = 'none';
+    document.getElementById('cpw-annulla').textContent = 'Chiudi';
+    if (trasportatoreFieldsCorrenti) trasportatoreFieldsCorrenti.password_temporanea = false;
+  } catch (e) {
+    console.error('Errore cambio password:', e);
+    err.textContent = 'Non sono riuscito a salvare la password. Esci, rientra e riprova. Se succede ancora, scrivici dal modulo "Scrivici".';
+    err.style.display = 'block';
+    salva.disabled = false; salva.textContent = '💾 Salva password';
+  }
+}
+
 function toggleForgotPw(e) {
   e.preventDefault();
   const box = document.getElementById('forgot-pw-box');
@@ -2056,6 +2148,7 @@ async function rilevaTipoUtente(email) {
     capCorrente = trasportatori[0].fields.cap || trasportatori[0].fields.CAP || '';
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
+    gestisciPasswordTemporanea(trasportatori[0].fields);
     aggiornaRiepilogoProfiloTrasportatore();
     document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('cap-bar-section').style.display = 'none';
@@ -2073,6 +2166,7 @@ async function rilevaTipoUtente(email) {
     document.getElementById('hero-personale').classList.add('tipo-azienda');
     aziendaRecordId = aziende[0].id;
     const af = aziende[0].fields;
+    gestisciPasswordTemporanea(af);
     profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
     profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
     profiloAzienda.codice_fiscale = af.codice_fiscale || '';
