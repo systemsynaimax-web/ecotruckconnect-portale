@@ -86,6 +86,11 @@
 
   /* ================= CHIAMATA ALLA FUNZIONE DI SICUREZZA ================= */
   async function sicurezza(azione, extra) {
+    if (window.__ANTEPRIMA_SCUDO) {
+      if (azione === 'stato') return { ok: true, email: 'anteprima@ecotruckconnect.it', mfa_attivo: false, pw_temporanea: true };
+      if (azione === 'mfa_inizia') return { ok: true, segreto: 'ANTEPRIMAANTEPRIMAAB', otpauth: 'otpauth://totp/EcoTruckConnect:anteprima?secret=ANTEPRIMAANTEPRIMAAB&issuer=EcoTruckConnect' };
+      return { ok: false, errore: 'anteprima' };
+    }
     var tok = await tokenAccesso();
     var r = await fetchOriginale(FUNZIONE, {
       method: 'POST',
@@ -177,7 +182,7 @@
     '#banner-pw-temp b{color:#fff !important;}' +
     '#banner-pw-temp button:first-of-type{background:#fff !important;color:#b91c1c !important;}' +
     '#banner-pw-temp button:nth-of-type(2){display:none !important;}' +
-    '#ect-pill{position:fixed;left:14px;bottom:14px;z-index:2147482000;background:#0e1623;border:1px solid rgba(255,255,255,0.12);border-radius:30px;padding:7px 12px;font-family:"DM Sans",system-ui,sans-serif;font-size:12px;color:#f1f5f9;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 6px 20px rgba(0,0,0,0.4);}' +
+    '#ect-pill{position:relative;z-index:2147480000;background:#0e1623;border-bottom:1px solid rgba(255,255,255,0.12);padding:7px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:12px;color:#f1f5f9;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}' +
     '#ect-pill span.link{cursor:pointer;color:#60a5fa;}' +
     '#ect-pill span.esci{cursor:pointer;color:#ef4444;}' +
     '#ect-blocco-sicurezza{margin:18px 0 10px;padding:14px;border:1px solid rgba(245,158,11,0.35);border-radius:10px;background:rgba(245,158,11,0.06);}';
@@ -332,6 +337,7 @@
       if (r && r.errore === 'bloccato') mostraErr(err, 'Troppi codici sbagliati. Riprova tra ' + r.minuti + ' minuti.');
       else if (r && r.errore === 'codice_errato') mostraErr(err, 'Codice sbagliato. Controlla di leggere quello accanto a EcoTruckConnect. Tentativi rimasti: ' + r.tentativi_rimasti + '.');
       else if (r && r.errore === 'ricomincia') mostraErr(err, 'Il collegamento è scaduto: chiudi e riapri questa finestra.');
+      else if (r && r.errore === 'anteprima') mostraErr(err, '🎭 Anteprima: qui l\'utente vero attiva Google Authenticator.');
       else mostraErr(err, 'Non riesco a verificare il codice. Riprova.');
     };
   }
@@ -381,6 +387,8 @@
         var dopo = rossaGestori || rossaPortale;
         if (dopo && dopo.parentNode === cont) dopo.insertAdjacentElement('afterend', gialla);
         else cont.insertBefore(gialla, cont.firstChild);
+        var barra = document.getElementById('ect-pill');
+        if (barra && barra.parentNode === cont) gialla.insertAdjacentElement('afterend', barra);
       }
     } else if (gialla) gialla.remove();
 
@@ -518,6 +526,29 @@
       });
     }
     window.richiediPasswordDimenticata = function () {};
+    // "Rigenera password" non serve piu': resta solo "Cambia password"
+    function togliRigenera() {
+      document.querySelectorAll('button[onclick="rigeneraPassword()"]').forEach(function (b) {
+        var prima = b.previousElementSibling;
+        if (prima && /Rigenera password/i.test(prima.textContent)) prima.style.display = 'none';
+        b.style.display = 'none';
+      });
+      ['rigenera-pw-msg', 'pw-ultima-modifica'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.setProperty('display', 'none', 'important'); });
+    }
+    togliRigenera(); setTimeout(togliRigenera, 1500);
+    // anteprima: fa vedere anche la striscia rossa della password temporanea
+    if (window.__ANTEPRIMA_SCUDO) {
+      var mostraRossa = setInterval(function () {
+        var app = document.getElementById('app'), br = document.getElementById('banner-pw-temp');
+        if (app && app.style.display === 'block' && br) {
+          clearInterval(mostraRossa); br.style.display = 'block'; leggiStato();
+          window.salvaNuovaPassword = function () {
+            var e = document.getElementById('cpw-err');
+            if (e) { e.textContent = '🎭 Anteprima: qui l\'utente vero salva la sua nuova password.'; e.style.display = 'block'; }
+          };
+        }
+      }, 300);
+    }
     // uscita: pulisce anche il codice dell'app
     if (typeof window.doLogout === 'function' && !window.doLogout.__ect) {
       var vecchio = window.doLogout;
@@ -654,10 +685,11 @@
   function mostraPill(email) {
     if (document.getElementById('ect-pill')) return;
     var p = document.createElement('div'); p.id = 'ect-pill';
-    p.innerHTML = '🔒 ' + email + ' · <span class="link" id="ect-pill-pw">🔑 Cambia password</span> · <span class="link" id="ect-pill-mfa">🛡️ Google Authenticator</span> · <span class="esci" id="ect-pill-esci">⏻ Esci</span>';
-    document.body.appendChild(p);
-    document.getElementById('ect-pill-pw').onclick = apriCambiaPasswordGestori;
-    document.getElementById('ect-pill-mfa').onclick = function () { if (statoCorrente && statoCorrente.mfa_attivo) apriDisattivazione(); else apriAttivazione(); };
+    p.innerHTML = '🔒 ' + email + ' · <span class="esci" id="ect-pill-esci">⏻ Esci</span>';
+    // barretta in alto (sotto le strisce): non copre mai niente della pagina
+    var gialla = document.getElementById('ect-striscia-mfa'), rossa = document.getElementById('ect-striscia-rossa');
+    var dopo = gialla || rossa;
+    if (dopo) dopo.insertAdjacentElement('afterend', p); else document.body.insertBefore(p, document.body.firstChild);
     document.getElementById('ect-pill-esci').onclick = esciSubito;
   }
 
