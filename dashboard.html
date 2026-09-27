@@ -268,6 +268,14 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
   </div>
 
+  <div class="sec-title">✅ Verifiche ufficiali <span style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;">NUOVO — DA PROVARE CON GERLANDO</span></div>
+  <div class="toolbar-grid">
+    <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>
+    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener"><span class="icon">🚛</span>Albo Autotrasportatori — Imprese iscritte</a>
+    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/servizio-regolarita-imprese" target="_blank" rel="noopener"><span class="icon">📑</span>Albo — Regolarità INPS/INAIL</a>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin:12px 0 30px;line-height:1.6;">Servizi pubblici ufficiali. <b>Verifica P.IVA</b>: gratuita, senza registrazione. <b>Regolarità INPS/INAIL</b>: serve una registrazione con PIN via PEC, una volta sola. Nella scheda di ogni nuova iscrizione (🔔) c'è il pulsante <b>🏛️ Verifica P.IVA</b>, che copia il numero e apre la pagina dell'Agenzia.</div>
+
   <div class="sec-title">📊 Numeri in tempo reale</div>
   <div class="stats-row">
     <div class="stat-card">
@@ -610,15 +618,15 @@ function renderNotifiche() {
 const CAMPI_TRASPORTATORE = [
   ['Nome', 'nome'], ['Cognome', 'cognome'], ['Email', 'email'], ['Telefono', 'telefono'],
   ['Data di nascita', 'data_nascita'], ['Partita IVA', 'p_iva'], ['Codice fiscale', 'codice_fiscale'],
-  ['Forma giuridica', 'forma_giuridica'], ['Camera di commercio', 'camera_commerciale'], ['Numero REA', 'numero_rea'],
-  ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'], ['Indirizzo', 'via'], ['CAP', 'cap'], ['Città', 'citta'],
+  ['Forma giuridica', 'forma_giuridica'], ['Camera di commercio', 'camera_commercio'], ['Numero REA', 'numero_rea'],
+  ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'], ['Indirizzo', 'indirizzo'], ['CAP', 'cap'], ['Città', 'citta'],
   ['Provincia', 'provincia'], ['Nazione', 'nazione'], ['Specifica mezzo', 'specifica'], ['Note', 'note']
 ];
 const CAMPI_AZIENDA = [
   ['Ragione sociale', 'ragione_sociale'], ['Email', 'email'], ['Telefono', 'telefono'],
   ['Partita IVA', 'p_iva'], ['Codice fiscale', 'codice_fiscale'], ['Forma giuridica', 'forma_giuridica'],
-  ['Camera di commercio', 'camera_commerciale'], ['Numero REA', 'numero_rea'], ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'],
-  ['Indirizzo', 'via'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
+  ['Camera di commercio', 'camera_commercio'], ['Numero REA', 'numero_rea'], ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'],
+  ['Indirizzo', 'indirizzo'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
   ['Specifica attività', 'specifica_azienda']
 ];
 
@@ -711,6 +719,24 @@ function apriDettaglioAnagrafica(recordId, tipo) {
 
 let recordApertoCorrente = null;
 
+// ===== VERIFICHE UFFICIALI (27/9/2026) — riquadro nella scheda di ogni nuova iscrizione =====
+function bloccoVerifica(f, tipo) {
+  const piva = String((f && (f.p_iva || f.partita_iva)) || '').replace(/[^0-9A-Za-z]/g, '');
+  const stile = 'margin:14px 0;padding:12px 14px;border:1px solid rgba(59,130,246,0.35);background:rgba(59,130,246,0.08);border-radius:10px;font-size:13px;line-height:1.5;';
+  if (!piva) return '<div style="' + stile + '">🔎 <b>Partita IVA non indicata</b>: non si può verificare. Chiedila prima di attivare.</div>';
+  const albo = tipo === 'azienda' ? '' : '<a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener">🚛 Albo Autotrasportatori</a>';
+  return '<div style="' + stile + '"><b>🔎 Prima di attivare, controlla i dati ufficiali</b><br>' +
+    '<span style="color:var(--muted)">Partita IVA: <b style="color:#fff">' + piva + '</b></span><br>' +
+    '<button type="button" class="btn-scarica" style="margin-top:8px;" onclick="verificaPiva(\'' + piva + '\')">🏛️ Verifica P.IVA (Agenzia Entrate)</button> ' + albo +
+    '<div id="verifica-msg" style="display:none;color:#4ade80;font-size:12px;margin-top:6px;"></div></div>';
+}
+function verificaPiva(piva) {
+  window.open('https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva', '_blank', 'noopener');
+  const msg = document.getElementById('verifica-msg');
+  const fatto = function () { if (msg) { msg.textContent = '✅ Partita IVA ' + piva + ' copiata: nella pagina dell\'Agenzia incollala con Ctrl+V.'; msg.style.display = 'block'; } };
+  try { navigator.clipboard.writeText(piva).then(fatto, fatto); } catch (e) { fatto(); }
+}
+
 function apriDettaglioUtente(recordId) {
   const r = listaAttuale().find(x => x.id === recordId);
   if (!r) return;
@@ -730,6 +756,7 @@ function apriDettaglioUtente(recordId) {
     <div class="dett-tipo">${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</div>
     <button class="btn-scarica" onclick="scaricaAnagrafica()">📥 Scarica anagrafica</button>
     <table class="dett-table">${righe}</table>
+    ${bloccoVerifica(f, r.tipo)}
     <div class="dett-azioni">
       <button class="btn-non-attiva" onclick="tornaListaNotifiche()">Non attivare ora</button>
       <button class="btn-attiva" id="btn-attiva-conferma" onclick="richiediConfermaAttivazione()">✅ Attiva</button>
