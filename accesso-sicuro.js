@@ -604,6 +604,57 @@
         apriCambiaPassword();
       }
     }, 500);
+    // CAP -> CITTA' (27/9): nel modulo "Pubblica un Carico", scrivendo il CAP la citta' si compila da sola
+    var capPronto = null;
+    function caricaCap() {
+      if (window.ECT_CAP) return Promise.resolve();
+      if (capPronto) return capPronto;
+      capPronto = new Promise(function (ok, no) {
+        var sc = document.createElement('script'); sc.src = '/cap-comuni.js';
+        sc.onload = ok; sc.onerror = function () { capPronto = null; no(); }; document.head.appendChild(sc);
+      });
+      return capPronto;
+    }
+    function collegaCap(idCap, idCitta) {
+      var inCap = document.getElementById(idCap), inCitta = document.getElementById(idCitta);
+      if (!inCap || !inCitta || inCap.__ectCap) return;
+      inCap.__ectCap = true;
+      var nota = document.createElement('div');
+      nota.style.cssText = 'font-size:12px;color:#86efac;margin-top:5px;min-height:16px;';
+      inCap.insertAdjacentElement('afterend', nota);
+      var autoMessa = '';
+      function scegli(nome) { inCitta.value = nome; autoMessa = nome; inCitta.dispatchEvent(new Event('input', { bubbles: true })); }
+      inCap.addEventListener('input', function () {
+        var v = inCap.value.replace(/\D/g, '');
+        if (v.length !== 5) { nota.textContent = ''; return; }
+        caricaCap().then(function () {
+          var r = window.ECT_CAP[v];
+          if (!r) { nota.style.color = '#fbbf24'; nota.textContent = 'CAP non trovato: scrivi la città a mano.'; return; }
+          var lista = Array.isArray(r) ? r : [r];
+          var primo = lista[0].split('|');
+          if (!inCitta.value.trim() || inCitta.value === autoMessa) scegli(primo[0]);
+          nota.style.color = '#86efac';
+          nota.innerHTML = '';
+          var testo = document.createElement('span'); testo.textContent = '📍 ' + primo[0] + ' (' + primo[1] + ')'; nota.appendChild(testo);
+          if (lista.length > 1) {
+            var alt = document.createElement('span'); alt.textContent = '  · altri comuni con questo CAP: '; alt.style.color = 'rgba(241,245,249,0.6)'; nota.appendChild(alt);
+            lista.slice(1, 8).forEach(function (x, i) {
+              var q = x.split('|'), a = document.createElement('a');
+              a.href = '#'; a.textContent = q[0] + ' (' + q[1] + ')'; a.style.cssText = 'color:#93c5fd;margin-right:8px;';
+              a.onclick = function (e) { e.preventDefault(); scegli(q[0]); testo.textContent = '📍 ' + q[0] + ' (' + q[1] + ')'; };
+              nota.appendChild(a);
+            });
+          }
+        }).catch(function () { nota.textContent = ''; });
+      });
+    }
+    var giriCap = 0;
+    var aspettaCap = setInterval(function () {
+      giriCap++;
+      if (document.getElementById('ins-cap-part')) { collegaCap('ins-cap-part', 'ins-citta-part'); collegaCap('ins-cap-arr', 'ins-citta-arr'); clearInterval(aspettaCap); }
+      else if (giriCap > 60) clearInterval(aspettaCap);
+    }, 500);
+
     // GRAFICI NEI REPORT DEL PORTALE (27/9): sotto "📈 I miei report", mese per mese
     function caricaChart() {
       return new Promise(function (ok, no) {
