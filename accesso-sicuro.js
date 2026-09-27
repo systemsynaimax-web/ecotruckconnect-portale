@@ -16,6 +16,12 @@
    ===================================================================== */
 (function () {
   var PROXY = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+  /* 27/9: queste 7 letture nel Proxy principale rispondevano sempre vuote.
+     Ora le fa lo scenario "Proxy Liste" (stessi controlli di sicurezza: accesso,
+     Google Authenticator, gestori). Il file le manda li' automaticamente. */
+  var PROXY_LISTE = 'https://hook.eu1.make.com/nqp4yjmtegxakql7a24sqvpit0vjcpjw';
+  var AZIONI_LISTE = ['get_carichi_pubblicati_azienda', 'get_candidature_trasportatore', 'conta_trasportatori_compatibili',
+                      'get_dashboard_data', 'get_candidature', 'get_scadenze', 'get_registrazioni'];
   var PROTETTI = [
     'hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak',
     'hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm'
@@ -167,6 +173,7 @@
         var corpo = {};
         if (typeof opts.body === 'string' && opts.body) { try { corpo = JSON.parse(opts.body); } catch (e) { corpo = {}; } }
         if (corpo.action === 'chat_bot' && typeof corpo.message === 'string') corpo.message = componiDomandaBot(corpo.message);
+        if (AZIONI_LISTE.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_LISTE;
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
           await garantisciCodice();
           var tok = await tokenAccesso();
