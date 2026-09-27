@@ -616,6 +616,15 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
 <script>
 const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+// 27/9: importi sempre come "€ 1.080,00"
+function euro(v) {
+  let n = typeof v === 'number' ? v : parseFloat(String(v || '0').replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  if (isNaN(n)) n = 0;
+  const segno = n < 0 ? '-' : '';
+  const [intero, decimali] = Math.abs(n).toFixed(2).split('.');
+  return '€ ' + segno + intero.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + decimali;
+}
+
 // ===== spiegazioni chiuse: si aprono solo cliccando "📖 Spiegazione" =====
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.spiega').forEach(function (el) {
@@ -714,7 +723,7 @@ async function apriAndamenti() {
   disegna('g-carichi', 'bar', eS, [{ nome: 'Pubblicati', valori: pubbl, colore: '#3b82f6' }, { nome: 'Presi', valori: presi, colore: '#22c55e' }]);
   document.getElementById('tot-carichi').textContent = 'Ultime 8 settimane: ' + somma(pubbl) + ' pubblicati, ' + somma(presi) + ' presi';
   disegna('g-incassi', 'bar', eM, [{ nome: 'Iscrizioni 150 €', valori: iscr150, colore: '#8b5cf6' }, { nome: 'Commissioni 20 €', valori: comm20, colore: '#22c55e' }], true);
-  document.getElementById('tot-incassi').textContent = 'Ultimi 6 mesi: € ' + somma(iscr150.concat(comm20)).toLocaleString('it-IT', { minimumFractionDigits: 2 });
+  document.getElementById('tot-incassi').textContent = 'Ultimi 6 mesi: ' + euro(somma(iscr150.concat(comm20)));
   disegna('g-iscrizioni', 'bar', eM, [{ nome: 'Trasportatori', valori: nuoviT, colore: '#3b82f6' }, { nome: 'Aziende', valori: nuoviA, colore: '#f59e0b' }]);
   document.getElementById('tot-iscrizioni').textContent = 'Ultimi 6 mesi: ' + somma(nuoviT) + ' trasportatori, ' + somma(nuoviA) + ' aziende';
   disegna('g-sicurezza', 'line', eS, [{ nome: 'Password cambiate', valori: pwCamb, colore: '#22c55e' }, { nome: 'Codici «Password dimenticata»', valori: codici, colore: '#f59e0b' }]);
@@ -933,7 +942,7 @@ const CAMPI_AZIENDA = [
   ['Partita IVA', 'p_iva'], ['Codice fiscale', 'codice_fiscale'], ['Forma giuridica', 'forma_giuridica'],
   ['Camera di commercio', 'camera_commercio'], ['Numero REA', 'numero_rea'], ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'],
   ['Indirizzo', 'indirizzo'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
-  ['Specifica attività', 'specifica_azienda']
+  ['Specifica attività', 'specifica'], ['Nome referente', 'nome_referente'], ['Cognome referente', 'cognome_referente'], ['Amministratore', 'nome_amministratore']
 ];
 
 /* ==================================================
@@ -1404,7 +1413,7 @@ function scaricaPDF(tipo) {
     righe = lista.map(r => {
       const f = r.fields;
       const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
-      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      const extra = r.tipo === 'azienda' ? (f.specifica || f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
       return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
     });
   } else {
@@ -1466,7 +1475,7 @@ function scaricaCSV(tipo) {
     righe = lista.map(r => {
       const f = r.fields;
       const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
-      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      const extra = r.tipo === 'azienda' ? (f.specifica || f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
       return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
     });
   } else {
