@@ -30,7 +30,7 @@ if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || 
 }
 </script>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-      <script src="/accesso-sicuro.js"></script>
+<script src="/accesso-sicuro.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -361,6 +361,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   .table-box{border-color:#ccc;background:#fff;}
   th,td{color:#000;border-color:#ddd;}
 }
+
+/* ===== DOMANDE FREQUENTI (27/9) ===== */
+.faq-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.faq-item summary{cursor:pointer;list-style:none;padding:14px 18px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.faq-item summary::-webkit-details-marker{display:none;}
+.faq-item summary::after{content:'▾';color:var(--blue);font-size:16px;transition:transform 0.2s;flex-shrink:0;}
+.faq-item[open] summary::after{transform:rotate(180deg);}
+.faq-item[open] summary{color:var(--blue);}
+.faq-item .faq-risp{padding:0 18px 16px;font-size:13px;color:rgba(241,245,249,0.8);line-height:1.65;}
 </style>
 </head>
 <body>
@@ -903,6 +912,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
           <thead><tr id="storico-thead"><th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th></tr></thead>
           <tbody id="storico-body"><tr><td colspan="4" class="empty">Caricamento storico...</td></tr></tbody>
         </table>
+      </div>
+      <!-- DOMANDE FREQUENTI (27/9) -->
+      <div id="faq-box" style="display:none;margin:34px 0 34px;">
+        <div class="sec-head">❓ Domande frequenti</div>
+        <div style="font-size:13px;color:var(--muted);margin:-6px 0 14px;">Clicca una domanda per vedere la risposta.</div>
+        <div id="faq-lista"></div>
       </div>
       <div class="assist-grid">
         <div class="assist-txt">
@@ -1533,8 +1548,8 @@ function aggiornaDashReport() {
   const mediaPerCarico = completate.length ? Math.round(guadagnoTotale / completate.length) : 0;
   el.innerHTML = `
     <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Carichi completati totali</h3><div class="card-num">${completate.length}</div></div>
-    <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Guadagno totale</h3><div class="card-num green">€ ${guadagnoTotale.toLocaleString('it-IT')}</div></div>
-    <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Guadagno questo mese</h3><div class="card-num blue">€ ${guadagnoMese.toLocaleString('it-IT')}</div></div>
+    <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Guadagno totale</h3><div class="card-num green">${euro(guadagnoTotale)}</div></div>
+    <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Guadagno questo mese</h3><div class="card-num blue">${euro(guadagnoMese)}</div></div>
   `;
 }
 
@@ -2302,7 +2317,7 @@ function renderCardCarico(c, prezzoMax) {
       <span style="font-size:12px;color:var(--muted);">· ${merce}</span>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-      ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">€ ${f.importo_pattuito}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
+      ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">${euro(f.importo_pattuito)}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
       <button class="btn-vedi-dettagli" data-id="${c.id}">Vedi dettagli ›</button>
     </div>
   </div>`;
@@ -2335,7 +2350,7 @@ function renderDettaglioCarico(c) {
         <span style="font-size:13px;color:var(--muted);">· ${merce}</span>
       </div>
       <div style="text-align:center;padding:14px;background:rgba(34,197,94,0.1);border-radius:8px;margin-bottom:14px;">
-        <span style="font-size:28px;font-weight:800;color:var(--green);">${f.importo_pattuito ? '€ ' + f.importo_pattuito : 'Non specificato'}</span>
+        <span style="font-size:28px;font-weight:800;color:var(--green);">${f.importo_pattuito ? euro(f.importo_pattuito) : 'Non specificato'}</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">🚚 ${mezzoRichiesto}</span>
@@ -2396,7 +2411,7 @@ function renderCarichiContenuto() {
   const prezzi = disponibili.map(c => parseImportoPattuito(c.fields.importo_pattuito)).filter(p => p > 0);
   if (statRiga) {
     statRiga.innerHTML = prezzi.length
-      ? `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'} · da € ${Math.min(...prezzi)} a € ${Math.max(...prezzi)}`
+      ? `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'} · da ${euro(Math.min(...prezzi))} a ${euro(Math.max(...prezzi))}`
       : `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'}`;
   }
   const prezzoMax = prezzi.length ? Math.max(...prezzi) : null;
@@ -2416,7 +2431,7 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce, import
     return;
   }
   let dettagliPrezzo = '';
-  if (importoPattuito) dettagliPrezzo += `\n\n💶 Importo pattuito: € ${importoPattuito}`;
+  if (importoPattuito) dettagliPrezzo += `\n\n💶 Importo pattuito: ${euro(importoPattuito)}`;
   if (terminiPagamento) dettagliPrezzo += `\n💳 Termini di pagamento: ${terminiPagamento}`;
   if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}${dettagliPrezzo}\n\nVerrai reindirizzato al pagamento.`)) return;
   try {
@@ -2685,11 +2700,11 @@ async function caricaDati(email) {
        presa in carico, non alla consegna). Solo per il trasportatore. */
     const completatiVeri = cands.filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO').length;
     if (tipoUtente !== 'azienda') {
-      aggiorna('st-guad', `€ ${guadagno.toLocaleString('it-IT')}`);
+      aggiorna('st-guad', `${euro(guadagno)}`);
       aggiorna('st-tot',  totali);
       aggiorna('st-completati', completatiVeri);
     }
-    aggiorna('c-guad',  `€ ${guadagno.toLocaleString('it-IT')}`);
+    aggiorna('c-guad',  `${euro(guadagno)}`);
     aggiorna('c-tot',   totali);
     renderStorico(cands);
   } catch(err) {
@@ -2816,8 +2831,8 @@ function renderTabelleFatture() {
             ? 's-wait' : 's-no';
           const rimborsato = stato.toUpperCase() === 'RIMBORSATO';
           const cellaImporto = rimborsato
-            ? `<td style="color:var(--amber);font-weight:500;">€ ${PREZZO} rimborsati</td>`
-            : `<td style="color:var(--green);font-weight:500;">€ ${PREZZO}</td>`;
+            ? `<td style="color:var(--amber);font-weight:500;">${euro(PREZZO)} rimborsati</td>`
+            : `<td style="color:var(--green);font-weight:500;">${euro(PREZZO)}</td>`;
           return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.richiesta_id || '—'}</td><td><span class="badge-stato ${rimborsato ? 's-wait' : cls}">${stato}</span></td>${cellaImporto}</tr>`;
         }).join('');
   ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
@@ -2876,10 +2891,40 @@ function cambiaFiltroReportTrasp(giorni, voce) {
    numerico o vuoto conta come 0 nel totale, ma resta visibile per esteso
    nella riga del singolo carico — non nascondiamo mai il dato originale. */
 function parseImportoPattuito(v) {
-  if (!v) return 0;
-  const pulito = String(v).replace(/[^\d,.-]/g, '').replace(',', '.');
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
+  let pulito = String(v).replace(/[^\d,.-]/g, '');
+  // formato italiano "1.080,50": i punti sono le migliaia, la virgola i decimali
+  if (pulito.indexOf(',') !== -1) pulito = pulito.replace(/\./g, '').replace(',', '.');
+  else if ((pulito.match(/\./g) || []).length > 1) pulito = pulito.replace(/\./g, '');
   const n = parseFloat(pulito);
   return isNaN(n) ? 0 : n;
+}
+
+// ===== DOMANDE FREQUENTI (27/9): diverse per trasportatore e azienda =====
+const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Vai in «Dashboard» → «Notifiche» → «Collega Telegram». Si apre il bot: premi «Avvia». Da quel momento ti arrivano in privato i carichi compatibili con i tuoi mezzi."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la commissione di € 20,00 entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "Iscrizione annuale € 150,00, pagata dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi € 20,00. Nessun altro costo. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Dashboard» → «Riepilogo movimenti» trovi tutte le commissioni pagate. In «I miei report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la commissione di € 20,00."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Quanto costa pubblicare un carico?", "Pubblicare i carichi è gratuito. Paghi solo l'iscrizione annuale di € 150,00, dopo la verifica dei tuoi dati. Prima della scadenza ti arriva un promemoria per email."], ["Come pubblico un carico?", "Nel riquadro «Pubblica un Carico» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica Carico». Puoi anche cliccare un giorno del «Calendario Carichi» per scegliere subito la data."], ["Come pubblico un carico di rifiuti?", "Nel modulo spunta «È un carico di rifiuti» e scrivi il codice CER, che è obbligatorio. Se la merce è pericolosa spunta anche «Il carico è pericoloso». Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva il mio carico?", "Solo ai trasportatori verificati che hanno il mezzo e l'autorizzazione che hai richiesto. Lo ricevono anche in privato su Telegram."], ["Come so che il mio carico è stato preso?", "Quando un trasportatore lo prende e paga, il carico diventa rosso («preso») nel calendario e in «Riepilogo movimenti»."], ["Posso modificare o annullare un carico?", "Per ora scrivici con il modulo «Scrivici» o all'email del supporto, indicando il carico: lo sistemiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]]};
+function mostraFAQ() {
+  const box = document.getElementById('faq-box'), lista = document.getElementById('faq-lista');
+  if (!box || !lista || !FAQ_PORTALE[tipoUtente]) return false;
+  lista.innerHTML = FAQ_PORTALE[tipoUtente].map(function (qa) {
+    const d = document.createElement('div'); d.textContent = qa[1]; const risp = d.innerHTML;
+    d.textContent = qa[0]; const dom = d.innerHTML;
+    return '<details class="faq-item"><summary>' + dom + '</summary><div class="faq-risp">' + risp + '</div></details>';
+  }).join('');
+  box.style.display = 'block';
+  return true;
+}
+(function attendiTipoPerFAQ() {
+  let giri = 0;
+  const t = setInterval(function () { giri++; if (mostraFAQ() || giri > 120) clearInterval(t); }, 500);
+})();
+
+// 27/9: tutti gli importi scritti sempre allo stesso modo, es. "€ 1.080,00"
+function euro(v) {
+  const n = parseImportoPattuito(v);
+  const segno = n < 0 ? '-' : '';
+  const [intero, decimali] = Math.abs(n).toFixed(2).split('.');
+  return '€ ' + segno + intero.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + decimali;
 }
 
 function renderReportTrasportatori() {
@@ -2894,7 +2939,7 @@ function renderReportTrasportatori() {
   const filtrati = filtraPerPeriodo(presi, 'data_assegnato', filtroReportTraspGiorni);
 
   const totaleGenerale = filtrati.reduce((s, c) => s + parseImportoPattuito(c.fields.importo_pattuito), 0);
-  aggiorna('az-c-dapagare', `€ ${totaleGenerale.toLocaleString('it-IT', {minimumFractionDigits: 2})}`);
+  aggiorna('az-c-dapagare', `${euro(totaleGenerale)}`);
 
   if (!filtrati.length) {
     bodyEl.innerHTML = `<div class="carico-empty">Nessun carico accaparrato in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Appena un trasportatore prende un tuo carico, comparirà qui con l'importo pattuito.</span></div>`;
@@ -2914,7 +2959,7 @@ function renderReportTrasportatori() {
     const righeHtml = righe.map(c => {
       const f = c.fields;
       const data = f.data_assegnato ? new Date(f.data_assegnato).toLocaleDateString('it-IT') : '—';
-      const importoTesto = f.importo_pattuito ? `€ ${f.importo_pattuito}` : 'non specificato';
+      const importoTesto = f.importo_pattuito ? `${euro(f.importo_pattuito)}` : 'non specificato';
       return `<tr>
         <td style="padding:10px 18px;font-size:13px;">${data}</td>
         <td style="padding:10px 18px;font-size:13px;">${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}</td>
@@ -2925,7 +2970,7 @@ function renderReportTrasportatori() {
     return `<div style="margin-bottom:20px;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
       <div style="background:rgba(255,255,255,0.03);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <span style="font-family:var(--font-h);font-weight:700;color:#fff;">🚚 ${nome}</span>
-        <span style="color:var(--green);font-weight:700;">Totale: € ${totaleTrasp.toLocaleString('it-IT', {minimumFractionDigits: 2})}</span>
+        <span style="color:var(--green);font-weight:700;">Totale: ${euro(totaleTrasp)}</span>
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
@@ -2996,7 +3041,7 @@ function scaricaStoricoPDF() {
     .map(c => {
       const f = c.fields;
       const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
-      return [data, f.richiesta_id || '—', f.stato || '—', `€ ${PREZZO}`];
+      return [data, f.richiesta_id || '—', f.stato || '—', `${euro(PREZZO)}`];
     });
   doc.autoTable({
     head: [['Data', 'ID Richiesta', 'Stato', 'Importo']],
