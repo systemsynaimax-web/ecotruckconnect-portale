@@ -124,6 +124,39 @@
     await cancelloInCorso;
   }
 
+  /* ================= ASSISTENTE VIRTUALE: informazioni aggiornate (27/9) =================
+     Il Proxy ha un testo base. Qui aggiungiamo, a ogni domanda, le informazioni vere
+     del portale (diverse per trasportatore e azienda) e puliamo la domanda da
+     virgolette e a capo, che prima rompevano il messaggio. */
+  var BOT_COMUNE = [
+    'ISTRUZIONI: rispondi in italiano, semplice e diretto, massimo 6 frasi, solo testo semplice senza asterischi, senza grassetto e senza elenchi puntati, indicando il percorso esatto nel portale con i nomi dei pulsanti tra « ». Usa solo queste informazioni; se non sai una cosa, di di scrivere al supporto. Non chiedere mai password o codici.',
+    'SEI un assistente basato su intelligenza artificiale, non una persona.',
+    'ACCESSO: si entra con email e password. Il primo accesso usa una password temporanea ricevuta per email: compare una striscia rossa e si apre la finestra «Scegli la tua password»; si puo premere «Piu tardi». Per cambiarla quando vuoi: menu «Dashboard» e poi «Sicurezza» e poi «Cambia password».',
+    'PASSWORD DIMENTICATA: nella pagina di accesso clicca «Password dimenticata», scrivi la tua email, ricevi per email un codice di 6 numeri valido 15 minuti, poi scrivi codice e nuova password. Massimo 3 codici al giorno.',
+    'GOOGLE AUTHENTICATOR (consigliato, non obbligatorio): striscia gialla «Attiva ora» oppure «Dashboard» e poi «Sicurezza». Si scarica l app gratuita Google Authenticator, dal computer si inquadra il quadratino QR, dal telefono si tocca il pulsante per aggiungere EcoTruckConnect, poi si scrive il codice di 6 numeri e si preme «Attiva». Da quel momento a ogni accesso serve anche il codice dell app. Se cambi o perdi il telefono scrivi al supporto.',
+    'PAGAMENTI: iscrizione 150 euro all anno per trasportatori e aziende, con link di pagamento via email dopo la verifica dei dati. Il trasportatore paga 20 euro per ogni carico che prende. Per le aziende pubblicare i carichi e gratuito. Si paga su pagina sicura Shopify. Prima della scadenza annuale arriva un promemoria per email.',
+    'RIEPILOGO: menu «Dashboard» e poi «Riepilogo movimenti» per vedere i movimenti; non e una fattura fiscale. «I miei report» mostra numeri e un grafico mese per mese. «Modifica i miei dati» per aggiornare i dati. In «Sicurezza» c e anche «Elimina il mio account».',
+    'PRIVACY E REGOLE: il portale e privato, nessuno vede i dati degli altri. SynAIMAX mette in contatto aziende e trasportatori ma non e parte del contratto di trasporto: il prezzo del trasporto si accorda e si paga direttamente tra azienda e trasportatore.',
+    'SUPPORTO: modulo «Scrivici» nel portale oppure email ecotruckconnect@synaimaxpro.com. Modifica o annullamento di un carico: per ora scrivere al supporto.'
+  ].join(' ');
+  var BOT_TRASPORTATORE = [
+    'L UTENTE E UN TRASPORTATORE.',
+    'PROFILO: nei riquadri «I miei mezzi» e «Le mie autorizzazioni» indica tutti i mezzi che hai e le autorizzazioni (conto terzi, rifiuti, ADR e altre), poi salva. Il sistema ti mostra e ti notifica solo i carichi compatibili con il tuo profilo.',
+    'TELEGRAM: menu «Dashboard» e poi «Notifiche» e poi «Collega Telegram»: si apre il bot, premi Avvia. Da quel momento ricevi in privato i carichi compatibili.',
+    'PRENDERE UN CARICO: nella lista «Carichi Disponibili» o nel «Calendario Carichi» clicca il carico blu, poi «Prendi», conferma e paga 20 euro entro 5 minuti. Se non paghi in tempo il carico torna disponibile per gli altri. Colori: blu disponibile, arancione qualcuno sta pagando, rosso gia preso. Dopo il pagamento il carico e tuo e ricevi la conferma.'
+  ].join(' ');
+  var BOT_AZIENDA = [
+    'L UTENTE E UN AZIENDA.',
+    'PUBBLICARE UN CARICO (gratis): riquadro «Pubblica un Carico»: CAP e citta di partenza e arrivo, data, tipo di merce, specifica, note, se e un rifiuto (serve il codice CER) o se e pericoloso, il tipo di mezzo richiesto e l autorizzazione richiesta; poi «Pubblica Carico». Si puo anche cliccare un giorno del «Calendario Carichi» per precompilare la data.',
+    'DOPO LA PUBBLICAZIONE: il carico arriva solo ai trasportatori con mezzo e autorizzazioni compatibili, anche su Telegram. Quando un trasportatore lo prende e paga, il carico diventa rosso (preso). Lo stato dei carichi si vede in «Riepilogo movimenti» e nel calendario.'
+  ].join(' ');
+  function pulisciTesto(t) { return String(t || '').replace(/["\\]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+  function componiDomandaBot(domanda) {
+    var tipo = ''; try { tipo = (typeof tipoUtente !== 'undefined' && tipoUtente) ? tipoUtente : ''; } catch (e) {}
+    var ruolo = tipo === 'azienda' ? BOT_AZIENDA : (tipo === 'trasportatore' ? BOT_TRASPORTATORE : (BOT_TRASPORTATORE + ' ' + BOT_AZIENDA));
+    return pulisciTesto('INFORMAZIONI AGGIORNATE DEL PORTALE: ' + BOT_COMUNE + ' ' + ruolo + ' DOMANDA DELL UTENTE: ' + pulisciTesto(domanda).slice(0, 800));
+  }
+
   /* ================= PASS AUTOMATICO SU OGNI RICHIESTA ================= */
   window.fetch = async function (url, opts) {
     try {
@@ -133,6 +166,7 @@
         opts = Object.assign({}, opts || {});
         var corpo = {};
         if (typeof opts.body === 'string' && opts.body) { try { corpo = JSON.parse(opts.body); } catch (e) { corpo = {}; } }
+        if (corpo.action === 'chat_bot' && typeof corpo.message === 'string') corpo.message = componiDomandaBot(corpo.message);
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
           await garantisciCodice();
           var tok = await tokenAccesso();
@@ -145,7 +179,18 @@
         opts.body = JSON.stringify(corpo);
       }
     } catch (e) { /* in caso di problemi la richiesta parte comunque */ }
-    return fetchOriginale(url, opts);
+    var eraBot = false; try { eraBot = !!(opts && typeof opts.body === 'string' && opts.body.indexOf('"action":"chat_bot"') !== -1); } catch (e) {}
+    var risposta = await fetchOriginale(url, opts);
+    if (!eraBot) return risposta;
+    // risposta dell'assistente: tolgo asterischi e simboli di formattazione
+    try {
+      var dati = await risposta.clone().json();
+      if (dati && typeof dati.reply === 'string') {
+        dati.reply = dati.reply.replace(/\*\*|__/g, '').replace(/^\s*[#>]+\s*/gm, '').replace(/^\s*[-*•]\s+/gm, '• ');
+        return new Response(JSON.stringify(dati), { status: risposta.status, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (e) {}
+    return risposta;
   };
 
   /* ================= GRAFICA COMUNE ================= */
