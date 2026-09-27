@@ -271,10 +271,22 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   <div class="sec-title">✅ Verifiche ufficiali <span style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;">NUOVO — DA PROVARE CON GERLANDO</span></div>
   <div class="toolbar-grid">
     <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>
+    <a class="tool-btn" href="https://ec.europa.eu/taxation_customs/vies/" target="_blank" rel="noopener"><span class="icon">🇪🇺</span>VIES — P.IVA europea</a>
     <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener"><span class="icon">🚛</span>Albo Autotrasportatori — Imprese iscritte</a>
     <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/servizio-regolarita-imprese" target="_blank" rel="noopener"><span class="icon">📑</span>Albo — Regolarità INPS/INAIL</a>
+    <a class="tool-btn" href="https://www.albonazionalegestoriambientali.it/public/elenchiiscritti" target="_blank" rel="noopener"><span class="icon">♻️</span>Albo Gestori Ambientali — Rifiuti</a>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin:12px 0 30px;line-height:1.6;">Servizi pubblici ufficiali. <b>Verifica P.IVA</b>: gratuita, senza registrazione. <b>Regolarità INPS/INAIL</b>: serve una registrazione con PIN via PEC, una volta sola. Nella scheda di ogni nuova iscrizione (🔔) c'è il pulsante <b>🏛️ Verifica P.IVA</b>, che copia il numero e apre la pagina dell'Agenzia.</div>
+  <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:12px 0 30px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <div style="color:#fff;font-weight:700;margin-bottom:8px;">A cosa serve ogni pulsante</div>
+    <ul style="margin:0;padding-left:18px;">
+      <li style="margin:0 0 8px;"><b style="color:#fff">🏛️ Agenzia Entrate</b>: dice se la Partita IVA è attiva, sospesa o cessata e a chi è intestata. Gratis, senza registrazione. Da usare per ogni nuova iscrizione, anche dal pulsante nella scheda della 🔔.</li>
+      <li style="margin:0 0 8px;"><b style="color:#fff">🇪🇺 VIES</b>: controllo europeo della Partita IVA. Attenzione: risulta «valida» solo se la P.IVA è abilitata a lavorare con l'estero. Molti piccoli trasportatori non lo sono, quindi «non valida» qui non vuol dire falsa.</li>
+      <li style="margin:0 0 8px;"><b style="color:#fff">🚛 Albo Autotrasportatori</b>: conferma che il trasportatore è iscritto all'Albo, obbligatorio per il trasporto per conto terzi.</li>
+      <li style="margin:0 0 8px;"><b style="color:#fff">📑 Regolarità INPS/INAIL</b>: per legge chi affida un trasporto deve verificarla prima. Serve una registrazione con PIN via PEC, una volta sola.</li>
+      <li style="margin:0 0 8px;"><b style="color:#fff">♻️ Albo Gestori Ambientali</b>: per i carichi di rifiuti (codici CER). Verifica che il trasportatore sia iscritto con la categoria e i codici giusti.</li>
+      <li style="margin:0;"><b style="color:#fff">Come fanno le altre piattaforme</b> (Trans.eu, B2PWeb, Spedity): verificano Partita IVA, licenza e assicurazione prima di far entrare i trasportatori. Noi lo facciamo con questi pulsanti e con la 🔔.</li>
+    </ul>
+  </div>
 
   <div class="sec-title">📊 Numeri in tempo reale</div>
   <div class="stats-row">
@@ -376,6 +388,21 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   </div>
 
   
+
+  <div class="sec-title">📌 Da completare — collegamenti ufficiali <span style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;">SPIEGAZIONE PER GERLANDO</span></div>
+  <div style="background:rgba(245,158,11,0.06);border:1px dashed rgba(245,158,11,0.45);border-radius:12px;padding:16px 20px;margin-bottom:30px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <div style="margin-bottom:10px;">Punti già preparati, da decidere insieme. Nessuno è attivo finché non dite sì.</div>
+    <ol style="margin:0;padding-left:20px;">
+      <li style="margin:0 0 10px;"><b style="color:#fff">Controllo automatico della Partita IVA all'iscrizione.</b> Quando arriva una nuova iscrizione, Make controlla da solo la P.IVA sul servizio europeo VIES e scrive l'esito nella 🔔. Limite: le P.IVA non abilitate all'estero risultano «non valide», quindi è solo un primo aiuto e l'ultima parola resta vostra.</li>
+      <li style="margin:0 0 10px;"><b style="color:#fff">Registrazione al servizio Regolarità INPS/INAIL dell'Albo.</b> Da fare una volta sola con la PEC della società. Dopo potete verificare ogni trasportatore, come chiede la legge a chi affida i trasporti.</li>
+      <li style="margin:0 0 10px;"><b style="color:#fff">Carichi di rifiuti.</b> Decidere se, per chi prende carichi con codice CER, il controllo sull'Albo Gestori Ambientali diventa obbligatorio.</li>
+      <li style="margin:0 0 10px;"><b style="color:#fff">Assicurazione del trasportatore.</b> Chiedere il documento dell'assicurazione al momento dell'iscrizione, come fa Spedity.</li>
+      <li style="margin:0 0 10px;"><b style="color:#fff">Valutazioni.</b> Dopo ogni carico, azienda e trasportatore si danno un voto, come su Trans.eu.</li>
+      <li style="margin:0 0 10px;"><b style="color:#fff">Prezzo indicativo del viaggio.</b> Un valore di riferimento, non obbligatorio, come nelle nuove borse carichi.</li>
+      <li style="margin:0;"><b style="color:#fff">Fatturazione elettronica automatica (SDI).</b> Da decidere con il commercialista.</li>
+    </ol>
+  </div>
+
 
 </div>
 
