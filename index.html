@@ -2015,11 +2015,13 @@ function renderCampanellino() {
   const badge = document.getElementById('notif-bell-badge');
   if (!lista || tipoUtente !== 'azienda') return;
 
+  // 27/9: nella campanella compaiono TUTTI i carichi dell'azienda (anche quelli appena
+  // pubblicati, come conferma); il pallino rosso conta solo le novita' vere (in pagamento / preso)
   const aggiornamenti = (carichiPubblicatiAzienda || [])
-    .filter(c => (c.fields.stato || '').toUpperCase() !== 'DISPONIBILE')
+    .slice()
     .sort((a,b) => (b.fields.data_assegnato || b.fields.data_pubblicazione || '').localeCompare(a.fields.data_assegnato || a.fields.data_pubblicazione || ''));
 
-  const nonLette = aggiornamenti.filter(c => !c.fields.notifica_letta);
+  const nonLette = aggiornamenti.filter(c => (c.fields.stato || '').toUpperCase() !== 'DISPONIBILE' && !c.fields.notifica_letta);
   if (badge) {
     if (nonLette.length > 0) {
       badge.style.display = 'flex';
@@ -2030,20 +2032,21 @@ function renderCampanellino() {
   }
 
   if (!aggiornamenti.length) {
-    lista.innerHTML = '<div class="notif-bell-empty">Nessun aggiornamento sui tuoi carichi per ora.</div>';
+    lista.innerHTML = '<div class="notif-bell-empty">Nessun carico pubblicato per ora.</div>';
     return;
   }
 
   lista.innerHTML = aggiornamenti.map(c => {
     const f = c.fields;
     const stato = (f.stato || '').toUpperCase();
-    const testoStato = stato === 'PRESO' ? '✅ Preso' : stato.includes('PAGAMENTO') ? '⏳ In pagamento' : stato;
+    const testoStato = stato === 'PRESO' ? '✅ Preso' : stato.includes('PAGAMENTO') ? '⏳ In pagamento' : stato === 'DISPONIBILE' ? '📦 Pubblicato — in attesa di un trasportatore' : stato;
     const chi = f.bloccato_da_nome || '—';
+    const perChi = stato === 'DISPONIBILE' ? '' : ` da <b>${chi}</b>`;
     const dataRif = f.data_assegnato || f.data_pubblicazione;
     const data = dataRif ? new Date(dataRif).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
     return `<div class="notif-bell-item">
       <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
-      <div style="color:var(--muted);margin-bottom:6px;">${testoStato} da <b>${chi}</b> · ${data}</div>
+      <div style="color:var(--muted);margin-bottom:6px;">${testoStato}${perChi} · ${data}</div>
       <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>
     </div>`;
   }).join('');
