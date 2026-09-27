@@ -737,6 +737,15 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 </script>
 <script>
 const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+// 27/9: importi sempre come "€ 1.080,00"
+function euro(v) {
+  let n = typeof v === 'number' ? v : parseFloat(String(v || '0').replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  if (isNaN(n)) n = 0;
+  const segno = n < 0 ? '-' : '';
+  const [intero, decimali] = Math.abs(n).toFixed(2).split('.');
+  return '€ ' + segno + intero.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + decimali;
+}
+
 window.ANDAMENTI_FINTI = true;
 const ESEMPI_ALTRI = {"tracciamento": {"t": "📍 Tracciamento del viaggio", "h": "<div class=\"es-riga\"><b>Favara → Palermo</b><span style=\"color:#22c55e;font-weight:700;\">In viaggio</span></div>\n<div style=\"position:relative;height:90px;border:1px solid var(--border);border-radius:10px;background:linear-gradient(90deg,rgba(59,130,246,0.15),rgba(34,197,94,0.15));margin-bottom:10px;\">\n<div style=\"position:absolute;left:8%;top:40px;\">🏭</div><div style=\"position:absolute;left:12%;right:12%;top:52px;border-top:3px dashed #93c5fd;\"></div><div style=\"position:absolute;left:58%;top:30px;font-size:24px;\">🚛</div><div style=\"position:absolute;right:8%;top:40px;\">📦</div></div>\n<div class=\"es-riga\"><span>Ultima posizione</span><b>A19, uscita Termini Imerese — 5 min fa</b></div><div class=\"es-riga\"><span>Arrivo previsto</span><b>14:40</b></div>"}, "consegna": {"t": "📸 Prova di consegna", "h": "<div class=\"es-riga\"><b>Carico ORD-1042 consegnato</b><span style=\"color:#22c55e;font-weight:700;\">✅ 12:35</span></div>\n<div style=\"display:flex;gap:10px;margin-bottom:10px;\"><div style=\"flex:1;height:110px;border-radius:10px;background:#334155;display:flex;align-items:center;justify-content:center;font-size:34px;\">📷</div><div style=\"flex:1;height:110px;border-radius:10px;background:#f8fafc;color:#0f172a;display:flex;align-items:center;justify-content:center;font-family:cursive;font-size:22px;\">M. Bianchi</div></div>\n<div class=\"es-riga\"><span>Ricevuto da</span><b>Mario Bianchi (magazzino)</b></div><div class=\"es-riga\"><span>Note</span><b>12 pallet, nessun danno</b></div>"}, "documenti": {"t": "📄 Documenti digitali", "h": "<div class=\"es-riga\"><b>Carico ORD-1042</b><span>3 documenti</span></div><div class=\"es-riga\"><span>📄 DDT n. 1182</span><button class=\"es-btn\" style=\"background:#3b82f6;\">Apri</button></div><div class=\"es-riga\"><span>📄 Lettera di vettura (CMR)</span><button class=\"es-btn\" style=\"background:#3b82f6;\">Apri</button></div><div class=\"es-riga\"><span>♻️ Formulario rifiuti (FIR)</span><button class=\"es-btn\" style=\"background:#3b82f6;\">Apri</button></div><div style=\"font-size:12px;color:var(--muted);\">Caricati dal telefono e conservati nel carico, per azienda e trasportatore.</div>"}, "offerte": {"t": "💬 Offerte sul prezzo", "h": "<div class=\"es-riga\"><b>Agrigento → Catania · 18 pallet</b><span>3 offerte</span></div>\n<div class=\"es-riga\"><span>🚛 Trasporti Lo Bue · ⭐ 4,8</span><b>€ 420</b><button class=\"es-btn\">Accetta</button></div>\n<div class=\"es-riga\"><span>🚛 Russo Autotrasporti · ⭐ 4,5</span><b>€ 450</b><button class=\"es-btn\">Accetta</button></div>\n<div class=\"es-riga\"><span>🚛 Sicil Cargo · ⭐ 4,1</span><b>€ 470</b><button class=\"es-btn\">Accetta</button></div>"}, "preferiti": {"t": "⭐ Trasportatori preferiti", "h": "<div style=\"margin-bottom:8px;color:var(--muted);\">I nuovi carichi arrivano prima a loro, per 30 minuti. Poi a tutti.</div>\n<div class=\"es-riga\"><span>⭐ Trasporti Lo Bue</span><b>12 carichi fatti</b></div><div class=\"es-riga\"><span>⭐ Russo Autotrasporti</span><b>7 carichi fatti</b></div><div class=\"es-riga\"><span>☆ Sicil Cargo</span><button class=\"es-btn\" style=\"background:#3b82f6;\">Aggiungi ai preferiti</button></div>"}, "ricorrenti": {"t": "🔁 Carichi ricorrenti", "h": "<div class=\"es-riga\"><b>Favara → Palermo · Alimentare</b><span>ogni settimana</span></div>\n<div class=\"es-riga\"><span>Ripeti</span><b>Ogni lunedì, ore 7:00</b></div><div class=\"es-riga\"><span>Fino al</span><b>31/12/2026</b></div><div class=\"es-riga\"><span>Prossimi</span><b>29/09 · 06/10 · 13/10 · 20/10</b></div>"}, "garantito": {"t": "🔐 Pagamento garantito", "h": "<div class=\"es-step\"><div class=\"es-pallino\" style=\"background:#3b82f6;\">1</div><div><b>L'azienda paga il trasporto alla piattaforma</b><br><span style=\"color:var(--muted);\">I soldi restano fermi, al sicuro.</span></div></div>\n<div class=\"es-step\"><div class=\"es-pallino\" style=\"background:#f59e0b;\">2</div><div><b>Il trasportatore consegna</b><br><span style=\"color:var(--muted);\">Con la prova di consegna.</span></div></div>\n<div class=\"es-step\"><div class=\"es-pallino\" style=\"background:#22c55e;\">3</div><div><b>I soldi passano al trasportatore</b><br><span style=\"color:var(--muted);\">Nessun rischio di non essere pagato.</span></div></div>\n<div style=\"margin-top:6px;font-size:12px;color:#f59e0b;\">Cambia il modello: oggi SynAIMAX non tocca i soldi del trasporto. Serve un servizio come Stripe.</div>"}};
 function apriEsempio(k){const e=ESEMPI_ALTRI[k];if(!e)return;document.getElementById('esempio-titolo').textContent=e.t;document.getElementById('esempio-corpo').innerHTML=e.h;document.getElementById('esempio-panel').classList.add('open');}
@@ -828,7 +837,7 @@ async function apriAndamenti() {
   disegna('g-carichi', 'bar', eS, [{ nome: 'Pubblicati', valori: pubbl, colore: '#3b82f6' }, { nome: 'Presi', valori: presi, colore: '#22c55e' }]);
   document.getElementById('tot-carichi').textContent = 'Ultime 8 settimane: ' + somma(pubbl) + ' pubblicati, ' + somma(presi) + ' presi';
   disegna('g-incassi', 'bar', eM, [{ nome: 'Iscrizioni 150 €', valori: iscr150, colore: '#8b5cf6' }, { nome: 'Commissioni 20 €', valori: comm20, colore: '#22c55e' }], true);
-  document.getElementById('tot-incassi').textContent = 'Ultimi 6 mesi: € ' + somma(iscr150.concat(comm20)).toLocaleString('it-IT', { minimumFractionDigits: 2 });
+  document.getElementById('tot-incassi').textContent = 'Ultimi 6 mesi: ' + euro(somma(iscr150.concat(comm20)));
   disegna('g-iscrizioni', 'bar', eM, [{ nome: 'Trasportatori', valori: nuoviT, colore: '#3b82f6' }, { nome: 'Aziende', valori: nuoviA, colore: '#f59e0b' }]);
   document.getElementById('tot-iscrizioni').textContent = 'Ultimi 6 mesi: ' + somma(nuoviT) + ' trasportatori, ' + somma(nuoviA) + ' aziende';
   disegna('g-sicurezza', 'line', eS, [{ nome: 'Password cambiate', valori: pwCamb, colore: '#22c55e' }, { nome: 'Codici «Password dimenticata»', valori: codici, colore: '#f59e0b' }]);
@@ -893,7 +902,7 @@ const ANTEPRIMA_REGISTRAZIONI = [
       p_iva: '01987650843', codice_fiscale: '01987650843', forma_giuridica: 'S.r.l.',
       camera_commercio: 'AG-654321', numero_rea: '112233', pec: 'belfiore@pec.it', codice_sdi: 'HIJKLMN',
       indirizzo: 'Via Industriale 8', cap: '92100', citta: 'Agrigento', provincia: 'AG', nazione: 'Italia',
-      specifica_azienda: 'Logistica generale — esempio'
+      specifica: 'Logistica generale — esempio', nome_referente: 'Giovanni', cognome_referente: 'Belfiore (DEMO)'
   }}
 ];
 
@@ -1126,7 +1135,7 @@ const CAMPI_AZIENDA = [
   ['Partita IVA', 'p_iva'], ['Codice fiscale', 'codice_fiscale'], ['Forma giuridica', 'forma_giuridica'],
   ['Camera di commercio', 'camera_commercio'], ['Numero REA', 'numero_rea'], ['PEC', 'pec'], ['Codice SDI', 'codice_sdi'],
   ['Indirizzo', 'indirizzo'], ['CAP', 'cap'], ['Città', 'citta'], ['Provincia', 'provincia'], ['Nazione', 'nazione'],
-  ['Specifica attività', 'specifica_azienda']
+  ['Specifica attività', 'specifica'], ['Nome referente', 'nome_referente'], ['Cognome referente', 'cognome_referente'], ['Amministratore', 'nome_amministratore']
 ];
 
 /* ==================================================
@@ -1597,7 +1606,7 @@ function scaricaPDF(tipo) {
     righe = lista.map(r => {
       const f = r.fields;
       const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
-      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      const extra = r.tipo === 'azienda' ? (f.specifica || f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
       return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
     });
   } else {
@@ -1659,7 +1668,7 @@ function scaricaCSV(tipo) {
     righe = lista.map(r => {
       const f = r.fields;
       const nome = r.tipo === 'azienda' ? (f.ragione_sociale || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
-      const extra = r.tipo === 'azienda' ? (f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
+      const extra = r.tipo === 'azienda' ? (f.specifica || f.specifica_azienda || '—') : ((f.tipo_camion || []).join(', ') || '—');
       return [r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore', nome, f.email || '—', f.telefono || '—', extra];
     });
   } else {
