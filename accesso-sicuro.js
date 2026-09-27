@@ -173,17 +173,17 @@
     '.ect-ov .err{color:#f87171;font-size:13px;margin-top:10px;display:none;text-align:center;}' +
     '.ect-ov .ok{color:#4ade80;font-size:14px;margin-top:10px;display:none;text-align:center;line-height:1.5;}' +
     '.ect-ov .piccolo{font-size:12px;color:rgba(241,245,249,0.5);margin-top:14px;text-align:center;line-height:1.5;}' +
-    '#ect-striscia-mfa{background:#f59e0b;color:#1c1917;padding:10px 44px 10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:2147481000;font-family:"DM Sans",system-ui,sans-serif;}' +
+    '#ect-striscia-mfa{background:#f59e0b;color:#1c1917;padding:10px 44px 10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:60;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-mfa button.att{margin-left:10px;background:#1c1917;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
     '#ect-striscia-mfa .x{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;font-weight:700;}' +
-    '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:2147481001;font-family:"DM Sans",system-ui,sans-serif;}' +
+    '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:61;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-rossa button{margin-left:10px;background:#fff;color:#b91c1c;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
     '#ect-striscia-rossa button.dopo{margin-left:6px;background:transparent;color:#fff;border:1px solid #fff;font-weight:600;}' +
-    '#banner-pw-temp{background:#dc2626 !important;color:#fff !important;position:relative;z-index:2147481001;}' +
+    '#banner-pw-temp{background:#dc2626 !important;color:#fff !important;position:relative;z-index:61;}' +
     '#banner-pw-temp b{color:#fff !important;}' +
     '#banner-pw-temp button:first-of-type{background:#fff !important;color:#b91c1c !important;}' +
     '#banner-pw-temp button:nth-of-type(2){background:transparent !important;color:#fff !important;border:1px solid #fff !important;}' +
-    '#ect-pill{position:relative;z-index:2147480000;background:#0e1623;border-bottom:1px solid rgba(255,255,255,0.12);padding:7px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:12px;color:#f1f5f9;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}' +
+    '#ect-pill{position:relative;z-index:59;background:#0e1623;border-bottom:1px solid rgba(255,255,255,0.12);padding:7px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:12px;color:#f1f5f9;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}' +
     '#ect-pill span.link{cursor:pointer;color:#60a5fa;}' +
     '#ect-pill span.esci{cursor:pointer;color:#ef4444;}' +
     '#ect-blocco-sicurezza{margin:18px 0 10px;padding:14px;border:1px solid rgba(245,158,11,0.35);border-radius:10px;background:rgba(245,158,11,0.06);}';
@@ -546,11 +546,92 @@
       clearInterval(guardaPw);
       var vista = false; try { vista = sessionStorage.getItem('ect_popup_pw_visto') === '1'; } catch (e) {}
       var m = document.getElementById('modal-cambia-pw');
-      if (!vista && m && m.style.display !== 'flex' && typeof apriCambiaPassword === 'function') {
+      var conSezione = false; try { conSezione = !!new URLSearchParams(location.search).get('apri'); } catch (e) {}
+      if (!vista && !conSezione && m && m.style.display !== 'flex' && typeof apriCambiaPassword === 'function') {
         try { sessionStorage.setItem('ect_popup_pw_visto', '1'); } catch (e) {}
         apriCambiaPassword();
       }
     }, 500);
+    // GRAFICI NEI REPORT DEL PORTALE (27/9): sotto "📈 I miei report", mese per mese
+    function caricaChart() {
+      return new Promise(function (ok, no) {
+        if (window.Chart) return ok();
+        var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+        sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+      });
+    }
+    var graficoPortale = null;
+    function disegnaGraficoPortale() {
+      var cards = document.getElementById('report-cards'); if (!cards) return;
+      var box = document.getElementById('ect-grafico-report');
+      if (!box) {
+        box = document.createElement('div'); box.id = 'ect-grafico-report';
+        box.style.cssText = 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin:4px 0 10px;';
+        box.innerHTML = '<div id="ect-graf-titolo" style="color:#fff;font-weight:700;font-size:13px;margin-bottom:2px;"></div><div id="ect-graf-nota" style="color:rgba(241,245,249,0.5);font-size:12px;margin-bottom:8px;"></div><div style="position:relative;height:220px;"><canvas id="ect-graf-canvas"></canvas></div>';
+        cards.insertAdjacentElement('afterend', box);
+      }
+      var mesi = []; var o = new Date(); for (var i = 5; i >= 0; i--) mesi.push(new Date(o.getFullYear(), o.getMonth() - i, 1));
+      var nomi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+      var etichette = mesi.map(function (m) { return nomi[m.getMonth()] + ' ' + String(m.getFullYear()).slice(2); });
+      function perMese(date) { var v = mesi.map(function () { return 0; }); date.forEach(function (x) { if (!x) return; var d = new Date(x.d || x); if (isNaN(d)) return; var k = mesi.findIndex(function (m) { return m.getFullYear() === d.getFullYear() && m.getMonth() === d.getMonth(); }); if (k >= 0) v[k] += (x.n != null ? x.n : 1); }); return v; }
+      var azienda = false; try { azienda = (typeof tipoUtente !== 'undefined' && tipoUtente === 'azienda'); } catch (e) {}
+      var serie, titolo, nota = '', finti = false;
+      if (azienda) {
+        var tutti = []; try { tutti = carichiPubblicatiAzienda || []; } catch (e) {}
+        var f = tutti.map(function (c) { return c.fields || c; });
+        var pub = perMese(f.map(function (x) { return x.data_pubblicazione || x.createdTime; }));
+        var pre = perMese(f.filter(function (x) { return String(x.stato || '').toUpperCase() === 'PRESO'; }).map(function (x) { return x.data_assegnato || x.data_pubblicazione; }));
+        if (window.__ANTEPRIMA_SCUDO && pub.every(function (n) { return !n; })) { pub = [3, 5, 4, 7, 6, 9]; pre = [2, 4, 3, 6, 5, 7]; finti = true; }
+        titolo = '📊 I miei carichi, mese per mese';
+        serie = [{ label: 'Pubblicati', data: pub, backgroundColor: '#3b82f6', yAxisID: 'y' }, { label: 'Presi', data: pre, backgroundColor: '#22c55e', yAxisID: 'y' }];
+      } else {
+        var cands = []; try { cands = ultimeCandidature || []; } catch (e) {}
+        var fatti = cands.map(function (c) { return c.fields || c; }).filter(function (x) { var st = String(x.stato || '').toLowerCase(); return st.indexOf('complet') >= 0 || st.indexOf('accett') >= 0 || st.indexOf('pagat') >= 0 || st === 'preso'; });
+        var quando = function (x) { return x.data_assegnato || x.data_candidatura || x.data_pubblicazione; };
+        var num = perMese(fatti.map(quando));
+        var imp = function (v) { try { return parseImportoPattuito(v); } catch (e) { return parseFloat(String(v || '0').replace(/[^0-9,.-]/g, '').replace(',', '.')) || 0; } };
+        var eur = perMese(fatti.map(function (x) { return { d: quando(x), n: imp(x.importo_pattuito) }; }));
+        if (window.__ANTEPRIMA_SCUDO && num.every(function (n) { return !n; })) { num = [2, 3, 5, 4, 6, 8]; eur = [360, 540, 900, 720, 1080, 1440]; finti = true; }
+        titolo = '📊 I miei carichi e il mio guadagno, mese per mese';
+        serie = [{ label: 'Carichi presi', data: num, backgroundColor: '#3b82f6', yAxisID: 'y' }, { type: 'line', label: 'Guadagno €', data: eur, borderColor: '#22c55e', backgroundColor: '#22c55e', yAxisID: 'y2', tension: 0, pointRadius: 3 }];
+      }
+      document.getElementById('ect-graf-titolo').textContent = titolo;
+      document.getElementById('ect-graf-nota').textContent = finti ? '🎭 Anteprima: numeri di esempio' : 'Ultimi 6 mesi';
+      caricaChart().then(function () {
+        if (graficoPortale) graficoPortale.destroy();
+        var scale = { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { beginAtZero: true, position: 'left', ticks: { color: '#94a3b8', precision: 0 }, grid: { color: 'rgba(255,255,255,0.06)' } } };
+        if (!azienda) scale.y2 = { beginAtZero: true, position: 'right', ticks: { color: '#86efac', callback: function (v) { return '€ ' + v; } }, grid: { display: false } };
+        graficoPortale = new Chart(document.getElementById('ect-graf-canvas'), { type: 'bar', data: { labels: etichette, datasets: serie }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#cbd5e1', boxWidth: 12 } } }, scales: scale } });
+      }).catch(function () { document.getElementById('ect-graf-nota').textContent = 'Grafico non disponibile in questo momento.'; });
+    }
+    var agganciaReport = setInterval(function () {
+      if (typeof window.aggiornaDashReport === 'function' && !window.aggiornaDashReport.__ect) {
+        var orig = window.aggiornaDashReport;
+        window.aggiornaDashReport = function () { var r = orig.apply(this, arguments); try { disegnaGraficoPortale(); } catch (e) {} return r; };
+        window.aggiornaDashReport.__ect = true;
+        clearInterval(agganciaReport);
+      }
+    }, 400);
+
+    // anteprima: ?preview=...&apri=<sezione> apre direttamente quella sezione
+    // (notifiche = Collega Telegram, sicurezza, fatture = Riepilogo movimenti, report, dati, overview)
+    var apriSez = null; try { apriSez = new URLSearchParams(location.search).get('apri'); } catch (e) {}
+    if (window.__ANTEPRIMA_SCUDO && apriSez) {
+      var giriSez = 0;
+      var vaiSez = setInterval(function () {
+        giriSez++;
+        var app = document.getElementById('app');
+        if (app && app.style.display === 'block' && typeof apriDashSezione === 'function') {
+          clearInterval(vaiSez);
+          setTimeout(function () {
+            var m = document.getElementById('modal-cambia-pw'); if (m) m.style.display = 'none';
+            try { apriDashSezione(apriSez); } catch (e) {}
+            var el = document.getElementById('dash-sezione-' + apriSez);
+            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.style.outline = '3px solid #f59e0b'; el.style.borderRadius = '12px'; setTimeout(function () { el.style.outline = ''; }, 4000); }
+          }, 600);
+        } else if (giriSez > 40) clearInterval(vaiSez);
+      }, 250);
+    }
     // anteprima: fa vedere anche la striscia rossa della password temporanea
     if (window.__ANTEPRIMA_SCUDO) {
       var mostraRossa = setInterval(function () {
