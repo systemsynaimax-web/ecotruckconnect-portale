@@ -283,6 +283,11 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .es-btn{background:#22c55e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;font-size:12px;}
 .es-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
 .es-pallino{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+
+.tool-btn.teal{background:#0d9488;}
+.tool-btn.teal:hover{background:#0f766e;}
+.tool-btn.teal .num{color:#0f766e;}
+.spiega.teal{background:rgba(13,148,136,0.07);border:1px dashed rgba(45,212,191,0.45);}
 </style>
 </head>
 <body>
@@ -370,6 +375,40 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <li><b>Accordo con una compagnia</b> <span class="decidere">DA DECIDERE</span>: per offrire all'azienda un'assicurazione del singolo viaggio. Più avanti.</li>
     </ol>
     <div style="margin-top:12px;font-size:12px;">Nota: non esiste un registro pubblico delle polizze da controllare con un pulsante, come per l'Albo. Il controllo si fa sul documento. Da confermare con un legale.</div>
+  </div>
+
+  <div class="sec-title">🧾 Fatturazione elettronica <span class="etichetta-nuovo">NUOVO — DA DECIDERE CON IL COMMERCIALISTA</span></div>
+  <div class="toolbar-grid">
+    <a class="tool-btn teal" href="https://ivaservizi.agenziaentrate.gov.it/portale/" target="_blank" rel="noopener"><span class="num">1</span><span class="icon">🏛️</span>Fatture e Corrispettivi (gratis)</a>
+    <a class="tool-btn teal" href="https://www.agenziaentrate.gov.it/portale/web/guest/aree-tematiche/fatturazione-elettronica/fatturazione-elettronica-site-area/servizi-consultazione-e-conservaz-fatture-elettroniche" target="_blank" rel="noopener"><span class="num">2</span><span class="icon">📱</span>App FatturAE (gratis)</a>
+    <a class="tool-btn teal" href="https://www.fattureincloud.it/" target="_blank" rel="noopener"><span class="num">3</span><span class="icon">☁️</span>Fatture in Cloud</a>
+    <a class="tool-btn teal" href="https://apps.shopify.com/fatture-italia?locale=it" target="_blank" rel="noopener"><span class="num">4</span><span class="icon">🛒</span>App Shopify — Fatture Italia</a>
+    <a class="tool-btn teal" href="https://apps.shopify.com/fattura-elettronicaautomatica?locale=it" target="_blank" rel="noopener"><span class="num">5</span><span class="icon">🛒</span>App Shopify — Fattura Elettronica Automatica</a>
+  </div>
+  <div class="spiega teal">
+    <h4>Adesso, con pochi pagamenti: a mano, gratis (pulsanti 1 e 2)</h4>
+    <ol>
+      <li>Entrare in <b>Fatture e Corrispettivi</b> (pulsante 1) con SPID, CIE o CNS della società, oppure lo fa il commercialista.</li>
+      <li><b>Fatturazione elettronica e Conservazione → Crea nuovo file → Fattura ordinaria</b>.</li>
+      <li><b>Il modello</b>: la prima volta si salvano le due voci che usiamo sempre: <b>«Iscrizione annuale EcoTruckConnect — 150 €»</b> e <b>«Commissione carico — 20 €»</b>. Dalla seconda fattura basta scegliere la voce.</li>
+      <li>I dati del cliente (P.IVA, codice SDI o PEC) sono già nella sua scheda, qui nella 🔔 o in «Anagrafica».</li>
+      <li>Controllare e <b>inviare allo SDI</b>. La fattura arriva da sola nel cassetto fiscale del cliente.</li>
+      <li>Rimborso di 20 € → si fa una <b>nota di credito</b> dallo stesso portale.</li>
+    </ol>
+    <h4 class="sotto">Quando i pagamenti aumentano: in automatico</h4>
+    <ol>
+      <li><b>Strada A — App su Shopify</b> (pulsanti 4 o 5) <span class="decidere">DA DECIDERE</span>: si installa sul negozio. Raccoglie i dati di fatturazione al pagamento e crea e invia la fattura quando l'ordine è pagato. Hanno un costo mensile, da verificare.</li>
+      <li><b>Strada B — Fatture in Cloud + Make</b> (pulsante 3) <span class="decidere">DA DECIDERE</span>: ordine pagato su Shopify → Make prende P.IVA, SDI e PEC <b>già salvati su Airtable</b> all'iscrizione → crea la fattura su Fatture in Cloud → invio allo SDI automatico. Il cliente non deve riscrivere niente. Rimborso → nota di credito automatica.</li>
+      <li>Consiglio: <b>strada B</b>, perché i dati fiscali li abbiamo già e il flusso resta dentro Make, come tutto il resto.</li>
+    </ol>
+    <h4 class="sotto">Da chiedere al commercialista <span class="decidere">DA DECIDERE</span></h4>
+    <ul>
+      <li>Quale programma di fatturazione usa, così colleghiamo quello.</li>
+      <li>I 150 € e i 20 € sono IVA inclusa o esclusa?</li>
+      <li>Una fattura per ogni pagamento, o un riepilogo mensile?</li>
+      <li>Numerazione delle fatture e chi le invia: SynAIMAX o il commercialista.</li>
+    </ul>
+    <div style="margin-top:10px;font-size:12px;">SynAIMAX fattura solo i 150 € e i 20 €. Il trasporto lo fattura il trasportatore all'azienda, fuori dalla piattaforma.</div>
   </div>
 
   <div class="sec-title">📊 Numeri in tempo reale</div>
@@ -508,7 +547,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <ol>
       <li><b>Valutazioni</b>: dopo ogni carico azienda e trasportatore si danno un voto, come su Trans.eu.</li>
       <li><b>Prezzo indicativo del viaggio</b>: un valore di riferimento, non obbligatorio, come nelle nuove borse carichi.</li>
-      <li><b>Fatturazione elettronica automatica (SDI)</b>: fattura inviata da sola all'Agenzia delle Entrate dopo ogni pagamento. Da decidere con il commercialista.</li>
       <li><b>Saldo prepagato</b>: il trasportatore ricarica una volta e i carichi si scalano da soli.</li>
     </ol>
 
