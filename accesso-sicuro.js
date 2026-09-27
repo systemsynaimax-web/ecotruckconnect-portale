@@ -21,7 +21,8 @@
      Google Authenticator, gestori). Il file le manda li' automaticamente. */
   var PROXY_LISTE = 'https://hook.eu1.make.com/nqp4yjmtegxakql7a24sqvpit0vjcpjw';
   var AZIONI_LISTE = ['get_carichi_pubblicati_azienda', 'get_candidature_trasportatore', 'conta_trasportatori_compatibili',
-                      'get_dashboard_data', 'get_candidature', 'get_scadenze', 'get_registrazioni'];
+                      'get_dashboard_data', 'get_candidature', 'get_scadenze', 'get_registrazioni',
+                      'modifica_carico', 'annulla_carico', 'richiedi_annullamento'];
   var PROTETTI = [
     'hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak',
     'hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm'
@@ -996,6 +997,10 @@
   }, true);
 
   // 2) Stampa di UN solo carico (riga delle tabelle del portale)
+  function numeroOrdine(tr) {
+    for (var i = 0; i < tr.cells.length; i++) { var t = (tr.cells[i].childNodes[0] && tr.cells[i].childNodes[0].textContent || tr.cells[i].textContent).trim(); if (/^ORD-[\w-]+$/.test(t)) return t; }
+    var m = tr.textContent.match(/ORD-\d+/); return m ? m[0] : null;
+  }
   function trovaCarico(chiave) {
     var fonti = [];
     try { fonti = fonti.concat(carichiPubblicatiAzienda || []); } catch (e) {}
@@ -1003,7 +1008,7 @@
     try { fonti = fonti.concat(ultimiCarichi || []); } catch (e) {}
     for (var i = 0; i < fonti.length; i++) {
       var f = fonti[i].fields || fonti[i];
-      if (f.numero_ordine === chiave || fonti[i].id === chiave || f.richiesta_id === chiave) return f;
+      if (f.numero_ordine === chiave || fonti[i].id === chiave || f.richiesta_id === chiave) { var ris = Object.assign({}, f); ris.__id = fonti[i].id || f.id; return ris; }
     }
     return null;
   }
@@ -1034,7 +1039,7 @@
       if (tr.__ectStampa || tr.cells.length < 2 || tr.querySelector('.empty')) return;
       tr.__ectStampa = true;
       var testo = tr.textContent;
-      var m = testo.match(/ORD-\d+/) || testo.match(/rec[A-Za-z0-9]{14}/);
+      var no = numeroOrdine(tr); var m = no ? [no] : testo.match(/rec[A-Za-z0-9]{14}/);
       var btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'btn-cap ect-stampa-riga'; btn.textContent = '🖨️ Stampa';
       btn.style.cssText = 'padding:5px 10px;font-size:11px;margin-left:6px;';
@@ -1114,5 +1119,158 @@
     });
   }
 
-  setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); } catch (e) {} }, 700);
+  // 6) AZIENDA: Modifica / Annulla (solo se DISPONIBILE) / Richiedi annullamento (se gia' preso)
+  var PROXY_P = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+  function pulito(t) { return String(t == null ? '' : t).replace(/["\\]/g, "'").replace(/[\r\n\t]+/g, ' ').trim(); }
+  async function chiamaProxy(corpo) {
+    try { var r = await fetch(PROXY_P, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }); return await r.json(); } catch (e) { return null; }
+  }
+  function ricarica() { try { if (typeof aggiornaDashFatture === 'function') aggiornaDashFatture(); } catch (e) {} try { if (typeof caricaDati === 'function' && currentUser) caricaDati(currentUser.email); } catch (e) {} }
+  function finestraCarico(titolo, html, onOk, testoOk) {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(8,13,22,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = '<div style="background:#0e1623;border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;color:#f1f5f9;font-family:DM Sans,system-ui,sans-serif;">' +
+      '<div style="font-size:17px;font-weight:800;margin-bottom:12px;">' + titolo + '</div>' + html +
+      '<div class="ect-m-err" style="display:none;color:#f87171;font-size:13px;margin-top:10px;"></div>' +
+      '<div style="display:flex;gap:8px;margin-top:16px;"><button type="button" class="ect-m-ok" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:9px;padding:11px;font-weight:700;cursor:pointer;">' + (testoOk || 'Salva') + '</button>' +
+      '<button type="button" class="ect-m-no" style="flex:1;background:rgba(255,255,255,0.08);color:#fff;border:none;border-radius:9px;padding:11px;cursor:pointer;">Annulla</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('.ect-m-no').onclick = function () { ov.remove(); };
+    ov.querySelector('.ect-m-ok').onclick = async function () {
+      var b = this, err = ov.querySelector('.ect-m-err'); err.style.display = 'none';
+      b.disabled = true; var t0 = b.textContent; b.textContent = 'Attendi…';
+      var esito = await onOk(ov);
+      b.disabled = false; b.textContent = t0;
+      if (esito === true) ov.remove(); else if (esito) { err.textContent = esito; err.style.display = 'block'; }
+    };
+    return ov;
+  }
+  var CAMPO = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 11px;color:#f1f5f9;font-size:13px;margin:4px 0 10px;';
+  function apriModifica(f) {
+    var html =
+      '<div style="font-size:12px;color:rgba(241,245,249,0.6);margin-bottom:10px;">' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + ' · ' + esc(f.numero_ordine || '') + '<br>Si può modificare finché nessun trasportatore l\u2019ha preso.</div>' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">DATA DEL CARICO</label><input type="date" class="m-data" style="' + CAMPO + '" value="' + esc(String(f.data_consegna || '').slice(0, 10)) + '">' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">SPECIFICA</label><input class="m-spec" style="' + CAMPO + '" value="' + esc(f.specifica || '') + '">' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">NOTE</label><textarea class="m-note" rows="2" style="' + CAMPO + '">' + esc(f.note || '') + '</textarea>' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">IMPORTO PATTUITO (€)</label><input class="m-imp" inputmode="decimal" style="' + CAMPO + '" value="' + esc(f.importo_pattuito || '') + '">' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">TERMINI DI PAGAMENTO</label><input class="m-ter" style="' + CAMPO + '" value="' + esc(f.termini_pagamento || '') + '">';
+    finestraCarico('✏️ Modifica carico', html, async function (ov) {
+      var v = function (c) { return pulito(ov.querySelector(c).value); };
+      var dati = { data_consegna: v('.m-data'), specifica: v('.m-spec'), note: v('.m-note'), importo_pattuito: v('.m-imp'), termini_pagamento: v('.m-ter') };
+      for (var k in dati) if (!dati[k]) return '⚠️ Compila tutti i campi.';
+      var r = await chiamaProxy(Object.assign({ action: 'modifica_carico', carico_id: f.__id }, dati));
+      if (r && String(r.ok) === 'true') { ricarica(); alert('✅ Carico modificato.'); return true; }
+      if (r && r.errore === 'non_modificabile') return 'Non si può più modificare: un trasportatore lo sta prendendo o l\u2019ha già preso.';
+      return 'Non riesco a salvare. Riprova tra poco.';
+    }, '💾 Salva modifiche');
+  }
+  function apriAnnulla(f) {
+    finestraCarico('❌ Annulla carico', '<div style="font-size:13px;line-height:1.6;">Vuoi annullare il carico <b>' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + '</b> del ' + esc(dataOra(f.data_consegna)) + '?<br><br>Sparisce subito per i trasportatori e resta nel tuo storico come <b>ANNULLATO</b>.</div>', async function () {
+      var r = await chiamaProxy({ action: 'annulla_carico', carico_id: f.__id });
+      if (r && String(r.ok) === 'true') { ricarica(); alert('✅ Carico annullato.'); return true; }
+      if (r && r.errore === 'non_annullabile') return 'Non si può più annullare: un trasportatore lo sta prendendo o l\u2019ha già preso. Usa «Richiedi annullamento».';
+      return 'Non riesco ad annullare. Riprova tra poco.';
+    }, 'Sì, annulla il carico');
+  }
+  function apriRichiesta(f) {
+    finestraCarico('📩 Richiedi annullamento', '<div style="font-size:13px;line-height:1.6;margin-bottom:8px;">Il carico <b>' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + '</b> è già stato preso: la richiesta arriva ai gestori, che ti ricontattano.</div>' +
+      '<label style="font-size:11px;color:rgba(241,245,249,0.6);">MOTIVO</label><textarea class="m-mot" rows="3" style="' + CAMPO + '"></textarea>', async function (ov) {
+      var mot = pulito(ov.querySelector('.m-mot').value);
+      if (!mot) return '⚠️ Scrivi il motivo.';
+      var r = await chiamaProxy({ action: 'richiedi_annullamento', carico_id: f.__id, motivo: mot });
+      if (r && String(r.ok) === 'true') { alert('✅ Richiesta inviata ai gestori.'); return true; }
+      return 'Non riesco a inviare la richiesta. Riprova tra poco.';
+    }, 'Invia richiesta');
+  }
+  function aggiungiAzioniAzienda() {
+    var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
+    if (tipo !== 'azienda') return;
+    document.querySelectorAll('#storico-body tr, #dash-fatture-body tr').forEach(function (tr) {
+      if (tr.__ectAzioni || tr.cells.length < 2 || tr.querySelector('.empty')) return;
+      var m = [numeroOrdine(tr)]; if (!m[0]) return;
+      var f = trovaCarico(m[0]); if (!f || !f.__id) return;
+      tr.__ectAzioni = true;
+      var st = String(f.stato || '').toUpperCase(), cella = tr.cells[tr.cells.length - 1];
+      function btn(t, fn, col) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn-cap'; b.textContent = t; b.style.cssText = 'padding:5px 10px;font-size:11px;margin:2px 0 2px 6px;' + (col ? 'background:' + col + ';' : ''); b.onclick = function (ev) { ev.stopPropagation(); fn(f); }; cella.appendChild(b); }
+      if (st === 'DISPONIBILE') { btn('✏️ Modifica', apriModifica); btn('❌ Annulla', apriAnnulla, '#b91c1c'); }
+      else if (st === 'PRESO' || st.indexOf('PAGAMENTO') >= 0) btn('📩 Richiedi annullamento', apriRichiesta, '#b45309');
+    });
+  }
+
+  // 7) ORA accanto alla data su ogni riga delle tabelle del portale
+  function aggiungiOrari() {
+    document.querySelectorAll('#storico-body tr, #dash-fatture-body tr').forEach(function (tr) {
+      if (tr.__ectOra || tr.cells.length < 2) return;
+      var m = [numeroOrdine(tr)]; if (!m[0]) return;
+      var f = trovaCarico(m[0]); if (!f) return;
+      var c0 = tr.cells[0]; if (!/^\s*\d{2}\/\d{2}\/\d{4}\s*$/.test(c0.textContent)) { tr.__ectOra = true; return; }
+      var rif = String(f.stato || '').toUpperCase() === 'PRESO' && f.data_assegnato ? f.data_assegnato : (f.data_pubblicazione || f.createdTime);
+      if (!rif || String(rif).length <= 10) { tr.__ectOra = true; return; }
+      var d = new Date(rif); if (isNaN(d)) { tr.__ectOra = true; return; }
+      var o = document.createElement('div'); o.style.cssText = 'font-size:11px;opacity:0.65;'; o.textContent = 'ore ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      c0.appendChild(o); tr.__ectOra = true;
+    });
+  }
+
+  // 8) FILTRI sopra le tabelle del portale: ricerca + stato
+  function barraFiltri(tabella, chiave) {
+    if (!tabella || tabella.__ectFiltri) return;
+    tabella.__ectFiltri = true;
+    var bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;';
+    bar.innerHTML = '<input type="text" placeholder="🔎 Cerca: città, ordine, trasportatore…" style="flex:1;min-width:180px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 11px;color:#f1f5f9;font-size:12px;">' +
+      '<select style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 10px;color:#f1f5f9;font-size:12px;"><option value="">Tutti gli stati</option><option>DISPONIBILE</option><option value="PAGAMENTO">IN PAGAMENTO</option><option>PRESO</option><option>ANNULLATO</option></select>';
+    var box = tabella.closest('.table-box') || tabella;
+    box.parentNode.insertBefore(bar, box);
+    var inp = bar.querySelector('input'), sel = bar.querySelector('select');
+    function applica() {
+      var q = inp.value.trim().toLowerCase(), s = sel.value.toUpperCase();
+      tabella.querySelectorAll('tbody tr').forEach(function (tr) {
+        if (tr.querySelector('.empty')) return;
+        var t = tr.textContent, ok = (!q || t.toLowerCase().indexOf(q) >= 0) && (!s || t.toUpperCase().indexOf(s) >= 0);
+        tr.style.display = ok ? '' : 'none';
+      });
+    }
+    inp.oninput = applica; sel.onchange = applica;
+    tabella.__ectApplica = applica;
+  }
+  function aggiungiFiltri() {
+    var sb = document.getElementById('storico-body'); if (sb) barraFiltri(sb.closest('table'), 'storico');
+    var fb = document.getElementById('dash-fatture-body'); if (fb) barraFiltri(fb.closest('table'), 'fatture');
+    [sb, fb].forEach(function (b) { if (b) { var t = b.closest('table'); if (t && t.__ectApplica) t.__ectApplica(); } });
+  }
+
+  // 9) Account dei GESTORI entrato nel portale: avviso chiaro invece del messaggio tecnico
+  var GESTORI_EMAIL = ['system.synaimax@gmail.com', 'davidepresti67@gmail.com'];
+  var giriG = 0;
+  var controllaGestore = setInterval(function () {
+    giriG++;
+    var app = document.getElementById('app');
+    if (!app || app.style.display !== 'block' || window.ECT_SOLO_GESTORI) { if (giriG > 80) clearInterval(controllaGestore); return; }
+    var mail = emailUtente().toLowerCase(), tipo = ''; try { tipo = tipoUtente; } catch (e) {}
+    if (giriG < 12) return; // aspetto che il portale riconosca l'utente
+    clearInterval(controllaGestore);
+    if (tipo || GESTORI_EMAIL.indexOf(mail) === -1 || document.getElementById('ect-avviso-gestore')) return;
+    var av = document.createElement('div'); av.id = 'ect-avviso-gestore';
+    av.style.cssText = 'margin:14px 20px;padding:16px;border-radius:12px;background:rgba(37,99,235,0.12);border:1px solid rgba(96,165,250,0.5);color:#f1f5f9;font-size:14px;line-height:1.6;';
+    av.innerHTML = '👤 <b>Questo è l\u2019account dei gestori</b> (' + esc(mail) + '). Il portale è per aziende e trasportatori: per vedere tutto usa la <b>Dashboard Gestori</b>.' +
+      '<div style="margin-top:10px;"><a href="/dashboard.html" style="display:inline-block;background:#2563eb;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:700;">📊 Apri la Dashboard Gestori</a></div>';
+    var nav = app.querySelector('.navbar'); if (nav) nav.insertAdjacentElement('afterend', av); else app.insertBefore(av, app.firstChild);
+  }, 500);
+
+  // 10) TRASPORTATORE dal computer: QR code per collegare Telegram con il telefono
+  function qrTelegram() {
+    var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
+    if (tipo !== 'trasportatore' || /android|iphone|ipad|ipod/i.test(navigator.userAgent || '')) return;
+    var a = document.querySelector('a[href^="https://t.me/SynAIMAX_EcoTruck_bot?start="]');
+    if (!a || !a.offsetParent || document.getElementById('ect-qr-tg')) return;
+    var box = document.createElement('div'); box.id = 'ect-qr-tg';
+    box.style.cssText = 'margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;';
+    box.innerHTML = '<div id="ect-qr-tg-img" style="background:#fff;padding:8px;border-radius:8px;"></div><div style="font-size:12px;color:rgba(241,245,249,0.75);line-height:1.6;max-width:260px;">📱 <b>Sei al computer?</b> Inquadra il quadratino con la fotocamera del telefono: si apre Telegram, premi <b>Avvia</b>. Entro 2 minuti ti arriva la conferma.</div>';
+    a.insertAdjacentElement('afterend', box);
+    function disegna() { try { new QRCode(document.getElementById('ect-qr-tg-img'), { text: a.href, width: 130, height: 130 }); } catch (e) {} }
+    if (window.QRCode) disegna(); else { var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload = disegna; document.head.appendChild(sc); }
+  }
+
+  setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); aggiungiAzioniAzienda(); aggiungiOrari(); aggiungiFiltri(); qrTelegram(); } catch (e) {} }, 700);
 })();
