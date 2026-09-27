@@ -931,3 +931,188 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia);
   else avvia();
 })();
+
+/* =====================================================================
+   27/9 sera — STAMPA PULITA, STAMPA PER RIGA E NELLE FINESTRE,
+   PUBBLICA SENZA DOPPIONI, TIPO MERCE SCRITTO A MANO, TELEGRAM AZIENDA
+   ===================================================================== */
+(function () {
+  function ora() { var d = new Date(); return d.toLocaleDateString('it-IT') + ' alle ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+  function emailUtente() { try { var u = window.netlifyIdentity && netlifyIdentity.currentUser(); return (u && u.email) || ''; } catch (e) { return ''; } }
+  function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+
+  // Stampa in una finestra pulita: solo il contenuto scelto, senza strisce, pulsanti e menu
+  function ectStampa(titolo, nodi, htmlExtra) {
+    var w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
+    var corpo = '';
+    (nodi || []).forEach(function (n) {
+      if (!n) return;
+      var c = n.cloneNode(true);
+      c.querySelectorAll('button, input, select, textarea, .feed-actions, .spiega-apri, .ect-stampa-bar, script').forEach(function (x) { x.remove(); });
+      corpo += c.outerHTML;
+    });
+    w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>' + esc(titolo) + '</title><style>' +
+      'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:28px;font-size:13px;line-height:1.5;}' +
+      '.testata{border-bottom:2px solid #1d4ed8;padding-bottom:10px;margin-bottom:18px;}' +
+      '.testata h1{font-size:18px;margin:0 0 4px;color:#1d4ed8;}.testata div{font-size:11px;color:#555;}' +
+      '*{color:#111 !important;background:transparent !important;box-shadow:none !important;}' +
+      'table{width:100%;border-collapse:collapse;margin:8px 0;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;font-size:12px;}' +
+      'th{background:#f1f5f9 !important;}.scheda td:first-child{width:38%;font-weight:bold;}' +
+      'img,svg,canvas{max-width:100%;}a{text-decoration:none;}' +
+      '@page{margin:14mm;}</style></head><body>' +
+      '<div class="testata"><h1>EcoTruckConnect — ' + esc(titolo) + '</h1><div>Stampato il ' + esc(ora()) + (emailUtente() ? ' · ' + esc(emailUtente()) : '') + '</div></div>' +
+      (htmlExtra || '') + corpo +
+      '<div style="margin-top:22px;font-size:10px;color:#777;">Documento di riepilogo EcoTruckConnect — SynAIMAX S.R.L.S. Non sostituisce la fattura fiscale.</div>' +
+      '</body></html>');
+    w.document.close();
+    setTimeout(function () { try { w.focus(); w.print(); } catch (e) {} }, 400);
+  }
+  window.ectStampa = ectStampa;
+
+  // 1) I pulsanti "Stampa" gia' presenti: stampano SOLO la loro sezione, non la pagina intera
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button');
+    if (!b) return;
+    var oc = b.getAttribute('onclick') || '';
+    if (oc.indexOf('stampaConTimbro') === -1) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var nodi = [], titolo = 'Riepilogo';
+    var sez = b.closest('.section');
+    if (sez) {
+      var t = sez.previousElementSibling; if (t && t.classList.contains('sec-title')) titolo = t.textContent.trim();
+      nodi = [sez];
+    } else if (b.closest('#storico-sec-head')) {
+      var h = b.closest('#storico-sec-head'); titolo = (h.textContent.split('📅')[0] || 'Storico').trim();
+      nodi = [h.nextElementSibling];
+    } else if (b.closest('#dash-sezione-fatture')) {
+      titolo = 'Riepilogo movimenti'; var s = b.closest('#dash-sezione-fatture');
+      nodi = Array.from(s.querySelectorAll('.table-box, table')).filter(function (x, i, arr) { return !arr.some(function (y) { return y !== x && y.contains(x); }); });
+    } else {
+      var box = b.parentElement; while (box && box !== document.body && !box.querySelector('table')) box = box.parentElement;
+      nodi = [box || document.body];
+    }
+    ectStampa(titolo, nodi);
+  }, true);
+
+  // 2) Stampa di UN solo carico (riga delle tabelle del portale)
+  function trovaCarico(chiave) {
+    var fonti = [];
+    try { fonti = fonti.concat(carichiPubblicatiAzienda || []); } catch (e) {}
+    try { fonti = fonti.concat(ultimeCandidature || []); } catch (e) {}
+    try { fonti = fonti.concat(ultimiCarichi || []); } catch (e) {}
+    for (var i = 0; i < fonti.length; i++) {
+      var f = fonti[i].fields || fonti[i];
+      if (f.numero_ordine === chiave || fonti[i].id === chiave || f.richiesta_id === chiave) return f;
+    }
+    return null;
+  }
+  function dataOra(v) { if (!v) return '—'; var d = new Date(v); if (isNaN(d)) return String(v); return d.toLocaleDateString('it-IT') + (String(v).length > 10 ? ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : ''); }
+  function euroTxt(v) { try { return euro(v); } catch (e) { return v ? '€ ' + v : '—'; } }
+  function stampaCarico(f, riga) {
+    var righe = [];
+    function add(k, v) { if (v != null && v !== '' && !(Array.isArray(v) && !v.length)) righe.push('<tr><td>' + esc(k) + '</td><td>' + esc(Array.isArray(v) ? v.join(', ') : v) + '</td></tr>'); }
+    if (f) {
+      add('Numero ordine', f.numero_ordine); add('Stato', f.stato);
+      add('Tratta', (f.citta_partenza || '') + ' (' + (f.cap_partenza || '') + ') → ' + (f.citta_arrivo || '') + ' (' + (f.cap_arrivo || '') + ')');
+      add('Data del carico', dataOra(f.data_consegna)); add('Pubblicato il', dataOra(f.data_pubblicazione));
+      add('Tipo merce', f.tipo_merce); add('Specifica', f.specifica); add('Note', f.note);
+      add('Mezzo richiesto', f.tipo_mezzo_richiesto); add('Autorizzazione richiesta', f.autorizzazione_richiesta);
+      if (f.codice_cer) add('Codice CER', f.codice_cer);
+      add('Importo pattuito', f.importo_pattuito ? euroTxt(f.importo_pattuito) : ''); add('Termini di pagamento', f.termini_pagamento);
+      add('Azienda', f.nome_azienda); add('Telefono azienda', f.telefono_azienda);
+      add('Trasportatore', f.assegnato_a_nome || f.bloccato_da_nome); add('Telefono trasportatore', f.assegnato_a_telefono);
+      add('Preso il', f.data_assegnato ? dataOra(f.data_assegnato) : '');
+    } else if (riga) {
+      var th = riga.closest('table') ? Array.from(riga.closest('table').querySelectorAll('thead th')).map(function (x) { return x.textContent.trim(); }) : [];
+      Array.from(riga.cells).forEach(function (c, i) { if (th[i] && !/azione/i.test(th[i])) add(th[i], c.textContent.trim()); });
+    }
+    ectStampa('Carico ' + ((f && f.numero_ordine) || ''), [], '<table class="scheda">' + righe.join('') + '</table>');
+  }
+  function aggiungiStampaRighe() {
+    document.querySelectorAll('#storico-body tr, #dash-fatture-body tr, #dash-sezione-fatture tbody tr').forEach(function (tr) {
+      if (tr.__ectStampa || tr.cells.length < 2 || tr.querySelector('.empty')) return;
+      tr.__ectStampa = true;
+      var testo = tr.textContent;
+      var m = testo.match(/ORD-\d+/) || testo.match(/rec[A-Za-z0-9]{14}/);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'btn-cap ect-stampa-riga'; btn.textContent = '🖨️ Stampa';
+      btn.style.cssText = 'padding:5px 10px;font-size:11px;margin-left:6px;';
+      btn.onclick = function (ev) { ev.stopPropagation(); stampaCarico(m ? trovaCarico(m[0]) : null, tr); };
+      tr.cells[tr.cells.length - 1].appendChild(btn);
+    });
+  }
+
+  // 3) Stampa e Salva PDF dentro le finestre che si aprono (dashboard e portale)
+  function barraStampa(cont, titoloFn) {
+    if (!cont || cont.querySelector(':scope > .ect-stampa-bar')) return;
+    if (!cont.textContent.trim()) return;
+    var bar = document.createElement('div');
+    bar.className = 'ect-stampa-bar';
+    bar.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px;flex-wrap:wrap;';
+    ['🖨️ Stampa', '📄 Salva PDF'].forEach(function (t) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+      b.style.cssText = 'background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;';
+      b.onclick = function (ev) { ev.stopPropagation(); ectStampa(titoloFn(), [cont]); };
+      bar.appendChild(b);
+    });
+    cont.insertBefore(bar, cont.firstChild);
+  }
+  function aggiungiStampaFinestre() {
+    var mb = document.getElementById('modal-body');
+    if (mb && mb.offsetParent) barraStampa(mb, function () { var t = document.getElementById('modal-title'); return (t && t.textContent.trim()) || 'Scheda'; });
+    var nd = document.getElementById('notif-dettaglio');
+    if (nd && nd.offsetParent) barraStampa(nd, function () { var h = nd.querySelector('h2,h3,.dett-nome,strong'); return 'Scheda ' + ((h && h.textContent.trim()) || ''); });
+    var cm = document.getElementById('cal-modal-corpo-carichi');
+    if (cm && cm.offsetParent) barraStampa(cm, function () { var h = document.querySelector('#cal-modal-overlay h3'); return 'Carichi del ' + ((h && h.textContent.trim()) || ''); });
+    var dc = document.getElementById('btn-chiudi-dettaglio-carico');
+    if (dc && dc.offsetParent) { var box = dc.parentElement && dc.parentElement.parentElement; if (box) barraStampa(box, function () { return 'Dettaglio carico'; }); }
+  }
+
+  // 4) Portale: niente doppioni con "Pubblica Carico" + Tipo merce scritto a mano + errore che dice cosa manca
+  var giriPub = 0;
+  var agganciaPubblica = setInterval(function () {
+    giriPub++;
+    if (typeof window.pubblicaCarico === 'function' && !window.pubblicaCarico.__ect) {
+      var orig = window.pubblicaCarico, inCorso = false;
+      window.pubblicaCarico = async function () {
+        if (inCorso) return;
+        inCorso = true;
+        var btn = document.querySelector('.btn-pubblica'); var testoBtn = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Pubblicazione in corso…'; btn.style.opacity = '0.7'; }
+        try {
+          var hid = document.getElementById('ins-merce'), vis = document.getElementById('ins-merce-ricerca');
+          if (hid && vis && !hid.value && vis.value.trim()) {
+            var scritto = vis.value.trim().toLowerCase(), trovato = null;
+            try { (OPZIONI_MERCE || []).forEach(function (op) { if (!trovato && op.toLowerCase() === scritto) trovato = op; }); } catch (e) {}
+            if (trovato) hid.value = trovato;
+          }
+          await orig.apply(this, arguments);
+          var err = document.getElementById('ins-err');
+          if (err && err.style.display === 'block' && /campi obbligatori/i.test(err.textContent)) {
+            var campi = [['ins-cap-part', 'CAP partenza'], ['ins-cap-arr', 'CAP arrivo'], ['ins-citta-part', 'Città partenza'], ['ins-citta-arr', 'Città arrivo'], ['ins-data', 'Data carico'], ['ins-merce', 'Tipo merce (sceglilo dall\u2019elenco)'], ['ins-specifica', 'Specifica'], ['ins-note', 'Note']];
+            var mancano = campi.filter(function (c) { var el = document.getElementById(c[0]); return el && !String(el.value || '').trim(); }).map(function (c) { return c[1]; });
+            if (mancano.length) err.textContent = '⚠️ Manca: ' + mancano.join(', ') + '.';
+          }
+        } finally {
+          inCorso = false;
+          if (btn) { btn.disabled = false; btn.innerHTML = testoBtn; btn.style.opacity = ''; }
+        }
+      };
+      window.pubblicaCarico.__ect = true;
+      clearInterval(agganciaPubblica);
+    } else if (giriPub > 80) clearInterval(agganciaPubblica);
+  }, 400);
+
+  // 5) Azienda: "Collega Telegram" non serve (riceve campanella ed email)
+  function nascondiTelegramAzienda() {
+    var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
+    if (tipo !== 'azienda') return;
+    document.querySelectorAll('a[href*="t.me/SynAIMAX_EcoTruck_bot"]').forEach(function (a) {
+      var box = a.closest('div[style*="border"]') || a.parentElement;
+      if (box && !box.__ectNascosto) { box.style.display = 'none'; box.__ectNascosto = true; }
+    });
+  }
+
+  setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); } catch (e) {} }, 700);
+})();
