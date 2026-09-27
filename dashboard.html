@@ -227,6 +227,26 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     border-bottom:1px solid #ccc;padding-bottom:8px;
   }
 }
+
+/* ===== 27/9: strumenti verdi, pulsanti numerati, riquadri spiegazione ===== */
+.strumenti-verdi .tool-btn{background:#16a34a;color:#fff;}
+.strumenti-verdi .tool-btn:hover{background:#15803d;}
+.tool-btn .num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#fff;color:#1d4ed8;font-weight:800;font-size:12px;line-height:1;}
+.tool-btn.viola{background:#7c3aed;}
+.tool-btn.viola:hover{background:#6d28d9;}
+.tool-btn.viola .num{color:#6d28d9;}
+.spiega{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin:12px 0 30px;font-size:13px;color:var(--muted);line-height:1.65;}
+.spiega h4{color:#fff;font-size:13px;font-weight:700;margin:0 0 10px;}
+.spiega h4.sotto{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.spiega ol,.spiega ul{margin:0;padding-left:22px;}
+.spiega li{margin:0 0 8px;}
+.spiega li:last-child{margin-bottom:0;}
+.spiega b{color:#fff;}
+.spiega .decidere{display:inline-block;font-size:10px;font-weight:800;letter-spacing:0.5px;color:#f59e0b;border:1px solid rgba(245,158,11,0.5);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px;}
+.spiega.giallo{background:rgba(245,158,11,0.06);border:1px dashed rgba(245,158,11,0.45);}
+.spiega.viola{background:rgba(124,58,237,0.07);border:1px dashed rgba(139,92,246,0.45);}
+.etichetta-nuovo{font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;}
+@media (max-width:760px){.toolbar-grid{grid-template-columns:repeat(2,1fr);}.spiega{padding:14px 14px;}}
 </style>
 </head>
 <body>
@@ -257,7 +277,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 <div class="wrap">
 
   <div class="sec-title">🛠️ Strumenti</div>
-  <div class="toolbar-grid">
+  <div class="toolbar-grid strumenti-verdi">
     <a class="tool-btn" href="https://airtable.com/app0TGG8f4ARpdlbl" target="_blank"><span class="icon">🗄️</span>Airtable</a>
     <a class="tool-btn" href="https://eu1.make.com/992733/scenarios?folder=312656" target="_blank"><span class="icon">⚡</span>Make</a>
     <a class="tool-btn" href="https://ecotruckconnect-vetrina.netlify.app" target="_blank"><span class="icon">🌐</span>Netlify vetrina</a>
@@ -268,24 +288,51 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
   </div>
 
-  <div class="sec-title">✅ Verifiche ufficiali <span style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;">NUOVO — DA PROVARE CON GERLANDO</span></div>
+  <div class="sec-title">✅ Verifiche ufficiali <span class="etichetta-nuovo">NUOVO — DA PROVARE CON GERLANDO</span></div>
   <div class="toolbar-grid">
-    <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>
-    <a class="tool-btn" href="https://ec.europa.eu/taxation_customs/vies/" target="_blank" rel="noopener"><span class="icon">🇪🇺</span>VIES — P.IVA europea</a>
-    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener"><span class="icon">🚛</span>Albo Autotrasportatori — Imprese iscritte</a>
-    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/servizio-regolarita-imprese" target="_blank" rel="noopener"><span class="icon">📑</span>Albo — Regolarità INPS/INAIL</a>
-    <a class="tool-btn" href="https://www.albonazionalegestoriambientali.it/public/elenchiiscritti" target="_blank" rel="noopener"><span class="icon">♻️</span>Albo Gestori Ambientali — Rifiuti</a>
+    <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="num">1</span><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>
+    <a class="tool-btn" href="https://ec.europa.eu/taxation_customs/vies/" target="_blank" rel="noopener"><span class="num">2</span><span class="icon">🇪🇺</span>VIES — P.IVA europea</a>
+    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener"><span class="num">3</span><span class="icon">🚛</span>Albo Autotrasportatori — Imprese iscritte</a>
+    <a class="tool-btn" href="https://www.alboautotrasporto.it/web/portale-albo/servizio-regolarita-imprese" target="_blank" rel="noopener"><span class="num">4</span><span class="icon">📑</span>Albo — Regolarità INPS/INAIL</a>
+    <a class="tool-btn" href="https://www.albonazionalegestoriambientali.it/public/elenchiiscritti" target="_blank" rel="noopener"><span class="num">5</span><span class="icon">♻️</span>Albo Gestori Ambientali — Rifiuti</a>
   </div>
-  <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:12px 0 30px;font-size:13px;color:var(--muted);line-height:1.6;">
-    <div style="color:#fff;font-weight:700;margin-bottom:8px;">A cosa serve ogni pulsante</div>
-    <ul style="margin:0;padding-left:18px;">
-      <li style="margin:0 0 8px;"><b style="color:#fff">🏛️ Agenzia Entrate</b>: dice se la Partita IVA è attiva, sospesa o cessata e a chi è intestata. Gratis, senza registrazione. Da usare per ogni nuova iscrizione, anche dal pulsante nella scheda della 🔔.</li>
-      <li style="margin:0 0 8px;"><b style="color:#fff">🇪🇺 VIES</b>: controllo europeo della Partita IVA. Attenzione: risulta «valida» solo se la P.IVA è abilitata a lavorare con l'estero. Molti piccoli trasportatori non lo sono, quindi «non valida» qui non vuol dire falsa.</li>
-      <li style="margin:0 0 8px;"><b style="color:#fff">🚛 Albo Autotrasportatori</b>: conferma che il trasportatore è iscritto all'Albo, obbligatorio per il trasporto per conto terzi.</li>
-      <li style="margin:0 0 8px;"><b style="color:#fff">📑 Regolarità INPS/INAIL</b>: per legge chi affida un trasporto deve verificarla prima. Serve una registrazione con PIN via PEC, una volta sola.</li>
-      <li style="margin:0 0 8px;"><b style="color:#fff">♻️ Albo Gestori Ambientali</b>: per i carichi di rifiuti (codici CER). Verifica che il trasportatore sia iscritto con la categoria e i codici giusti.</li>
-      <li style="margin:0;"><b style="color:#fff">Come fanno le altre piattaforme</b> (Trans.eu, B2PWeb, Spedity): verificano Partita IVA, licenza e assicurazione prima di far entrare i trasportatori. Noi lo facciamo con questi pulsanti e con la 🔔.</li>
-    </ul>
+  <div class="spiega">
+    <h4>A cosa serve ogni pulsante</h4>
+    <ol>
+      <li><b>Agenzia Entrate</b>: dice se la Partita IVA è attiva, sospesa o cessata e a chi è intestata. Gratis, senza registrazione. Da usare per ogni nuova iscrizione, anche dal pulsante nella scheda della 🔔.</li>
+      <li><b>VIES</b>: controllo europeo della Partita IVA. Attenzione: risulta «valida» solo se la P.IVA è abilitata a lavorare con l'estero. Molti piccoli trasportatori non lo sono, quindi «non valida» qui non vuol dire falsa.</li>
+      <li><b>Albo Autotrasportatori</b>: conferma che il trasportatore è iscritto all'Albo, obbligatorio per il trasporto per conto terzi.</li>
+      <li><b>Regolarità INPS/INAIL</b>: per legge chi affida un trasporto deve verificarla prima. Serve una registrazione con PIN via PEC, una volta sola.</li>
+      <li><b>Albo Gestori Ambientali</b>: per i carichi di rifiuti (codici CER). Verifica che il trasportatore sia iscritto con la categoria e i codici giusti.</li>
+    </ol>
+    <h4 class="sotto">Cosa si può aggiungere</h4>
+    <ol>
+      <li><b>Controllo automatico della P.IVA all'iscrizione</b> <span class="decidere">DA DECIDERE</span>: Make controlla da solo la P.IVA sul VIES (pulsante 2) e scrive l'esito nella 🔔. È solo un primo aiuto, per il limite spiegato al punto 2: l'ultima parola resta vostra.</li>
+      <li><b>Registrazione al servizio Regolarità INPS/INAIL</b> <span class="decidere">DA DECIDERE</span>: da fare una volta con la PEC della società. Dopo si può verificare ogni trasportatore (pulsante 4).</li>
+      <li><b>Carichi di rifiuti</b> <span class="decidere">DA DECIDERE</span>: rendere obbligatorio il controllo sull'Albo Gestori Ambientali (pulsante 5) per chi prende carichi con codice CER.</li>
+    </ol>
+    <h4 class="sotto">Come fanno le altre piattaforme</h4>
+    <ul><li>Trans.eu, B2PWeb e Spedity verificano Partita IVA, licenza e assicurazione prima di far entrare i trasportatori. Noi lo facciamo con questi pulsanti e con la 🔔.</li></ul>
+  </div>
+
+  <div class="sec-title">🛡️ Tutela assicurativa <span class="etichetta-nuovo">NUOVO — DA DECIDERE CON GERLANDO</span></div>
+  <div class="spiega giallo">
+    <h4>Chi risponde se il carico si perde, si rompe o sparisce</h4>
+    <ol>
+      <li><b>Il trasportatore</b>: dal carico alla consegna la merce è sotto la sua responsabilità. Per questo i trasportatori seri hanno l'<b>assicurazione RC del vettore</b>.</li>
+      <li><b>Attenzione al limite</b>: per legge il risarcimento del trasportatore ha un tetto calcolato sul peso della merce. Per merce di valore può coprire solo una parte.</li>
+      <li><b>L'azienda</b> può tutelarsi del tutto con una sua <b>assicurazione sulla merce trasportata</b>, che copre il valore vero.</li>
+      <li><b>SynAIMAX</b> mette in contatto le parti e non è parte del trasporto: non risponde del carico, se è scritto bene nei Termini e Condizioni.</li>
+      <li>Se un trasportatore sparisce apposta con il carico è un <b>reato</b> e si denuncia. Le verifiche qui sopra servono a far entrare solo imprese vere e rintracciabili.</li>
+    </ol>
+    <h4 class="sotto">Cosa si può fare in piattaforma</h4>
+    <ol>
+      <li><b>Polizza obbligatoria all'iscrizione</b> <span class="decidere">DA DECIDERE</span>: il trasportatore carica compagnia, numero di polizza e scadenza. Gerlando li vede nella 🔔 prima di cliccare Attiva.</li>
+      <li><b>Avviso di scadenza</b> <span class="decidere">DA DECIDERE</span>: quando la polizza sta per scadere arriva un avviso al trasportatore e a voi.</li>
+      <li><b>«Trasportatore assicurato ✅»</b> <span class="decidere">DA DECIDERE</span>: l'azienda lo vede sulla scheda di ogni carico.</li>
+      <li><b>Accordo con una compagnia</b> <span class="decidere">DA DECIDERE</span>: per offrire all'azienda un'assicurazione del singolo viaggio. Più avanti.</li>
+    </ol>
+    <div style="margin-top:12px;font-size:12px;">Nota: non esiste un registro pubblico delle polizze da controllare con un pulsante, come per l'Albo. Il controllo si fa sul documento. Da confermare con un legale.</div>
   </div>
 
   <div class="sec-title">📊 Numeri in tempo reale</div>
@@ -389,17 +436,43 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
   
 
-  <div class="sec-title">📌 Da completare — collegamenti ufficiali <span style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:8px;letter-spacing:0;">SPIEGAZIONE PER GERLANDO</span></div>
-  <div style="background:rgba(245,158,11,0.06);border:1px dashed rgba(245,158,11,0.45);border-radius:12px;padding:16px 20px;margin-bottom:30px;font-size:13px;color:var(--muted);line-height:1.6;">
-    <div style="margin-bottom:10px;">Punti già preparati, da decidere insieme. Nessuno è attivo finché non dite sì.</div>
-    <ol style="margin:0;padding-left:20px;">
-      <li style="margin:0 0 10px;"><b style="color:#fff">Controllo automatico della Partita IVA all'iscrizione.</b> Quando arriva una nuova iscrizione, Make controlla da solo la P.IVA sul servizio europeo VIES e scrive l'esito nella 🔔. Limite: le P.IVA non abilitate all'estero risultano «non valide», quindi è solo un primo aiuto e l'ultima parola resta vostra.</li>
-      <li style="margin:0 0 10px;"><b style="color:#fff">Registrazione al servizio Regolarità INPS/INAIL dell'Albo.</b> Da fare una volta sola con la PEC della società. Dopo potete verificare ogni trasportatore, come chiede la legge a chi affida i trasporti.</li>
-      <li style="margin:0 0 10px;"><b style="color:#fff">Carichi di rifiuti.</b> Decidere se, per chi prende carichi con codice CER, il controllo sull'Albo Gestori Ambientali diventa obbligatorio.</li>
-      <li style="margin:0 0 10px;"><b style="color:#fff">Assicurazione del trasportatore.</b> Chiedere il documento dell'assicurazione al momento dell'iscrizione, come fa Spedity.</li>
-      <li style="margin:0 0 10px;"><b style="color:#fff">Valutazioni.</b> Dopo ogni carico, azienda e trasportatore si danno un voto, come su Trans.eu.</li>
-      <li style="margin:0 0 10px;"><b style="color:#fff">Prezzo indicativo del viaggio.</b> Un valore di riferimento, non obbligatorio, come nelle nuove borse carichi.</li>
-      <li style="margin:0;"><b style="color:#fff">Fatturazione elettronica automatica (SDI).</b> Da decidere con il commercialista.</li>
+  <div class="sec-title">💡 Idee future <span class="etichetta-nuovo">NON ATTIVE — SOLO PROPOSTE</span></div>
+  <div class="toolbar-grid">
+    <a class="tool-btn viola" href="https://admin.shopify.com/store/zdv0ey-rv/settings/payments" target="_blank" rel="noopener"><span class="num">1</span><span class="icon">🅿️</span>PayPal — Pagamenti Shopify</a>
+    <a class="tool-btn viola" href="https://www.revolut.com/it-IT/business/payment-gateway/shopify/" target="_blank" rel="noopener"><span class="num">2</span><span class="icon">💳</span>Revolut Pay — per Shopify</a>
+  </div>
+  <div class="spiega viola">
+    <h4>1. PayPal: come si attiva</h4>
+    <ol>
+      <li>Serve un conto <b>PayPal Business</b> intestato a SynAIMAX. Si può creare anche durante la procedura.</li>
+      <li>Aprire il pulsante 1: porta in <b>Shopify → Impostazioni → Pagamenti</b>.</li>
+      <li>Nella sezione <b>«Metodi di pagamento aggiuntivi»</b>, accanto a PayPal, cliccare <b>«Completa configurazione»</b>.</li>
+      <li>Inserire email e password del conto PayPal, poi i dati dell'azienda, accettare le condizioni e cliccare <b>«Torna a Shopify»</b>.</li>
+      <li>Fare un <b>pagamento di prova</b> (iscrizione o carico) e controllare che su Airtable tutto si aggiorni come con la carta.</li>
+    </ol>
+    <div style="margin:10px 0 0;font-size:12px;">Guida ufficiale Shopify: <a href="https://help.shopify.com/it/manual/payments/paypal/set-up-paypal" target="_blank" rel="noopener" style="color:#a78bfa;">help.shopify.com — Configura PayPal</a></div>
+
+    <h4 class="sotto">2. Revolut Pay: come si attiva</h4>
+    <ol>
+      <li>Serve un conto <b>Revolut Business</b> intestato a SynAIMAX.</li>
+      <li>Dal pulsante 2 si arriva al <b>plugin Revolut per Shopify</b>: installarlo e cliccare <b>«Installa»</b>.</li>
+      <li>Accedere al conto Revolut Business e cliccare <b>«Autorizza»</b>.</li>
+      <li>Tornati su Shopify, cliccare <b>«Attiva»</b>. Poi in <b>Impostazioni → App</b> aprire l'app Revolut e scegliere cosa accettare: Revolut Pay, carte, bonifico. Salvare.</li>
+      <li>Fare un <b>pagamento di prova</b>. Costo: commissione su ogni pagamento, da verificare sul listino Revolut aggiornato.</li>
+    </ol>
+
+    <h4 class="sotto">Da sapere</h4>
+    <ul>
+      <li>I collegamenti con Make restano uguali: il sistema guarda l'ordine pagato su Shopify, <b>qualunque sia il metodo</b>. Va comunque fatta una prova vera per ogni metodo.</li>
+      <li>Più metodi di pagamento = più persone che pagano: non tutti i trasportatori vogliono inserire la carta.</li>
+    </ul>
+
+    <h4 class="sotto">Altre idee</h4>
+    <ol>
+      <li><b>Valutazioni</b>: dopo ogni carico azienda e trasportatore si danno un voto, come su Trans.eu.</li>
+      <li><b>Prezzo indicativo del viaggio</b>: un valore di riferimento, non obbligatorio, come nelle nuove borse carichi.</li>
+      <li><b>Fatturazione elettronica automatica (SDI)</b>: fattura inviata da sola all'Agenzia delle Entrate dopo ogni pagamento. Da decidere con il commercialista.</li>
+      <li><b>Saldo prepagato</b>: il trasportatore ricarica una volta e i carichi si scalano da soli.</li>
     </ol>
   </div>
 
