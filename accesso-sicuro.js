@@ -81,7 +81,7 @@
   }
   function pulisciSessione() {
     try { localStorage.removeItem('ect_mfa_ticket'); } catch (e) {}
-    try { sessionStorage.removeItem('ect_giallo_chiuso'); sessionStorage.removeItem('ect_popup_mfa_visto'); } catch (e) {}
+    try { sessionStorage.removeItem('ect_giallo_chiuso'); sessionStorage.removeItem('ect_popup_mfa_visto'); sessionStorage.removeItem('ect_popup_pw_visto'); } catch (e) {}
   }
 
   /* ================= CHIAMATA ALLA FUNZIONE DI SICUREZZA ================= */
@@ -178,10 +178,11 @@
     '#ect-striscia-mfa .x{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;font-weight:700;}' +
     '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:2147481001;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-rossa button{margin-left:10px;background:#fff;color:#b91c1c;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
+    '#ect-striscia-rossa button.dopo{margin-left:6px;background:transparent;color:#fff;border:1px solid #fff;font-weight:600;}' +
     '#banner-pw-temp{background:#dc2626 !important;color:#fff !important;position:relative;z-index:2147481001;}' +
     '#banner-pw-temp b{color:#fff !important;}' +
     '#banner-pw-temp button:first-of-type{background:#fff !important;color:#b91c1c !important;}' +
-    '#banner-pw-temp button:nth-of-type(2){display:none !important;}' +
+    '#banner-pw-temp button:nth-of-type(2){background:transparent !important;color:#fff !important;border:1px solid #fff !important;}' +
     '#ect-pill{position:relative;z-index:2147480000;background:#0e1623;border-bottom:1px solid rgba(255,255,255,0.12);padding:7px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:12px;color:#f1f5f9;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}' +
     '#ect-pill span.link{cursor:pointer;color:#60a5fa;}' +
     '#ect-pill span.esci{cursor:pointer;color:#ef4444;}' +
@@ -398,8 +399,9 @@
       if (st.pw_temporanea) {
         if (!rossa) {
           rossa = document.createElement('div'); rossa.id = 'ect-striscia-rossa';
-          rossa.innerHTML = '🔒 Stai usando una <b>password temporanea</b>. Sceglierne una tua richiede 1 minuto.<button type="button">Cambia password</button>';
-          rossa.querySelector('button').onclick = apriCambiaPasswordGestori;
+          rossa.innerHTML = '🔒 Stai usando una <b>password temporanea</b>. Per sicurezza scegline una tua.<button type="button" class="cambia">Cambia password</button><button type="button" class="dopo">Più tardi</button>';
+          rossa.querySelector('.cambia').onclick = apriCambiaPasswordGestori;
+          rossa.querySelector('.dopo').onclick = function () { rossa.style.display = 'none'; };
           document.body.insertBefore(rossa, document.body.firstChild);
         }
       } else if (rossa) rossa.remove();
@@ -427,19 +429,17 @@
       }
     }
 
-    // riquadro "Proteggi il tuo accesso" una volta per accesso, dopo la scelta della password
-    var visto = false; try { visto = sessionStorage.getItem('ect_popup_mfa_visto') === '1'; } catch (e) {}
-    var pwTemp = !!st.pw_temporanea;
-    var bannerPortale = document.getElementById('banner-pw-temp');
-    if (bannerPortale && bannerPortale.style.display !== 'none') pwTemp = true;
-    if (!st.mfa_attivo && !visto && !pwTemp) {
-      try { sessionStorage.setItem('ect_popup_mfa_visto', '1'); } catch (e) {}
-      var attendi = setInterval(function () {
-        var m = document.getElementById('modal-cambia-pw');
-        var aperto = m && m.style.display && m.style.display !== 'none';
-        var altro = document.getElementById('ect-lucchetto') && document.getElementById('ect-lucchetto').style.display !== 'none';
-        if (!aperto && !altro && !document.getElementById('ect-attiva')) { clearInterval(attendi); apriAttivazione(); }
-      }, 1200);
+    // Google Authenticator: NESSUNA finestra automatica. Si apre solo cliccando
+    // "Attiva ora" (striscia gialla o sezione Sicurezza).
+
+    // Password temporanea: la finestra "Scegli la tua password" si apre da sola,
+    // una volta per accesso (con il pulsante "Più tardi")
+    var pwVista = false; try { pwVista = sessionStorage.getItem('ect_popup_pw_visto') === '1'; } catch (e) {}
+    if (!pwVista) {
+      if (GESTORI && st.pw_temporanea) {
+        try { sessionStorage.setItem('ect_popup_pw_visto', '1'); } catch (e) {}
+        apriCambiaPasswordGestori();
+      }
     }
   }
 
@@ -536,6 +536,21 @@
       ['rigenera-pw-msg', 'pw-ultima-modifica'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.setProperty('display', 'none', 'important'); });
     }
     togliRigenera(); setTimeout(togliRigenera, 1500);
+    // password temporanea: appena compare la striscia rossa, si apre da sola la
+    // finestra "Scegli la tua password" (una volta per accesso, con "Più tardi")
+    var guardaPw = setInterval(function () {
+      var br = document.getElementById('banner-pw-temp');
+      var app = document.getElementById('app');
+      if (!br || !app || app.style.display !== 'block') return;
+      if (br.style.display !== 'block') return;
+      clearInterval(guardaPw);
+      var vista = false; try { vista = sessionStorage.getItem('ect_popup_pw_visto') === '1'; } catch (e) {}
+      var m = document.getElementById('modal-cambia-pw');
+      if (!vista && m && m.style.display !== 'flex' && typeof apriCambiaPassword === 'function') {
+        try { sessionStorage.setItem('ect_popup_pw_visto', '1'); } catch (e) {}
+        apriCambiaPassword();
+      }
+    }, 500);
     // anteprima: fa vedere anche la striscia rossa della password temporanea
     if (window.__ANTEPRIMA_SCUDO) {
       var mostraRossa = setInterval(function () {
@@ -660,7 +675,7 @@
       '<label>Nuova password</label><div class="campo"><input type="password" id="ect-np1" autocomplete="new-password">' + occhio('ect-np1') + '</div>' +
       '<label>Conferma password</label><div class="campo"><input type="password" id="ect-np2" autocomplete="new-password">' + occhio('ect-np2') + '</div>' +
       '<button id="ect-salva">💾 Salva password</button>' +
-      '<button class="sec" id="ect-annulla">Chiudi</button>' +
+      '<button class="sec" id="ect-annulla">Più tardi</button>' +
       '<div class="err" id="ect-err2"></div><div class="ok" id="ect-ok2">✅ Password salvata.</div>'
     );
     document.getElementById('ect-annulla').onclick = function () { chiudi('ect-cambia-pw'); };
