@@ -2428,31 +2428,205 @@ function renderCarichiContenuto() {
   });
 }
 
+/* ====================================================
+   PRENDI CARICO — cassa in finestrella (29/9/2026)
+   Clic "Prendi" -> si apre SUBITO una finestrella con la cassa Shopify del
+   carico (20 €), già con l'email del portale (è così che il sistema riconosce
+   quale carico è stato pagato). Dopo "Paga ora" il portale se ne accorge da
+   solo, chiude la finestrella e mostra "Carico tuo". Niente domanda di
+   conferma: carico e prezzo si vedono già nella cassa.
+   ==================================================== */
+const ECT_VARIANTE_CARICO = '52274708349269'; // Shopify: Blocca Carico – EcoTruckConnect (20 €)
+const ECT_CASSA_OGNI_MS = 5000;              // ogni quanto il portale controlla se il pagamento è arrivato
+const ECT_CASSA_MAX_MS = 7 * 60 * 1000;      // dopo 7 minuti smette di controllare
+let cassaCarico = null;
+
+function dimensioniCassa() {
+  const w = Math.min(560, (screen.availWidth || 800) - 40);
+  const h = Math.min(860, (screen.availHeight || 900) - 60);
+  const left = Math.max(0, (screen.availWidth || 800) - w - 30);
+  const top = Math.max(0, ((screen.availHeight || 900) - h) / 2);
+  return 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+}
+
+function linkCassaCarico(id) {
+  const email = (currentUser && currentUser.email) ? currentUser.email : '';
+  return 'https://shop.synaimaxpro.com/cart/' + ECT_VARIANTE_CARICO + ':1'
+    + '?checkout[email]=' + encodeURIComponent(email)
+    + '&attributes[carico_id]=' + encodeURIComponent(id);
+}
+
+function stileCassaOverlay() {
+  if (document.getElementById('ect-cassa-stile')) return;
+  const st = document.createElement('style');
+  st.id = 'ect-cassa-stile';
+  st.textContent = '' +
+    '#ect-cassa-ov{position:fixed;inset:0;z-index:2147483100;background:rgba(8,13,22,0.88);display:flex;align-items:center;justify-content:center;padding:16px;font-family:"DM Sans",system-ui,sans-serif;color:#f1f5f9;}' +
+    '#ect-cassa-ov .box{background:#0e1623;border:1px solid rgba(255,255,255,0.14);border-radius:18px;padding:28px 26px;width:100%;max-width:440px;text-align:center;}' +
+    '#ect-cassa-ov .ico{font-size:44px;line-height:1;margin-bottom:12px;}' +
+    '#ect-cassa-ov h2{font-family:"Syne",sans-serif;font-size:22px;font-weight:800;margin:0 0 8px;}' +
+    '#ect-cassa-ov .tratta{font-size:16px;font-weight:600;margin:0 0 12px;}' +
+    '#ect-cassa-ov p{font-size:15px;line-height:1.55;color:rgba(241,245,249,0.8);margin:0 0 12px;}' +
+    '#ect-cassa-ov .tempo{font-size:14px;color:#fbbf24;margin:4px 0 14px;}' +
+    '#ect-cassa-ov .rotella{width:30px;height:30px;border:3px solid rgba(255,255,255,0.15);border-top-color:#3b82f6;border-radius:50%;animation:ectgira 0.8s linear infinite;margin:6px auto 14px;}' +
+    '@keyframes ectgira{to{transform:rotate(360deg);}}' +
+    '#ect-cassa-ov button,#ect-cassa-ov a.btn{display:block;width:100%;box-sizing:border-box;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;text-decoration:none;text-align:center;}' +
+    '#ect-cassa-ov .pri{background:#22c55e;color:#04210f;}' +
+    '#ect-cassa-ov .blu{background:#3b82f6;color:#fff;}' +
+    '#ect-cassa-ov .sec{background:rgba(255,255,255,0.08);color:#f1f5f9;font-weight:600;}' +
+    '#ect-cassa-ov .nota{font-size:12px;color:rgba(241,245,249,0.5);margin-top:14px;}';
+  document.head.appendChild(st);
+}
+
+function mostraCassaOverlay(html) {
+  stileCassaOverlay();
+  let ov = document.getElementById('ect-cassa-ov');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'ect-cassa-ov'; document.body.appendChild(ov); }
+  ov.innerHTML = '<div class="box">' + html + '</div>';
+  return ov;
+}
+
+function chiudiCassaOverlay() {
+  const ov = document.getElementById('ect-cassa-ov');
+  if (ov) ov.remove();
+}
+
+function fermaCassaCarico(chiudiFinestra) {
+  if (!cassaCarico) return;
+  clearInterval(cassaCarico.timer);
+  if (chiudiFinestra) { try { if (cassaCarico.win && !cassaCarico.win.closed) cassaCarico.win.close(); } catch (e) {} }
+  cassaCarico = null;
+}
+
+function riapriCassaCarico() {
+  if (!cassaCarico) return;
+  try {
+    const w = window.open(cassaCarico.url, 'ect_cassa', dimensioniCassa());
+    if (w) { cassaCarico.win = w; w.focus(); }
+  } catch (e) {}
+}
+
+function annullaCassaCarico() {
+  fermaCassaCarico(true);
+  chiudiCassaOverlay();
+  alert('Pagamento annullato. Se non paghi, il carico torna disponibile per gli altri entro 5 minuti.');
+  if (currentUser && currentUser.email) caricaDati(currentUser.email);
+}
+
+function escCassa(v) { return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function testoTratta(c) { return escCassa(c.partenza) + ' → ' + escCassa(c.arrivo); }
+
+function schermataAttesaPagamento() {
+  if (!cassaCarico) return;
+  const passati = Date.now() - cassaCarico.inizio;
+  const rimasti = Math.max(0, 5 * 60 * 1000 - passati);
+  const mm = Math.floor(rimasti / 60000), ss = String(Math.floor((rimasti % 60000) / 1000)).padStart(2, '0');
+  const finestraAperta = cassaCarico.win && !cassaCarico.win.closed;
+  mostraCassaOverlay(
+    '<div class="ico">💳</div>' +
+    '<h2>Paga nella finestra della cassa</h2>' +
+    '<div class="tratta">' + testoTratta(cassaCarico) + '</div>' +
+    '<p>Clicca <b>«Paga ora»</b>. Appena il pagamento è fatto, questa schermata se ne accorge da sola.</p>' +
+    '<div class="rotella"></div>' +
+    '<div class="tempo">⏱️ Tempo per pagare: ' + mm + ':' + ss + '</div>' +
+    (finestraAperta ? '' : '<p style="color:#fbbf24;">Non vedi la cassa? Aprila con il pulsante qui sotto.</p>') +
+    '<button class="blu" onclick="riapriCassaCarico()">' + (finestraAperta ? 'Porta davanti la cassa' : 'Apri la cassa') + '</button>' +
+    '<button class="sec" onclick="annullaCassaCarico()">Annulla</button>' +
+    '<div class="nota">La prima volta spunta «Salva questi dati per la prossima volta»: dalla volta dopo paghi in pochi secondi.</div>'
+  );
+}
+
+function schermataCaricoTuo(c) {
+  mostraCassaOverlay(
+    '<div class="ico">✅</div>' +
+    '<h2>Carico tuo!</h2>' +
+    '<div class="tratta">' + testoTratta(c) + '</div>' +
+    '<p>Pagamento ricevuto. Il carico è assegnato a te e non è più visibile agli altri trasportatori.</p>' +
+    '<button class="pri" onclick="chiudiCassaOverlay()">Ok</button>'
+  );
+}
+
+async function controllaPagamentoCarico() {
+  if (!cassaCarico) return;
+  const c = cassaCarico;
+  if (Date.now() - c.inizio > ECT_CASSA_MAX_MS) {
+    fermaCassaCarico(false);
+    mostraCassaOverlay(
+      '<div class="ico">🕐</div><h2>Pagamento non ancora visto</h2>' +
+      '<div class="tratta">' + testoTratta(c) + '</div>' +
+      '<p>Se hai pagato, il carico comparirà come tuo tra poco. Se non hai pagato, il carico è tornato disponibile.</p>' +
+      '<button class="pri" onclick="chiudiCassaOverlay();caricaDati(currentUser.email)">Aggiorna i carichi</button>');
+    return;
+  }
+  let d = null;
+  try {
+    const r = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'check_carico', carico_id: c.id }) });
+    d = await r.json();
+  } catch (e) { d = null; }
+  if (!cassaCarico || cassaCarico !== c) return;
+  const stato = d ? String(d.stato || '').toUpperCase() : '';
+  if (stato === 'PRESO') {
+    fermaCassaCarico(true);
+    schermataCaricoTuo(c);
+    if (currentUser && currentUser.email) caricaDati(currentUser.email);
+    return;
+  }
+  if (stato === 'DISPONIBILE' && Date.now() - c.inizio > 30000) {
+    fermaCassaCarico(true);
+    mostraCassaOverlay(
+      '<div class="ico">⏱️</div><h2>Tempo scaduto</h2>' +
+      '<div class="tratta">' + testoTratta(c) + '</div>' +
+      '<p>Il pagamento non è arrivato in tempo e il carico è tornato disponibile. Puoi riprovare con «Prendi».</p>' +
+      '<button class="pri" onclick="chiudiCassaOverlay();caricaDati(currentUser.email)">Ok</button>');
+    return;
+  }
+  schermataAttesaPagamento();
+}
+
 async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce, importoPattuito, terminiPagamento) {
   if (tipoUtente === 'azienda') {
     alert('Le aziende non possono accaparrare carichi. Questa funzione è riservata ai trasportatori.');
     return;
   }
-  let dettagliPrezzo = '';
-  if (importoPattuito) dettagliPrezzo += `\n\n💶 Importo pattuito: ${euro(importoPattuito)}`;
-  if (terminiPagamento) dettagliPrezzo += `\n💳 Termini di pagamento: ${terminiPagamento}`;
-  if (!confirm(`Vuoi accaparrare questo carico?\n\n${partenza} → ${arrivo}\n${merce}${dettagliPrezzo}\n\nVerrai reindirizzato al pagamento.`)) return;
+  if (cassaCarico) fermaCassaCarico(true);
+  const info = { id: id, partenza: partenza, arrivo: arrivo };
+
+  // ANTEPRIMA: nessun pagamento vero, si mostra solo come funziona
+  if (window.__ANTEPRIMA_SCUDO) {
+    mostraCassaOverlay('<div class="ico">💳</div><h2>Paga nella finestra della cassa</h2><div class="tratta">' + testoTratta(info) + '</div>' +
+      '<p>🎭 ANTEPRIMA: qui si aprirebbe la cassa Shopify da 20 € con i tuoi dati già pronti. Nessun pagamento parte.</p><div class="rotella"></div>');
+    setTimeout(function () { schermataCaricoTuo(info); }, 3500);
+    return;
+  }
+
+  // 1) la finestrella si apre SUBITO (così il browser non la blocca)
+  let win = null;
   try {
-    const checkRes = await fetch(PROXY_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'check_carico', carico_id: id })
-    });
+    win = window.open('', 'ect_cassa', dimensioniCassa());
+    if (win) {
+      win.document.write('<!DOCTYPE html><title>Cassa EcoTruckConnect</title><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0e1623;color:#f1f5f9;font-family:system-ui,sans-serif;font-size:17px;">Sto aprendo la cassa…</body>');
+      win.document.close();
+    }
+  } catch (e) { win = null; }
+  mostraCassaOverlay('<div class="ico">🔒</div><h2>Blocco il carico per te…</h2><div class="tratta">' + testoTratta(info) + '</div><div class="rotella"></div>');
+
+  // 2) controllo che sia ancora libero
+  try {
+    const checkRes = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'check_carico', carico_id: id }) });
     const checkData = await checkRes.json();
     if (!checkData.trovato || checkData.stato !== 'DISPONIBILE') {
-      alert('⚠️ Questo carico non è più disponibile — qualcun altro lo ha già preso.');
+      try { if (win) win.close(); } catch (e) {}
+      mostraCassaOverlay('<div class="ico">⚠️</div><h2>Carico non più disponibile</h2><div class="tratta">' + testoTratta(info) + '</div><p>Qualcun altro lo ha appena preso.</p><button class="pri" onclick="chiudiCassaOverlay()">Ok</button>');
       caricaDati(currentUser.email);
       return;
     }
-  } catch(e) {
-    alert('⚠️ Non riesco a verificare la disponibilità del carico. Riprova.');
+  } catch (e) {
+    try { if (win) win.close(); } catch (e2) {}
+    mostraCassaOverlay('<div class="ico">⚠️</div><h2>Connessione lenta</h2><p>Non riesco a verificare il carico. Riprova tra un momento.</p><button class="pri" onclick="chiudiCassaOverlay()">Ok</button>');
     return;
   }
+
+  // 3) blocco il carico a mio nome (5 minuti per pagare)
   try {
     await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -2465,10 +2639,17 @@ async function prendiCarico(id, partenza, arrivo, capPart, capArr, merce, import
       })
     });
     registraAttivita('Assegnazione', 'Carico accaparrato', `${partenza} → ${arrivo} (${merce}) preso in carico.`);
-  } catch(e) { console.error(e); }
-  const url = `https://shop.synaimaxpro.com/products/accaparramento-carico-ecotruckconnect?cap_partenza=${capPart}&cap_arrivo=${capArr}&merce=${encodeURIComponent(merce)}&carico_id=${id}`;
-  window.open(url, '_blank');
-  setTimeout(() => caricaDati(currentUser.email), 3000);
+  } catch (e) { console.error(e); }
+
+  // 4) la finestrella va alla cassa, con l'email già scritta
+  const url = linkCassaCarico(id);
+  try {
+    if (win && !win.closed) win.location.href = url;
+    else win = window.open(url, 'ect_cassa', dimensioniCassa());
+  } catch (e) {}
+  cassaCarico = { id: id, partenza: partenza, arrivo: arrivo, url: url, win: win, inizio: Date.now(), timer: null };
+  schermataAttesaPagamento();
+  cassaCarico.timer = setInterval(controllaPagamentoCarico, (window.__ECT_CASSA_OGNI_MS || ECT_CASSA_OGNI_MS));
 }
 
 let capCaricoLookupTimer = {};
