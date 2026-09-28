@@ -580,9 +580,9 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn vedi" href="#" onclick="apriEsempio('preferiti');return false;"><span class="num">5</span><span class="icon">⭐</span>Trasportatori preferiti</a>
     <a class="tool-btn vedi" href="#" onclick="apriEsempio('ricorrenti');return false;"><span class="num">6</span><span class="icon">🔁</span>Carichi ricorrenti</a>
     <a class="tool-btn vedi" href="#" onclick="apriEsempio('garantito');return false;"><span class="num">7</span><span class="icon">🔐</span>Pagamento garantito</a>
-    <a class="tool-btn vedi" href="https://ecotruckconnect-portale.netlify.app/?preview=azienda&apri=report" target="_blank"><span class="num">8</span><span class="icon">📊</span>Statistiche per l'azienda</a>
+    <a class="tool-btn vedi" href="https://ecotruckconnect-portale.netlify.app/?preview=azienda&apri=report" target="_blank"><span class="num">8</span><span class="icon">📊</span>Statistiche azienda — ✅ già attive</a>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin:8px 0 0;">👁 Esempi di cosa hanno le altre piattaforme: si costruiscono solo quelli che sceglie Gerlando.</div>
+  <div style="font-size:12px;color:var(--muted);margin:8px 0 0;">👁 Esempi di funzioni in più (suggerimenti di Claude, da decidere). La numero 8 c'è già.</div>
   <div class="spiega viola">
     <h4>1. PayPal: come si attiva</h4>
     <ol>
@@ -617,18 +617,20 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <li><b>Saldo prepagato</b>: il trasportatore ricarica una volta e i carichi si scalano da soli.</li>
     </ol>
 
-    <h4 class="sotto">Cosa hanno le altre piattaforme e noi no (da valutare con Gerlando)</h4>
+    <h4 class="sotto">Funzioni in più — suggerimenti di Claude <span class="decidere">DA DECIDERE</span></h4>
+    <div style="font-size:13px;line-height:1.6;margin:0 0 10px;">Nessuna è attiva. Ognuna può diventare un'<b>opzione a pagamento</b>, per esempio un abbonamento <b>ogni 3 mesi</b>: si sceglie quali fare e a che prezzo, poi si inseriscono una alla volta nei portali.</div>
     <ol>
-      <li><b>Tracciamento del viaggio</b> <span class="decidere">DA DECIDERE</span>: l'azienda vede dove si trova il camion durante il trasporto.</li>
-      <li><b>Prova di consegna</b> <span class="decidere">DA DECIDERE</span>: alla consegna il trasportatore carica foto e firma dal telefono. L'azienda la vede subito.</li>
-      <li><b>Documenti digitali</b> <span class="decidere">DA DECIDERE</span>: DDT o lettera di vettura (CMR) caricati e conservati nel carico.</li>
-      <li><b>Offerte sul prezzo</b> <span class="decidere">DA DECIDERE</span>: il trasportatore propone un prezzo, l'azienda sceglie l'offerta migliore.</li>
-      <li><b>Trasportatori preferiti</b> <span class="decidere">DA DECIDERE</span>: l'azienda salva i trasportatori di fiducia e manda i carichi prima a loro.</li>
-      <li><b>Carichi ricorrenti</b> <span class="decidere">DA DECIDERE</span>: l'azienda pubblica una volta un carico che si ripete, per esempio ogni lunedì.</li>
-      <li><b>Pagamento garantito</b> <span class="decidere">DA DECIDERE</span>: il trasportatore è sicuro di essere pagato per il trasporto.</li>
-      <li><b>Statistiche per l'azienda</b> <span class="decidere">DA DECIDERE</span>: quanti carichi, quali tratte, quanto ha speso.</li>
+      <li><b>Filtro per zona (CAP)</b> <span class="decidere">DA DECIDERE</span>: il trasportatore vede prima i carichi vicini al suo CAP o alla posizione in cui si trova. <i>Già preparato nel portale ma spento.</i> 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Carico di ritorno (niente viaggio a vuoto)</b> <span class="decidere">DA DECIDERE</span>: dopo la consegna il sistema cerca carichi entro 15-20 km, nelle ore successive o la mattina dopo, e avvisa il trasportatore su Telegram. Decide sempre lui se prenderlo. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Tracciamento del viaggio</b> <span class="decidere">DA DECIDERE</span>: l'azienda vede dove si trova il camion durante il trasporto. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Prova di consegna</b> <span class="decidere">DA DECIDERE</span>: alla consegna il trasportatore carica foto e firma dal telefono. L'azienda la vede subito. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Documenti digitali</b> <span class="decidere">DA DECIDERE</span>: DDT o lettera di vettura (CMR) caricati e conservati nel carico. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Offerte sul prezzo</b> <span class="decidere">DA DECIDERE</span>: il trasportatore propone un prezzo, l'azienda sceglie l'offerta migliore. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Trasportatori preferiti</b> <span class="decidere">DA DECIDERE</span>: l'azienda salva i trasportatori di fiducia e manda i carichi prima a loro. 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Carichi ricorrenti</b> <span class="decidere">DA DECIDERE</span>: l'azienda imposta una volta un carico che si ripubblica <b>da solo</b>, per esempio ogni lunedì. <i>Diverso da «Duplica», che c'è già: Duplica copia a mano un carico una volta sola.</i> 💶 Tariffa ogni 3 mesi: da decidere.</li>
+      <li><b>Pagamento garantito</b> <span class="decidere">DA DECIDERE</span>: il trasportatore è sicuro di essere pagato per il trasporto. 💶 Tariffa ogni 3 mesi: da decidere.</li>
     </ol>
-    <div style="margin-top:10px;font-size:12px;">Sono funzioni viste su Trans.eu, B2PWeb, Spedity, Truckscanner e altre borse carichi. Si costruiscono solo quelle che Gerlando sceglie.</div>
+    <div style="margin-top:10px;font-size:12px;">✅ <b>Già presenti</b>, non da decidere: Duplica carico, Statistiche e grafici per l'azienda e per il trasportatore («I miei report»), Stampa e PDF di ogni carico.<br>Suggerimenti di Claude, ispirati a funzioni viste su Trans.eu, B2PWeb, Spedity, Truckscanner e altre borse carichi.</div>
   </div>
 
 
