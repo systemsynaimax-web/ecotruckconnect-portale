@@ -305,7 +305,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     </div>
     <div class="header-right">
       <span class="refresh-info" id="refresh-info-testo"><span class="dot-live"></span>Solo aggiornamento manuale</span>
-      <a href="https://t.me/SynAIMAX_EcoTruck_bot?start=gestori_cf08d91f72fc" target="_blank" rel="noopener" id="btn-tg-gestori" title="Collega il Telegram dei gestori: ricevete ogni carico pubblicato e ogni carico preso" style="display:inline-flex;align-items:center;gap:8px;background:#229ED9;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;margin-right:10px;"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Collega Telegram</a><button onclick="aggiornaOra()" id="btn-aggiorna-ora" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-right:10px;">🔄 Aggiorna ora</button>
+      <a href="https://ecotruckconnect.synaimaxpro.com" target="_blank" rel="noopener" id="btn-vetrina" title="Apri la vetrina pubblica (iscrizioni di trasportatori e aziende)" style="display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,0.14);border:1px solid rgba(34,197,94,0.45);color:#4ade80;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;margin-right:10px;">🏪 Apri la vetrina</a><a href="https://t.me/SynAIMAX_EcoTruck_bot?start=gestori_cf08d91f72fc" target="_blank" rel="noopener" id="btn-tg-gestori" title="Collega il Telegram dei gestori: ricevete ogni carico pubblicato e ogni carico preso" style="display:inline-flex;align-items:center;gap:8px;background:#229ED9;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;margin-right:10px;"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Collega Telegram</a><button onclick="aggiornaOra()" id="btn-aggiorna-ora" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-right:10px;">🔄 Aggiorna ora</button>
       <div class="notif-bell" id="notif-bell" onclick="apriNotifiche()" title="Registrazioni da approvare">
         🔔
         <span class="notif-count" id="notif-count">0</span>
@@ -423,6 +423,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a href="#" onclick="alert('🎭 In demo questa pagina non si apre: contiene dati veri. Usala dalla Dashboard REALE.');return false;" class="quick-link">📋 Report Trasportatori</a>
     <a href="#report-aziende-sezione" class="quick-link">🏢 Report Aziende</a>
     <a href="#" onclick="alert('🎭 In demo questa pagina non si apre: contiene dati veri. Usala dalla Dashboard REALE.');return false;" class="quick-link">🆕 Registrazioni</a>
+    <a href="https://ecotruckconnect.synaimaxpro.com" target="_blank" rel="noopener" class="quick-link">🏪 Vetrina (iscrizioni)</a>
   </div>
 
   <div class="sec-title">🗓️ Calendario</div>
@@ -565,6 +566,31 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <h4 class="sotto">Da decidere con il commercialista <span class="decidere">DA DECIDERE</span></h4>
     <ul><li>Pagamenti su Shopify e fatture: quale <b>software di fatturazione</b> usa il commercialista, e fattura per ogni pagamento o riepilogo mensile?</li></ul>
     <ul><li>Il collegamento automatico con l'Agenzia delle Entrate (SDI) è un obbligo fiscale: prima serve il parere del commercialista su come collegarsi.</li></ul>
+  </div>
+
+
+  <div class="sec-title">🏪 Vetrina — proposte <span class="etichetta-nuovo">SUGGERIMENTI DI CLAUDE — DA DECIDERE</span></div>
+  <div class="stats-row" style="margin-bottom:14px;">
+    <div class="stat-card"><div class="stat-label">Iscrizioni dalla vetrina</div><div class="stat-value blue">14</div><div class="stat-sub">Dati finti</div></div>
+    <div class="stat-card"><div class="stat-label">Trasportatori</div><div class="stat-value blue">9</div><div class="stat-sub">Dati finti</div></div>
+    <div class="stat-card"><div class="stat-label">Aziende</div><div class="stat-value blue">5</div><div class="stat-sub">Dati finti</div></div>
+    <div class="stat-card"><div class="stat-label">Da approvare</div><div class="stat-value blue">3</div><div class="stat-sub">Dati finti — sono nella campanella</div></div>
+  </div>
+  <div class="quick-links" style="margin-bottom:12px;"><a href="https://ecotruckconnect.synaimaxpro.com" target="_blank" rel="noopener" class="quick-link">🏪 Apri la vetrina vera</a></div>
+  <div class="spiega">
+    <h4>Cosa c'è già nella vetrina</h4>
+    <ul>
+      <li>✅ Iscrizione di trasportatori e aziende (forma giuridica, dati fiscali, sede), che arriva nella campanella della dashboard.</li>
+      <li>✅ <b>Suggerimenti mentre scrivi</b> su CAP, città e provincia: scrivi «Agr» ed esce «Agrigento (AG) · 92100»; scrivi il CAP e città e provincia si riempiono da sole (anche 90100 → Palermo).</li>
+    </ul>
+    <h4 class="sotto">Proposte per la vetrina <span class="decidere">DA DECIDERE</span></h4>
+    <ol>
+      <li><b>Domande frequenti</b> <span class="decidere">DA DECIDERE</span>: una tendina con le risposte più chieste (quanto costa, come funziona, chi paga cosa, come si entra), come quella del portale.</li>
+      <li><b>Le piattaforme EcoTruckConnect — in arrivo</b> <span class="decidere">DA DECIDERE</span>: una scheda per ognuna, con badge «IN ARRIVO», per creare attesa senza promettere cose non ancora pronte: 🛒 EcoMercatino (compravendita di mezzi e attrezzature) · 🏢 EcoSponsor (aziende locali che si fanno conoscere nella rete) · 🌿 EcoGreen (prodotti e progetti sostenibili) · 🎓 EcoEdu (corsi e certificati) · 💼 EcoWork (lavoro e collaborazioni per CAP) · 💚 EcoFund (raccolte fondi per progetti ambientali) · 🧠 EcoGamification (punti, livelli e premi).</li>
+      <li><b>Diventa partner / Diventa sponsor</b> <span class="decidere">DA DECIDERE</span>: due pulsanti con candidatura via email, verifica fatta da voi. Possibile quota d'ingresso dopo il lancio.</li>
+      <li><b>Assistente (bot) nella vetrina</b> <span class="decidere">SCONSIGLIATO PER ORA</span>: costa a ogni domanda e potrebbe promettere cose non vere a chi non è ancora cliente. Meglio Domande frequenti + «Scrivici» via email; il bot resta nel portale per chi è iscritto.</li>
+      <li><b>Prima del lancio</b> <span class="decidere">DA FARE</span>: caricare sempre i 4 file insieme su Netlify Drop (index.html, robots.txt, sitemap.xml, file di verifica Google), poi Google Search Console.</li>
+    </ol>
   </div>
 
   <div class="sec-title">💡 Idee future <span class="etichetta-nuovo">NON ATTIVE — SOLO PROPOSTE</span></div>
