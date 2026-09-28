@@ -177,6 +177,13 @@ h1,h2,h3,h4{font-family:var(--font-h);}
   display:block;transition:background 0.2s;
 }
 .email-btn:hover{background:rgba(255,255,255,0.08);}
+.riga-apribile{cursor:pointer;transition:background .15s;border-radius:10px;}
+.riga-apribile:hover{background:rgba(59,130,246,0.07);}
+.riga-freccia{font-size:22px;color:#60a5fa;margin-left:10px;font-weight:700;flex-shrink:0;}
+.dett-grid{display:grid;grid-template-columns:170px 1fr;gap:6px 12px;font-size:13px;line-height:1.5;}
+.dett-grid .k{color:var(--muted);font-weight:600;}
+.dett-grid .v{color:var(--text);word-break:break-word;}
+.dett-sez{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#60a5fa;margin:16px 0 8px;}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.open{display:flex;}
 .modal{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;}
@@ -1274,12 +1281,56 @@ function apriGiorno(key) {
         <div class="carico-row"><b>Merce:</b> ${f.tipo_merce||'—'}</div>
         <div class="carico-row"><b>Numero ordine:</b> ${f.numero_ordine||'—'}</div>
         ${trasportatore}
+        <button type="button" onclick="apriDettaglioCarico('${c.id}')" style="margin-top:10px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">📄 Dettaglio completo ›</button>
       </div>`;
     }).join('');
   }
   document.getElementById('modal-bg').classList.add('open');
 }
 function chiudiModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+/* 28/9 — DETTAGLIO COMPLETO di un carico o di un'attività: tutto quello che c'è, stampabile (prova in caso di contestazioni) */
+function escD(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function dataOraD(v) { if (!v) return '—'; const s = String(v); const d = new Date(s); if (isNaN(d)) return s; return s.length <= 10 ? d.toLocaleDateString('it-IT') : d.toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function valD(v) { if (v == null || v === '') return '—'; if (Array.isArray(v)) return v.length ? v.join(', ') : '—'; if (v === true) return 'Sì'; if (v === false) return 'No'; return v; }
+function righeD(coppie) { return '<div class="dett-grid">' + coppie.map(([k, v]) => `<div class="k">${escD(k)}</div><div class="v">${escD(valD(v))}</div>`).join('') + '</div>'; }
+function apriDettaglioCarico(id) {
+  const c = tuttiCarichi.find(x => x.id === id); if (!c) return;
+  const f = c.fields;
+  document.getElementById('modal-title').textContent = '📦 Carico ' + (f.numero_ordine || '');
+  document.getElementById('modal-body').innerHTML =
+    `<div class="carico-tratta" style="font-size:18px;margin-bottom:6px;">${escD(f.citta_partenza||'—')} → ${escD(f.citta_arrivo||'—')}</div>
+     <span class="carico-stato ${classeStato(f.stato)}">${escD(f.stato||'—')}</span>` +
+    '<div class="dett-sez">Il carico</div>' + righeD([
+      ['Numero ordine', f.numero_ordine], ['CAP partenza', f.cap_partenza], ['CAP arrivo', f.cap_arrivo],
+      ['Data del carico', dataOraD(f.data_consegna)], ['Tipo merce', f.tipo_merce], ['Specifica', f.specifica],
+      ['Note', f.note], ['Mezzo richiesto', f.tipo_mezzo_richiesto], ['Autorizzazione richiesta', f.autorizzazione_richiesta],
+      ['Rifiuto', f.tipo_rifiuto], ['Codice CER', f.codice_cer], ['Pericoloso', f.pericoloso]]) +
+    '<div class="dett-sez">Prezzo e pagamenti</div>' + righeD([
+      ['Importo pattuito (trasporto)', f.importo_pattuito ? euro(f.importo_pattuito) : ''], ['Termini di pagamento', f.termini_pagamento],
+      ['Commissione piattaforma', String(f.stato||'').toUpperCase() === 'PRESO' ? euro(20) + ' — pagata dal trasportatore' : 'non ancora dovuta']]) +
+    '<div class="dett-sez">Azienda</div>' + righeD([
+      ['Azienda', f.nome_azienda], ['Email', f.email_azienda], ['Telefono', f.telefono_azienda],
+      ['Pubblicato il', dataOraD(f.data_pubblicazione || c.createdTime)]]) +
+    '<div class="dett-sez">Trasportatore</div>' + righeD([
+      ['Nome', f.assegnato_a_nome || f.bloccato_da_nome], ['Email', f.bloccato_da_id], ['Telefono', f.assegnato_a_telefono],
+      ['Preso il', dataOraD(f.data_assegnato)]]) +
+    `<div style="font-size:11px;color:var(--muted);margin-top:14px;">Codice interno: ${escD(c.id)} · Dati letti da Airtable il ${new Date().toLocaleString('it-IT')}</div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function apriDettaglioRegistro(id) {
+  const r = registroAttivitaCorrente.find(x => x.id === id); if (!r) return;
+  const f = r.fields || {};
+  document.getElementById('modal-title').textContent = '📜 ' + (f.titolo_attivita || 'Attività');
+  const noti = ['titolo_attivita','tipo_attivita','descrizione_attivita','autore'];
+  const altri = Object.keys(f).filter(k => noti.indexOf(k) < 0).map(k => [k.replace(/_/g, ' '), /data|time/i.test(k) ? dataOraD(f[k]) : f[k]]);
+  document.getElementById('modal-body').innerHTML = righeD([
+      ['Tipo', f.tipo_attivita], ['Descrizione', f.descrizione_attivita], ['Chi', f.autore],
+      ['Data e ora (Airtable, fa fede)', dataOraD(r.createdTime)]]) +
+    (altri.length ? '<div class="dett-sez">Altri dati</div>' + righeD(altri) : '') +
+    `<div style="font-size:11px;color:var(--muted);margin-top:14px;">Codice interno: ${escD(r.id)}</div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
 
 function renderFeed(lista) {
   const recenti = [...lista]
@@ -1299,13 +1350,14 @@ function renderFeed(lista) {
     const data = f.data_assegnato || f.data_pubblicazione;
     const dataFmt = data ? new Date(data).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
     const azione = f.stato === 'PRESO' ? `Preso da ${f.bloccato_da_nome||'trasportatore'}` : `Pubblicato da ${f.nome_azienda||'azienda'}`;
-    return `<div class="feed-item">
+    return `<div class="feed-item riga-apribile" onclick="apriDettaglioCarico('${c.id}')" title="Apri il dettaglio completo">
       <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
       <div class="feed-info">
         <div class="feed-title">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
         <div class="feed-sub">${azione}</div>
       </div>
       <div class="feed-date">${dataFmt}</div>
+      <span class="riga-freccia">›</span>
     </div>`;
   }).join('');
 }
@@ -1342,13 +1394,14 @@ function renderAziende(lista) {
   el.innerHTML = conAzienda.map(c => {
     const f = c.fields;
     const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '—';
-    return `<div class="feed-item">
+    return `<div class="feed-item riga-apribile" onclick="apriDettaglioCarico('${c.id}')" title="Apri il dettaglio completo">
       <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
       <div class="feed-info">
         <div class="feed-title">${f.nome_azienda} — ${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
-        <div class="feed-sub">${f.tipo_merce||'—'} · ${f.stato||'—'}</div>
+        <div class="feed-sub">${f.tipo_merce||'—'} · ${f.stato||'—'}${f.bloccato_da_nome ? ' · 🚚 ' + f.bloccato_da_nome : ''}</div>
       </div>
       <div class="feed-date">${data}</div>
+      <span class="riga-freccia">›</span>
     </div>`;
   }).join('');
 }
@@ -1549,13 +1602,14 @@ function renderRegistroAttivita() {
     const f = r.fields;
     const colore = COLORE_TIPO_ATTIVITA[f.tipo_attivita] || '#6b7280';
     const dataFmt = r.createdTime ? new Date(r.createdTime).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-    return `<div class="feed-item">
+    return `<div class="feed-item riga-apribile" onclick="apriDettaglioRegistro('${r.id}')" title="Apri il dettaglio completo">
       <span class="feed-dot" style="background:${colore};"></span>
       <div class="feed-info">
         <div class="feed-title">${f.titolo_attivita || '(senza titolo)'} <span style="font-size:11px;color:${colore};font-weight:600;">· ${f.tipo_attivita || '—'}</span></div>
         <div class="feed-sub">${f.descrizione_attivita || ''} ${f.autore ? '— <b>' + f.autore + '</b>' : ''}</div>
       </div>
       <div class="feed-date">${dataFmt}</div>
+      <span class="riga-freccia">›</span>
     </div>`;
   }).join('');
 }
@@ -1591,7 +1645,7 @@ async function aggiornaOra() {
   if (caricamentoInCorso) return;
   const btn = document.getElementById('btn-aggiorna-ora');
   btn.disabled = true;
-  btn.textContent = '⏳ Aggiorno...';
+  btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno...';
   await caricaTutto();
   btn.textContent = '✅ Aggiornato';
   setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
