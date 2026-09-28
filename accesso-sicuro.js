@@ -1185,15 +1185,37 @@
   function aggiungiAzioniAzienda() {
     var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
     if (tipo !== 'azienda') return;
+    var finto = !!window.__ANTEPRIMA_SCUDO;
     document.querySelectorAll('#storico-body tr, #dash-fatture-body tr').forEach(function (tr) {
       if (tr.__ectAzioni || tr.cells.length < 2 || tr.querySelector('.empty')) return;
-      var m = [numeroOrdine(tr)]; if (!m[0]) return;
-      var f = trovaCarico(m[0]); if (!f || !f.__id) return;
-      tr.__ectAzioni = true;
+      var no = numeroOrdine(tr); if (!no) return;
+      var f = trovaCarico(no); if (!f) return;
+      var id = f.__id || f.id; if (!id) return;
+      tr.__ectAzioni = true; tr.__ectStampa = true;
       var st = String(f.stato || '').toUpperCase(), cella = tr.cells[tr.cells.length - 1];
-      function btn(t, fn, col) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn-cap'; b.textContent = t; b.style.cssText = 'padding:5px 10px;font-size:11px;margin:2px 0 2px 6px;' + (col ? 'background:' + col + ';' : ''); b.onclick = function (ev) { ev.stopPropagation(); fn(f); }; cella.appendChild(b); }
-      if (st === 'DISPONIBILE') { btn('✏️ Modifica', apriModifica); btn('❌ Annulla', apriAnnulla, '#b91c1c'); }
-      else if (st === 'PRESO' || st.indexOf('PAGAMENTO') >= 0) btn('📩 Richiedi annullamento', apriRichiesta, '#b45309');
+      // Una fila sola, sempre nello stesso ordine e con gli stessi colori (28/9)
+      cella.innerHTML = ''; cella.style.whiteSpace = 'normal';
+      var fila = document.createElement('div'); fila.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;';
+      cella.appendChild(fila);
+      var TONI = { blu: 'background:#2563eb;color:#fff;border:1px solid #2563eb;', rosso: 'background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.5);',
+        ambra: 'background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.5);', spento: 'background:rgba(255,255,255,0.06);color:rgba(241,245,249,0.5);border:1px solid rgba(255,255,255,0.12);cursor:not-allowed;' };
+      function btn(testo, tono, fn) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = testo;
+        b.style.cssText = 'padding:6px 12px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;' + TONI[tono];
+        b.onclick = function (ev) { ev.stopPropagation(); fn(); }; fila.appendChild(b);
+      }
+      function etichetta(testo, col) { var sp = document.createElement('span'); sp.textContent = testo; sp.style.cssText = 'font-size:12px;font-weight:600;color:' + col + ';'; fila.appendChild(sp); }
+      btn('🖨️ Stampa', 'blu', function () { stampaCarico(f, tr); }); fila.lastChild.classList.add('ect-stampa-riga');
+      btn('🔁 Duplica', 'blu', function () { if (typeof duplicaCarico === 'function') duplicaCarico(id); });
+      if (st === 'DISPONIBILE') {
+        btn('✏️ Modifica', 'blu', function () { if (finto && typeof anteprimaModificaCarico === 'function') anteprimaModificaCarico(id); else apriModifica(f); });
+        btn('❌ Annulla', 'rosso', function () { if (finto && typeof anteprimaEliminaCarico === 'function') anteprimaEliminaCarico(id); else apriAnnulla(f); });
+      } else if (st.indexOf('PAGAMENTO') >= 0) {
+        btn('🔒 Bloccato', 'spento', function () { alert('⏳ Un trasportatore sta pagando proprio ora questo carico: Modifica e Annulla sono bloccati per 5 minuti.'); });
+      } else if (st === 'PRESO') {
+        btn('📩 Richiedi annullamento', 'ambra', function () { if (finto && typeof anteprimaRichiediAnnullamento === 'function') anteprimaRichiediAnnullamento(id); else apriRichiesta(f); });
+      } else if (st === 'ANNULLAMENTO RICHIESTO') etichetta('⏳ In attesa dei gestori', '#fbbf24');
+      else if (st === 'ANNULLATO') etichetta('Annullato', 'rgba(241,245,249,0.5)');
     });
   }
 
@@ -1262,7 +1284,7 @@
   function qrTelegram() {
     var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
     if (tipo !== 'trasportatore' || /android|iphone|ipad|ipod/i.test(navigator.userAgent || '')) return;
-    var a = document.querySelector('a[href^="https://t.me/SynAIMAX_EcoTruck_bot?start="]');
+    var a = document.querySelector('a[href^="https://t.me/SynAIMAX_EcoTruck_bot"]');
     if (!a || !a.offsetParent || document.getElementById('ect-qr-tg')) return;
     var box = document.createElement('div'); box.id = 'ect-qr-tg';
     box.style.cssText = 'margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;';
