@@ -311,7 +311,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     </div>
     <div class="header-right">
       <span class="refresh-info" id="refresh-info-testo"><span class="dot-live"></span>Solo aggiornamento manuale</span>
-      <button onclick="aggiornaOra()" id="btn-aggiorna-ora" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-right:10px;">🔄 Aggiorna ora</button>
+      <a href="https://t.me/SynAIMAX_EcoTruck_bot?start=gestori_cf08d91f72fc" target="_blank" rel="noopener" id="btn-tg-gestori" title="Collega il Telegram dei gestori: ricevete ogni carico pubblicato e ogni carico preso" style="display:inline-flex;align-items:center;gap:8px;background:#229ED9;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;margin-right:10px;"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Collega Telegram</a><button onclick="aggiornaOra()" id="btn-aggiorna-ora" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-right:10px;">🔄 Aggiorna ora</button>
       <div class="notif-bell" id="notif-bell" onclick="apriNotifiche()" title="Registrazioni da approvare">
         🔔
         <span class="notif-count" id="notif-count">0</span>
@@ -458,6 +458,20 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <button class="cal-nav" onclick="cambiaMese(1)">→</button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="sec-title" id="telegram-carichi"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Carichi su Telegram — pubblicati e presi</div>
+  <div class="panel" style="margin-bottom:24px;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+      <div style="flex:1;min-width:240px;font-size:13px;color:var(--muted);line-height:1.6;">Gli stessi carichi che vi arrivano su Telegram (ogni carico pubblicato e ogni carico preso). Clicca una riga per il dettaglio completo e la stampa.</div>
+      <a href="https://t.me/SynAIMAX_EcoTruck_bot?start=gestori_cf08d91f72fc" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#229ED9;color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;text-decoration:none;"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Collega Telegram gestori</a>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <input id="tg-cerca" oninput="renderTelegramCarichi()" placeholder="🔎 Cerca azienda, trasportatore, città, ordine…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
+      <select id="tg-stato" onchange="renderTelegramCarichi()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;"><option value="">Pubblicati e presi</option><option value="DISPONIBILE">Solo pubblicati (disponibili)</option><option value="PRESO">Solo presi</option></select>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
+    </div>
+    <div id="tg-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
   <div class="sec-title">🕓 Attività Recente — cerca, scarica, stampa</div>
@@ -753,6 +767,7 @@ async function caricaDashboard() {
     aggiornaStats();
     renderCalendario();
     renderFeed(tuttiCarichi);
+    try { renderTelegramCarichi(); } catch (e) {}
     renderAziende(tuttiCarichi);
   } catch (e) {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
@@ -1288,6 +1303,32 @@ function apriGiorno(key) {
   document.getElementById('modal-bg').classList.add('open');
 }
 function chiudiModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+/* 28/9 — CARICHI SU TELEGRAM (gestori): pubblicati e presi, come i messaggi che arrivano sul Telegram dei gestori */
+function renderTelegramCarichi() {
+  const el = document.getElementById('tg-lista'); if (!el) return;
+  const q = ((document.getElementById('tg-cerca') || {}).value || '').trim().toLowerCase();
+  const st = ((document.getElementById('tg-stato') || {}).value || '');
+  const lista = tuttiCarichi.filter(c => { const s = String(c.fields.stato || '').toUpperCase(); return (s === 'DISPONIBILE' || s === 'PRESO') && (!st || s === st); })
+    .filter(c => { const f = c.fields; return !q || [f.nome_azienda, f.bloccato_da_nome, f.assegnato_a_nome, f.citta_partenza, f.citta_arrivo, f.numero_ordine].join(' ').toLowerCase().includes(q); })
+    .sort((a, b) => new Date(b.fields.data_assegnato || b.fields.data_pubblicazione || 0) - new Date(a.fields.data_assegnato || a.fields.data_pubblicazione || 0));
+  if (!lista.length) { el.innerHTML = '<div class="feed-empty">Nessun carico pubblicato o preso.</div>'; return; }
+  el.innerHTML = lista.map(c => {
+    const f = c.fields, preso = String(f.stato || '').toUpperCase() === 'PRESO';
+    const quando = preso ? f.data_assegnato : f.data_pubblicazione;
+    const q2 = quando ? new Date(quando).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div class="feed-item riga-apribile" onclick="apriDettaglioCarico('${c.id}')" title="Apri il dettaglio completo">
+      <span class="feed-dot" style="background:${coloreStato(f.stato)};"></span>
+      <div class="feed-info">
+        <div class="feed-title">${preso ? '✅ Preso' : '📦 Pubblicato'} — ${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
+        <div class="feed-sub">🏢 ${f.nome_azienda||'—'} · ${f.tipo_merce||'—'}${f.importo_pattuito ? ' · 💶 ' + euro(f.importo_pattuito) : ''}${preso ? ' · 🚚 ' + (f.assegnato_a_nome || f.bloccato_da_nome || '—') : ''} · 🧾 ${f.numero_ordine||'—'}</div>
+      </div>
+      <div class="feed-date">${q2}</div>
+      <span class="riga-freccia">›</span>
+    </div>`;
+  }).join('');
+}
+window.addEventListener('load', function () { if (location.hash === '#telegram-carichi') setTimeout(function () { const t = document.getElementById('telegram-carichi'); if (t) t.scrollIntoView({behavior:'smooth'}); }, 2500); });
 
 /* 28/9 — DETTAGLIO COMPLETO di un carico o di un'attività: tutto quello che c'è, stampabile (prova in caso di contestazioni) */
 function escD(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
