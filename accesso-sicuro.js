@@ -1266,11 +1266,72 @@
     if (!a || !a.offsetParent || document.getElementById('ect-qr-tg')) return;
     var box = document.createElement('div'); box.id = 'ect-qr-tg';
     box.style.cssText = 'margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;';
-    box.innerHTML = '<div id="ect-qr-tg-img" style="background:#fff;padding:8px;border-radius:8px;"></div><div style="font-size:12px;color:rgba(241,245,249,0.75);line-height:1.6;max-width:260px;">📱 <b>Sei al computer?</b> Inquadra il quadratino con la fotocamera del telefono: si apre Telegram, premi <b>Avvia</b>. Entro 2 minuti ti arriva la conferma.</div>';
+    box.innerHTML = '<div id="ect-qr-tg-img" style="background:#fff;padding:8px;border-radius:8px;"></div><div style="font-size:12px;color:rgba(241,245,249,0.75);line-height:1.6;max-width:260px;">📱 <b>Sei al computer?</b> Inquadra il quadratino con la fotocamera del telefono: si apre Telegram, premi <b>Avvia</b>. Entro 5 minuti ti arriva la conferma.</div>';
     a.insertAdjacentElement('afterend', box);
     function disegna() { try { new QRCode(document.getElementById('ect-qr-tg-img'), { text: a.href, width: 130, height: 130 }); } catch (e) {} }
     if (window.QRCode) disegna(); else { var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload = disegna; document.head.appendChild(sc); }
   }
 
-  setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); aggiungiAzioniAzienda(); aggiungiOrari(); aggiungiFiltri(); qrTelegram(); } catch (e) {} }, 700);
+  // 11) 🔄 AGGIORNA accanto a OGNI pulsante Stampa di sezione (portale e dashboard), con icona che gira
+  (function () {
+    var st = document.createElement('style');
+    st.textContent = '.ect-gira{display:inline-block;animation:ectgira .8s linear infinite;}@keyframes ectgira{to{transform:rotate(360deg);}}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
+  function attendi(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  async function eseguiAggiorna(sezione) {
+    // DASHBOARD GESTORI
+    if (typeof caricaTutto === 'function') {
+      if (sezione && sezione.querySelector && sezione.querySelector('#registro-lista') && typeof caricaRegistroAttivita === 'function') { await caricaRegistroAttivita(); return; }
+      var giri = 0; while (typeof caricamentoInCorso !== 'undefined' && caricamentoInCorso && giri++ < 40) await attendi(250);
+      await caricaTutto(); return;
+    }
+    // PORTALE aziende/trasportatori
+    var mail = emailUtente();
+    if (typeof caricaDati === 'function' && mail) await caricaDati(mail);
+    var tipo = ''; try { tipo = tipoUtente; } catch (e) {}
+    if (tipo === 'azienda' && typeof aggiornaDashFatture === 'function') await aggiornaDashFatture();
+    try { if (typeof renderCampanellino === 'function') renderCampanellino(); } catch (e) {}
+    await attendi(400);
+  }
+  async function premiAggiorna(b) {
+    if (b.disabled) return;
+    var t0 = b.innerHTML; b.disabled = true;
+    b.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno…';
+    try { await eseguiAggiorna(b.closest('.dash-card, .panel, .card, [id^="dash-sezione-"], .ins-box, section, div')); } catch (e) {}
+    b.innerHTML = '✅ Aggiornato';
+    setTimeout(function () { b.disabled = false; b.innerHTML = t0; }, 1400);
+  }
+  function aggiungiAggiorna() {
+    document.querySelectorAll('button[onclick*="stampaConTimbro"]').forEach(function (bs) {
+      if (bs.__ectAgg) return; bs.__ectAgg = true;
+      var b = document.createElement('button'); b.type = 'button'; b.className = bs.className;
+      b.setAttribute('style', bs.getAttribute('style') || ''); b.innerHTML = '🔄 Aggiorna';
+      b.onclick = function (ev) { ev.stopPropagation(); premiAggiorna(b); };
+      bs.parentNode.insertBefore(b, bs);
+    });
+    // Report del portale (non ha il pulsante Stampa di sezione)
+    var rep = document.getElementById('dash-sezione-report');
+    if (rep && !rep.__ectAgg && rep.firstElementChild) {
+      rep.__ectAgg = true;
+      var b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn-cap'; b2.innerHTML = '🔄 Aggiorna';
+      b2.style.cssText = 'margin:0 0 10px;';
+      b2.onclick = function () { premiAggiorna(b2); };
+      rep.insertBefore(b2, rep.firstChild);
+    }
+    // Campanella azienda: "Aggiorna ora" che gira
+    if (typeof aggiornaCampanellino === 'function' && !window.__ectCampWrap) {
+      window.__ectCampWrap = true;
+      var orig = aggiornaCampanellino;
+      window.aggiornaCampanellino = async function (manuale) {
+        var btn = document.querySelector('button[onclick*="aggiornaCampanellino(true)"]');
+        var t0 = btn ? btn.innerHTML : '';
+        if (manuale && btn) { btn.disabled = true; btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno…'; }
+        try { await orig.apply(this, arguments); } catch (e) {}
+        if (manuale && btn) { await attendi(350); btn.innerHTML = '✅ Aggiornato'; setTimeout(function () { btn.disabled = false; btn.innerHTML = t0 || '🔄 Aggiorna ora'; }, 1200); }
+      };
+    }
+  }
+
+  setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); aggiungiAzioniAzienda(); aggiungiOrari(); aggiungiFiltri(); qrTelegram(); aggiungiAggiorna(); } catch (e) {} }, 700);
 })();
