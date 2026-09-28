@@ -60,6 +60,7 @@ h1,h2,h3{font-family:var(--font-h);}
 .trasp-actions{margin-top:14px;}
 
 .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.ect-gira{display:inline-block;animation:ectgira .8s linear infinite;}@keyframes ectgira{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -93,6 +94,9 @@ h1,h2,h3{font-family:var(--font-h);}
     </div>
     <button class="btn" onclick="applicaFiltro()">Filtra</button>
     <button class="btn btn-outline" onclick="scaricaTutti()">📥 Scarica tutti (CSV)</button>
+    <button class="btn btn-outline" onclick="stampaTrasportatore(null)">🖨️ Stampa tutti</button>
+    <button class="btn btn-outline" id="btn-aggiorna-rep" onclick="aggiornaRep()">🔄 Aggiorna</button>
+    <input id="rep-cerca" oninput="renderLista()" placeholder="🔎 Cerca trasportatore, azienda, città…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:13px;">
   </div>
 
   <div class="summary-bar">
@@ -159,15 +163,17 @@ function applicaFiltro() {
 
 function renderLista() {
   const gruppi = {};
+  const q = ((document.getElementById('rep-cerca') || {}).value || '').trim().toLowerCase();
   carichiFiltrati.forEach(c => {
     const f = c.fields;
+    if (q && ![f.assegnato_a_nome, f.bloccato_da_nome, f.bloccato_da_id, f.nome_azienda, f.citta_partenza, f.citta_arrivo, f.numero_ordine].join(' ').toLowerCase().includes(q)) return;
     const key = f.bloccato_da_id || f.assegnato_a_nome || 'sconosciuto';
-    if (!gruppi[key]) gruppi[key] = { nome: f.assegnato_a_nome || 'Nome non disponibile', telefono: f.assegnato_a_telefono || '—', email: f.bloccato_da_id || '—', carichi: [] };
+    if (!gruppi[key]) gruppi[key] = { nome: f.assegnato_a_nome || f.bloccato_da_nome || 'Nome non disponibile', telefono: f.assegnato_a_telefono || '—', email: f.bloccato_da_id || '—', carichi: [] };
     gruppi[key].carichi.push(f);
   });
 
   const nomiTrasportatori = Object.keys(gruppi).length;
-  document.getElementById('summary-text').innerHTML = `<b>${carichiFiltrati.length}</b> viaggi accaparrati da <b>${nomiTrasportatori}</b> trasportatori nel periodo selezionato.`;
+  document.getElementById('summary-text').innerHTML = `<b>${Object.values(gruppi).reduce((n, g) => n + g.carichi.length, 0)}</b> viaggi accaparrati da <b>${nomiTrasportatori}</b> trasportatori nel periodo selezionato.`;
 
   const el = document.getElementById('lista-trasportatori');
   if (!nomiTrasportatori) {
@@ -176,7 +182,7 @@ function renderLista() {
   }
 
   el.innerHTML = Object.entries(gruppi).map(([key, g]) => {
-    const tratte = g.carichi.map(c => `<span class="t-item">${fmtData(c.data_assegnato)} · ${c.citta_partenza}→${c.citta_arrivo}</span>`).join('');
+    const tratte = g.carichi.map(c => `<span class="t-item">${fmtData(c.data_assegnato)} ${c.data_assegnato ? new Date(c.data_assegnato).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) : ''} · ${c.citta_partenza}→${c.citta_arrivo}</span>`).join('');
     return `<div class="trasp-card">
       <div class="trasp-top">
         <div>
@@ -188,9 +194,54 @@ function renderLista() {
       <div class="trasp-tratte">${tratte}</div>
       <div class="trasp-actions">
         <button class="btn btn-sm" onclick='scaricaTrasportatore(${JSON.stringify(key)})'>📥 Scarica report di ${g.nome}</button>
+        <button class="btn btn-sm" onclick='stampaTrasportatore(${JSON.stringify(key)})'>🖨️ Stampa</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function escR(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function euroRep(v) { const n = parseFloat(String(v || '0').replace(/[^\d,.-]/g, '').replace(',', '.')) || 0; return '€ ' + n.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+async function aggiornaRep() {
+  const b = document.getElementById('btn-aggiorna-rep');
+  b.disabled = true; b.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno…';
+  const da = document.getElementById('data-da').value, a = document.getElementById('data-a').value;
+  await carica();
+  if (da && a) { document.getElementById('data-da').value = da; document.getElementById('data-a').value = a; applicaFiltro(); }
+  b.innerHTML = '✅ Aggiornato'; setTimeout(() => { b.disabled = false; b.innerHTML = '🔄 Aggiorna'; }, 1400);
+}
+/* 28/9 — Foglio stampabile di UN trasportatore (o di tutti) nel periodo scelto: per fatture e contestazioni */
+function stampaTrasportatore(key) {
+  const carichi = carichiFiltrati.filter(c => key === null || (c.fields.bloccato_da_id || c.fields.assegnato_a_nome) === key)
+    .sort((x, y) => new Date(x.fields.data_assegnato) - new Date(y.fields.data_assegnato));
+  if (!carichi.length) { alert('Nessun viaggio da stampare in questo periodo.'); return; }
+  const f0 = carichi[0].fields;
+  const titolo = key === null ? 'Report di tutti i trasportatori' : 'Report di ' + (f0.assegnato_a_nome || f0.bloccato_da_nome || 'trasportatore');
+  const da = document.getElementById('data-da').value, a = document.getElementById('data-a').value;
+  const periodo = (da ? new Date(da + 'T00:00:00').toLocaleDateString('it-IT') : '') + ' – ' + (a ? new Date(a + 'T00:00:00').toLocaleDateString('it-IT') : '');
+  const intest = key === null ? '' : `<table style="margin-bottom:14px;"><tr><th>Trasportatore</th><td>${escR(f0.assegnato_a_nome || f0.bloccato_da_nome || '—')}</td></tr><tr><th>Email</th><td>${escR(f0.bloccato_da_id || '—')}</td></tr><tr><th>Telefono</th><td>${escR(f0.assegnato_a_telefono || '—')}</td></tr></table>`;
+  let totTrasp = 0;
+  const righe = carichi.map(c => {
+    const f = c.fields; const imp = parseFloat(String(f.importo_pattuito || '0').replace(',', '.')) || 0; totTrasp += imp;
+    return `<tr><td>${escR(new Date(f.data_assegnato).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}))}</td>` +
+      (key === null ? `<td>${escR(f.assegnato_a_nome || f.bloccato_da_nome || f.bloccato_da_id || '—')}</td>` : '') +
+      `<td>${escR(f.numero_ordine || '')}</td><td>${escR((f.citta_partenza || '—') + ' → ' + (f.citta_arrivo || '—'))}<br><small>CAP ${escR(f.cap_partenza || '—')} → ${escR(f.cap_arrivo || '—')} · carico del ${escR(fmtData(f.data_consegna))}</small></td>` +
+      `<td>${escR(f.nome_azienda || '—')}<br><small>${escR(f.email_azienda || '')} ${escR(f.telefono_azienda || '')}</small></td><td>${escR(f.tipo_merce || '—')}${f.specifica ? '<br><small>' + escR(f.specifica) + '</small>' : ''}</td>` +
+      `<td>${escR(f.importo_pattuito ? euroRep(f.importo_pattuito) : '—')}<br><small>${escR(f.termini_pagamento || '')}</small></td><td>${escR(euroRep(20))}</td></tr>`;
+  }).join('');
+  const html = intest + `<table><tr><th>Preso il</th>${key === null ? '<th>Trasportatore</th>' : ''}<th>Ordine</th><th>Tratta</th><th>Azienda</th><th>Merce</th><th>Prezzo trasporto</th><th>Commissione</th></tr>${righe}
+    <tr><th colspan="${key === null ? 6 : 5}" style="text-align:right">Totali (${carichi.length} viagg${carichi.length === 1 ? 'io' : 'i'})</th><td><b>${escR(euroRep(totTrasp))}</b></td><td><b>${escR(euroRep(20 * carichi.length))}</b></td></tr></table>`;
+  const w = window.open('', '_blank');
+  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${escR(titolo)}</title><style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:26px;font-size:12px;} h1{font-size:18px;margin:0 0 4px;} .sub{color:#555;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;} td,th{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top;} th{background:#f1f5f9;} small{color:#555;}
+    .barra{margin-bottom:14px;} .barra button{padding:9px 16px;font-weight:700;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;}
+    @media print{.barra{display:none;}}</style></head><body>
+    <div class="barra"><button onclick="window.print()">🖨️ Stampa / 📄 Salva PDF</button></div>
+    <h1>${escR(titolo)}</h1><div class="sub">Periodo: ${escR(periodo)} · EcoTruckConnect — SynAIMAX S.R.L.S. · stampato il ${new Date().toLocaleString('it-IT')}</div>${html}
+    <p style="font-size:11px;color:#666;margin-top:14px;">Il prezzo del trasporto è pattuito tra azienda e trasportatore: SynAIMAX non è parte del contratto di trasporto. La commissione è l'importo pagato dal trasportatore a SynAIMAX per accaparrare il carico.</p></body></html>`);
+  w.document.close();
 }
 
 function csvEscape(v) {
