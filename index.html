@@ -748,7 +748,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
           </div>
         </div>
         <div class="ins-field ins-full"><label>Specifica *</label><input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari..."></div>
-        <div class="ins-field ins-full"><label>Note *</label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro..."></textarea></div>
+        <div class="ins-field ins-full"><label>Note *</label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro... (niente telefoni o indirizzi: vanno nei campi di ritiro e consegna)"></textarea></div>
       </div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione carico</h4>
       <div class="ins-grid">
@@ -797,6 +797,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         </div>
       </div>
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+
+      <h4 style="margin-top:22px;color:#fff;font-family:var(--font-h);">📍 Ritiro e consegna *</h4>
+      <div style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.5;">🔒 Questi dati li vede il trasportatore <b>solo dopo aver pagato</b>. Prima vede solo città, CAP, merce e importo.</div>
+      <div class="ins-grid">
+        <div class="ins-field ins-full"><label>Indirizzo preciso di ritiro *</label><input type="text" id="ins-indirizzo-ritiro" placeholder="es. Via Roma 12, 92026 Favara (AG) — capannone 3"></div>
+        <div class="ins-field ins-full"><label>Indirizzo preciso di consegna *</label><input type="text" id="ins-indirizzo-consegna" placeholder="es. Via Libertà 100, 90100 Palermo (PA)"></div>
+        <div class="ins-field"><label>A chi consegnare *</label><input type="text" id="ins-destinatario-nome" placeholder="Nome e cognome o ragione sociale"></div>
+        <div class="ins-field"><label>Cellulare di chi riceve *</label><input type="tel" id="ins-destinatario-telefono" placeholder="es. 333 1234567"></div>
+      </div>
 
       <div style="margin-top:20px;"></div>
       <div class="ins-grid">
@@ -1412,8 +1421,13 @@ function chiudiDashSezione() {
 
 function precompilaDashDati() {
   const f = tipoUtente === 'azienda' ? profiloAzienda : trasportatoreFieldsCorrenti;
-  document.getElementById('dd-nome').value = f.nome || '';
-  document.getElementById('dd-cognome').value = f.cognome || '';
+  const azi = tipoUtente === 'azienda';
+  document.getElementById('dd-nome').value = (azi ? f.referente_nome : f.nome) || '';
+  document.getElementById('dd-cognome').value = (azi ? f.referente_cognome : f.cognome) || '';
+  try {
+    document.getElementById('dd-nome').previousElementSibling.textContent = azi ? 'Nome del referente' : 'Nome';
+    document.getElementById('dd-cognome').previousElementSibling.textContent = azi ? 'Cognome del referente' : 'Cognome';
+  } catch (e) {}
   document.getElementById('dd-ragione-sociale').value = f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '';
   document.getElementById('dd-cf').value = f.codice_fiscale || '';
   document.getElementById('dd-piva').value = f.partita_iva || f.p_iva || '';
@@ -1474,7 +1488,15 @@ async function salvaDashDati() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dati)
     });
-    if (tipoUtente === 'azienda') { Object.assign(profiloAzienda, dati); }
+    if (tipoUtente === 'azienda') {
+      // 29/9: nome/cognome del modulo sono il REFERENTE, non la ragione sociale
+      const resto = Object.assign({}, dati); delete resto.nome; delete resto.cognome;
+      Object.assign(profiloAzienda, resto, {
+        referente_nome: dati.nome, referente_cognome: dati.cognome,
+        ragione_sociale: dati.ragione_sociale || profiloAzienda.ragione_sociale,
+        nome: dati.ragione_sociale || profiloAzienda.nome
+      });
+    }
     else { Object.assign(trasportatoreFieldsCorrenti, dati); }
     registraAttivita('Modifica Dati', 'Anagrafica modificata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha aggiornato i propri dati anagrafici.`);
     document.getElementById('dd-salvato-msg').style.display = 'inline';
@@ -2206,6 +2228,9 @@ async function rilevaTipoUtente(email) {
     profiloAzienda.citta = af.citta || '';
     profiloAzienda.provincia = af.provincia || '';
     profiloAzienda.specifica = af.specifica || '';
+    profiloAzienda.ragione_sociale = af.ragione_sociale || af.nome || '';
+    profiloAzienda.referente_nome = af.nome_referente || '';
+    profiloAzienda.referente_cognome = af.cognome_referente || '';
     document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('notif-bell-wrap').style.display = 'block';
     impostaEtichetteHeroAzienda();
@@ -2767,6 +2792,10 @@ async function pubblicaCarico() {
   const autRichiesta   = Array.from(document.querySelectorAll('#checkbox-aut-richiesta input:checked')).map(el => el.value);
   const importoPattuito = document.getElementById('ins-importo-pattuito').value.trim();
   const terminiPagamento = document.getElementById('ins-termini-pagamento').value.trim();
+  const indirizzoRitiro = document.getElementById('ins-indirizzo-ritiro').value.trim();
+  const indirizzoConsegna = document.getElementById('ins-indirizzo-consegna').value.trim();
+  const destinatarioNome = document.getElementById('ins-destinatario-nome').value.trim();
+  const destinatarioTelefono = document.getElementById('ins-destinatario-telefono').value.trim();
   const err = document.getElementById('ins-err');
   const ok  = document.getElementById('ins-ok');
   err.style.display = 'none';
@@ -2812,6 +2841,16 @@ async function pubblicaCarico() {
     err.style.display = 'block';
     return;
   }
+  if (!indirizzoRitiro || !indirizzoConsegna || !destinatarioNome || !destinatarioTelefono) {
+    err.textContent = '⚠️ Compila ritiro e consegna: indirizzo di ritiro, indirizzo di consegna, a chi consegnare e il suo cellulare.';
+    err.style.display = 'block';
+    return;
+  }
+  if (destinatarioTelefono.replace(/\D/g, '').length < 8) {
+    err.textContent = '⚠️ Il cellulare di chi riceve sembra incompleto: controllalo.';
+    err.style.display = 'block';
+    return;
+  }
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -2835,6 +2874,10 @@ async function pubblicaCarico() {
         autorizzazione_richiesta: autRichiesta,
         importo_pattuito: importoPattuito,
         termini_pagamento: terminiPagamento,
+        indirizzo_ritiro: indirizzoRitiro,
+        indirizzo_consegna: indirizzoConsegna,
+        destinatario_nome: destinatarioNome,
+        destinatario_telefono: destinatarioTelefono,
         email_azienda: currentUser.email,
         nome_azienda: profiloAzienda.nome,
         telefono_azienda: profiloAzienda.telefono
@@ -2859,6 +2902,7 @@ async function pubblicaCarico() {
       document.getElementById('specifica-mezzoRichiesto').value = '';
       document.getElementById('ins-importo-pattuito').value = '';
       document.getElementById('ins-termini-pagamento').value = '';
+      ['ins-indirizzo-ritiro','ins-indirizzo-consegna','ins-destinatario-nome','ins-destinatario-telefono'].forEach(function (i) { var el = document.getElementById(i); if (el) el.value = ''; });
       resetTendina('mezzoRichiesto');
       resetTendina('autRichiesta');
       setTimeout(() => caricaDati(currentUser.email), 2000);
@@ -3479,6 +3523,7 @@ function duplicaCarico(recordId) {
   if (ricercaMerce) ricercaMerce.value = f.tipo_merce || '';
   document.getElementById('ins-specifica').value = f.specifica || '';
   document.getElementById('ins-note').value = f.note || '';
+  [['ins-indirizzo-ritiro','indirizzo_ritiro'],['ins-indirizzo-consegna','indirizzo_consegna'],['ins-destinatario-nome','destinatario_nome'],['ins-destinatario-telefono','destinatario_telefono']].forEach(function (x) { var el = document.getElementById(x[0]); if (el) el.value = f[x[1]] || ''; });
   document.getElementById('sezione-azienda').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
