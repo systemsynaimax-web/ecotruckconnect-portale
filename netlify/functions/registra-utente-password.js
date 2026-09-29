@@ -59,6 +59,19 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // PROTEZIONE ACCOUNT GESTORI (29/9/2026): la password dell'account della società
+  // non si crea e non si cambia MAI da qui (registrazioni, pagamenti, rigenera).
+  // Si cambia solo con "Password dimenticata?" e il codice via email.
+  // Risponde 200 con ok:false così gli scenari Make non si fermano con errore.
+  const EMAIL_PROTETTE = ['system.synaimax@gmail.com'];
+  if (EMAIL_PROTETTE.indexOf(String(email).trim().toLowerCase()) !== -1) {
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: false, errore: 'Account gestori protetto: password non modificabile da qui' })
+    };
+  }
+
   if (!password) {
     const numero = Math.floor(100000 + Math.random() * 900000);
     password = `EcoTruck${numero}!`;
