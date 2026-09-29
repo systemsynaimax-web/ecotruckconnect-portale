@@ -311,7 +311,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   #bot-panel{width:calc(100vw - 32px);right:16px;left:16px;height:70vh;max-height:520px;}
   #bot-btn{right:16px;bottom:16px;}
   .dd-panel-camion, [id^="dd-panel-"]{max-width:100%;}
-  .notif-bell-panel{right:0;left:auto;width:calc(100vw - 40px);max-width:360px;}
+  .notif-bell-panel{position:fixed;top:64px;left:10px;right:10px;width:auto;max-width:none;max-height:70vh;}
 }
 @media screen and (max-width: 600px) {
   .hero{padding:36px 18px 32px;}
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         </button>
         <div class="notif-bell-panel" id="notif-bell-panel">
           <div class="notif-bell-head">
-            <span style="font-weight:700;font-size:13px;color:#fff;">Aggiornamenti carichi</span>
+            <span id="notif-bell-titolo" style="font-weight:700;font-size:13px;color:#fff;">Aggiornamenti carichi</span>
             <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();aggiornaCampanellino(true)">🔄 Aggiorna ora</button>
           </div>
           <div id="notif-bell-lista"><div class="notif-bell-empty">Caricamento...</div></div>
@@ -734,6 +734,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div class="ins-field"><label>CAP Arrivo *</label><input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100" inputmode="numeric" oninput="autocompilaCittaCarico('arr')"></div>
         <div class="ins-field"><label>Città Partenza *</label><input type="text" id="ins-citta-part" placeholder="es. Favara"></div>
         <div class="ins-field"><label>Città Arrivo *</label><input type="text" id="ins-citta-arr" placeholder="es. Palermo"></div>
+        <div class="ins-field ins-full" id="ins-km-info" style="display:none;font-size:13px;color:var(--muted);margin-top:-4px;"></div>
         <div class="ins-field"><label>Data Carico *</label><input type="date" id="ins-data"></div>
         <div class="ins-field" style="position:relative;">
           <label>Tipo Merce *</label>
@@ -826,11 +827,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       <div id="carichi-disponibili-wrap">
         <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
         <div id="carichi-stat-riga" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
-        <div id="sortbar-carichi" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-          <button class="sort-carichi-btn attivo" data-sort="recenti" onclick="cambiaOrdinamentoCarichi('recenti', this)">🕐 Più recenti</button>
-          <button class="sort-carichi-btn" data-sort="alto" onclick="cambiaOrdinamentoCarichi('alto', this)">⬆️ Prezzo più alto</button>
-          <button class="sort-carichi-btn" data-sort="basso" onclick="cambiaOrdinamentoCarichi('basso', this)">⬇️ Prezzo più basso</button>
-        </div>
+        <div id="sortbar-carichi" style="display:none;"></div>
         <div id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
       </div>
       <div id="calendario-carichi-wrap">
@@ -1761,17 +1758,18 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
       ultimiCarichi = [
-        { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', data_consegna:new Date().toISOString(), data_pubblicazione:new Date(Date.now()-7200000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 30gg dalla consegna', tipo_mezzo_richiesto:['Furgone frigo'], autorizzazione_richiesta:['Alimentare (ATP)'] } },
-        { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
+        { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', data_consegna:new Date().toISOString(), data_pubblicazione:new Date(Date.now()-7200000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 30gg dalla consegna', tipo_mezzo_richiesto:['Furgone frigo'], autorizzazione_richiesta:['Alimentare (ATP)'] } },
+        { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', km_tratta:165, tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
       ];
       ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
         { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), data_assegnato:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', numero_ordine:'ORD-PREVIEW2', stato:'RIMBORSATO', citta_partenza:'Sciacca', cap_partenza:'92019', citta_arrivo:'Trapani', cap_arrivo:'91100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 60gg dalla consegna', indirizzo_ritiro:'Contrada Muciare, 92019 Sciacca (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Edil Trapani Srl', destinatario_telefono:'0923 445566', nome_azienda:'Sciacca Costruzioni Srl', azienda_referente:'Anna Ferrara', telefono_azienda:'338 7776655', email_azienda:'info@sciaccacostruzioni.it', azienda_indirizzo:'Via Roma 3, 92019 Sciacca (AG)', azienda_piva:'02345678901' } }
       ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
       renderStorico(ultimeCandidature);
       aggiorna('st-completati', 1);
+      avviaCampanellaTrasportatore();
     } else {
       profiloAzienda = { nome:'Azienda Anteprima Srl', telefono:'3331234567', codice_fiscale:'', partita_iva:'12345678901', pec:'azienda@pec.it', codice_sdi:'', camera_commerciale:'Agrigento', numero_rea:'', nome_amministratore:'', via:'Via Roma 1', cap:'92026', citta:'Favara', provincia:'AG', specifica:'Logistica' };
       aziendaRecordId = 'preview-recid-az';
@@ -1788,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario.rossi@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', indirizzo_ritiro:'Via Roma 1, 92026 Favara (AG)', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario.rossi@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', indirizzo_ritiro:'Via Roma 1, 92026 Favara (AG)', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
         { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg', note:'Ritiro dalle 8 alle 12', data_consegna:new Date(Date.now()+345600000).toISOString() } },
         { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } }
       ];
@@ -2037,10 +2035,12 @@ function toggleCampanellino() {
   const panel = document.getElementById('notif-bell-panel');
   const staAprendo = !panel.classList.contains('open');
   panel.classList.toggle('open', staAprendo);
+  if (staAprendo && tipoUtente === 'trasportatore') { renderCampanellinoTrasportatore(); segnaCarichiVistiTrasportatore(); return; }
   if (staAprendo) marcaNotificheComeLette();
 }
 
 async function aggiornaCampanellino(manuale) {
+  if (tipoUtente === 'trasportatore') { await aggiornaCarichiTrasportatore(); return; }
   if (tipoUtente !== 'azienda') return;
   if (!modalitaAnteprimaAttiva) await aggiornaDashFatture();
   else renderCampanellino();
@@ -2214,6 +2214,7 @@ async function rilevaTipoUtente(email) {
     trasportatoreRecordId = trasportatori[0].id;
     trasportatoreFieldsCorrenti = trasportatori[0].fields;
     gestisciPasswordTemporanea(trasportatori[0].fields);
+    avviaCampanellaTrasportatore();
     aggiornaRiepilogoProfiloTrasportatore();
     document.getElementById('dash-nav-wrap').style.display = 'block';
     document.getElementById('cap-bar-section').style.display = 'none';
@@ -2325,9 +2326,8 @@ function percorsoHTML(da, arrivo, grande) {
 
 function ordinaCarichi(lista) {
   const arr = lista.slice();
-  if (ordinamentoCarichi === 'alto') arr.sort((a, b) => parseImportoPattuito(b.fields.importo_pattuito) - parseImportoPattuito(a.fields.importo_pattuito));
-  else if (ordinamentoCarichi === 'basso') arr.sort((a, b) => parseImportoPattuito(a.fields.importo_pattuito) - parseImportoPattuito(b.fields.importo_pattuito));
-  else arr.sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''));
+  // 29/9 (decisione con Gerlando): niente ordinamento per prezzo, solo i piu' recenti
+  arr.sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''));
   return arr;
 }
 
@@ -2346,14 +2346,13 @@ function renderCardCarico(c, prezzoMax) {
   const f = c.fields;
   const stato = (f.stato || 'DISPONIBILE').toUpperCase();
   const importo = parseImportoPattuito(f.importo_pattuito);
-  const top = prezzoMax !== null && importo === prezzoMax && stato === 'DISPONIBILE';
   const partenza = f.citta_partenza || f.cap_partenza || '—';
   const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
   const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', {day:'numeric', month:'long'}) : '—';
   const merce = f.tipo_merce || f.merce || '—';
   return `<div class="carico-card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px;">
-      ${top ? '<span class="carico-badge-top">⭐ Migliore</span>' : '<span></span>'}
+<span></span>
       <span style="font-size:11px;color:var(--muted);">${tempoTrascorso(f.data_pubblicazione)}</span>
     </div>
     ${percorsoHTML(partenza, arrivo, false)}
@@ -2361,6 +2360,7 @@ function renderCardCarico(c, prezzoMax) {
       <span style="font-size:13px;">📅</span>
       <span style="font-size:13px;color:var(--text);font-weight:600;">${data}</span>
       <span style="font-size:12px;color:var(--muted);">· ${merce}</span>
+      ${kmHTML(f)}
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">${euro(f.importo_pattuito)}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
@@ -2394,6 +2394,7 @@ function renderDettaglioCarico(c) {
         <span style="font-size:14px;">📅</span>
         <span style="font-size:14px;color:var(--text);font-weight:600;">${data}</span>
         <span style="font-size:13px;color:var(--muted);">· ${merce}</span>
+        ${kmHTML(f)}
       </div>
       <div style="text-align:center;padding:14px;background:rgba(34,197,94,0.1);border-radius:8px;margin-bottom:14px;">
         <span style="font-size:28px;font-weight:800;color:var(--green);">${f.importo_pattuito ? euro(f.importo_pattuito) : 'Non specificato'}</span>
@@ -2402,6 +2403,7 @@ function renderDettaglioCarico(c) {
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">🚚 ${mezzoRichiesto}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">📋 ${autRichiesta}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">💳 ${f.termini_pagamento || 'Termini non specificati'}</span>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent((f.citta_partenza||'') + ' ' + (f.cap_partenza||'') + ', Italia')}&destination=${encodeURIComponent((f.citta_arrivo||'') + ' ' + (f.cap_arrivo||'') + ', Italia')}&travelmode=driving" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);text-decoration:none;">🗺️ Vedi la tratta su Google Maps</a>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">🔒 Dopo il pagamento vedrai indirizzi precisi e contatti dell'azienda; l'azienda vedrà i tuoi dati di contatto.</div>
       <button class="btn-pubblica" ${disabilitato} style="width:100%;justify-content:center;" onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${escAttr(partenza)}','${escAttr(arrivo)}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${escAttr(merce)}','${escAttr(f.importo_pattuito||'')}','${escAttr(f.termini_pagamento||'')}')">${testoBtn}</button>
@@ -2420,7 +2422,7 @@ function renderCarichi(carichi) {
     return;
   }
   if (statRiga) statRiga.style.display = 'block';
-  if (sortbar) sortbar.style.display = 'flex';
+  if (sortbar) sortbar.style.display = 'none';
   let filtrati = carichi;
   const FILTRO_CAP_ATTIVO = false;
   if (FILTRO_CAP_ATTIVO && tipoUtente === 'trasportatore' && capCorrente) {
@@ -2457,9 +2459,7 @@ function renderCarichiContenuto() {
   const disponibili = ultimiCarichiVisibili.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE');
   const prezzi = disponibili.map(c => parseImportoPattuito(c.fields.importo_pattuito)).filter(p => p > 0);
   if (statRiga) {
-    statRiga.innerHTML = prezzi.length
-      ? `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'} · da ${euro(Math.min(...prezzi))} a ${euro(Math.max(...prezzi))}`
-      : `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico compatibile' : 'carichi compatibili'}`;
+    statRiga.innerHTML = `🚚 ${ultimiCarichiVisibili.length} ${ultimiCarichiVisibili.length === 1 ? 'carico adatto al tuo mezzo' : 'carichi adatti al tuo mezzo'}`;
   }
   const prezzoMax = prezzi.length ? Math.max(...prezzi) : null;
   const ordinati = ordinaCarichi(ultimiCarichiVisibili);
@@ -2870,12 +2870,15 @@ async function pubblicaCarico() {
     err.style.display = 'block';
     return;
   }
+  let kmTratta = null;
+  try { kmTratta = await calcolaKmTratta(cittaPart, capPart, cittaArr, capArr); } catch (e) { kmTratta = null; }
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'crea_carico',
+        km_tratta: kmTratta || '',
         numero_ordine: 'ORD-' + Date.now(),
         cap_partenza: capPart,
         cap_arrivo: capArr,
@@ -2967,6 +2970,7 @@ async function caricaDati(email) {
     aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
+    if (tipoUtente === 'trasportatore') renderCampanellinoTrasportatore();
     if (tipoUtente === 'azienda') {
       await aggiornaDashFatture();
       aggiornaStatsAzienda();
@@ -3402,6 +3406,173 @@ function renderCarichiPresi() {
     '</div>';
   }).join('');
 }
+
+/* ====================================================
+   KM DELLA TRATTA — solo informativi (decisione 29/9 con Gerlando).
+   Calcolati una volta quando l'azienda pubblica: citta'/CAP di partenza ->
+   citta'/CAP di arrivo, su strada, con servizi gratuiti OpenStreetMap
+   (Nominatim per trovare il punto, OSRM per la strada). Se il calcolo non
+   riesce il carico si pubblica lo stesso, senza km.
+   ==================================================== */
+const cacheKmTratta = {};
+function kmTesto(f) { const k = parseInt(f && f.km_tratta, 10); return k > 0 ? `circa ${k} km` : ''; }
+function kmHTML(f) { const t = kmTesto(f); return t ? `<span style="font-size:12px;color:var(--muted);white-space:nowrap;">· 🛣️ ${t}</span>` : ''; }
+async function fetchConLimite(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 8000);
+  try { return await fetch(url, { signal: ctrl.signal, headers: { 'Accept-Language': 'it' } }); }
+  finally { clearTimeout(t); }
+}
+async function trovaPuntoItalia(citta, cap) {
+  const tentativi = [];
+  if (cap) tentativi.push(new URLSearchParams({ format: 'json', limit: '1', countrycodes: 'it', postalcode: cap, city: citta || '' }));
+  if (citta) tentativi.push(new URLSearchParams({ format: 'json', limit: '1', countrycodes: 'it', q: `${citta}${cap ? ' ' + cap : ''}, Italia` }));
+  if (cap) tentativi.push(new URLSearchParams({ format: 'json', limit: '1', countrycodes: 'it', postalcode: cap }));
+  for (const q of tentativi) {
+    try {
+      const r = await fetchConLimite('https://nominatim.openstreetmap.org/search?' + q.toString(), 7000);
+      const d = await r.json();
+      if (Array.isArray(d) && d.length) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+    } catch (e) {}
+  }
+  return null;
+}
+async function calcolaKmTratta(cittaP, capP, cittaA, capA) {
+  if (!(cittaP || capP) || !(cittaA || capA)) return null;
+  const chiave = [cittaP, capP, cittaA, capA].map(x => String(x || '').trim().toLowerCase()).join('|');
+  if (chiave in cacheKmTratta) return cacheKmTratta[chiave];
+  const a = await trovaPuntoItalia(cittaP, capP);
+  const b = a ? await trovaPuntoItalia(cittaA, capA) : null;
+  if (!a || !b) return null;
+  try {
+    const r = await fetchConLimite(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`, 8000);
+    const d = await r.json();
+    const metri = d && d.routes && d.routes[0] && d.routes[0].distance;
+    const km = metri ? Math.max(1, Math.round(metri / 1000)) : null;
+    cacheKmTratta[chiave] = km;
+    return km;
+  } catch (e) { return null; }
+}
+let timerKmModulo = null;
+function aggiornaKmModulo() {
+  const box = document.getElementById('ins-km-info');
+  if (!box) return;
+  clearTimeout(timerKmModulo);
+  timerKmModulo = setTimeout(async () => {
+    const cp = (document.getElementById('ins-citta-part') || {}).value || '';
+    const kp = (document.getElementById('ins-cap-part') || {}).value || '';
+    const ca = (document.getElementById('ins-citta-arr') || {}).value || '';
+    const ka = (document.getElementById('ins-cap-arr') || {}).value || '';
+    if (!(cp.trim() && ca.trim())) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.textContent = '🛣️ Calcolo la distanza…';
+    const km = await calcolaKmTratta(cp.trim(), kp.trim(), ca.trim(), ka.trim());
+    box.textContent = km ? `🛣️ ${cp.trim()} → ${ca.trim()}: circa ${km} km (indicativo, lo vede anche il trasportatore)` : '';
+    if (!km) box.style.display = 'none';
+  }, 700);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  ['ins-citta-part', 'ins-citta-arr', 'ins-cap-part', 'ins-cap-arr'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('change', aggiornaKmModulo); el.addEventListener('blur', aggiornaKmModulo); }
+  });
+});
+
+/* ====================================================
+   CAMPANELLA DEL TRASPORTATORE (29/9) — qui arrivano i carichi nuovi
+   adatti al suo mezzo e alle sue autorizzazioni. Usa la stessa lista gia'
+   caricata per "Carichi disponibili". Il "nuovo" si ricorda sul telefono/PC
+   (carichi gia' visti), niente chiamate in piu' a Make per segnarli.
+   ==================================================== */
+let campTraspInterval = null;
+function chiaveCarichiVisti() { return 'ect_carichi_visti_' + ((currentUser && currentUser.email) || 'anteprima'); }
+function leggiCarichiVisti() { try { return JSON.parse(localStorage.getItem(chiaveCarichiVisti()) || '[]'); } catch (e) { return []; } }
+function salvaCarichiVisti(ids) { try { localStorage.setItem(chiaveCarichiVisti(), JSON.stringify(ids.slice(-500))); } catch (e) {} }
+function carichiCampanellaTrasportatore() {
+  return (ultimiCarichi || [])
+    .filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE')
+    .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''));
+}
+function renderCampanellinoTrasportatore() {
+  const lista = document.getElementById('notif-bell-lista');
+  const badge = document.getElementById('notif-bell-badge');
+  if (!lista || tipoUtente !== 'trasportatore') return;
+  const titolo = document.getElementById('notif-bell-titolo');
+  if (titolo) titolo.textContent = 'Carichi per te';
+  const carichi = carichiCampanellaTrasportatore();
+  const visti = leggiCarichiVisti();
+  const nuovi = carichi.filter(c => visti.indexOf(c.id) === -1);
+  if (badge) {
+    if (nuovi.length) { badge.style.display = 'flex'; badge.textContent = nuovi.length > 9 ? '9+' : nuovi.length; }
+    else badge.style.display = 'none';
+  }
+  if (!carichi.length) {
+    lista.innerHTML = '<div class="notif-bell-empty">Nessun carico per il tuo mezzo in questo momento.<br>Appena ne esce uno, lo trovi qui.</div>';
+    return;
+  }
+  lista.innerHTML = carichi.map(c => {
+    const f = c.fields;
+    const nuovo = visti.indexOf(c.id) === -1;
+    const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '—';
+    const km = kmTesto(f);
+    return `<div class="notif-bell-item">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:3px;">
+        <span style="font-weight:700;">${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}</span>
+        ${nuovo ? '<span style="background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">NUOVO</span>' : ''}
+      </div>
+      <div style="color:var(--muted);margin-bottom:6px;">📅 ${data} · ${f.tipo_merce || '—'}${km ? ' · 🛣️ ' + km : ''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euro(f.importo_pattuito) : ''}</span>
+        <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="apriCaricoDaCampanella('${c.id}')">Vedi ›</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function segnaCarichiVistiTrasportatore() {
+  const visti = leggiCarichiVisti();
+  carichiCampanellaTrasportatore().forEach(c => { if (visti.indexOf(c.id) === -1) visti.push(c.id); });
+  salvaCarichiVisti(visti);
+  const badge = document.getElementById('notif-bell-badge');
+  if (badge) badge.style.display = 'none';
+}
+function apriCaricoDaCampanella(id) {
+  const panel = document.getElementById('notif-bell-panel');
+  if (panel) panel.classList.remove('open');
+  try {
+    const sd = document.getElementById('sezione-dashboard'); if (sd) sd.style.display = 'none';
+    const cn = document.getElementById('contenuto-normale-portale'); if (cn) cn.style.display = 'block';
+  } catch (e) {}
+  dettaglioCaricoAperto = id;
+  renderCarichiContenuto();
+  const wrap = document.getElementById('carichi-disponibili-wrap');
+  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function aggiornaCarichiTrasportatore() {
+  if (tipoUtente !== 'trasportatore') return;
+  if (modalitaAnteprimaAttiva) { renderCampanellinoTrasportatore(); return; }
+  try {
+    const r1 = await fetch('https://hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm');
+    if (!r1.ok) return;
+    const d1 = await r1.json();
+    const raw = d1.carichi ? (Array.isArray(d1.carichi) ? d1.carichi : [d1.carichi]) : [];
+    ultimiCarichi = carichiCompatibiliPerTrasportatore(
+      raw.map(r => ({ id: r.id, fields: r })).filter(r => (r.fields.stato || '').toUpperCase() !== 'PRESO')
+    );
+    const nDisp = ultimiCarichi.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE').length;
+    aggiorna('st-disp', nDisp); aggiorna('c-disp', nDisp);
+    if (!dettaglioCaricoAperto) renderCarichi(ultimiCarichi);
+    renderCalendarioMensile();
+    renderCampanellinoTrasportatore();
+  } catch (e) { console.error('Aggiornamento carichi (non bloccante):', e); }
+}
+function avviaCampanellaTrasportatore() {
+  const wrap = document.getElementById('notif-bell-wrap');
+  if (wrap) wrap.style.display = 'block';
+  renderCampanellinoTrasportatore();
+  if (campTraspInterval) clearInterval(campTraspInterval);
+  if (!modalitaAnteprimaAttiva) campTraspInterval = setInterval(aggiornaCarichiTrasportatore, 5 * 60 * 1000);
+}
+
 function apriSchedaCaricoPreso(id) {
   try {
     const sd = document.getElementById('sezione-dashboard'); if (sd) sd.style.display = 'none';
