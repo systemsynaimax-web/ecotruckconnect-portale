@@ -1263,7 +1263,7 @@
   }
 
   // 9) Account dei GESTORI entrato nel portale: avviso chiaro invece del messaggio tecnico
-  var GESTORI_EMAIL = ['system.synaimax@gmail.com', 'davidepresti67@gmail.com'];
+  var GESTORI_EMAIL = ['system.synaimax@gmail.com'];
   var giriG = 0;
   var controllaGestore = setInterval(function () {
     giriG++;
