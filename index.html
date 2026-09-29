@@ -879,8 +879,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
       <div class="cards" id="cards-riepilogo-azienda" style="display:none;">
         <div class="card" style="cursor:default;">
-          <div class="card-icon">📦</div><h3>Carichi Pubblicati</h3>
-          <p>Tutti i carichi che hai pubblicato: accaparrati e ancora liberi.</p>
+          <div class="card-icon">📦</div><h3>Le mie pubblicazioni</h3>
+          <p>Tutto quello che hai pubblicato: già preso e ancora libero.</p>
           <div class="card-num" id="az-c-pubblicati">—</div><div class="card-sub">pubblicati totali</div>
         </div>
         <div class="card" onclick="document.getElementById('report-trasportatore-wrap').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
@@ -904,6 +904,40 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div id="cp-sub" style="color:var(--muted);font-size:12px;margin:-10px 0 14px;"></div>
         <div id="cp-body"></div>
       </div>
+      <!-- RESOCONTO (29/9): contatori e totali per trasportatore/azienda, per giorno, per la fattura -->
+      <div id="rs-wrap" style="display:none;margin-bottom:34px;">
+        <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <span id="rs-titolo">💶 Resoconto</span>
+          <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn-cap" style="font-size:12px;" onclick="rsAggiorna(this)">🔄 Aggiorna</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="rsStampaFattura(null)">🖨️ Stampa per la fattura</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="rsCSV()">⬇️ CSV</button>
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+          <select id="rs-periodo" class="btn-cap" style="font-size:12px;" onchange="rsCambiaPeriodo()">
+            <option value="1">📅 Oggi</option>
+            <option value="7">📅 Ultimi 7 giorni</option>
+            <option value="15">📅 Ultimi 15 giorni</option>
+            <option value="30" selected>📅 Ultimi 30 giorni</option>
+            <option value="mese">📅 Questo mese</option>
+            <option value="mesescorso">📅 Mese scorso</option>
+            <option value="0">📅 Da sempre</option>
+            <option value="dal">📅 Dal … al …</option>
+          </select>
+          <span id="rs-date" style="display:none;gap:6px;align-items:center;">
+            <input type="date" id="rs-dal" onchange="renderResoconto()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px;">
+            <span style="color:var(--muted);font-size:12px;">→</span>
+            <input type="date" id="rs-al" onchange="renderResoconto()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px;">
+          </span>
+          <select id="rs-stato" class="btn-cap" style="font-size:12px;" onchange="renderResoconto()"></select>
+          <input id="rs-cerca" oninput="renderResoconto()" style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
+        </div>
+        <div id="rs-scelto" style="margin-bottom:10px;"></div>
+        <div id="rs-contatori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;"></div>
+        <div id="rs-persone"></div>
+        <div id="rs-giorni"></div>
+      </div>
       <div id="report-trasportatore-wrap" style="display:none;">
         <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
           <span>💶 Report Pagamenti per Trasportatore</span>
@@ -917,7 +951,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
             </div>
           </div>
         </div>
-        <div style="color:var(--muted);font-size:12px;margin:-10px 0 16px;">Un riquadro per ogni trasportatore, con i carichi presi e l'importo pattuito al momento della pubblicazione. Somma dei singoli importi — verifica sempre col trasportatore prima di pagare.</div>
+        <div style="color:var(--muted);font-size:12px;margin:-10px 0 16px;">Un riquadro per ogni trasportatore, con i trasporti presi e l'importo pattuito al momento della pubblicazione. Somma dei singoli importi — verifica sempre col trasportatore prima di pagare.</div>
         <div id="report-trasportatore-body"></div>
       </div>
       <div class="sec-head" id="storico-sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -1568,7 +1602,7 @@ function aggiornaDashReport() {
     const disponibili = tutti.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE').length;
     const percPresi = totale ? Math.round((presi / totale) * 100) : 0;
     el.innerHTML = `
-      <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Carichi pubblicati totali</h3><div class="card-num">${totale}</div></div>
+      <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Pubblicazioni totali</h3><div class="card-num">${totale}</div></div>
       <div class="card" style="cursor:default;"><div class="card-icon">✅</div><h3>Carichi presi</h3><div class="card-num green">${presi}</div><div class="card-sub">${percPresi}% del totale</div></div>
       <div class="card" style="cursor:default;"><div class="card-icon">⏳</div><h3>Ancora disponibili</h3><div class="card-num">${disponibili}</div></div>
     `;
@@ -1773,7 +1807,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       ultimeCandidature = [
         { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Licata', cap_partenza:'92027', citta_arrivo:'Gela', cap_arrivo:'93012', km_tratta:34, tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Palma 12, 92027 Licata (AG) — capannone 3', indirizzo_consegna:'Via Venezia 40, 93012 Gela (CL)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'0933 556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
-        { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), data_assegnato:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', numero_ordine:'ORD-PREVIEW2', stato:'RIMBORSATO', citta_partenza:'Sciacca', cap_partenza:'92019', citta_arrivo:'Trapani', cap_arrivo:'91100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 60gg dalla consegna', indirizzo_ritiro:'Contrada Muciare, 92019 Sciacca (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Edil Trapani Srl', destinatario_telefono:'0923 445566', nome_azienda:'Sciacca Costruzioni Srl', azienda_referente:'Anna Ferrara', telefono_azienda:'338 7776655', email_azienda:'info@sciaccacostruzioni.it', azienda_indirizzo:'Via Roma 3, 92019 Sciacca (AG)', azienda_piva:'02345678901' } }
+        { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), data_assegnato:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', numero_ordine:'ORD-PREVIEW2', stato:'RIMBORSATO', citta_partenza:'Sciacca', cap_partenza:'92019', citta_arrivo:'Trapani', cap_arrivo:'91100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 60gg dalla consegna', indirizzo_ritiro:'Contrada Muciare, 92019 Sciacca (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Edil Trapani Srl', destinatario_telefono:'0923 445566', nome_azienda:'Sciacca Costruzioni Srl', azienda_referente:'Anna Ferrara', telefono_azienda:'338 7776655', email_azienda:'info@sciaccacostruzioni.it', azienda_indirizzo:'Via Roma 3, 92019 Sciacca (AG)', azienda_piva:'02345678901' } },
+        { id:'candpreview3', fields:{ data_candidatura:new Date(Date.now()-4*86400000-3*3600000).toISOString(), data_assegnato:new Date(Date.now()-4*86400000-3*3600000).toISOString(), richiesta_id:'ORD-PREVIEW3', numero_ordine:'ORD-PREVIEW3', stato:'PRESO', citta_partenza:'Favara', citta_arrivo:'Canicattì', km_tratta:33, tipo_merce:'Alimentare', importo_pattuito:'110', termini_pagamento:'Bonifico a 30gg', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@azienda.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890', indirizzo_ritiro:'Via Roma 12, Favara', indirizzo_consegna:'Via Libertà 5, Canicattì', destinatario_nome:'Verdi Snc', destinatario_telefono:'347 8889900', incassato_trasportatore:true, data_incassato:new Date(Date.now()-2*86400000-0*3600000).toISOString() } },
+        { id:'candpreview4', fields:{ data_candidatura:new Date(Date.now()-9*86400000-3*3600000).toISOString(), data_assegnato:new Date(Date.now()-9*86400000-3*3600000).toISOString(), richiesta_id:'ORD-PREVIEW4', numero_ordine:'ORD-PREVIEW4', stato:'PRESO', citta_partenza:'Favara', citta_arrivo:'Palermo', km_tratta:128, tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@azienda.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890', indirizzo_ritiro:'Via Roma 12, Favara', indirizzo_consegna:'Via Libertà 5, Palermo', destinatario_nome:'Verdi Snc', destinatario_telefono:'347 8889900' } },
+        { id:'candpreview5', fields:{ data_candidatura:new Date(Date.now()-9*86400000-3*3600000).toISOString(), data_assegnato:new Date(Date.now()-9*86400000-3*3600000).toISOString(), richiesta_id:'ORD-PREVIEW5', numero_ordine:'ORD-PREVIEW5', stato:'PRESO', citta_partenza:'Agrigento', citta_arrivo:'Trapani', km_tratta:175, tipo_merce:'Alimentare', importo_pattuito:'280', termini_pagamento:'Bonifico a 30gg', nome_azienda:'Gilda Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@azienda.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'04567891230', indirizzo_ritiro:'Via Roma 12, Favara', indirizzo_consegna:'Via Libertà 5, Trapani', destinatario_nome:'Verdi Snc', destinatario_telefono:'347 8889900' } }
       ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
@@ -1798,7 +1835,11 @@ document.addEventListener('DOMContentLoaded', () => {
       carichiPubblicatiAzienda = [
         { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario.rossi@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', indirizzo_ritiro:'Via Roma 1, 92026 Favara (AG)', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
         { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg', note:'Ritiro dalle 8 alle 12', data_consegna:new Date(Date.now()+345600000).toISOString() } },
-        { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } }
+        { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } },
+        { id:'carpreview4', fields:{ data_pubblicazione:new Date(Date.now()-3*86400000-5*3600000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ4', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', citta_partenza:'Favara', citta_arrivo:'Agrigento', cap_partenza:'92026', cap_arrivo:'', km_tratta:11, tipo_merce:'Alimentare', importo_pattuito:'90', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()-2*86400000-0*3600000).toISOString(), data_assegnato:new Date(Date.now()-3*86400000-4*3600000).toISOString(), notifica_letta:true, pagato_azienda:true, data_pagato_azienda:new Date(Date.now()-1*86400000-0*3600000).toISOString() } },
+        { id:'carpreview5', fields:{ data_pubblicazione:new Date(Date.now()-6*86400000-5*3600000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ5', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', citta_partenza:'Favara', citta_arrivo:'Caltanissetta', cap_partenza:'92026', cap_arrivo:'', km_tratta:73, tipo_merce:'Alimentare', importo_pattuito:'160', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()-5*86400000-0*3600000).toISOString(), data_assegnato:new Date(Date.now()-6*86400000-4*3600000).toISOString(), notifica_letta:true } },
+        { id:'carpreview6', fields:{ data_pubblicazione:new Date(Date.now()-6*86400000-5*3600000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ6', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', citta_partenza:'Favara', citta_arrivo:'Sciacca', cap_partenza:'92026', cap_arrivo:'', km_tratta:66, tipo_merce:'Alimentare', importo_pattuito:'140', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()-5*86400000-0*3600000).toISOString(), data_assegnato:new Date(Date.now()-6*86400000-4*3600000).toISOString(), notifica_letta:true } },
+        { id:'carpreview7', fields:{ data_pubblicazione:new Date(Date.now()-12*86400000-5*3600000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ7', stato:'PRESO', bloccato_da_nome:'Luca Bianchi', assegnato_a_nome:'Luca Bianchi', assegnato_a_telefono:'347 7654321', trasportatore_email:'luca@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', citta_partenza:'Favara', citta_arrivo:'Catania', cap_partenza:'92026', cap_arrivo:'', km_tratta:187, tipo_merce:'Alimentare', importo_pattuito:'300', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()-11*86400000-0*3600000).toISOString(), data_assegnato:new Date(Date.now()-12*86400000-4*3600000).toISOString(), notifica_letta:true } }
       ];
       renderCalendarioMensile();
       aggiornaStatsAzienda();
@@ -2079,7 +2120,7 @@ function renderCampanellino() {
   }
 
   if (!aggiornamenti.length) {
-    lista.innerHTML = '<div class="notif-bell-empty">Nessun carico pubblicato per ora.</div>';
+    lista.innerHTML = '<div class="notif-bell-empty">Nessuna pubblicazione per ora.</div>';
     return;
   }
 
@@ -3274,7 +3315,7 @@ function renderReportTrasportatori() {
   aggiorna('az-c-dapagare', `${euro(totaleGenerale)}`);
 
   if (!filtrati.length) {
-    bodyEl.innerHTML = `<div class="carico-empty">Nessun carico accaparrato in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Appena un trasportatore prende un tuo carico, comparirà qui con l'importo pattuito.</span></div>`;
+    bodyEl.innerHTML = `<div class="carico-empty">Nessun trasporto preso in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Appena un trasportatore prende una tua pubblicazione, comparirà qui con l'importo pattuito.</span></div>`;
     return;
   }
 
@@ -3398,13 +3439,264 @@ function cpScheda(f) {
   }
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:12px;">' + trasporto + controparte + soldi + '</div>';
 }
+
+/* ====================================================
+   RESOCONTO (29/9) — "la calcolatrice la fa il sistema".
+   Azienda: quanto deve pagare a ogni trasportatore (trasporti, totale, gia'
+   pagato, da pagare), per periodo e giorno per giorno. Trasportatore: quanto
+   deve incassare da ogni azienda, piu' le commissioni da 20 € versate.
+   Solo carichi PRESI e pagati (dopo i 20 €). Stampa per la fattura: tutti
+   insieme (una fattura per il periodo) oppure uno alla volta.
+   ==================================================== */
+let rsScelto = '';
+function rsAz() { return tipoUtente === 'azienda'; }
+function rsParola(n) { return rsAz() ? (n === 1 ? 'trasporto' : 'trasporti') : (n === 1 ? 'carico' : 'carichi'); }
+function rsBase() {
+  const l = rsAz() ? (carichiPubblicatiAzienda || []) : (ultimeCandidatureRaw || []);
+  return l.filter(c => String(c.fields.stato || '').toUpperCase() === 'PRESO');
+}
+function rsData(f) { return f.data_assegnato || f.data_candidatura || f.data_pubblicazione || ''; }
+function rsImp(f) { return parseImportoPattuito(f.importo_pattuito) || 0; }
+function rsPagato(f) { return rsAz() ? !!f.pagato_azienda : !!f.incassato_trasportatore; }
+function rsDataPagato(f) { return rsAz() ? f.data_pagato_azienda : f.data_incassato; }
+function rsNome(f) { return cpControparte(f); }
+function rsCambiaPeriodo() {
+  const v = document.getElementById('rs-periodo').value;
+  document.getElementById('rs-date').style.display = v === 'dal' ? 'inline-flex' : 'none';
+  renderResoconto();
+}
+function rsIntervallo() {
+  const v = (document.getElementById('rs-periodo') || {}).value || '30';
+  const oggi = new Date();
+  if (v === 'dal') {
+    const dal = document.getElementById('rs-dal').value, al = document.getElementById('rs-al').value;
+    return { da: dal ? new Date(dal + 'T00:00:00') : null, a: al ? new Date(al + 'T23:59:59') : null,
+      testo: 'dal ' + (dal ? new Date(dal + 'T00:00:00').toLocaleDateString('it-IT') : '…') + ' al ' + (al ? new Date(al + 'T00:00:00').toLocaleDateString('it-IT') : '…') };
+  }
+  if (v === 'mese') { const da = new Date(oggi.getFullYear(), oggi.getMonth(), 1); return { da, a: null, testo: da.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) }; }
+  if (v === 'mesescorso') {
+    const da = new Date(oggi.getFullYear(), oggi.getMonth() - 1, 1), a = new Date(oggi.getFullYear(), oggi.getMonth(), 0, 23, 59, 59);
+    return { da, a, testo: da.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) };
+  }
+  const g = parseInt(v, 10);
+  if (!g) return { da: null, a: null, testo: 'da sempre' };
+  const da = new Date(); da.setHours(0, 0, 0, 0); da.setDate(da.getDate() - (g - 1));
+  return { da, a: null, testo: g === 1 ? 'oggi' : 'ultimi ' + g + ' giorni' };
+}
+function rsFiltrati(conPeriodo) {
+  const iv = rsIntervallo();
+  const st = (document.getElementById('rs-stato') || {}).value || '';
+  const q = ((document.getElementById('rs-cerca') || {}).value || '').trim().toLowerCase();
+  return rsBase().filter(c => {
+    const f = c.fields;
+    if (conPeriodo) {
+      const d = new Date(rsData(f));
+      if (iv.da && !(d >= iv.da)) return false;
+      if (iv.a && !(d <= iv.a)) return false;
+    }
+    if (rsScelto && rsNome(f) !== rsScelto) return false;
+    if (st === 'da' && rsPagato(f)) return false;
+    if (st === 'fatto' && !rsPagato(f)) return false;
+    if (q) {
+      const t = [rsNome(f), f.numero_ordine, f.citta_partenza, f.citta_arrivo, f.tipo_merce,
+        rsAz() ? f.trasportatore_piva : f.azienda_piva].join(' ').toLowerCase();
+      if (t.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort((a, b) => String(rsData(b.fields)).localeCompare(String(rsData(a.fields))));
+}
+function rsSomma(l) {
+  const tot = l.reduce((t, c) => t + rsImp(c.fields), 0);
+  const fatto = l.filter(c => rsPagato(c.fields)).reduce((t, c) => t + rsImp(c.fields), 0);
+  return { n: l.length, tot, fatto, resta: tot - fatto };
+}
+function rsScegli(nome) { rsScelto = nome || ''; renderResoconto(); const w = document.getElementById('rs-wrap'); if (w) w.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function rsAggiorna(btn) {
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno...'; }
+  const fine = () => { renderResoconto(); if (btn) { btn.disabled = false; btn.textContent = '🔄 Aggiorna'; } };
+  try {
+    if (!modalitaAnteprimaAttiva && currentUser && currentUser.email) { Promise.resolve(caricaDati(currentUser.email)).finally(fine); return; }
+  } catch (e) {}
+  fine();
+}
+function renderResoconto() {
+  const wrap = document.getElementById('rs-wrap');
+  if (!wrap || !tipoUtente) return;
+  wrap.style.display = 'block';
+  const az = rsAz();
+  document.getElementById('rs-titolo').textContent = az ? '💶 Da pagare ai trasportatori' : '💶 Da incassare dalle aziende';
+  const cerca = document.getElementById('rs-cerca');
+  cerca.placeholder = az ? '🔎 Scrivi il nome del trasportatore, ordine, città…' : '🔎 Scrivi il nome dell\'azienda, ordine, città…';
+  const selStato = document.getElementById('rs-stato');
+  if (!selStato.options.length) {
+    selStato.innerHTML = az
+      ? '<option value="">Tutti</option><option value="da">Da pagare</option><option value="fatto">Già pagati</option>'
+      : '<option value="">Tutti</option><option value="da">Da incassare</option><option value="fatto">Già incassati</option>';
+  }
+  const iv = rsIntervallo();
+  const lista = rsFiltrati(true);
+  const sempre = rsFiltrati(false);
+  const S = rsSomma(lista), SS = rsSomma(sempre);
+  const card = (n, t, col) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;"><div style="font-size:22px;font-weight:800;color:${col || 'var(--text)'};">${n}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${t}</div></div>`;
+  let cont = card(S.n, rsParola(S.n) + ' · ' + iv.testo) +
+    card(euro(S.tot), az ? 'totale del periodo' : 'totale da fatturare nel periodo', 'var(--green)') +
+    card(euro(S.fatto), az ? 'già pagato' : 'già incassato') +
+    card(euro(S.resta), az ? 'ancora da pagare' : 'ancora da incassare', S.resta > 0 ? 'var(--amber)' : 'var(--green)');
+  if (!az) cont += card(euro(S.n * 20), 'commissioni EcoTruckConnect (' + S.n + ' × 20 €)');
+  cont += card(SS.n + ' · ' + euro(SS.tot), (az ? 'trasporti' : 'carichi') + ' da sempre' + (rsScelto ? ' con ' + rsScelto : ''));
+  document.getElementById('rs-contatori').innerHTML = cont;
+  document.getElementById('rs-scelto').innerHTML = rsScelto
+    ? `<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:20px;padding:6px 12px;font-size:13px;">${az ? '🚛' : '🏢'} Solo: <b>${cpEsc(rsScelto)}</b> <span style="cursor:pointer;font-weight:700;" onclick="rsScegli('')">✕</span></span>
+       <button class="btn-cap" style="font-size:12px;margin-left:8px;" onclick="rsStampaFattura(rsScelto)">🖨️ Stampa per la fattura di ${cpEsc(rsScelto)}</button>`
+    : '';
+  // riquadri per trasportatore / azienda
+  const pers = {};
+  lista.forEach(c => { const k = rsNome(c.fields); (pers[k] = pers[k] || []).push(c); });
+  const nomi = Object.keys(pers).sort((a, b) => rsSomma(pers[b]).tot - rsSomma(pers[a]).tot);
+  document.getElementById('rs-persone').innerHTML = (!rsScelto && nomi.length)
+    ? `<div style="font-size:12px;color:var(--muted);margin:4px 0 8px;">${az ? 'Per trasportatore' : 'Per azienda'} · ${iv.testo}</div>
+       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:16px;">` +
+      nomi.map(n => { const x = rsSomma(pers[n]); return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${az ? '🚛' : '🏢'} ${cpEsc(n)}</div>
+        <div style="font-size:12px;color:var(--muted);">${x.n} ${rsParola(x.n)} · totale <b style="color:var(--green);">${euro(x.tot)}</b></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${az ? 'da pagare' : 'da incassare'} <b style="color:${x.resta > 0 ? 'var(--amber)' : 'var(--green)'};">${euro(x.resta)}</b></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsScegli(${JSON.stringify(n).replace(/"/g, '&quot;')})">Vedi solo ${az ? 'lui' : 'lei'}</button>
+          <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(${JSON.stringify(n).replace(/"/g, '&quot;')})">🖨️ Fattura</button>
+        </div></div>`; }).join('') + '</div>'
+    : '';
+  // giorno per giorno
+  const box = document.getElementById('rs-giorni');
+  if (!lista.length) {
+    box.innerHTML = `<div class="carico-empty">${az ? 'Nessun trasporto preso in questo periodo.' : 'Nessun carico preso in questo periodo.'}</div>`;
+    return;
+  }
+  const giorni = {};
+  lista.forEach(c => { const d = new Date(rsData(c.fields)); const k = isNaN(d) ? '—' : d.toISOString().slice(0, 10); (giorni[k] = giorni[k] || []).push(c); });
+  box.innerHTML = Object.keys(giorni).sort().reverse().map(k => {
+    const l = giorni[k]; const x = rsSomma(l);
+    const titolo = k === '—' ? 'Senza data' : new Date(k + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);">
+        <b style="text-transform:capitalize;">📅 ${titolo}</b>
+        <span style="font-size:12px;color:var(--muted);">${x.n} ${rsParola(x.n)} · totale del giorno <b style="color:var(--green);">${euro(x.tot)}</b></span>
+      </div>` + l.map(c => {
+        const f = c.fields; const pag = rsPagato(f);
+        const ora = rsData(f) ? new Date(rsData(f)).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
+        const nome = rsNome(f);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="min-width:200px;flex:1;">
+            <div style="font-weight:700;font-size:14px;">${cpEsc(f.citta_partenza || '—')} → ${cpEsc(f.citta_arrivo || '—')}${f.km_tratta ? ` <span style="font-weight:400;color:var(--muted);font-size:12px;">· ${cpEsc(f.km_tratta)} km</span>` : ''}</div>
+            <div style="font-size:12px;color:var(--muted);">🕐 ${ora} · ${az ? '🚛' : '🏢'} <a href="javascript:void(0)" onclick="rsScegli(${JSON.stringify(nome).replace(/"/g, '&quot;')})" style="color:var(--blue);text-decoration:none;">${cpEsc(nome)}</a> · ${cpEsc(f.numero_ordine || '')}${f.termini_pagamento ? ' · 💳 ' + cpEsc(f.termini_pagamento) : ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <b style="color:var(--green);font-size:15px;">${euro(rsImp(f))}</b>
+            <button class="btn-cap" style="font-size:11px;padding:4px 10px;${pag ? 'background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.5);color:var(--green);' : ''}" onclick="rsSegna('${c.id}', ${pag ? 'false' : 'true'}, this)">${pag ? (az ? '✓ Pagato' : '✓ Incassato') : (az ? 'Segna pagato' : 'Segna incassato')}</button>
+            <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="apriSchedaCaricoPreso('${c.id}')">📋 Scheda</button>
+            <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(null, ['${c.id}'])">🖨️</button>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+  }).join('');
+}
+async function rsSegna(id, valore, btn) {
+  const tutti = rsAz() ? (carichiPubblicatiAzienda || []) : (ultimeCandidatureRaw || []);
+  const c = tutti.find(x => x.id === id); if (!c) return;
+  const campo = rsAz() ? 'pagato_azienda' : 'incassato_trasportatore';
+  const campoData = rsAz() ? 'data_pagato_azienda' : 'data_incassato';
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  if (!modalitaAnteprimaAttiva) {
+    try {
+      const r = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'segna_pagamento', carico_id: id, ruolo: rsAz() ? 'azienda' : 'trasportatore', valore: !!valore }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.esito !== 'salvato') throw new Error('non salvato');
+    } catch (e) {
+      alert('⚠️ Non sono riuscito a salvare. Riprova tra qualche secondo.');
+      if (btn) btn.disabled = false;
+      renderResoconto();
+      return;
+    }
+  }
+  c.fields[campo] = !!valore;
+  c.fields[campoData] = valore ? new Date().toISOString() : '';
+  renderResoconto();
+}
+function rsDatiMiei() {
+  if (rsAz()) {
+    const p = profiloAzienda || {};
+    return { nome: p.ragione_sociale || p.nome || '', indirizzo: [p.via, [p.cap, p.citta].filter(Boolean).join(' ') + (p.provincia ? ' (' + p.provincia + ')' : '')].map(x => String(x || '').trim()).filter(Boolean).join(', '),
+      piva: p.partita_iva || '', tel: p.telefono || '', email: (currentUser && currentUser.email) || '' };
+  }
+  const t = trasportatoreFieldsCorrenti || {};
+  return { nome: t.ragione_sociale || [t.nome, t.cognome].filter(Boolean).join(' '), indirizzo: [t.via || t.indirizzo, [t.cap, t.citta].filter(Boolean).join(' ') + (t.provincia ? ' (' + t.provincia + ')' : '')].map(x => String(x || '').trim()).filter(Boolean).join(', '),
+    piva: t.partita_iva || t.p_iva || '', tel: t.telefono || '', email: (currentUser && currentUser.email) || t.email || '' };
+}
+function rsDatiLoro(f) {
+  if (rsAz()) return { nome: rsNome(f), indirizzo: f.trasportatore_indirizzo || '', piva: f.trasportatore_piva || '', tel: f.assegnato_a_telefono || '', email: f.trasportatore_email || f.bloccato_da_id || '' };
+  return { nome: rsNome(f), referente: f.azienda_referente || '', indirizzo: f.azienda_indirizzo || '', piva: f.azienda_piva || '', tel: f.telefono_azienda || '', email: f.email_azienda || '' };
+}
+function rsStampaFattura(nome, ids) {
+  const tutti = rsBase();
+  let lista = ids ? tutti.filter(c => ids.indexOf(c.id) !== -1) : rsFiltrati(true);
+  if (nome) lista = lista.filter(c => rsNome(c.fields) === nome);
+  if (!lista.length) { alert(rsAz() ? 'Nessun trasporto da stampare in questo periodo.' : 'Nessun carico da stampare in questo periodo.'); return; }
+  const az = rsAz();
+  const iv = ids ? { testo: 'singolo ' + rsParola(1) } : rsIntervallo();
+  const io = rsDatiMiei();
+  const esc = cpEsc;
+  const gruppi = {};
+  lista.forEach(c => { const k = rsNome(c.fields); (gruppi[k] = gruppi[k] || []).push(c); });
+  const pagine = Object.keys(gruppi).map(n => {
+    const l = gruppi[n].slice().sort((a, b) => String(rsData(a.fields)).localeCompare(String(rsData(b.fields))));
+    const x = rsSomma(l); const loro = rsDatiLoro(l[0].fields);
+    const blocco = (tit, d) => `<div class="b"><div class="bt">${tit}</div><b>${esc(d.nome || '—')}</b>${d.referente ? '<br>Referente: ' + esc(d.referente) : ''}${d.indirizzo ? '<br>' + esc(d.indirizzo) : ''}${d.piva ? '<br>P.IVA ' + esc(d.piva) : ''}${d.tel ? '<br>Tel. ' + esc(d.tel) : ''}${d.email ? '<br>' + esc(d.email) : ''}</div>`;
+    const righe = l.map(c => { const f = c.fields; const d = new Date(rsData(f));
+      return `<tr><td>${isNaN(d) ? '' : d.toLocaleDateString('it-IT')}</td><td>${esc(f.numero_ordine || '')}</td><td>${esc(f.citta_partenza || '')} → ${esc(f.citta_arrivo || '')}${f.km_tratta ? ' (' + esc(f.km_tratta) + ' km)' : ''}</td><td>${esc(f.tipo_merce || '')}</td><td>${esc(f.termini_pagamento || '')}</td><td class="r">${euro(rsImp(f))}</td><td>${rsPagato(f) ? (az ? 'pagato' : 'incassato') : ''}</td></tr>`; }).join('');
+    return `<div class="pag">
+      <h1>${az ? 'Riepilogo trasporti da pagare' : 'Riepilogo per la fattura'}</h1>
+      <div class="sub">Periodo: ${esc(iv.testo)} · ${x.n} ${rsParola(x.n)} · stampato il ${new Date().toLocaleString('it-IT')} · EcoTruckConnect</div>
+      <div class="bb">${az ? blocco('Trasportatore (chi emette la fattura)', loro) + blocco('Azienda (chi paga)', io) : blocco('Trasportatore (chi emette la fattura)', io) + blocco('Azienda (a cui intestare la fattura)', loro)}</div>
+      <table><tr><th>Data</th><th>Ordine</th><th>Tratta</th><th>Merce</th><th>Termini</th><th class="r">Importo</th><th></th></tr>${righe}
+      <tr class="t"><td colspan="5">Totale ${x.n} ${rsParola(x.n)}</td><td class="r">${euro(x.tot)}</td><td></td></tr>
+      ${x.fatto ? `<tr><td colspan="5">${az ? 'Già pagato' : 'Già incassato'}</td><td class="r">${euro(x.fatto)}</td><td></td></tr><tr class="t"><td colspan="5">${az ? 'Ancora da pagare' : 'Ancora da incassare'}</td><td class="r">${euro(x.resta)}</td><td></td></tr>` : ''}
+      </table>
+      <div class="nota">Riepilogo dei trasporti presi tramite EcoTruckConnect. Non è una fattura fiscale: serve per preparare la fattura.</div>
+    </div>`;
+  }).join('');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${az ? 'Da pagare' : 'Da incassare'} — EcoTruckConnect</title><style>
+    body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .sub{font-size:12px;color:#555;margin-bottom:12px;}
+    .bb{display:flex;gap:14px;margin-bottom:14px;} .b{flex:1;border:1px solid #ccc;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.5;} .bt{font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;} th,td{border-bottom:1px solid #ddd;padding:6px 6px;text-align:left;} th{background:#f3f3f3;} .r{text-align:right;white-space:nowrap;}
+    tr.t td{font-weight:bold;border-top:2px solid #333;} .nota{font-size:11px;color:#666;margin-top:10px;} .pag{page-break-after:always;} .pag:last-child{page-break-after:auto;}
+  </style></head><body>${pagine}</body></html>`);
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+}
+function rsCSV() {
+  const l = rsFiltrati(true);
+  if (!l.length) { alert('Niente da scaricare in questo periodo.'); return; }
+  const az = rsAz();
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const col = ['Data', 'Ora', 'Ordine', az ? 'Trasportatore' : 'Azienda', 'P.IVA', 'Partenza', 'Arrivo', 'Km', 'Merce', 'Termini', 'Importo', az ? 'Pagato' : 'Incassato', 'Il'];
+  const righe = l.map(c => { const f = c.fields; const d = new Date(rsData(f)); const loro = rsDatiLoro(f);
+    return [isNaN(d) ? '' : d.toLocaleDateString('it-IT'), isNaN(d) ? '' : d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }), f.numero_ordine, loro.nome, loro.piva,
+      f.citta_partenza, f.citta_arrivo, f.km_tratta, f.tipo_merce, f.termini_pagamento, String(rsImp(f)).replace('.', ','), rsPagato(f) ? 'sì' : 'no', rsDataPagato(f) ? new Date(rsDataPagato(f)).toLocaleString('it-IT') : ''].map(q).join(';'); });
+  const csv = '\ufeff' + col.map(q).join(';') + '\r\n' + righe.join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = (az ? 'da-pagare' : 'da-incassare') + (rsScelto ? '-' + rsScelto.replace(/[^\w]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
 function renderCarichiPresi() {
+  try { renderResoconto(); } catch (e) { console.error('Resoconto:', e); }
   const wrap = document.getElementById('carichi-presi-wrap');
   if (!wrap || !tipoUtente) return;
   wrap.style.display = 'block';
-  document.getElementById('cp-titolo').textContent = tipoUtente === 'azienda' ? '📋 I miei carichi presi dai trasportatori' : '📋 I miei carichi presi';
+  document.getElementById('cp-titolo').textContent = tipoUtente === 'azienda' ? '📋 I miei trasporti presi dai trasportatori' : '📋 I miei carichi presi';
   document.getElementById('cp-sub').textContent = tipoUtente === 'azienda'
-    ? 'Per ogni carico preso: chi l\'ha preso, i suoi dati completi (anche per la fattura), quanto devi pagare ed entro quando.'
+    ? 'Per ogni trasporto preso: chi l\'ha preso, i suoi dati completi (anche per la fattura), quanto devi pagare ed entro quando.'
     : 'Per ogni carico preso: dove ritirare e consegnare, i dati completi dell\'azienda (anche per la fattura), quanto incassare ed entro quando.';
   const r = cpLista();
   const sel = document.getElementById('cp-controparte');
@@ -3415,7 +3707,7 @@ function renderCarichiPresi() {
   }
   const body = document.getElementById('cp-body');
   if (!r.lista.length) {
-    body.innerHTML = '<div class="carico-empty">Nessun carico preso in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">' + (tipoUtente === 'azienda' ? 'Appena un trasportatore prende e paga un tuo carico, compare qui con tutti i suoi dati.' : 'Appena prendi e paghi un carico, compare qui con tutti i dati dell\'azienda.') + '</span></div>';
+    body.innerHTML = '<div class="carico-empty">' + (tipoUtente === 'azienda' ? 'Nessun trasporto preso in questo periodo.' : 'Nessun carico preso in questo periodo.') + '<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">' + (tipoUtente === 'azienda' ? 'Appena un trasportatore prende e paga una tua pubblicazione, compare qui con tutti i suoi dati.' : 'Appena prendi e paghi un carico, compare qui con tutti i dati dell\'azienda.') + '</span></div>';
     return;
   }
   body.innerHTML = r.lista.map((c, i) => {
@@ -3667,7 +3959,7 @@ function cpStampa(indici) {
   w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>EcoTruckConnect — Carichi presi</title><style>' +
     ':root{--muted:#555;--border:#ccc;--green:#15803d;--blue:#1d4ed8;} body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .t{font-size:12px;color:#555;margin-bottom:16px;} ' +
     '.c{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:14px;} h2{font-size:15px;margin:0;} h2 small{font-weight:normal;color:#555;font-size:12px;} a{color:#111;text-decoration:none;} div[style*="background"]{background:#fafafa !important;}' +
-    '</style></head><body><h1>EcoTruckConnect — ' + (tipoUtente === 'azienda' ? 'Carichi presi dai trasportatori' : 'I miei carichi presi') + '</h1>' +
+    '</style></head><body><h1>EcoTruckConnect — ' + (tipoUtente === 'azienda' ? 'Trasporti presi dai trasportatori' : 'I miei carichi presi') + '</h1>' +
     '<div class="t">' + cpEsc(chi) + ' · stampato il ' + ora.toLocaleDateString('it-IT') + ' alle ' + ora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + '</div>' + pezzi +
     '<script>window.onload=function(){window.print();}<\/script></body></html>');
   w.document.close();
@@ -3878,7 +4170,7 @@ function scaricaFattureAziendaPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   doc.setFontSize(15);
-  doc.text('EcoTruckConnect — Carichi Pubblicati', 14, 18);
+  doc.text('EcoTruckConnect — Le mie pubblicazioni', 14, 18);
   doc.setFontSize(9);
   doc.setTextColor(120);
   doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
