@@ -523,7 +523,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
             </div>
           </div>
         </div>
-        <div id="hero-stat-guad-wrap"><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Guadagnato questo mese</div></div>
+        <div id="hero-stat-guad-wrap"><div class="hs-val blue" id="st-guad">—</div><div class="hs-label" id="st-guad-label">Da incassare questo mese</div></div>
         <div><div class="hs-val" id="st-tot">—</div><div class="hs-label" id="st-tot-label">Carichi totali</div></div>
         <div id="hero-stat-completati-wrap" style="display:none;"><div class="hs-val" style="color:var(--green);" id="st-completati">—</div><div class="hs-label">Carichi completati</div></div>
       </div>
@@ -561,7 +561,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div class="cards" style="margin-bottom:28px;">
           <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Carichi disponibili oggi</h3><div class="card-num" id="dash-stat-disp">—</div></div>
           <div class="card" style="cursor:default;"><div class="card-icon">📋</div><h3>Carichi totali</h3><div class="card-num" id="dash-stat-tot">—</div></div>
-          <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Guadagnato questo mese</h3><div class="card-num green" id="dash-stat-guad">—</div></div>
+          <div class="card" style="cursor:default;"><div class="card-icon">🧾</div><h3>Da incassare questo mese</h3><div class="card-num green" id="dash-stat-guad">—</div></div>
         </div>
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">🗓️ Calendario Carichi</h4>
         <div class="cal-box">
@@ -799,7 +799,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       <div id="tags-autRichiesta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
 
       <h4 style="margin-top:22px;color:#fff;font-family:var(--font-h);">📍 Ritiro e consegna *</h4>
-      <div style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.5;">🔒 Questi dati li vede il trasportatore <b>solo dopo aver pagato</b>. Prima vede solo città, CAP, merce e importo.</div>
+      <div style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.5;">🔒 Questi indirizzi e i tuoi dati di contatto li vede il trasportatore <b>solo dopo aver pagato</b>. Prima vede solo città, CAP, merce e importo. Dopo il pagamento anche tu vedi i suoi dati.</div>
       <div class="ins-grid">
         <div class="ins-field ins-full"><label>Indirizzo preciso di ritiro *</label><input type="text" id="ins-indirizzo-ritiro" placeholder="es. Via Roma 12, 92026 Favara (AG) — capannone 3"></div>
         <div class="ins-field ins-full"><label>Indirizzo preciso di consegna *</label><input type="text" id="ins-indirizzo-consegna" placeholder="es. Via Libertà 100, 90100 Palermo (PA)"></div>
@@ -881,6 +881,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
           <p>Quanto devi ai trasportatori, diviso per ciascuno. Clicca per il dettaglio.</p>
           <div class="card-num green" id="az-c-dapagare">—</div><div class="card-sub">totale da pagare</div>
         </div>
+      </div>
+      <!-- I MIEI CARICHI PRESI (29/9): report completo con scheda del carico -->
+      <div id="carichi-presi-wrap" style="display:none;margin-bottom:34px;">
+        <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <span id="cp-titolo">📋 I miei carichi presi</span>
+          <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select class="btn-cap" style="font-size:12px;" onchange="cpCambiaPeriodo(this.value)"><option value="">📅 Tutti</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="15">15 giorni</option><option value="30">30 giorni</option></select>
+            <select class="btn-cap" id="cp-controparte" style="font-size:12px;max-width:220px;" onchange="cpCambiaControparte(this.value)"><option value="">Tutti</option></select>
+            <button class="btn-cap" style="font-size:12px;" onclick="renderCarichiPresi()">🔄 Aggiorna</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="cpStampa()">🖨️ Stampa</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="cpScaricaCSV()">⬇️ CSV</button>
+          </span>
+        </div>
+        <div id="cp-sub" style="color:var(--muted);font-size:12px;margin:-10px 0 14px;"></div>
+        <div id="cp-body"></div>
       </div>
       <div id="report-trasportatore-wrap" style="display:none;">
         <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -1750,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
       ];
       ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', stato:'PRESO' } },
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
         { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', stato:'RIMBORSATO' } }
       ];
       renderCarichi(ultimiCarichi);
@@ -1773,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
       aggiornaEtichettaTendina('autRichiesta');
       ultimiCarichi = [];
       carichiPubblicatiAzienda = [
-        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
+        { id:'carpreview1', fields:{ data_pubblicazione:new Date(Date.now()-259200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ1', stato:'PRESO', bloccato_da_nome:'Mario Rossi', assegnato_a_nome:'Mario Rossi', assegnato_a_telefono:'333 1234567', trasportatore_email:'mario.rossi@trasporti.it', trasportatore_indirizzo:'Via Etna 7, 92100 Agrigento (AG)', trasportatore_piva:'09876543210', indirizzo_ritiro:'Via Roma 1, 92026 Favara (AG)', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', tipo_merce:'Alimentare', importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+64800000).toISOString(), data_assegnato:new Date(Date.now()-3600000).toISOString(), notifica_letta:false } },
         { id:'carpreview2', fields:{ data_pubblicazione:new Date(Date.now()-86400000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ2', stato:'DISPONIBILE', bloccato_da_nome:'', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', tipo_merce:'Materiali edili/inerti (17 09 04)', importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg', note:'Ritiro dalle 8 alle 12', data_consegna:new Date(Date.now()+345600000).toISOString() } },
         { id:'carpreview3', fields:{ data_pubblicazione:new Date(Date.now()-7200000).toISOString(), numero_ordine:'ORD-PREVIEW-AZ3', stato:'IN PAGAMENTO', bloccato_da_nome:'Luca Bianchi', citta_partenza:'Sciacca', citta_arrivo:'Messina', cap_partenza:'92019', cap_arrivo:'98121', tipo_merce:'Carta e cartone (20 01 01)', importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', data_consegna:new Date(Date.now()+259200000).toISOString() } }
       ];
@@ -2063,7 +2078,7 @@ function renderCampanellino() {
     const stato = (f.stato || '').toUpperCase();
     const testoStato = stato === 'PRESO' ? '✅ Preso' : stato.includes('PAGAMENTO') ? '⏳ In pagamento' : stato === 'DISPONIBILE' ? '📦 Pubblicato — in attesa di un trasportatore' : stato;
     const chi = f.bloccato_da_nome || '—';
-    const perChi = stato === 'DISPONIBILE' ? '' : ` da <b>${chi}</b>`;
+    const perChi = stato === 'PRESO' ? ` da <b>${f.assegnato_a_nome || chi}</b>` : '';
     const dataRif = f.data_assegnato || f.data_pubblicazione;
     const data = dataRif ? new Date(dataRif).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
     return `<div class="notif-bell-item">
@@ -2385,6 +2400,7 @@ function renderDettaglioCarico(c) {
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">📋 ${autRichiesta}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">💳 ${f.termini_pagamento || 'Termini non specificati'}</span>
       </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">🔒 Dopo il pagamento vedrai indirizzi precisi e contatti dell'azienda; l'azienda vedrà i tuoi dati di contatto.</div>
       <button class="btn-pubblica" ${disabilitato} style="width:100%;justify-content:center;" onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${escAttr(partenza)}','${escAttr(arrivo)}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${escAttr(merce)}','${escAttr(f.importo_pattuito||'')}','${escAttr(f.termini_pagamento||'')}')">${testoBtn}</button>
     </div>
   </div>`;
@@ -2647,7 +2663,7 @@ function pagaCassaFinta(id, partenza, arrivo) {
     // come nel vero: il carico diventa PRESO, sparisce dai disponibili ed entra nello storico
     const c = (ultimiCarichi || []).find(x => x.id === id);
     ultimiCarichi = (ultimiCarichi || []).filter(x => x.id !== id);
-    ultimeCandidatureRaw = [{ id: 'cand-' + id, fields: { data_candidatura: new Date().toISOString(), richiesta_id: 'ORD-' + id.toUpperCase(), stato: 'PRESO' } }].concat(ultimeCandidatureRaw || []);
+    ultimeCandidatureRaw = [{ id: 'cand-' + id, fields: Object.assign({}, (c && c.fields) || {}, { data_candidatura: new Date().toISOString(), data_assegnato: new Date().toISOString(), richiesta_id: 'ORD-' + id.toUpperCase(), numero_ordine: 'ORD-' + id.toUpperCase(), stato: 'PRESO', indirizzo_ritiro: 'Via Garibaldi 5, ' + ((c && c.fields.cap_partenza) || '') + ' ' + partenza, indirizzo_consegna: 'Via Maqueda 40, ' + ((c && c.fields.cap_arrivo) || '') + ' ' + arrivo, destinatario_nome: 'Verdi & Figli Snc', destinatario_telefono: '347 8889900', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' }) }].concat(ultimeCandidatureRaw || []);
     try { renderCarichi(ultimiCarichi); } catch (e) {}
     try { renderCalendarioMensile(); } catch (e) {}
     try { renderStorico(ultimeCandidatureRaw); } catch (e) {}
@@ -3082,7 +3098,7 @@ function renderTabelleFatture() {
             const f = c.fields;
             const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
             const azioniAnteprima = window.__ANTEPRIMA_SCUDO ? pulsantiAnteprimaCarico(c) : '';
-            return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${f.bloccato_da_nome || '—'}</td><td style="white-space:nowrap;"><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button>${azioniAnteprima}</td></tr>`;
+            return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${(f.stato || '').toUpperCase() === 'PRESO' ? (f.assegnato_a_nome || f.bloccato_da_nome || '—') : '—'}</td><td style="white-space:nowrap;"><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button>${azioniAnteprima}</td></tr>`;
           }).join('');
     ['dash-fatture-thead', 'storico-thead'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = headerHtml; });
     ['dash-fatture-body', 'storico-body'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = bodyHtml; });
@@ -3269,6 +3285,260 @@ function renderReportTrasportatori() {
     </div>`;
   }).join('');
 }
+
+/* ====================================================
+   I MIEI CARICHI PRESI — report + scheda del carico (29/9/2026)
+   Trasportatore: è lui che fa la fattura all'azienda, quindi vede TUTTO
+   dell'azienda (P.IVA compresa) + indirizzi di ritiro/consegna + destinatario.
+   Azienda: lo specchio, con TUTTO del trasportatore + "Da pagare".
+   I dati compaiono SOLO per i carichi PRESI (cioè pagati).
+   ==================================================== */
+let cpFiltroGiorni = null;
+let cpFiltroControparte = '';
+function cpEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cpDataOra(v) { if (!v) return '—'; const d = new Date(v); if (isNaN(d)) return cpEsc(v); return d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+function cpData(v) { if (!v) return '—'; const d = new Date(v); return isNaN(d) ? cpEsc(v) : d.toLocaleDateString('it-IT'); }
+function cpVal(v) { return (v == null || v === '') ? '<span style="color:var(--muted);">—</span>' : cpEsc(Array.isArray(v) ? v.join(', ') : v); }
+function cpTel(v) { if (!v) return cpVal(v); const n = String(v).replace(/[^\d+]/g, ''); return '<a href="tel:' + cpEsc(n) + '" style="color:var(--blue);text-decoration:none;">📞 ' + cpEsc(v) + '</a>'; }
+function cpMail(v) { if (!v) return cpVal(v); return '<a href="mailto:' + cpEsc(v) + '" style="color:var(--blue);text-decoration:none;">' + cpEsc(v) + '</a>'; }
+function cpMaps(f) {
+  const da = f.indirizzo_ritiro || ((f.citta_partenza || '') + ' ' + (f.cap_partenza || ''));
+  const a = f.indirizzo_consegna || ((f.citta_arrivo || '') + ' ' + (f.cap_arrivo || ''));
+  return 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(da) + '&destination=' + encodeURIComponent(a) + '&travelmode=driving';
+}
+function cpControparte(f) {
+  return tipoUtente === 'azienda' ? (f.assegnato_a_nome || f.bloccato_da_nome || 'Trasportatore') : (f.nome_azienda || 'Azienda');
+}
+function cpLista() {
+  const base = tipoUtente === 'azienda'
+    ? (carichiPubblicatiAzienda || []).filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO')
+    : (ultimeCandidatureRaw || []).filter(c => ['PRESO', 'RIMBORSATO'].indexOf((c.fields.stato || '').toUpperCase()) !== -1);
+  let l = filtraPerPeriodo(base, 'data_assegnato', cpFiltroGiorni);
+  if (cpFiltroGiorni && !l.length) l = filtraPerPeriodo(base, 'data_candidatura', cpFiltroGiorni);
+  if (cpFiltroControparte) l = l.filter(c => cpControparte(c.fields) === cpFiltroControparte);
+  return { base: base, lista: l.sort((a, b) => String(b.fields.data_assegnato || b.fields.data_candidatura || '').localeCompare(String(a.fields.data_assegnato || a.fields.data_candidatura || ''))) };
+}
+function cpRiga(k, v) { return '<tr><td style="padding:5px 10px 5px 0;color:var(--muted);font-size:12px;white-space:nowrap;vertical-align:top;">' + k + '</td><td style="padding:5px 0;font-size:13px;">' + v + '</td></tr>'; }
+function cpBlocco(titolo, righe) { return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;">' + titolo + '</div><table style="width:100%;border-collapse:collapse;">' + righe.join('') + '</table></div>'; }
+function cpScheda(f) {
+  const trasporto = cpBlocco('🚚 Per il trasporto', [
+    cpRiga('📍 Ritiro', cpVal(f.indirizzo_ritiro || (f.citta_partenza ? f.citta_partenza + (f.cap_partenza ? ' (' + f.cap_partenza + ')' : '') : ''))),
+    cpRiga('🏁 Consegna', cpVal(f.indirizzo_consegna || (f.citta_arrivo ? f.citta_arrivo + (f.cap_arrivo ? ' (' + f.cap_arrivo + ')' : '') : ''))),
+    cpRiga('👤 A chi', cpVal(f.destinatario_nome)),
+    cpRiga('📱 Cellulare di chi riceve', cpTel(f.destinatario_telefono)),
+    cpRiga('📦 Merce', cpVal(f.tipo_merce) + (f.specifica ? ' — ' + cpEsc(f.specifica) : '')),
+    cpRiga('📅 Data del carico', cpData(f.data_consegna)),
+    f.note ? cpRiga('📝 Note', cpVal(f.note)) : ''
+  ]);
+  let controparte, soldi;
+  if (tipoUtente === 'azienda') {
+    controparte = cpBlocco('🚛 Trasportatore', [
+      cpRiga('Nome', cpVal(f.assegnato_a_nome || f.bloccato_da_nome)),
+      cpRiga('Cellulare', cpTel(f.assegnato_a_telefono)),
+      cpRiga('Email', cpMail(f.trasportatore_email || f.bloccato_da_id)),
+      cpRiga('Indirizzo', cpVal(f.trasportatore_indirizzo)),
+      cpRiga('P.IVA', cpVal(f.trasportatore_piva))
+    ]);
+    soldi = cpBlocco('💶 Da pagare al trasportatore', [
+      cpRiga('Importo pattuito', '<b style="color:var(--green);">' + (f.importo_pattuito ? euro(f.importo_pattuito) : '—') + '</b>'),
+      cpRiga('Termini', cpVal(f.termini_pagamento)),
+      cpRiga('Preso il', cpDataOra(f.data_assegnato))
+    ]);
+  } else {
+    controparte = cpBlocco('🏢 Azienda', [
+      cpRiga('Ragione sociale', cpVal(f.nome_azienda)),
+      cpRiga('Referente', cpVal(f.azienda_referente)),
+      cpRiga('Cellulare', cpTel(f.telefono_azienda)),
+      cpRiga('Email', cpMail(f.email_azienda)),
+      cpRiga('Sede', cpVal(f.azienda_indirizzo)),
+      cpRiga('P.IVA', cpVal(f.azienda_piva))
+    ]);
+    soldi = cpBlocco('💶 Da incassare dall\'azienda', [
+      cpRiga('Importo pattuito', '<b style="color:var(--green);">' + (f.importo_pattuito ? euro(f.importo_pattuito) : '—') + '</b>'),
+      cpRiga('Termini', cpVal(f.termini_pagamento)),
+      cpRiga('Commissione EcoTruckConnect', euro(PREZZO) + ' pagata il ' + cpDataOra(f.data_assegnato || f.data_candidatura))
+    ]);
+  }
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:12px;">' + trasporto + controparte + soldi + '</div>';
+}
+function renderCarichiPresi() {
+  const wrap = document.getElementById('carichi-presi-wrap');
+  if (!wrap || !tipoUtente) return;
+  wrap.style.display = 'block';
+  document.getElementById('cp-titolo').textContent = tipoUtente === 'azienda' ? '📋 I miei carichi presi dai trasportatori' : '📋 I miei carichi presi';
+  document.getElementById('cp-sub').textContent = tipoUtente === 'azienda'
+    ? 'Per ogni carico preso: chi l\'ha preso, i suoi dati completi (anche per la fattura), quanto devi pagare ed entro quando.'
+    : 'Per ogni carico preso: dove ritirare e consegnare, i dati completi dell\'azienda (anche per la fattura), quanto incassare ed entro quando.';
+  const r = cpLista();
+  const sel = document.getElementById('cp-controparte');
+  if (sel) {
+    const nomi = Array.from(new Set(r.base.map(c => cpControparte(c.fields)))).sort();
+    const cur = cpFiltroControparte;
+    sel.innerHTML = '<option value="">' + (tipoUtente === 'azienda' ? 'Tutti i trasportatori' : 'Tutte le aziende') + '</option>' + nomi.map(n => '<option' + (n === cur ? ' selected' : '') + '>' + cpEsc(n) + '</option>').join('');
+  }
+  const body = document.getElementById('cp-body');
+  if (!r.lista.length) {
+    body.innerHTML = '<div class="carico-empty">Nessun carico preso in questo periodo.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">' + (tipoUtente === 'azienda' ? 'Appena un trasportatore prende e paga un tuo carico, compare qui con tutti i suoi dati.' : 'Appena prendi e paghi un carico, compare qui con tutti i dati dell\'azienda.') + '</span></div>';
+    return;
+  }
+  body.innerHTML = r.lista.map((c, i) => {
+    const f = c.fields;
+    const stato = (f.stato || '').toUpperCase();
+    return '<div class="cp-card" style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;" onclick="cpApri(' + i + ')">' +
+        '<div><div style="font-weight:700;font-size:15px;">' + cpEsc(f.citta_partenza || '—') + ' → ' + cpEsc(f.citta_arrivo || '—') + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);">🕐 Preso il ' + cpDataOra(f.data_assegnato || f.data_candidatura) + ' · ' + (tipoUtente === 'azienda' ? '🚛 ' : '🏢 ') + cpEsc(cpControparte(f)) + ' · ' + cpEsc(f.numero_ordine || '') + '</div></div>' +
+        '<div style="display:flex;align-items:center;gap:10px;"><span class="badge-stato ' + (stato === 'PRESO' ? 's-ok' : 's-wait') + '">' + cpEsc(stato) + '</span><b style="color:var(--green);">' + (f.importo_pattuito ? euro(f.importo_pattuito) : '') + '</b><span id="cp-freccia-' + i + '" style="color:var(--muted);">▾</span></div>' +
+      '</div>' +
+      '<div id="cp-det-' + i + '" style="display:none;">' + cpScheda(f) +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
+          '<a class="btn-cap" href="' + cpMaps(f) + '" target="_blank" rel="noopener" style="font-size:12px;text-decoration:none;">🗺️ Apri il percorso su Google Maps</a>' +
+          '<button class="btn-cap" style="font-size:12px;" onclick="cpStampa([' + i + '])">🖨️ Stampa questo carico</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function cpApri(i) {
+  const d = document.getElementById('cp-det-' + i); if (!d) return;
+  const aperto = d.style.display !== 'none';
+  d.style.display = aperto ? 'none' : 'block';
+  const fr = document.getElementById('cp-freccia-' + i); if (fr) fr.textContent = aperto ? '▾' : '▴';
+}
+function cpCambiaPeriodo(v) { cpFiltroGiorni = v ? parseInt(v, 10) : null; renderCarichiPresi(); }
+function cpCambiaControparte(v) { cpFiltroControparte = v || ''; renderCarichiPresi(); }
+function cpStampa(indici) {
+  const r = cpLista().lista;
+  const scelti = (indici && indici.length) ? indici.map(i => r[i]).filter(Boolean) : r;
+  if (!scelti.length) { alert('Nessun carico da stampare.'); return; }
+  const chi = tipoUtente === 'azienda' ? (profiloAzienda.nome || '') : (((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim());
+  const ora = new Date();
+  const pezzi = scelti.map(c => {
+    const f = c.fields;
+    return '<div class="c"><h2>' + cpEsc(f.citta_partenza || '') + ' → ' + cpEsc(f.citta_arrivo || '') + ' <small>' + cpEsc(f.numero_ordine || '') + ' · preso il ' + cpDataOra(f.data_assegnato || f.data_candidatura) + '</small></h2>' + cpScheda(f) + '</div>';
+  }).join('');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i pop-up per questo sito.'); return; }
+  w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>EcoTruckConnect — Carichi presi</title><style>' +
+    ':root{--muted:#555;--border:#ccc;--green:#15803d;--blue:#1d4ed8;} body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .t{font-size:12px;color:#555;margin-bottom:16px;} ' +
+    '.c{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:14px;} h2{font-size:15px;margin:0;} h2 small{font-weight:normal;color:#555;font-size:12px;} a{color:#111;text-decoration:none;} div[style*="background"]{background:#fafafa !important;}' +
+    '</style></head><body><h1>EcoTruckConnect — ' + (tipoUtente === 'azienda' ? 'Carichi presi dai trasportatori' : 'I miei carichi presi') + '</h1>' +
+    '<div class="t">' + cpEsc(chi) + ' · stampato il ' + ora.toLocaleDateString('it-IT') + ' alle ' + ora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + '</div>' + pezzi +
+    '<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
+}
+function cpScaricaCSV() {
+  const r = cpLista().lista;
+  if (!r.length) { alert('Nessun carico da scaricare.'); return; }
+  const az = tipoUtente === 'azienda';
+  const testa = ['Numero ordine', 'Preso il', 'Stato', 'Partenza', 'Arrivo', 'Indirizzo ritiro', 'Indirizzo consegna', 'Destinatario', 'Cellulare destinatario', 'Merce', 'Data carico', 'Importo pattuito', 'Termini di pagamento']
+    .concat(az ? ['Trasportatore', 'Cellulare trasportatore', 'Email trasportatore', 'Indirizzo trasportatore', 'P.IVA trasportatore']
+               : ['Azienda', 'Referente', 'Cellulare azienda', 'Email azienda', 'Sede azienda', 'P.IVA azienda', 'Commissione pagata']);
+  const righe = [testa].concat(r.map(c => {
+    const f = c.fields;
+    const comuni = [f.numero_ordine, cpDataOra(f.data_assegnato || f.data_candidatura), f.stato, f.citta_partenza, f.citta_arrivo, f.indirizzo_ritiro, f.indirizzo_consegna, f.destinatario_nome, f.destinatario_telefono, f.tipo_merce, cpData(f.data_consegna), f.importo_pattuito, f.termini_pagamento];
+    return comuni.concat(az ? [f.assegnato_a_nome || f.bloccato_da_nome, f.assegnato_a_telefono, f.trasportatore_email, f.trasportatore_indirizzo, f.trasportatore_piva]
+                            : [f.nome_azienda, f.azienda_referente, f.telefono_azienda, f.email_azienda, f.azienda_indirizzo, f.azienda_piva, PREZZO]);
+  }));
+  const csv = righe.map(x => x.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'ecotruckconnect-carichi-presi-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ====================================================
+   SUGGERIMENTI SOTTO I CAMPI (29/9/2026) — niente precompilazione
+   (regola di Gerlando): dopo 2-3 lettere compaiono dei suggerimenti presi
+   dai dati d'iscrizione e da quanto l'utente ha già scritto; lui sceglie.
+   ==================================================== */
+let ectComuniCache = null;
+function ectComuni() {
+  if (ectComuniCache) return ectComuniCache;
+  const s = new Set();
+  try { Object.values(window.ECT_CAP || {}).forEach(v => (Array.isArray(v) ? v : [v]).forEach(x => s.add(x))); } catch (e) {}
+  const capo = new Set(['Agrigento','Alessandria','Ancona','Aosta','Arezzo','Ascoli Piceno','Asti','Avellino','Bari','Barletta','Belluno','Benevento','Bergamo','Biella','Bologna','Bolzano','Brescia','Brindisi','Cagliari','Caltanissetta','Campobasso','Caserta','Catania','Catanzaro','Chieti','Como','Cosenza','Cremona','Crotone','Cuneo','Enna','Fermo','Ferrara','Firenze','Foggia','Forlì','Frosinone','Genova','Gorizia','Grosseto','Imperia','Isernia','La Spezia',"L'Aquila",'Latina','Lecce','Lecco','Livorno','Lodi','Lucca','Macerata','Mantova','Massa','Matera','Messina','Milano','Modena','Monza','Napoli','Novara','Nuoro','Oristano','Padova','Palermo','Parma','Pavia','Perugia','Pesaro','Pescara','Piacenza','Pisa','Pistoia','Pordenone','Potenza','Prato','Ragusa','Ravenna','Reggio Calabria',"Reggio nell'Emilia",'Rieti','Rimini','Roma','Rovigo','Salerno','Sassari','Savona','Siena','Siracusa','Sondrio','Taranto','Teramo','Terni','Torino','Trapani','Trento','Treviso','Trieste','Udine','Varese','Venezia','Verbania','Vercelli','Verona','Vibo Valentia','Vicenza','Viterbo']);
+  ectComuniCache = Array.from(s).map(x => { const p = String(x).split('|'); return { testo: p[0], nota: p[1] || '', capo: capo.has(p[0]) }; })
+    .sort((a, b) => (b.capo - a.capo) || a.testo.length - b.testo.length || a.testo.localeCompare(b.testo));
+  return ectComuniCache;
+}
+function ectUnici(arr) { const vis = {}; return arr.filter(x => { const k = String(x.testo || '').trim().toLowerCase(); if (!k || vis[k]) return false; vis[k] = 1; return true; }); }
+function ectMieiCarichi() { return tipoUtente === 'azienda' ? (carichiPubblicatiAzienda || []) : (ultimeCandidatureRaw || []); }
+function ectSede() {
+  const p = profiloAzienda || {};
+  const t = [p.via, [p.cap, p.citta].filter(Boolean).join(' '), p.provincia ? '(' + p.provincia + ')' : ''].filter(Boolean).join(', ').replace(', (', ' (');
+  return p.via ? [{ testo: t, nota: 'la tua sede' }] : [];
+}
+const ECT_SUGG = {
+  'ins-citta-part': { min: 2, fonte: () => ectComuni() },
+  'ins-citta-arr': { min: 2, fonte: () => ectComuni() },
+  'dd-citta': { min: 2, fonte: () => ectComuni() },
+  'ins-indirizzo-ritiro': { min: 3, fonte: () => ectUnici(ectSede().concat(ectMieiCarichi().flatMap(c => [c.fields.indirizzo_ritiro, c.fields.indirizzo_consegna]).filter(Boolean).map(t => ({ testo: t, nota: 'già usato' })))) },
+  'ins-indirizzo-consegna': { min: 3, fonte: () => ectUnici(ectMieiCarichi().flatMap(c => [c.fields.indirizzo_consegna, c.fields.indirizzo_ritiro]).filter(Boolean).map(t => ({ testo: t, nota: 'già usato' })).concat(ectSede())) },
+  'ins-destinatario-nome': { min: 3, fonte: () => ectUnici(ectMieiCarichi().filter(c => c.fields.destinatario_nome).map(c => ({ testo: c.fields.destinatario_nome, nota: c.fields.destinatario_telefono || '', tel: c.fields.destinatario_telefono || '' }))),
+    scelto: s => { const t = document.getElementById('ins-destinatario-telefono'); if (t && s.tel) t.value = s.tel; } },
+  'ins-specifica': { min: 3, fonte: () => ectUnici(ectMieiCarichi().map(c => ({ testo: c.fields.specifica, nota: 'già usato' }))) },
+  'ins-termini-pagamento': { min: 3, fonte: () => ectUnici(ectMieiCarichi().map(c => ({ testo: c.fields.termini_pagamento, nota: 'già usato' })).concat([{ testo: 'Bonifico a 30gg dalla consegna', nota: '' }, { testo: 'Bonifico a 60gg dalla consegna', nota: '' }, { testo: 'Bonifico alla consegna', nota: '' }])) }
+};
+function ectChiudiSugg() { const b = document.getElementById('ect-sugg-box'); if (b) b.remove(); }
+function ectMostraSugg(input) {
+  const cfg = ECT_SUGG[input.id]; if (!cfg) return;
+  const q = input.value.trim().toLowerCase();
+  ectChiudiSugg();
+  if (q.length < cfg.min) return;
+  let lista = [];
+  try { lista = cfg.fonte() || []; } catch (e) { lista = []; }
+  const inizio = lista.filter(x => String(x.testo || '').toLowerCase().startsWith(q));
+  const dentro = lista.filter(x => !String(x.testo || '').toLowerCase().startsWith(q) && String(x.testo || '').toLowerCase().includes(q));
+  const scelti = inizio.concat(dentro).filter(x => String(x.testo).toLowerCase() !== q).slice(0, 8);
+  if (!scelti.length) return;
+  const r = input.getBoundingClientRect();
+  const box = document.createElement('div');
+  box.id = 'ect-sugg-box';
+  box.style.cssText = 'position:absolute;z-index:3000;left:' + (r.left + window.scrollX) + 'px;top:' + (r.bottom + window.scrollY + 4) + 'px;width:' + r.width + 'px;background:#12161f;border:1px solid rgba(59,130,246,0.5);border-radius:10px;box-shadow:0 14px 36px rgba(0,0,0,.5);overflow:hidden;';
+  scelti.forEach(s => {
+    const it = document.createElement('div');
+    it.style.cssText = 'padding:10px 13px;cursor:pointer;font-size:14px;color:#f1f5f9;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,0.05);';
+    it.innerHTML = '<span>' + cpEsc(s.testo) + '</span><span style="color:rgba(241,245,249,.45);font-size:12px;white-space:nowrap;">' + cpEsc(s.nota || '') + '</span>';
+    it.onmouseenter = () => { it.style.background = 'rgba(59,130,246,0.15)'; };
+    it.onmouseleave = () => { it.style.background = ''; };
+    it.onmousedown = ev => {
+      ev.preventDefault();
+      input.value = s.testo;
+      if (cfg.scelto) cfg.scelto(s);
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      ectChiudiSugg();
+    };
+    box.appendChild(it);
+  });
+  document.body.appendChild(box);
+  ectSuggInput = input;
+}
+function ectAttivaSuggerimenti() {
+  Object.keys(ECT_SUGG).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.__ectSugg) return;
+    el.__ectSugg = true;
+    el.setAttribute('autocomplete', 'off');
+    el.addEventListener('input', () => ectMostraSugg(el));
+    el.addEventListener('blur', () => setTimeout(function () { if (ectSuggInput === el) { ectChiudiSugg(); ectSuggInput = null; } }, 150));
+    el.addEventListener('keydown', e => { if (e.key === 'Escape') ectChiudiSugg(); });
+  });
+}
+document.addEventListener('DOMContentLoaded', ectAttivaSuggerimenti);
+let ectSuggInput = null;
+window.addEventListener('scroll', function () {
+  const b = document.getElementById('ect-sugg-box');
+  if (!b || !ectSuggInput) return;
+  const r = ectSuggInput.getBoundingClientRect();
+  b.style.left = (r.left + window.scrollX) + 'px'; b.style.top = (r.bottom + window.scrollY + 4) + 'px'; b.style.width = r.width + 'px';
+}, { passive: true });
+
+/* il report "carichi presi" si aggiorna ogni volta che si aggiornano storico/fatture */
+(function () {
+  const orig = renderTabelleFatture;
+  renderTabelleFatture = function () { const r = orig.apply(this, arguments); try { renderCarichiPresi(); } catch (e) { console.error(e); } return r; };
+})();
 
 function stampaConTimbro() {
   const ora = new Date();
