@@ -293,6 +293,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
 .notif-bell-item:last-child{border-bottom:none;}
 .notif-bell-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
 .notif-cliccabile{cursor:pointer;transition:background 0.15s;}
+@media screen and (max-width: 700px){
+  .cp-riga{display:block;border-bottom:1px solid rgba(255,255,255,0.05);padding:4px 0;}
+  .cp-riga td{display:block;padding:2px 0 !important;white-space:normal !important;}
+  .cp-card{padding:12px !important;}
+}
 .notif-cliccabile:hover,.notif-cliccabile:active{background:rgba(59,130,246,0.10);}
 .filtro-periodo-voce:hover{background:rgba(255,255,255,0.08);}
 .filtro-periodo-voce.attivo{background:rgba(59,130,246,0.15);color:#93c5fd;font-weight:600;}
@@ -2078,24 +2083,35 @@ function renderCampanellino() {
     return;
   }
 
+  const dataOra = d => d ? new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) + ' alle ' + new Date(d).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '—';
   lista.innerHTML = aggiornamenti.map(c => {
     const f = c.fields;
     const stato = (f.stato || '').toUpperCase();
-    const testoStato = stato === 'PRESO' ? '✅ Preso' : stato.includes('PAGAMENTO') ? '⏳ In pagamento' : stato === 'DISPONIBILE' ? '📦 Pubblicato — in attesa di un trasportatore' : stato;
-    const chi = f.bloccato_da_nome || '—';
-    const perChi = stato === 'PRESO' ? ` da <b>${f.assegnato_a_nome || chi}</b>` : '';
-    const dataRif = f.data_assegnato || f.data_pubblicazione;
-    const data = dataRif ? new Date(dataRif).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    const azioneRiga = stato === 'PRESO'
-      ? `document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');`
-      : `document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');`;
-    return `<div class="notif-bell-item notif-cliccabile" onclick="${azioneRiga}">
-      <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
-      <div style="color:var(--muted);margin-bottom:6px;">${testoStato}${perChi} · ${data}</div>
-      ${stato === 'PRESO' && f.assegnato_a_telefono ? `<div style="margin-bottom:6px;font-size:12px;">📞 <a href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:none;">${f.assegnato_a_telefono}</a></div>` : ''}
-      ${stato === 'PRESO'
-        ? `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');">📋 Apri la scheda completa</button>`
-        : `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>`}
+    const preso = stato === 'PRESO';
+    let riga;
+    if (preso) riga = `✅ <b>Preso da ${escAttr(f.assegnato_a_nome || f.bloccato_da_nome || 'un trasportatore')}</b> il ${dataOra(f.data_assegnato)}`;
+    else if (stato.includes('PAGAMENTO')) riga = `⏳ Un trasportatore lo sta prendendo (pagamento in corso)`;
+    else if (stato === 'ANNULLATO') riga = `✖️ Annullato`;
+    else if (stato === 'RIMBORSATO') riga = `↩️ Annullato e rimborsato`;
+    else riga = `📦 Pubblicato il ${dataOra(f.data_pubblicazione)} · in attesa di un trasportatore`;
+    const km = kmTesto(f);
+    const dataCarico = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '—';
+    const apri = `document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');`;
+    return `<div class="notif-bell-item${preso ? ' notif-cliccabile' : ''}"${preso ? ` onclick="${apri}"` : ''}>
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:3px;">
+        <span style="font-weight:700;">${escAttr(f.citta_partenza || '—')} → ${escAttr(f.citta_arrivo || '—')}</span>
+        ${preso && !f.notifica_letta ? '<span style="background:var(--green);color:#04210f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">PRESO</span>' : ''}
+      </div>
+      <div style="color:var(--muted);margin-bottom:6px;">${km ? '🛣️ ' + km + ' · ' : ''}📅 ${dataCarico} · ${escAttr(merceTesto(f))}</div>
+      ${requisitiHTML(f, 11)}
+      <div style="margin-bottom:8px;font-size:12px;">${riga}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euro(f.importo_pattuito) : ''}</span>
+        ${preso ? `<span style="display:flex;gap:6px;align-items:center;">
+          ${f.assegnato_a_telefono ? `<a class="btn-cap" href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">📞 Chiama</a>` : ''}
+          <button class="btn-cap" style="padding:4px 12px;font-size:12px;" onclick="event.stopPropagation();${apri}">Vedi ›</button>
+        </span>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -3335,7 +3351,7 @@ function cpLista() {
   if (cpFiltroControparte) l = l.filter(c => cpControparte(c.fields) === cpFiltroControparte);
   return { base: base, lista: l.sort((a, b) => String(b.fields.data_assegnato || b.fields.data_candidatura || '').localeCompare(String(a.fields.data_assegnato || a.fields.data_candidatura || ''))) };
 }
-function cpRiga(k, v) { return '<tr><td style="padding:5px 10px 5px 0;color:var(--muted);font-size:12px;white-space:nowrap;vertical-align:top;">' + k + '</td><td style="padding:5px 0;font-size:13px;">' + v + '</td></tr>'; }
+function cpRiga(k, v) { return '<tr class="cp-riga"><td class="cp-k" style="padding:5px 10px 5px 0;color:var(--muted);font-size:12px;white-space:nowrap;vertical-align:top;">' + k + '</td><td class="cp-v" style="padding:5px 0;font-size:13px;overflow-wrap:anywhere;word-break:break-word;">' + v + '</td></tr>'; }
 function cpBlocco(titolo, righe) { return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;">' + titolo + '</div><table style="width:100%;border-collapse:collapse;">' + righe.join('') + '</table></div>'; }
 function cpScheda(f) {
   if ((f.stato || '').toUpperCase() !== 'PRESO') {
