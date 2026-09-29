@@ -867,7 +867,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div class="card">
           <div class="card-icon">🧾</div><h3>Riepilogo Movimenti</h3>
           <p>Ogni accaparramento registrato, con data e commissione pagata. È un riepilogo: non sostituisce la fattura fiscale.</p>
-          <div class="card-num green" id="c-guad">—</div><div class="card-sub">guadagnato questo mese</div>
+          <div class="card-num green" id="c-guad">—</div><div class="card-sub">da incassare questo mese</div>
         </div>
       </div>
       <div class="cards" id="cards-riepilogo-azienda" style="display:none;">
@@ -1766,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       ultimeCandidature = [
         { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
-        { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', stato:'RIMBORSATO' } }
+        { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), data_assegnato:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', numero_ordine:'ORD-PREVIEW2', stato:'RIMBORSATO', citta_partenza:'Sciacca', cap_partenza:'92019', citta_arrivo:'Trapani', cap_arrivo:'91100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 60gg dalla consegna', indirizzo_ritiro:'Contrada Muciare, 92019 Sciacca (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Edil Trapani Srl', destinatario_telefono:'0923 445566', nome_azienda:'Sciacca Costruzioni Srl', azienda_referente:'Anna Ferrara', telefono_azienda:'338 7776655', email_azienda:'info@sciaccacostruzioni.it', azienda_indirizzo:'Via Roma 3, 92019 Sciacca (AG)', azienda_piva:'02345678901' } }
       ];
       renderCarichi(ultimiCarichi);
       renderCalendarioMensile();
