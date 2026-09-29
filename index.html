@@ -1767,7 +1767,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', km_tratta:163, tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
       ];
       ultimeCandidature = [
-        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
+        { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Licata', cap_partenza:'92027', citta_arrivo:'Gela', cap_arrivo:'93012', km_tratta:34, tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Palma 12, 92027 Licata (AG) — capannone 3', indirizzo_consegna:'Via Venezia 40, 93012 Gela (CL)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'0933 556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
         { id:'candpreview2', fields:{ data_candidatura:new Date(Date.now()-86400000).toISOString(), data_assegnato:new Date(Date.now()-86400000).toISOString(), richiesta_id:'ORD-PREVIEW2', numero_ordine:'ORD-PREVIEW2', stato:'RIMBORSATO', citta_partenza:'Sciacca', cap_partenza:'92019', citta_arrivo:'Trapani', cap_arrivo:'91100', tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 60gg dalla consegna', indirizzo_ritiro:'Contrada Muciare, 92019 Sciacca (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Edil Trapani Srl', destinatario_telefono:'0923 445566', nome_azienda:'Sciacca Costruzioni Srl', azienda_referente:'Anna Ferrara', telefono_azienda:'338 7776655', email_azienda:'info@sciaccacostruzioni.it', azienda_indirizzo:'Via Roma 3, 92019 Sciacca (AG)', azienda_piva:'02345678901' } }
       ];
       renderCarichi(ultimiCarichi);
@@ -2374,8 +2374,7 @@ function renderCardCarico(c, prezzoMax) {
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
       ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">${euro(f.importo_pattuito)}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
       <span style="display:flex;gap:6px;">
-        <a class="btn-vedi-dettagli" href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" style="text-decoration:none;">🗺️ Tratta su Maps</a>
-        <button class="btn-vedi-dettagli" data-id="${c.id}">Vedi e prendi ›</button>
+        <button class="btn-vedi-dettagli" data-id="${c.id}">Prendi ›</button>
       </span>
     </div>
   </div>`;
@@ -2415,7 +2414,6 @@ function renderDettaglioCarico(c) {
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">🚚 ${mezzoRichiesto}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">📋 ${autRichiesta}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">💳 ${f.termini_pagamento || 'Termini non specificati'}</span>
-        <a href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);text-decoration:none;">🗺️ Tratta su Google Maps</a>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">🔒 Dopo il pagamento vedrai indirizzi precisi e contatti dell'azienda; l'azienda vedrà i tuoi dati di contatto.</div>
       <button class="btn-pubblica" ${disabilitato} style="width:100%;justify-content:center;" onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${escAttr(partenza)}','${escAttr(arrivo)}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${escAttr(merce)}','${escAttr(f.importo_pattuito||'')}','${escAttr(f.termini_pagamento||'')}')">${testoBtn}</button>
@@ -3340,6 +3338,10 @@ function cpLista() {
 function cpRiga(k, v) { return '<tr><td style="padding:5px 10px 5px 0;color:var(--muted);font-size:12px;white-space:nowrap;vertical-align:top;">' + k + '</td><td style="padding:5px 0;font-size:13px;">' + v + '</td></tr>'; }
 function cpBlocco(titolo, righe) { return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;">' + titolo + '</div><table style="width:100%;border-collapse:collapse;">' + righe.join('') + '</table></div>'; }
 function cpScheda(f) {
+  if ((f.stato || '').toUpperCase() !== 'PRESO') {
+    return '<div style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;">' +
+      '↩️ Commissione rimborsata: questo carico non è stato assegnato a te, quindi indirizzi e contatti non sono disponibili.</div>';
+  }
   const trasporto = cpBlocco('🚚 Per il trasporto', [
     cpRiga('📍 Ritiro', cpVal(f.indirizzo_ritiro || (f.citta_partenza ? f.citta_partenza + (f.cap_partenza ? ' (' + f.cap_partenza + ')' : '') : ''))),
     cpRiga('🏁 Consegna', cpVal(f.indirizzo_consegna || (f.citta_arrivo ? f.citta_arrivo + (f.cap_arrivo ? ' (' + f.cap_arrivo + ')' : '') : ''))),
@@ -3406,14 +3408,14 @@ function renderCarichiPresi() {
     return '<div class="cp-card" style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface);">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;" onclick="cpApri(' + i + ')">' +
         '<div><div style="font-weight:700;font-size:15px;">' + cpEsc(f.citta_partenza || '—') + ' → ' + cpEsc(f.citta_arrivo || '—') + '</div>' +
-        '<div style="font-size:12px;color:var(--muted);">🕐 Preso il ' + cpDataOra(f.data_assegnato || f.data_candidatura) + ' · ' + (tipoUtente === 'azienda' ? '🚛 ' : '🏢 ') + cpEsc(cpControparte(f)) + ' · ' + cpEsc(f.numero_ordine || '') + '</div></div>' +
+        '<div style="font-size:12px;color:var(--muted);">🕐 Preso il ' + cpDataOra(f.data_assegnato || f.data_candidatura) + ' · ' + (stato === 'PRESO' ? (tipoUtente === 'azienda' ? '🚛 ' : '🏢 ') + cpEsc(cpControparte(f)) + ' · ' : '') + cpEsc(f.numero_ordine || '') + '</div></div>' +
         '<div style="display:flex;align-items:center;gap:10px;"><span class="badge-stato ' + (stato === 'PRESO' ? 's-ok' : 's-wait') + '">' + cpEsc(stato) + '</span><b style="color:var(--green);">' + (f.importo_pattuito ? euro(f.importo_pattuito) : '') + '</b><span id="cp-freccia-' + i + '" style="color:var(--muted);">▾</span></div>' +
       '</div>' +
       '<div id="cp-det-' + i + '" style="display:none;">' + cpScheda(f) +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
+        (stato !== 'PRESO' ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
           '<a class="btn-cap" href="' + cpMaps(f) + '" target="_blank" rel="noopener" style="font-size:12px;text-decoration:none;">🗺️ Apri il percorso su Google Maps</a>' +
           '<button class="btn-cap" style="font-size:12px;" onclick="cpStampa([' + i + '])">🖨️ Stampa questo carico</button>' +
-        '</div>' +
+        '</div>') +
       '</div>' +
     '</div>';
   }).join('');
@@ -3558,8 +3560,7 @@ function renderCampanellinoTrasportatore() {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euro(f.importo_pattuito) : ''}</span>
         <span style="display:flex;gap:6px;">
-          <a class="btn-cap" style="padding:4px 10px;font-size:11px;text-decoration:none;" href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🗺️ Maps</a>
-          <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();apriCaricoDaCampanella('${c.id}')">Vedi e prendi ›</button>
+          <button class="btn-cap" style="padding:4px 12px;font-size:12px;" onclick="event.stopPropagation();apriCaricoDaCampanella('${c.id}')">Prendi ›</button>
         </span>
       </div>
     </div>`;
