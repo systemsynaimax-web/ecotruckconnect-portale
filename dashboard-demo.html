@@ -94,6 +94,8 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .wrap{max-width:1400px;margin:0 auto;padding:32px;}
 .sec-title{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin:36px 0 14px;}
 .sec-title:first-child{margin-top:0;}
+.st-btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);}
+.st-btn:hover{background:var(--blue2);}
 .toolbar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
 .tool-btn{
   background:var(--blue);color:#fff;border:none;border-radius:10px;
@@ -456,6 +458,41 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="tg-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
+  <div class="sec-title" id="storico-sezione">📚 Storico movimenti — archivio di tutto</div>
+  <div class="section">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+      <select id="st-periodo" onchange="stCambiaPeriodo()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="1">📅 Oggi</option>
+        <option value="7">📅 Ultimi 7 giorni</option>
+        <option value="15">📅 Ultimi 15 giorni</option>
+        <option value="30" selected>📅 Ultimi 30 giorni</option>
+        <option value="0">📅 Tutto</option>
+        <option value="dal">📅 Dal … al …</option>
+      </select>
+      <span id="st-date" style="display:none;gap:6px;align-items:center;">
+        <input type="date" id="st-dal" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
+        <span style="color:var(--muted);font-size:12px;">→</span>
+        <input type="date" id="st-al" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
+      </span>
+      <select id="st-stato" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Tutti i carichi</option>
+        <option value="PRESO">Solo presi e pagati</option>
+        <option value="DISPONIBILE">Solo pubblicati, in attesa</option>
+        <option value="ALTRO">Annullati / rimborsati</option>
+      </select>
+      <input id="st-cerca" oninput="renderStorico()" placeholder="🔎 Scrivi il nome del trasportatore o dell'azienda, ordine, città, P.IVA…" style="flex:1;min-width:220px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <div id="st-scelto"></div>
+      <span style="flex:1;"></span>
+      <button class="st-btn" onclick="aggiornaOra()">🔄 Aggiorna</button>
+      <button class="st-btn" onclick="stStampa()">🖨️ Stampa</button>
+      <button class="st-btn" onclick="stCSV()">⬇️ CSV</button>
+    </div>
+    <div id="st-contatori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+    <div id="st-lista"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
   <div class="sec-title">🕓 Attività Recente — cerca, scarica, stampa</div>
   <div class="section">
     <input type="text" class="feed-search" id="feed-cerca" placeholder="🔍 Cerca per nome azienda o trasportatore..." oninput="filtraFeed()">
@@ -761,6 +798,18 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       { id:'demo-l3', createdTime:g(-2,18), fields:{ tipo_attivita:'Modifica Dati', titolo_attivita:'Anagrafica aggiornata', descrizione_attivita:'Cambiato numero di telefono', autore:'Giuseppe Lo Bue (DEMO)' } }
     ]
   };
+  const EXTRA = {
+    'demo-c1': { km_tratta:128, importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', azienda_referente:'Paolo Belfiore', telefono_azienda:'0922 000000', email_azienda:'info@belfiore-esempio.it', azienda_piva:'00000000001', azienda_indirizzo:'Via Roma 10, 92026 Favara (AG)', tipo_mezzo_richiesto:['Furgone frigo'] },
+    'demo-c2': { km_tratta:163, importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', telefono_azienda:'0922 000001', email_azienda:'info@edilsud-esempio.it', tipo_mezzo_richiesto:['Bilico cassonato'] },
+    'demo-c3': { km_tratta:221, importo_pattuito:'350', termini_pagamento:'Bonifico a 30gg', azienda_referente:'Paolo Belfiore', telefono_azienda:'0922 000000', email_azienda:'info@belfiore-esempio.it', azienda_piva:'00000000001', azienda_indirizzo:'Via Roma 10, 92026 Favara (AG)',
+      assegnato_a_nome: 'Giuseppe Lo Bue (DEMO)', assegnato_a_telefono:'333 0000002', trasportatore_email:'g.lobue@esempio.it', bloccato_da_id:'g.lobue@esempio.it', trasportatore_indirizzo:'Via Nazionale 5, 92024 Canicattì (AG)', trasportatore_piva:'00000000002',
+      indirizzo_ritiro:'Contrada Rinazzo, 92024 Canicattì (AG)', indirizzo_consegna:'Via Marsala 20, 91100 Trapani (TP)', destinatario_nome:'Magazzini Trapani Srl (DEMO)', destinatario_telefono:'0923 000000', tipo_mezzo_richiesto:['Bilico cassonato'] },
+    'demo-c4': { km_tratta:167, importo_pattuito:'260', termini_pagamento:'Bonifico a 30gg', telefono_azienda:'0922 000002', email_azienda:'info@ecorecuperi-esempio.it', azienda_piva:'00000000003', azienda_indirizzo:'Via Palma 3, 92027 Licata (AG)',
+      assegnato_a_nome: 'Marco Russo (DEMO)', assegnato_a_telefono:'333 0000001', trasportatore_email:'marco.russo@esempio.it', bloccato_da_id:'marco.russo@esempio.it', trasportatore_indirizzo:'Via Agrigento 8, 92026 Favara (AG)', trasportatore_piva:'00000000000',
+      indirizzo_ritiro:'Zona Industriale, 92027 Licata (AG)', indirizzo_consegna:'Via Elorina 50, 96100 Siracusa (SR)', destinatario_nome:'Acciaierie Siracusa (DEMO)', destinatario_telefono:'0931 000000', tipo_mezzo_richiesto:['Cassone scarrabile'] },
+    'demo-c5': { km_tratta:320, importo_pattuito:'400', termini_pagamento:'Bonifico a 60gg', telefono_azienda:'0922 000002', email_azienda:'info@ecorecuperi-esempio.it', tipo_mezzo_richiesto:['Motrice centinata'] }
+  };
+  DEMO.carichi.forEach(c => { const x = EXTRA[c.id] || {}; Object.keys(x).forEach(k => { if (c.fields[k] === undefined) c.fields[k] = x[k]; }); });
   const approvati = new Set();
   function risposta(obj){ return Promise.resolve(new Response(JSON.stringify(obj), { status:200, headers:{'Content-Type':'application/json'} })); }
   window.fetch = function(url, opts){
@@ -923,6 +972,7 @@ async function caricaDashboard() {
     renderFeed(tuttiCarichi);
     try { renderTelegramCarichi(); } catch (e) {}
     renderAziende(tuttiCarichi);
+    try { renderStorico(); } catch (e) { console.error('Storico:', e); }
   } catch (e) {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
@@ -1538,19 +1588,24 @@ function apriDettaglioCarico(id) {
     `<div class="carico-tratta" style="font-size:18px;margin-bottom:6px;">${escD(f.citta_partenza||'—')} → ${escD(f.citta_arrivo||'—')}</div>
      <span class="carico-stato ${classeStato(f.stato)}">${escD(f.stato||'—')}</span>` +
     '<div class="dett-sez">Il carico</div>' + righeD([
-      ['Numero ordine', f.numero_ordine], ['CAP partenza', f.cap_partenza], ['CAP arrivo', f.cap_arrivo],
+      ['Numero ordine', f.numero_ordine], ['CAP partenza', f.cap_partenza], ['CAP arrivo', f.cap_arrivo], ['Km della tratta', f.km_tratta ? f.km_tratta + ' km' : ''],
       ['Data del carico', dataOraD(f.data_consegna)], ['Tipo merce', f.tipo_merce], ['Specifica', f.specifica],
       ['Note', f.note], ['Mezzo richiesto', f.tipo_mezzo_richiesto], ['Autorizzazione richiesta', f.autorizzazione_richiesta],
       ['Rifiuto', f.tipo_rifiuto], ['Codice CER', f.codice_cer], ['Pericoloso', f.pericoloso]]) +
+    '<div class="dett-sez">Ritiro e consegna (visibili al trasportatore solo dopo il pagamento)</div>' + righeD([
+      ['Indirizzo di ritiro', f.indirizzo_ritiro], ['Indirizzo di consegna', f.indirizzo_consegna],
+      ['A chi consegnare', f.destinatario_nome], ['Cellulare di chi riceve', f.destinatario_telefono]]) +
     '<div class="dett-sez">Prezzo e pagamenti</div>' + righeD([
       ['Importo pattuito (trasporto)', f.importo_pattuito ? euro(f.importo_pattuito) : ''], ['Termini di pagamento', f.termini_pagamento],
       ['Commissione piattaforma', String(f.stato||'').toUpperCase() === 'PRESO' ? euro(20) + ' — pagata dal trasportatore' : 'non ancora dovuta']]) +
     '<div class="dett-sez">Azienda</div>' + righeD([
-      ['Azienda', f.nome_azienda], ['Email', f.email_azienda], ['Telefono', f.telefono_azienda],
-      ['Pubblicato il', dataOraD(f.data_pubblicazione || c.createdTime)]]) +
+      ['Azienda', f.nome_azienda], ['Referente', f.azienda_referente], ['Email', f.email_azienda], ['Telefono', f.telefono_azienda],
+      ['Sede', f.azienda_indirizzo], ['P.IVA', f.azienda_piva], ['Pubblicato il', dataOraD(f.data_pubblicazione || f.createdTime || c.createdTime)],
+      ['Pagato al trasportatore (segnato dall\'azienda)', f.pagato_azienda ? 'Sì, il ' + dataOraD(f.data_pagato_azienda) : '']]) +
     '<div class="dett-sez">Trasportatore</div>' + righeD([
-      ['Nome', f.assegnato_a_nome || f.bloccato_da_nome], ['Email', f.bloccato_da_id], ['Telefono', f.assegnato_a_telefono],
-      ['Preso il', dataOraD(f.data_assegnato)]]) +
+      ['Nome', f.assegnato_a_nome || f.bloccato_da_nome], ['Email', f.trasportatore_email || f.bloccato_da_id], ['Telefono', f.assegnato_a_telefono],
+      ['Indirizzo', f.trasportatore_indirizzo], ['P.IVA', f.trasportatore_piva], ['Preso il', dataOraD(f.data_assegnato)],
+      ['Incassato (segnato dal trasportatore)', f.incassato_trasportatore ? 'Sì, il ' + dataOraD(f.data_incassato) : '']]) +
     `<div style="font-size:11px;color:var(--muted);margin-top:14px;">Codice interno: ${escD(c.id)} · Dati letti da Airtable il ${new Date().toLocaleString('it-IT')}</div>`;
   document.getElementById('modal-bg').classList.add('open');
 }
@@ -1913,6 +1968,148 @@ function stampaConTimbro() {
     ora.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('timbro-stampa').textContent = testo;
   window.print();
+}
+
+/* ====================================================
+   STORICO MOVIMENTI (29/9) — archivio di tutti i carichi, di tutte le
+   aziende e di tutti i trasportatori, con data e ora. Filtri: periodo,
+   stato, ricerca libera, e un'azienda o un trasportatore scelto con un clic
+   (da li' si stampa tutto quello che lo riguarda). Serve come prova in
+   caso di contestazioni.
+   ==================================================== */
+let stScelto = null; // { tipo: 'trasportatore' | 'azienda', nome: '...' }
+function stNomeTrasp(f) { return f.assegnato_a_nome || f.bloccato_da_nome || ''; }
+function stHaTrasp(f) { const s = String(f.stato || '').toUpperCase(); return s === 'PRESO' || s === 'RIMBORSATO'; }
+function stDataRif(f, c) { return (stHaTrasp(f) && f.data_assegnato) ? f.data_assegnato : (f.data_pubblicazione || f.createdTime || (c && c.createdTime) || ''); }
+function stDO(d) {
+  if (!d) return '—';
+  const x = new Date(d);
+  return x.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + x.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+}
+function stCambiaPeriodo() {
+  const v = document.getElementById('st-periodo').value;
+  document.getElementById('st-date').style.display = v === 'dal' ? 'inline-flex' : 'none';
+  renderStorico();
+}
+function stIntervallo() {
+  const v = document.getElementById('st-periodo').value;
+  if (v === 'dal') {
+    const dal = document.getElementById('st-dal').value, al = document.getElementById('st-al').value;
+    return { da: dal ? new Date(dal + 'T00:00:00') : null, a: al ? new Date(al + 'T23:59:59') : null, testo: 'dal ' + (dal ? new Date(dal).toLocaleDateString('it-IT') : '…') + ' al ' + (al ? new Date(al).toLocaleDateString('it-IT') : '…') };
+  }
+  const g = parseInt(v, 10);
+  if (!g) return { da: null, a: null, testo: 'tutto' };
+  const da = new Date(); da.setHours(0, 0, 0, 0); da.setDate(da.getDate() - (g - 1));
+  return { da, a: null, testo: g === 1 ? 'oggi' : 'ultimi ' + g + ' giorni' };
+}
+function stScegli(tipo, nome) { stScelto = { tipo, nome }; renderStorico(); document.getElementById('storico-sezione').scrollIntoView({ behavior: 'smooth' }); }
+function stTogliScelto() { stScelto = null; renderStorico(); }
+function stFiltrati() {
+  const iv = stIntervallo();
+  const stato = document.getElementById('st-stato').value;
+  const q = (document.getElementById('st-cerca').value || '').trim().toLowerCase();
+  return (tuttiCarichi || []).filter(c => {
+    const f = c.fields;
+    const s = String(f.stato || '').toUpperCase();
+    if (stato === 'PRESO' && s !== 'PRESO') return false;
+    if (stato === 'DISPONIBILE' && s !== 'DISPONIBILE' && !s.includes('PAGAMENTO')) return false;
+    if (stato === 'ALTRO' && s !== 'ANNULLATO' && s !== 'RIMBORSATO') return false;
+    const d = new Date(stDataRif(f, c));
+    if (iv.da && !(d >= iv.da)) return false;
+    if (iv.a && !(d <= iv.a)) return false;
+    if (stScelto) {
+      if (stScelto.tipo === 'azienda' && (f.nome_azienda || '') !== stScelto.nome) return false;
+      if (stScelto.tipo === 'trasportatore' && (!stHaTrasp(f) || stNomeTrasp(f) !== stScelto.nome)) return false;
+    }
+    if (q) {
+      const tutto = [f.nome_azienda, f.email_azienda, f.azienda_piva, stHaTrasp(f) ? stNomeTrasp(f) : '', stHaTrasp(f) ? f.bloccato_da_id : '', stHaTrasp(f) ? f.trasportatore_piva : '',
+        f.numero_ordine, f.citta_partenza, f.citta_arrivo, f.tipo_merce].join(' ').toLowerCase();
+      if (tutto.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort((a, b) => String(stDataRif(b.fields, b)).localeCompare(String(stDataRif(a.fields, a))));
+}
+function renderStorico() {
+  const box = document.getElementById('st-lista'); if (!box) return;
+  const lista = stFiltrati();
+  const presi = lista.filter(c => String(c.fields.stato || '').toUpperCase() === 'PRESO');
+  const pubblicati = lista.length;
+  const trasp = new Set(presi.map(c => stNomeTrasp(c.fields)).filter(Boolean));
+  const az = new Set(lista.map(c => c.fields.nome_azienda).filter(Boolean));
+  const valoreTrasporti = presi.reduce((t, c) => t + (parseFloat(String(c.fields.importo_pattuito || '0').replace(',', '.')) || 0), 0);
+  const card = (n, t, col) => `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px;"><div style="font-size:22px;font-weight:800;color:${col || 'var(--text)'};">${n}</div><div style="font-size:11px;color:var(--muted);">${t}</div></div>`;
+  document.getElementById('st-contatori').innerHTML =
+    card(pubblicati, 'carichi nel periodo') + card(presi.length, 'presi e pagati', 'var(--green)') +
+    card(euro(presi.length * 20), 'commissioni 20 € incassate', 'var(--green)') + card(euro(valoreTrasporti), 'valore dei trasporti presi') +
+    card(az.size, 'aziende') + card(trasp.size, 'trasportatori');
+  document.getElementById('st-scelto').innerHTML = stScelto
+    ? `<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:20px;padding:5px 12px;font-size:13px;">${stScelto.tipo === 'azienda' ? '🏢' : '🚛'} Solo: <b>${escD(stScelto.nome)}</b> <span style="cursor:pointer;font-weight:700;" onclick="stTogliScelto()">✕</span></span>`
+    : '<span style="font-size:12px;color:var(--muted);">Clicca il nome di un\'azienda o di un trasportatore per vedere solo i suoi carichi e stamparli.</span>';
+  if (!lista.length) { box.innerHTML = '<div class="feed-empty">Nessun movimento in questo periodo.</div>'; return; }
+  box.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px;">' +
+    '<tr style="text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">' +
+    '<th style="padding:8px 6px;">Pubblicato il</th><th style="padding:8px 6px;">Azienda</th><th style="padding:8px 6px;">Tratta</th><th style="padding:8px 6px;">Merce</th><th style="padding:8px 6px;">Prezzo</th><th style="padding:8px 6px;">Stato</th><th style="padding:8px 6px;">Trasportatore</th><th style="padding:8px 6px;">Preso il</th><th style="padding:8px 6px;">20 €</th><th></th></tr>' +
+    lista.map(c => {
+      const f = c.fields; const s = String(f.stato || '').toUpperCase();
+      const nomeT = stHaTrasp(f) ? stNomeTrasp(f) : '';
+      return `<tr style="border-top:1px solid var(--border);">
+        <td style="padding:8px 6px;white-space:nowrap;">${stDO(f.data_pubblicazione || f.createdTime || c.createdTime)}</td>
+        <td style="padding:8px 6px;">${f.nome_azienda ? `<a href="javascript:void(0)" onclick="stScegli('azienda', ${JSON.stringify(f.nome_azienda).replace(/"/g, '&quot;')})" style="color:var(--blue);text-decoration:none;">${escD(f.nome_azienda)}</a>` : '—'}</td>
+        <td style="padding:8px 6px;">${escD(f.citta_partenza || '—')} → ${escD(f.citta_arrivo || '—')}${f.km_tratta ? `<div style="color:var(--muted);font-size:11px;">${escD(f.km_tratta)} km</div>` : ''}</td>
+        <td style="padding:8px 6px;">${escD(f.tipo_merce || '—')}</td>
+        <td style="padding:8px 6px;white-space:nowrap;">${f.importo_pattuito ? euro(f.importo_pattuito) : '—'}</td>
+        <td style="padding:8px 6px;"><span class="carico-stato ${classeStato(f.stato)}">${escD(f.stato || '—')}</span></td>
+        <td style="padding:8px 6px;">${nomeT ? `<a href="javascript:void(0)" onclick="stScegli('trasportatore', ${JSON.stringify(nomeT).replace(/"/g, '&quot;')})" style="color:var(--blue);text-decoration:none;">${escD(nomeT)}</a>` : '—'}</td>
+        <td style="padding:8px 6px;white-space:nowrap;">${stHaTrasp(f) ? stDO(f.data_assegnato) : '—'}</td>
+        <td style="padding:8px 6px;white-space:nowrap;">${s === 'PRESO' ? '✅ pagati' : s === 'RIMBORSATO' ? '↩️ rimborsati' : '—'}</td>
+        <td style="padding:8px 6px;"><button class="st-btn" onclick="apriDettaglioCarico('${c.id}')" style="padding:4px 10px;font-size:11px;">Vedi ›</button></td>
+      </tr>`;
+    }).join('') + '</table></div>';
+}
+function stRigheEsportabili() {
+  return stFiltrati().map(c => {
+    const f = c.fields; const t = stHaTrasp(f);
+    return {
+      'Pubblicato il': stDO(f.data_pubblicazione || f.createdTime || c.createdTime), 'Ordine': f.numero_ordine || '', 'Stato': f.stato || '',
+      'Azienda': f.nome_azienda || '', 'Referente azienda': f.azienda_referente || '', 'Telefono azienda': f.telefono_azienda || '', 'Email azienda': f.email_azienda || '', 'Sede azienda': f.azienda_indirizzo || '', 'P.IVA azienda': f.azienda_piva || '',
+      'Partenza': f.citta_partenza || '', 'Arrivo': f.citta_arrivo || '', 'Km': f.km_tratta || '', 'Data del carico': f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT') : '',
+      'Merce': f.tipo_merce || '', 'Mezzo': [].concat(f.tipo_mezzo_richiesto || []).join(', '), 'Prezzo trasporto': f.importo_pattuito || '', 'Termini': f.termini_pagamento || '',
+      'Ritiro': t ? (f.indirizzo_ritiro || '') : '', 'Consegna': t ? (f.indirizzo_consegna || '') : '', 'A chi': t ? (f.destinatario_nome || '') : '', 'Cellulare destinatario': t ? (f.destinatario_telefono || '') : '',
+      'Trasportatore': t ? stNomeTrasp(f) : '', 'Telefono trasportatore': t ? (f.assegnato_a_telefono || '') : '', 'Email trasportatore': t ? (f.trasportatore_email || f.bloccato_da_id || '') : '', 'Indirizzo trasportatore': t ? (f.trasportatore_indirizzo || '') : '', 'P.IVA trasportatore': t ? (f.trasportatore_piva || '') : '',
+      'Preso il': t ? stDO(f.data_assegnato) : '', 'Commissione 20 €': String(f.stato || '').toUpperCase() === 'PRESO' ? 'pagata' : (String(f.stato || '').toUpperCase() === 'RIMBORSATO' ? 'rimborsata' : '')
+    };
+  });
+}
+function stCSV() {
+  const righe = stRigheEsportabili(); if (!righe.length) { alert('Nessun movimento da scaricare in questo periodo.'); return; }
+  const col = Object.keys(righe[0]);
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = '\ufeff' + [col.map(q).join(';')].concat(righe.map(r => col.map(k => q(r[k])).join(';'))).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'storico-movimenti' + (stScelto ? '-' + stScelto.nome.replace(/[^\w]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function stStampa() {
+  const righe = stRigheEsportabili(); if (!righe.length) { alert('Nessun movimento da stampare in questo periodo.'); return; }
+  const iv = stIntervallo();
+  const presi = righe.filter(r => r['Commissione 20 €'] === 'pagata').length;
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const blocchi = righe.map(r => `<div class="c"><div class="t">${esc(r['Partenza'])} → ${esc(r['Arrivo'])}${r['Km'] ? ' · ' + esc(r['Km']) + ' km' : ''} <span class="s">${esc(r['Stato'])}</span></div>
+    <table>${Object.keys(r).filter(k => r[k] !== '' && k !== 'Partenza' && k !== 'Arrivo' && k !== 'Km' && k !== 'Stato').map(k => `<tr><td class="k">${esc(k)}</td><td>${esc(r[k])}</td></tr>`).join('')}</table></div>`).join('');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Storico movimenti EcoTruckConnect</title><style>
+    body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .sub{font-size:12px;color:#555;margin-bottom:14px;}
+    .c{border:1px solid #ccc;border-radius:6px;padding:10px 12px;margin-bottom:12px;page-break-inside:avoid;} .t{font-weight:bold;font-size:14px;margin-bottom:6px;}
+    .s{font-size:11px;border:1px solid #999;border-radius:10px;padding:1px 8px;margin-left:6px;font-weight:normal;} table{border-collapse:collapse;width:100%;font-size:12px;}
+    td{padding:2px 8px 2px 0;vertical-align:top;} td.k{color:#555;white-space:nowrap;width:190px;}
+  </style></head><body>
+    <h1>EcoTruckConnect — Storico movimenti${stScelto ? ' — ' + esc(stScelto.nome) : ''}</h1>
+    <div class="sub">Periodo: ${esc(iv.testo)} · ${righe.length} carichi · ${presi} presi e pagati · Stampato il ${new Date().toLocaleString('it-IT')} dalla Dashboard Gestori</div>
+    ${blocchi}
+  </body></html>`);
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
 }
 
 let caricamentoInCorso = false;
