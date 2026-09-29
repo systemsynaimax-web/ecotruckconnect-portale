@@ -747,8 +747,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
             </div>
           </div>
         </div>
-        <div class="ins-field ins-full"><label>Specifica *</label><input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari..."></div>
-        <div class="ins-field ins-full"><label>Note *</label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro... (niente telefoni o indirizzi: vanno nei campi di ritiro e consegna)"></textarea></div>
+        <div class="ins-field ins-full"><label>Specifica <span style="opacity:.6;font-weight:400;">(facoltativo)</span></label><input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari..."></div>
+        <div class="ins-field ins-full"><label>Note <span style="opacity:.6;font-weight:400;">(facoltativo)</span></label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro... (niente telefoni o indirizzi: vanno nei campi di ritiro e consegna)"></textarea></div>
       </div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione carico</h4>
       <div class="ins-grid">
@@ -2084,7 +2084,10 @@ function renderCampanellino() {
     return `<div class="notif-bell-item">
       <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
       <div style="color:var(--muted);margin-bottom:6px;">${testoStato}${perChi} · ${data}</div>
-      <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>
+      ${stato === 'PRESO' && f.assegnato_a_telefono ? `<div style="margin-bottom:6px;font-size:12px;">📞 <a href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" style="color:var(--blue);text-decoration:none;">${f.assegnato_a_telefono}</a></div>` : ''}
+      ${stato === 'PRESO'
+        ? `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');">📋 Apri la scheda completa</button>`
+        : `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>`}
     </div>`;
   }).join('');
 }
@@ -2816,7 +2819,7 @@ async function pubblicaCarico() {
   const ok  = document.getElementById('ins-ok');
   err.style.display = 'none';
   ok.style.display  = 'none';
-  if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce || !specifica || !note) {
+  if (!capPart || !capArr || !cittaPart || !cittaArr || !data || !merce) {
     err.textContent = '⚠️ Compila tutti i campi obbligatori.';
     err.style.display = 'block';
     return;
@@ -3398,6 +3401,23 @@ function renderCarichiPresi() {
       '</div>' +
     '</div>';
   }).join('');
+}
+function apriSchedaCaricoPreso(id) {
+  try {
+    const sd = document.getElementById('sezione-dashboard'); if (sd) sd.style.display = 'none';
+    const cn = document.getElementById('contenuto-normale-portale'); if (cn) cn.style.display = 'block';
+  } catch (e) {}
+  cpFiltroGiorni = null; cpFiltroControparte = '';
+  renderCarichiPresi();
+  const lista = cpLista().lista;
+  const i = lista.findIndex(c => c.id === id);
+  const wrap = document.getElementById('carichi-presi-wrap');
+  if (i === -1) { if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const det = document.getElementById('cp-det-' + i);
+  if (det && det.style.display === 'none') cpApri(i);
+  const card = det ? det.closest('.cp-card') : null;
+  (card || wrap).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (card) { card.style.boxShadow = '0 0 0 2px var(--blue)'; setTimeout(() => { card.style.boxShadow = ''; }, 2500); }
 }
 function cpApri(i) {
   const d = document.getElementById('cp-det-' + i); if (!d) return;
