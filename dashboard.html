@@ -339,6 +339,123 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <a class="tool-btn" href="https://claude.ai/project/019ec565-858a-737c-a1ae-8894f0107db2" target="_blank"><span class="icon">✨</span>Claude.ai</a>
   </div>
 
+  <div class="sec-title">📊 Numeri in tempo reale</div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Carichi Disponibili</div>
+      <div class="stat-value blue" id="st-disponibili">—</div>
+      <div class="stat-sub">In attesa di essere presi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Pagamento Ora</div>
+      <div class="stat-value amber" id="st-pagamento">—</div>
+      <div class="stat-sub">Bloccati, entro 5 minuti</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Carichi Presi (Totale)</div>
+      <div class="stat-value green" id="st-presi">—</div>
+      <div class="stat-sub">Da sempre</div>
+    </div>
+  </div>
+
+  <div class="sec-title">🔗 Collegamenti rapidi</div>
+  <div class="quick-links">
+    <a href="report.html" class="quick-link">📋 Report Trasportatori</a>
+    <a href="#storico-sezione" class="quick-link">🏢 Report Aziende</a>
+    <a href="registrazioni.html" class="quick-link">🆕 Registrazioni</a>
+    <a href="https://ecotruckconnect.synaimaxpro.com" target="_blank" rel="noopener" class="quick-link">🏪 Vetrina (iscrizioni)</a>
+  </div>
+
+  <div class="sec-title">🗓️ Calendario</div>
+  <div class="section">
+    <div class="section-title">📅 Calendario Carichi</div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:var(--blue);"></span>Disponibile</span>
+      <span><span class="legend-dot" style="background:var(--amber);"></span>In pagamento</span>
+      <span><span class="legend-dot" style="background:var(--green);"></span>Preso</span>
+    </div>
+    <div class="cal-header">
+      <button class="cal-nav" onclick="cambiaMese(-1)">←</button>
+      <div class="cal-month" id="cal-month-label">—</div>
+      <button class="cal-nav" onclick="cambiaMese(1)">→</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div id="telegram-carichi"></div><div id="report-aziende-sezione"></div>
+  <div class="sec-title" id="storico-sezione">📚 Storico movimenti — archivio di tutto</div>
+  <div class="section">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+      <select id="st-periodo" onchange="stCambiaPeriodo()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="1">📅 Oggi</option>
+        <option value="7">📅 Ultimi 7 giorni</option>
+        <option value="15">📅 Ultimi 15 giorni</option>
+        <option value="30" selected>📅 Ultimi 30 giorni</option>
+        <option value="0">📅 Tutto</option>
+        <option value="dal">📅 Dal … al …</option>
+      </select>
+      <span id="st-date" style="display:none;gap:6px;align-items:center;">
+        <input type="date" id="st-dal" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
+        <span style="color:var(--muted);font-size:12px;">→</span>
+        <input type="date" id="st-al" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
+      </span>
+      <select id="st-stato" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Tutti i carichi</option>
+        <option value="PRESO">Solo presi e pagati</option>
+        <option value="DISPONIBILE">Solo pubblicati, in attesa</option>
+        <option value="ALTRO">Annullati / rimborsati</option>
+      </select>
+      <input id="st-cerca" oninput="renderStorico()" placeholder="🔎 Scrivi il nome del trasportatore o dell'azienda, ordine, città, P.IVA…" style="flex:1;min-width:220px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <div id="st-scelto"></div>
+      <span style="flex:1;"></span>
+      <button class="st-btn" onclick="aggiornaOra()">🔄 Aggiorna</button>
+      <button class="st-btn" onclick="stStampa()">🖨️ Stampa</button>
+      <button class="st-btn" onclick="stCSV()">⬇️ CSV</button>
+    </div>
+    <div id="st-contatori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+    <div id="st-persone"></div>
+    <div id="st-lista"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
+  <div class="sec-title">📜 Registro Attività — chi ha fatto cosa, quando</div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Ogni modifica dati, rigenerazione password, richiesta di eliminazione account fatta da trasportatori e aziende. Data/ora assegnata automaticamente da Airtable — non modificabile, fa fede. Caricamento manuale: si aggiorna solo quando clicchi, come tutto il resto della dashboard.</div>
+    <input type="text" class="feed-search" id="registro-cerca" placeholder="🔍 Cerca per nome, tipo o descrizione..." oninput="filtraRegistroAttivita()">
+    <div class="feed-actions">
+      <button onclick="caricaRegistroAttivita()">🔄 Carica registro</button>
+      <button onclick="scaricaPDF('registro')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('registro')">⬇️ Esporta CSV</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
+    </div>
+    <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
+  </div>
+
+  <div class="sec-title">👥 Anagrafica Trasportatori e Aziende</div>
+  <div class="stats-row" style="margin-bottom:20px;">
+    <div class="stat-card">
+      <div class="stat-label">Trasportatori Registrati</div>
+      <div class="stat-value blue" id="st-trasportatori-tot">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Aziende Registrate</div>
+      <div class="stat-value amber" id="st-aziende-tot">—</div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tutti i trasportatori e le aziende registrati (approvati o ancora in attesa), coi loro mezzi e autorizzazioni. Cerca per nome, email, tipo di mezzo o autorizzazione — clicca su un risultato per vedere la scheda completa. Si aggiorna insieme al resto premendo "🔄 Aggiorna ora" in alto.</div>
+    <input type="text" class="feed-search" id="anagrafica-cerca" placeholder="🔍 Cerca per nome, email, mezzo o autorizzazione..." oninput="filtraAnagrafica()">
+    <div class="feed-actions">
+      <button onclick="scaricaPDF('anagrafica')">📄 Scarica PDF</button>
+      <button onclick="scaricaCSV('anagrafica')">⬇️ Esporta CSV</button>
+      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
+    </div>
+    <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+
+  
+
   <div class="sec-title">✅ Verifiche ufficiali <span class="etichetta-nuovo">NUOVO — DA PROVARE CON GERLANDO</span></div>
   <div class="toolbar-grid">
     <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="num">1</span><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>
@@ -419,157 +536,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     </ul>
     <div style="margin-top:10px;font-size:12px;">SynAIMAX fattura solo i 150 € e i 20 €. Il trasporto lo fattura il trasportatore all'azienda, fuori dalla piattaforma.</div>
   </div>
-
-  <div class="sec-title">📊 Numeri in tempo reale</div>
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Carichi Disponibili</div>
-      <div class="stat-value blue" id="st-disponibili">—</div>
-      <div class="stat-sub">In attesa di essere presi</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">In Pagamento Ora</div>
-      <div class="stat-value amber" id="st-pagamento">—</div>
-      <div class="stat-sub">Bloccati, entro 5 minuti</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Carichi Presi (Totale)</div>
-      <div class="stat-value green" id="st-presi">—</div>
-      <div class="stat-sub">Da sempre</div>
-    </div>
-  </div>
-
-  <div class="sec-title">🔗 Collegamenti rapidi</div>
-  <div class="quick-links">
-    <a href="report.html" class="quick-link">📋 Report Trasportatori</a>
-    <a href="#report-aziende-sezione" class="quick-link">🏢 Report Aziende</a>
-    <a href="registrazioni.html" class="quick-link">🆕 Registrazioni</a>
-    <a href="https://ecotruckconnect.synaimaxpro.com" target="_blank" rel="noopener" class="quick-link">🏪 Vetrina (iscrizioni)</a>
-  </div>
-
-  <div class="sec-title">🗓️ Calendario</div>
-  <div class="section">
-    <div class="section-title">📅 Calendario Carichi</div>
-    <div class="legend">
-      <span><span class="legend-dot" style="background:var(--blue);"></span>Disponibile</span>
-      <span><span class="legend-dot" style="background:var(--amber);"></span>In pagamento</span>
-      <span><span class="legend-dot" style="background:var(--green);"></span>Preso</span>
-    </div>
-    <div class="cal-header">
-      <button class="cal-nav" onclick="cambiaMese(-1)">←</button>
-      <div class="cal-month" id="cal-month-label">—</div>
-      <button class="cal-nav" onclick="cambiaMese(1)">→</button>
-    </div>
-    <div class="cal-grid" id="cal-grid"></div>
-  </div>
-
-  <div class="sec-title" id="telegram-carichi"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Carichi su Telegram — pubblicati e presi</div>
-  <div class="panel" style="margin-bottom:24px;">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-      <div style="flex:1;min-width:240px;font-size:13px;color:var(--muted);line-height:1.6;">Gli stessi carichi che vi arrivano su Telegram (ogni carico pubblicato e ogni carico preso). Clicca una riga per il dettaglio completo e la stampa.</div>
-      <a href="https://t.me/SynAIMAX_EcoTruck_bot?start=gestori_cf08d91f72fc" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#229ED9;color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;text-decoration:none;"><img src="https://telegram.org/img/t_logo.png" alt="" width="20" height="20" style="vertical-align:middle;border-radius:50%;" onerror="this.replaceWith(document.createTextNode('✈️'))"> Collega Telegram gestori</a>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-      <input id="tg-cerca" oninput="renderTelegramCarichi()" placeholder="🔎 Cerca azienda, trasportatore, città, ordine…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
-      <select id="tg-stato" onchange="renderTelegramCarichi()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;"><option value="">Pubblicati e presi</option><option value="DISPONIBILE">Solo pubblicati (disponibili)</option><option value="PRESO">Solo presi</option></select>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
-    </div>
-    <div id="tg-lista"><div class="feed-empty">Caricamento…</div></div>
-  </div>
-
-  <div class="sec-title" id="storico-sezione">📚 Storico movimenti — archivio di tutto</div>
-  <div class="section">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-      <select id="st-periodo" onchange="stCambiaPeriodo()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
-        <option value="1">📅 Oggi</option>
-        <option value="7">📅 Ultimi 7 giorni</option>
-        <option value="15">📅 Ultimi 15 giorni</option>
-        <option value="30" selected>📅 Ultimi 30 giorni</option>
-        <option value="0">📅 Tutto</option>
-        <option value="dal">📅 Dal … al …</option>
-      </select>
-      <span id="st-date" style="display:none;gap:6px;align-items:center;">
-        <input type="date" id="st-dal" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
-        <span style="color:var(--muted);font-size:12px;">→</span>
-        <input type="date" id="st-al" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--text);font-size:13px;">
-      </span>
-      <select id="st-stato" onchange="renderStorico()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
-        <option value="">Tutti i carichi</option>
-        <option value="PRESO">Solo presi e pagati</option>
-        <option value="DISPONIBILE">Solo pubblicati, in attesa</option>
-        <option value="ALTRO">Annullati / rimborsati</option>
-      </select>
-      <input id="st-cerca" oninput="renderStorico()" placeholder="🔎 Scrivi il nome del trasportatore o dell'azienda, ordine, città, P.IVA…" style="flex:1;min-width:220px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-      <div id="st-scelto"></div>
-      <span style="flex:1;"></span>
-      <button class="st-btn" onclick="aggiornaOra()">🔄 Aggiorna</button>
-      <button class="st-btn" onclick="stStampa()">🖨️ Stampa</button>
-      <button class="st-btn" onclick="stCSV()">⬇️ CSV</button>
-    </div>
-    <div id="st-contatori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
-    <div id="st-lista"><div class="feed-empty">Caricamento…</div></div>
-  </div>
-
-  <div class="sec-title">🕓 Attività Recente — cerca, scarica, stampa</div>
-  <div class="section">
-    <input type="text" class="feed-search" id="feed-cerca" placeholder="🔍 Cerca per nome azienda o trasportatore..." oninput="filtraFeed()">
-    <div class="feed-actions">
-      <button onclick="scaricaPDF('feed')">📄 Scarica PDF</button>
-      <button onclick="scaricaCSV('feed')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
-    </div>
-    <div id="feed-list"><div class="feed-empty">Caricamento…</div></div>
-  </div>
-
-  <div class="sec-title" id="report-aziende-sezione">🏢 Report Aziende — cerca, scarica, stampa</div>
-  <div class="section">
-    <input type="text" class="feed-search" id="az-cerca" placeholder="🔍 Cerca per nome azienda..." oninput="filtraAziende()">
-    <div class="feed-actions">
-      <button onclick="scaricaPDF('aziende')">📄 Scarica PDF</button>
-      <button onclick="scaricaCSV('aziende')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
-    </div>
-    <div id="az-lista"><div class="feed-empty">Caricamento…</div></div>
-  </div>
-
-  <div class="sec-title">📜 Registro Attività — chi ha fatto cosa, quando</div>
-  <div class="section">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Ogni modifica dati, rigenerazione password, richiesta di eliminazione account fatta da trasportatori e aziende. Data/ora assegnata automaticamente da Airtable — non modificabile, fa fede. Caricamento manuale: si aggiorna solo quando clicchi, come tutto il resto della dashboard.</div>
-    <input type="text" class="feed-search" id="registro-cerca" placeholder="🔍 Cerca per nome, tipo o descrizione..." oninput="filtraRegistroAttivita()">
-    <div class="feed-actions">
-      <button onclick="caricaRegistroAttivita()">🔄 Carica registro</button>
-      <button onclick="scaricaPDF('registro')">📄 Scarica PDF</button>
-      <button onclick="scaricaCSV('registro')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
-    </div>
-    <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
-  </div>
-
-  <div class="sec-title">👥 Anagrafica Trasportatori e Aziende</div>
-  <div class="stats-row" style="margin-bottom:20px;">
-    <div class="stat-card">
-      <div class="stat-label">Trasportatori Registrati</div>
-      <div class="stat-value blue" id="st-trasportatori-tot">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Aziende Registrate</div>
-      <div class="stat-value amber" id="st-aziende-tot">—</div>
-    </div>
-  </div>
-  <div class="section">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tutti i trasportatori e le aziende registrati (approvati o ancora in attesa), coi loro mezzi e autorizzazioni. Cerca per nome, email, tipo di mezzo o autorizzazione — clicca su un risultato per vedere la scheda completa. Si aggiorna insieme al resto premendo "🔄 Aggiorna ora" in alto.</div>
-    <input type="text" class="feed-search" id="anagrafica-cerca" placeholder="🔍 Cerca per nome, email, mezzo o autorizzazione..." oninput="filtraAnagrafica()">
-    <div class="feed-actions">
-      <button onclick="scaricaPDF('anagrafica')">📄 Scarica PDF</button>
-      <button onclick="scaricaCSV('anagrafica')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
-    </div>
-    <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
-  </div>
-
-  
 
   <div class="sec-title">💡 Idee future <span class="etichetta-nuovo">NON ATTIVE — SOLO PROPOSTE</span></div>
   <div class="toolbar-grid">
@@ -806,13 +772,13 @@ async function caricaDashboard() {
     tuttiCarichi = raw.map(r => ({ id: r.id, fields: r.fields || r }));
     aggiornaStats();
     renderCalendario();
-    renderFeed(tuttiCarichi);
+    try { if (document.getElementById('feed-list')) renderFeed(tuttiCarichi); } catch (e) {}
     try { renderTelegramCarichi(); } catch (e) {}
-    renderAziende(tuttiCarichi);
+    try { if (document.getElementById('az-lista')) renderAziende(tuttiCarichi); } catch (e) {}
     try { renderStorico(); } catch (e) { console.error('Storico:', e); }
   } catch (e) {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
-    document.getElementById('feed-list').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
+    const boxErr = document.getElementById('st-lista') || document.getElementById('feed-list'); if (boxErr) boxErr.innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
   }
   await caricaNotificheRegistrazioni();
   await caricaAnagraficaCompleta();
@@ -1429,7 +1395,7 @@ function renderFeed(lista) {
     })
     .slice(0, 15);
 
-  const el = document.getElementById('feed-list');
+  const el = document.getElementById('feed-list'); if (!el) return;
   if (!recenti.length) { el.innerHTML = '<div class="feed-empty">Nessuna attività recente.</div>'; return; }
 
   el.innerHTML = recenti.map(c => {
@@ -1472,7 +1438,7 @@ function copiaEmail(btn, email) {
 }
 
 function renderAziende(lista) {
-  const el = document.getElementById('az-lista');
+  const el = document.getElementById('az-lista'); if (!el) return;
   const conAzienda = lista.filter(c => c.fields.nome_azienda);
   if (!conAzienda.length) {
     el.innerHTML = '<div class="feed-empty">Nessun carico con azienda trovato. Se Make è spento, appare da solo appena riparte.</div>';
@@ -1789,11 +1755,46 @@ function renderStorico() {
   document.getElementById('st-scelto').innerHTML = stScelto
     ? `<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:20px;padding:5px 12px;font-size:13px;">${stScelto.tipo === 'azienda' ? '🏢' : '🚛'} Solo: <b>${escD(stScelto.nome)}</b> <span style="cursor:pointer;font-weight:700;" onclick="stTogliScelto()">✕</span></span>`
     : '<span style="font-size:12px;color:var(--muted);">Clicca il nome di un\'azienda o di un trasportatore per vedere solo i suoi carichi e stamparli.</span>';
+  // riepilogo per persona (nel periodo) oppure "da sempre" della persona scelta
+  const pBox = document.getElementById('st-persone');
+  if (pBox) {
+    if (stScelto) {
+      const tuttoLui = (tuttiCarichi || []).filter(c => stScelto.tipo === 'azienda' ? (c.fields.nome_azienda || '') === stScelto.nome : (stHaTrasp(c.fields) && stNomeTrasp(c.fields) === stScelto.nome));
+      const presiLui = tuttoLui.filter(c => String(c.fields.stato || '').toUpperCase() === 'PRESO');
+      const valLui = presiLui.reduce((t, c) => t + (parseFloat(String(c.fields.importo_pattuito || '0').replace(',', '.')) || 0), 0);
+      pBox.innerHTML = `<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+        📌 <b>${escD(stScelto.nome)} — da sempre:</b> ${stScelto.tipo === 'azienda' ? tuttoLui.length + ' pubblicati · ' : ''}${presiLui.length} presi e pagati · commissioni ${euro(presiLui.length * 20)} · valore dei trasporti ${euro(valLui)}</div>`;
+    } else {
+      const perT = {}, perA = {};
+      lista.forEach(c => { const f = c.fields;
+        if (String(f.stato || '').toUpperCase() === 'PRESO' && stNomeTrasp(f)) { const k = stNomeTrasp(f); perT[k] = (perT[k] || 0) + 1; }
+        if (f.nome_azienda) { const a = perA[f.nome_azienda] = perA[f.nome_azienda] || { pub: 0, presi: 0 }; a.pub++; if (String(f.stato || '').toUpperCase() === 'PRESO') a.presi++; } });
+      const chip = (tipo, nome, testo) => `<a href="javascript:void(0)" onclick="stScegli('${tipo}', ${JSON.stringify(nome).replace(/"/g, '&quot;')})" style="display:inline-flex;gap:6px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 12px;margin:0 6px 6px 0;font-size:12px;color:var(--text);text-decoration:none;">${testo}</a>`;
+      const t = Object.keys(perT).sort((a, b) => perT[b] - perT[a]).map(n => chip('trasportatore', n, `🚛 <b>${escD(n)}</b> · ${perT[n]} presi · ${euro(perT[n] * 20)}`)).join('');
+      const a = Object.keys(perA).sort((x, y) => perA[y].pub - perA[x].pub).map(n => chip('azienda', n, `🏢 <b>${escD(n)}</b> · ${perA[n].pub} pubblicati · ${perA[n].presi} presi`)).join('');
+      pBox.innerHTML = (t || a) ? `<div style="margin-bottom:12px;">${t ? '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TRASPORTATORI NEL PERIODO</div>' + t : ''}${a ? '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">AZIENDE NEL PERIODO</div>' + a : ''}</div>` : '';
+    }
+  }
   if (!lista.length) { box.innerHTML = '<div class="feed-empty">Nessun movimento in questo periodo.</div>'; return; }
   box.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px;">' +
     '<tr style="text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">' +
     '<th style="padding:8px 6px;">Pubblicato il</th><th style="padding:8px 6px;">Azienda</th><th style="padding:8px 6px;">Tratta</th><th style="padding:8px 6px;">Merce</th><th style="padding:8px 6px;">Prezzo</th><th style="padding:8px 6px;">Stato</th><th style="padding:8px 6px;">Trasportatore</th><th style="padding:8px 6px;">Preso il</th><th style="padding:8px 6px;">20 €</th><th></th></tr>' +
-    lista.map(c => {
+    (function () {
+      const giorno = c => { const d = new Date(stDataRif(c.fields, c)); return isNaN(d) ? '—' : d.toLocaleDateString('it-IT'); };
+      const perGiorno = {};
+      lista.forEach(c => { const g = giorno(c); (perGiorno[g] = perGiorno[g] || []).push(c); });
+      let ultimo = null;
+      return lista.map(c => {
+        const g = giorno(c); let testa = '';
+        if (g !== ultimo) {
+          ultimo = g; const l = perGiorno[g]; const pr = l.filter(x => String(x.fields.stato || '').toUpperCase() === 'PRESO').length;
+          testa = `<tr><td colspan="10" style="padding:10px 6px 6px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);"><b style="color:var(--text);">📅 ${g}</b> · ${l.length} carichi · ${pr} presi · commissioni del giorno <b style="color:var(--green);">${euro(pr * 20)}</b></td></tr>`;
+        }
+        return testa + rigaStorico(c);
+      }).join('');
+    })() + '</table></div>';
+}
+function rigaStorico(c) {
       const f = c.fields; const s = String(f.stato || '').toUpperCase();
       const nomeT = stHaTrasp(f) ? stNomeTrasp(f) : '';
       return `<tr style="border-top:1px solid var(--border);">
@@ -1808,7 +1809,6 @@ function renderStorico() {
         <td style="padding:8px 6px;white-space:nowrap;">${s === 'PRESO' ? '✅ pagati' : s === 'RIMBORSATO' ? '↩️ rimborsati' : '—'}</td>
         <td style="padding:8px 6px;"><button class="st-btn" onclick="apriDettaglioCarico('${c.id}')" style="padding:4px 10px;font-size:11px;">Vedi ›</button></td>
       </tr>`;
-    }).join('') + '</table></div>';
 }
 function stRigheEsportabili() {
   return stFiltrati().map(c => {
