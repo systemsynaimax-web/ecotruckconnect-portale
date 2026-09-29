@@ -292,6 +292,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
 .notif-bell-item{padding:10px;border-radius:8px;font-size:12px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.05);}
 .notif-bell-item:last-child{border-bottom:none;}
 .notif-bell-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
+.notif-cliccabile{cursor:pointer;transition:background 0.15s;}
+.notif-cliccabile:hover,.notif-cliccabile:active{background:rgba(59,130,246,0.10);}
 .filtro-periodo-voce:hover{background:rgba(255,255,255,0.08);}
 .filtro-periodo-voce.attivo{background:rgba(59,130,246,0.15);color:#93c5fd;font-weight:600;}
 @media screen and (max-width: 900px) {
@@ -311,7 +313,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   #bot-panel{width:calc(100vw - 32px);right:16px;left:16px;height:70vh;max-height:520px;}
   #bot-btn{right:16px;bottom:16px;}
   .dd-panel-camion, [id^="dd-panel-"]{max-width:100%;}
-  .notif-bell-panel{position:fixed;top:64px;left:10px;right:10px;width:auto;max-width:none;max-height:70vh;}
+  .notif-bell-panel{position:fixed;top:64px;left:10px;right:10px;width:auto;max-width:none;max-height:75vh;}
+  .notif-bell-btn{width:42px;height:42px;font-size:20px;}
+  .notif-bell-badge{min-width:20px;height:20px;font-size:11px;border-radius:10px;}
+  .notif-bell-item{font-size:13px;padding:12px 10px;}
 }
 @media screen and (max-width: 600px) {
   .hero{padding:36px 18px 32px;}
@@ -1758,8 +1763,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('cap-temp-input').value = capCorrente;
       document.getElementById('cap-attivo-label').textContent = `✅ Zona attiva: ${capCorrente}`;
       ultimiCarichi = [
-        { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', data_consegna:new Date().toISOString(), data_pubblicazione:new Date(Date.now()-7200000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 30gg dalla consegna', tipo_mezzo_richiesto:['Furgone frigo'], autorizzazione_richiesta:['Alimentare (ATP)'] } },
-        { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', km_tratta:165, tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
+        { id:'preview1', fields:{ stato:'DISPONIBILE', citta_partenza:'Favara', citta_arrivo:'Palermo', cap_partenza:'92026', cap_arrivo:'90100', km_tratta:128, tipo_merce:'Alimentare', specifica:'10 pallet', data_consegna:new Date().toISOString(), data_pubblicazione:new Date(Date.now()-7200000).toISOString(), importo_pattuito:'150', termini_pagamento:'Bonifico a 30gg dalla consegna', tipo_mezzo_richiesto:['Furgone frigo'], autorizzazione_richiesta:['Alimentare (ATP)'] } },
+        { id:'preview2', fields:{ stato:'DISPONIBILE', citta_partenza:'Agrigento', citta_arrivo:'Catania', cap_partenza:'92100', cap_arrivo:'95100', km_tratta:163, tipo_merce:'Materiali edili/inerti (17 09 04)', data_consegna:new Date(Date.now()+86400000).toISOString(), data_pubblicazione:new Date(Date.now()-18000000).toISOString(), importo_pattuito:'220', termini_pagamento:'Bonifico a 60gg dalla consegna', tipo_mezzo_richiesto:['Bilico cassonato'], autorizzazione_richiesta:['Conto Terzi'] } }
       ];
       ultimeCandidature = [
         { id:'candpreview1', fields:{ data_candidatura:new Date(Date.now()-172800000).toISOString(), data_assegnato:new Date(Date.now()-172800000).toISOString(), richiesta_id:'ORD-PREVIEW1', numero_ordine:'ORD-PREVIEW1', stato:'PRESO', citta_partenza:'Favara', cap_partenza:'92026', citta_arrivo:'Palermo', cap_arrivo:'90100', km_tratta:130, tipo_merce:'Alimentare', specifica:'8 pallet di conserve', data_consegna:new Date(Date.now()-86400000).toISOString(), importo_pattuito:'180', termini_pagamento:'Bonifico a 30gg dalla consegna', indirizzo_ritiro:'Via Roma 12, 92026 Favara (AG) — capannone 3', indirizzo_consegna:'Via Libertà 100, 90100 Palermo (PA)', destinatario_nome:'Bianchi Alimentari Srl', destinatario_telefono:'091 5556677', nome_azienda:'Rossi Logistica Srl', azienda_referente:'Giuseppe Rossi', telefono_azienda:'333 1112233', email_azienda:'info@rossilogistica.it', azienda_indirizzo:'Via Roma 12, 92026 Favara (AG)', azienda_piva:'01234567890' } },
@@ -2081,13 +2086,16 @@ function renderCampanellino() {
     const perChi = stato === 'PRESO' ? ` da <b>${f.assegnato_a_nome || chi}</b>` : '';
     const dataRif = f.data_assegnato || f.data_pubblicazione;
     const data = dataRif ? new Date(dataRif).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    return `<div class="notif-bell-item">
+    const azioneRiga = stato === 'PRESO'
+      ? `document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');`
+      : `document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');`;
+    return `<div class="notif-bell-item notif-cliccabile" onclick="${azioneRiga}">
       <div style="font-weight:700;margin-bottom:3px;">${f.citta_partenza||'—'} → ${f.citta_arrivo||'—'}</div>
       <div style="color:var(--muted);margin-bottom:6px;">${testoStato}${perChi} · ${data}</div>
-      ${stato === 'PRESO' && f.assegnato_a_telefono ? `<div style="margin-bottom:6px;font-size:12px;">📞 <a href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" style="color:var(--blue);text-decoration:none;">${f.assegnato_a_telefono}</a></div>` : ''}
+      ${stato === 'PRESO' && f.assegnato_a_telefono ? `<div style="margin-bottom:6px;font-size:12px;">📞 <a href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:none;">${f.assegnato_a_telefono}</a></div>` : ''}
       ${stato === 'PRESO'
-        ? `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');">📋 Apri la scheda completa</button>`
-        : `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>`}
+        ? `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();document.getElementById('notif-bell-panel').classList.remove('open');apriSchedaCaricoPreso('${c.id}');">📋 Apri la scheda completa</button>`
+        : `<button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();document.getElementById('notif-bell-panel').classList.remove('open');apriDashSezione('fatture');">📄 Vedi riepilogo/report</button>`}
     </div>`;
   }).join('');
 }
@@ -2350,7 +2358,7 @@ function renderCardCarico(c, prezzoMax) {
   const arrivo = f.citta_arrivo || f.cap_arrivo || '—';
   const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', {day:'numeric', month:'long'}) : '—';
   const merce = f.tipo_merce || f.merce || '—';
-  return `<div class="carico-card">
+  return `<div class="carico-card" style="cursor:pointer;" onclick="if(!event.target.closest('a,button')){dettaglioCaricoAperto='${c.id}';renderCarichiContenuto();}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px;">
 <span></span>
       <span style="font-size:11px;color:var(--muted);">${tempoTrascorso(f.data_pubblicazione)}</span>
@@ -2359,12 +2367,16 @@ function renderCardCarico(c, prezzoMax) {
     <div style="display:flex;align-items:center;gap:5px;margin-bottom:12px;">
       <span style="font-size:13px;">📅</span>
       <span style="font-size:13px;color:var(--text);font-weight:600;">${data}</span>
-      <span style="font-size:12px;color:var(--muted);">· ${merce}</span>
+      <span style="font-size:12px;color:var(--muted);">· ${escAttr(merceTesto(f))}</span>
       ${kmHTML(f)}
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    ${requisitiHTML(f, 12)}
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
       ${f.importo_pattuito ? `<span style="font-size:22px;font-weight:800;color:var(--green);">${euro(f.importo_pattuito)}</span>` : '<span style="font-size:13px;color:var(--muted);">Prezzo non specificato</span>'}
-      <button class="btn-vedi-dettagli" data-id="${c.id}">Vedi dettagli ›</button>
+      <span style="display:flex;gap:6px;">
+        <a class="btn-vedi-dettagli" href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" style="text-decoration:none;">🗺️ Tratta su Maps</a>
+        <button class="btn-vedi-dettagli" data-id="${c.id}">Vedi e prendi ›</button>
+      </span>
     </div>
   </div>`;
 }
@@ -2393,7 +2405,7 @@ function renderDettaglioCarico(c) {
       <div style="display:flex;align-items:center;gap:5px;margin-bottom:14px;">
         <span style="font-size:14px;">📅</span>
         <span style="font-size:14px;color:var(--text);font-weight:600;">${data}</span>
-        <span style="font-size:13px;color:var(--muted);">· ${merce}</span>
+        <span style="font-size:13px;color:var(--muted);">· ${escAttr(merceTesto(f))}</span>
         ${kmHTML(f)}
       </div>
       <div style="text-align:center;padding:14px;background:rgba(34,197,94,0.1);border-radius:8px;margin-bottom:14px;">
@@ -2403,7 +2415,7 @@ function renderDettaglioCarico(c) {
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">🚚 ${mezzoRichiesto}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">📋 ${autRichiesta}</span>
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);">💳 ${f.termini_pagamento || 'Termini non specificati'}</span>
-        <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent((f.citta_partenza||'') + ' ' + (f.cap_partenza||'') + ', Italia')}&destination=${encodeURIComponent((f.citta_arrivo||'') + ' ' + (f.cap_arrivo||'') + ', Italia')}&travelmode=driving" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);text-decoration:none;">🗺️ Vedi la tratta su Google Maps</a>
+        <a href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);text-decoration:none;">🗺️ Tratta su Google Maps</a>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">🔒 Dopo il pagamento vedrai indirizzi precisi e contatti dell'azienda; l'azienda vedrà i tuoi dati di contatto.</div>
       <button class="btn-pubblica" ${disabilitato} style="width:100%;justify-content:center;" onclick="chiudiModaleCalendario();prendiCarico('${c.id}','${escAttr(partenza)}','${escAttr(arrivo)}','${f.cap_partenza||''}','${f.cap_arrivo||''}','${escAttr(merce)}','${escAttr(f.importo_pattuito||'')}','${escAttr(f.termini_pagamento||'')}')">${testoBtn}</button>
@@ -3415,7 +3427,28 @@ function renderCarichiPresi() {
    riesce il carico si pubblica lo stesso, senza km.
    ==================================================== */
 const cacheKmTratta = {};
-function kmTesto(f) { const k = parseInt(f && f.km_tratta, 10); return k > 0 ? `circa ${k} km` : ''; }
+function kmTesto(f) { const k = parseInt(f && f.km_tratta, 10); return k > 0 ? `${k} km` : ''; }
+/* Merce + specifica breve. La specifica la scrive l'azienda: se contiene
+   un numero di telefono o un'email non la mostriamo prima del pagamento. */
+function merceTesto(f) {
+  const merce = f.tipo_merce || f.merce || '—';
+  const spec = String(f.specifica || '').trim();
+  if (!spec || /\d[\d\s.\-\/]{5,}\d/.test(spec) || /@|www\.|http/i.test(spec)) return merce;
+  return merce + ', ' + (spec.length > 40 ? spec.slice(0, 40) + '…' : spec);
+}
+function mapsTrattaURL(f) {
+  return 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent((f.citta_partenza || '') + ' ' + (f.cap_partenza || '') + ', Italia') +
+    '&destination=' + encodeURIComponent((f.citta_arrivo || '') + ' ' + (f.cap_arrivo || '') + ', Italia') + '&travelmode=driving';
+}
+function requisitiHTML(f, dim) {
+  const mezzo = (f.tipo_mezzo_richiesto || []).join(', ');
+  const aut = (f.autorizzazione_richiesta || []).join(', ');
+  const parti = [];
+  if (mezzo) parti.push(`🚚 ${mezzo}`);
+  if (aut) parti.push(`📋 ${aut}`);
+  if (f.termini_pagamento) parti.push(`💳 ${f.termini_pagamento}`);
+  return parti.length ? `<div style="font-size:${dim || 12}px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;margin-bottom:10px;">${parti.map(x => `<span>${x}</span>`).join('')}</div>` : '';
+}
 function kmHTML(f) { const t = kmTesto(f); return t ? `<span style="font-size:12px;color:var(--muted);white-space:nowrap;">· 🛣️ ${t}</span>` : ''; }
 async function fetchConLimite(url, ms) {
   const ctrl = new AbortController();
@@ -3467,7 +3500,7 @@ function aggiornaKmModulo() {
     box.style.display = 'block';
     box.textContent = '🛣️ Calcolo la distanza…';
     const km = await calcolaKmTratta(cp.trim(), kp.trim(), ca.trim(), ka.trim());
-    box.textContent = km ? `🛣️ ${cp.trim()} → ${ca.trim()}: circa ${km} km (indicativo, lo vede anche il trasportatore)` : '';
+    box.textContent = km ? `🛣️ ${cp.trim()} → ${ca.trim()}: ${km} km` : '';
     if (!km) box.style.display = 'none';
   }, 700);
 }
@@ -3515,15 +3548,19 @@ function renderCampanellinoTrasportatore() {
     const nuovo = visti.indexOf(c.id) === -1;
     const data = f.data_consegna ? new Date(f.data_consegna).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '—';
     const km = kmTesto(f);
-    return `<div class="notif-bell-item">
+    return `<div class="notif-bell-item notif-cliccabile" onclick="apriCaricoDaCampanella('${c.id}')">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:3px;">
         <span style="font-weight:700;">${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}</span>
         ${nuovo ? '<span style="background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">NUOVO</span>' : ''}
       </div>
-      <div style="color:var(--muted);margin-bottom:6px;">📅 ${data} · ${f.tipo_merce || '—'}${km ? ' · 🛣️ ' + km : ''}</div>
+      <div style="color:var(--muted);margin-bottom:6px;">${km ? '🛣️ ' + km + ' · ' : ''}📅 ${data} · ${escAttr(merceTesto(f))}</div>
+      ${requisitiHTML(f, 11)}
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euro(f.importo_pattuito) : ''}</span>
-        <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="apriCaricoDaCampanella('${c.id}')">Vedi ›</button>
+        <span style="display:flex;gap:6px;">
+          <a class="btn-cap" style="padding:4px 10px;font-size:11px;text-decoration:none;" href="${mapsTrattaURL(f)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🗺️ Maps</a>
+          <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();apriCaricoDaCampanella('${c.id}')">Vedi e prendi ›</button>
+        </span>
       </div>
     </div>`;
   }).join('');
