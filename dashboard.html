@@ -85,6 +85,10 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 .dett-azioni{display:flex;gap:10px;}
 .btn-attiva{flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:background 0.2s;}
 .btn-attiva:hover{background:#16a34a;}
+.btn-rifiuta{flex:1;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.55);color:#f87171;border-radius:8px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:background 0.2s;}
+.btn-rifiuta:hover{background:rgba(239,68,68,0.25);}
+.verifica-box{margin:12px 0 14px;padding:12px 14px;border:1px solid rgba(245,158,11,0.55);background:rgba(245,158,11,0.08);border-radius:10px;font-size:13px;line-height:1.5;}
+.verifica-titolo{font-size:15px;font-weight:800;color:#fbbf24;margin-bottom:6px;letter-spacing:0.5px;}
 .btn-non-attiva{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:background 0.2s;}
 .btn-non-attiva:hover{background:rgba(255,255,255,0.09);color:var(--text);}
 .stampa-box{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:340px;width:100%;text-align:center;}
@@ -322,7 +326,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <span class="badge">🔒 Dashboard Gestori — REALE</span>
     </div>
   </div>
-  <div class="hero-tagline">✅ DASHBOARD REALE — qui ci sono solo dati veri di Airtable. Ogni "Attiva" approva davvero un utente e fa partire l'email di pagamento.</div>
+  <div class="hero-tagline">✅ DASHBOARD REALE — qui ci sono solo dati veri di Airtable. Ogni "Approva" attiva davvero un utente e fa partire l'email di pagamento; "Rifiuta" lo toglie dalla campanella.</div>
 </div>
 
 <div class="wrap">
@@ -589,6 +593,16 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <li><b>Pagamento garantito</b> <span class="decidere">DA DECIDERE</span>: il trasportatore è sicuro di essere pagato per il trasporto. 💶 Tariffa ogni 3 mesi: da decidere.</li>
     </ol>
     <div style="margin-top:10px;font-size:12px;">✅ <b>Già presenti</b>, non da decidere: Duplica carico, Statistiche e grafici per l'azienda e per il trasportatore («I miei report»), Stampa e PDF di ogni carico.<br>Suggerimenti di Claude, ispirati a funzioni viste su Trans.eu, B2PWeb, Spedity, Truckscanner e altre borse carichi.</div>
+  </div>
+
+  <div class="sec-title">📜 Condizioni d'uso e privacy EcoTruckConnect</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:30px;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">I documenti che trasportatori e aziende accettano con le due caselle nella vetrina (consenso e artt. 1341-1342, salvati su Airtable con data e ora).</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a class="btn-scarica" style="text-decoration:none;display:inline-block;" href="https://ecotruckconnect.synaimaxpro.com/condizioni.html" target="_blank" rel="noopener">📜 Condizioni d'uso EcoTruckConnect</a>
+      <a class="btn-scarica" style="text-decoration:none;display:inline-block;" href="https://legal.synaimaxpro.com" target="_blank" rel="noopener">⚖️ Privacy, Cookie e Termini (legal.synaimaxpro.com)</a>
+      <a class="btn-scarica" style="text-decoration:none;display:inline-block;" href="https://docs.google.com/document/d/1fmBUEy46p-z-HRP52H5g3MRpH3TPRH_1_n0J1666GWs/preview" target="_blank" rel="noopener">📄 Documento Google delle condizioni</a>
+    </div>
   </div>
 
 
@@ -1066,12 +1080,13 @@ let recordApertoCorrente = null;
 // ===== VERIFICHE UFFICIALI (27/9/2026) — riquadro nella scheda di ogni nuova iscrizione =====
 function bloccoVerifica(f, tipo) {
   const piva = String((f && (f.p_iva || f.partita_iva)) || '').replace(/[^0-9A-Za-z]/g, '');
-  const stile = 'margin:14px 0;padding:12px 14px;border:1px solid rgba(59,130,246,0.35);background:rgba(59,130,246,0.08);border-radius:10px;font-size:13px;line-height:1.5;';
-  if (!piva) return '<div style="' + stile + '">🔎 <b>Partita IVA non indicata</b>: non si può verificare. Chiedila prima di attivare.</div>';
-  const albo = tipo === 'azienda' ? '' : '<a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener">🚛 Albo Autotrasportatori</a>';
-  return '<div style="' + stile + '"><b>🔎 Prima di attivare, controlla i dati ufficiali</b><br>' +
+  const titolo = '<div class="verifica-titolo">🔎 VERIFICA</div>';
+  if (!piva) return '<div class="verifica-box">' + titolo + '<b>Partita IVA non indicata</b>: non si può verificare. Chiedila prima di approvare.</div>';
+  const vies = '<a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://ec.europa.eu/taxation_customs/vies/#/vat-validation" target="_blank" rel="noopener">🇪🇺 VIES (P.IVA europea)</a>';
+  const albo = tipo === 'azienda' ? '' : ' <a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener">🚛 Albo Autotrasportatori</a>';
+  return '<div class="verifica-box">' + titolo + 'Controlla i dati ufficiali prima di decidere.<br>' +
     '<span style="color:var(--muted)">Partita IVA: <b style="color:#fff">' + piva + '</b></span><br>' +
-    '<button type="button" class="btn-scarica" style="margin-top:8px;" onclick="verificaPiva(\'' + piva + '\')">🏛️ Verifica P.IVA (Agenzia Entrate)</button> ' + albo +
+    '<button type="button" class="btn-scarica" style="margin-top:8px;" onclick="verificaPiva(\'' + piva + '\')">🏛️ Verifica P.IVA (Agenzia Entrate)</button> ' + vies + albo +
     '<div id="verifica-msg" style="display:none;color:#4ade80;font-size:12px;margin-top:6px;"></div></div>';
 }
 function verificaPiva(piva) {
@@ -1098,13 +1113,14 @@ function apriDettaglioUtente(recordId) {
     ${modalitaAnteprima ? '<div class="anteprima-banner" style="font-size:14px;font-weight:800;padding:14px 16px;text-align:center;">🎭 ATTENZIONE — DATI FINTI DI ESEMPIO, NON RICHIESTE VERE 🎭</div>' : ''}
     <div class="dett-nome">${nome}</div>
     <div class="dett-tipo">${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</div>
+    ${bloccoVerifica(f, r.tipo)}
     <button class="btn-scarica" onclick="scaricaAnagrafica()">📥 Scarica anagrafica</button>
     <table class="dett-table">${righe}</table>
-    ${bloccoVerifica(f, r.tipo)}
     <div class="dett-azioni">
-      <button class="btn-non-attiva" onclick="tornaListaNotifiche()">Non attivare ora</button>
-      <button class="btn-attiva" id="btn-attiva-conferma" onclick="richiediConfermaAttivazione()">✅ Attiva</button>
+      <button class="btn-rifiuta" id="btn-rifiuta-conferma" onclick="rifiutaIscrizione()">❌ Rifiuta</button>
+      <button class="btn-attiva" id="btn-attiva-conferma" onclick="richiediConfermaAttivazione()">✅ Approva</button>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">Per decidere più tardi: ← Torna alla lista (in alto).</div>
   `;
   document.getElementById('notif-lista').style.display = 'none';
   document.getElementById('notif-dettaglio').style.display = 'block';
@@ -1152,7 +1168,7 @@ function richiediConfermaAttivazione() {
   const nome = recordApertoCorrente.tipo === 'azienda'
     ? (recordApertoCorrente.fields.ragione_sociale || '—')
     : ((recordApertoCorrente.fields.nome || '') + ' ' + (recordApertoCorrente.fields.cognome || '')).trim();
-  document.getElementById('stampa-testo').textContent = `Vuoi stampare l'anagrafica di ${nome} prima di attivarlo?`;
+  document.getElementById('stampa-testo').textContent = `Vuoi stampare l'anagrafica di ${nome} prima di approvarlo?`;
   document.getElementById('stampa-overlay').style.display = 'flex';
 }
 
@@ -1188,7 +1204,7 @@ async function eseguiAttivazione() {
   if (!recordApertoCorrente) return;
   const r = recordApertoCorrente;
   const btn = document.getElementById('btn-attiva-conferma');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Attivo…'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Approvo…'; }
 
   if (modalitaAnteprima || String(r.id).startsWith('anteprima-')) {
     await new Promise(res => setTimeout(res, 700));
@@ -1211,6 +1227,39 @@ async function eseguiAttivazione() {
     tornaListaNotifiche();
   } catch (e) {
     console.error('Errore attivazione:', e);
+    if (btn) { btn.disabled = false; btn.textContent = '⚠️ Riprova'; }
+  }
+}
+
+// 30/9: Rifiuta iscrizione -> stato "Rifiutato" su Airtable (scenario Make dedicato 7694561).
+// Nessuna email parte: la persona esce solo dalla campanella.
+const RIFIUTA_WEBHOOK = 'https://hook.eu1.make.com/il6nrbitqrtf8dmhnwp0zifl91usr96h';
+async function rifiutaIscrizione() {
+  if (!recordApertoCorrente) return;
+  const r = recordApertoCorrente;
+  const nome = r.tipo === 'azienda' ? (r.fields.ragione_sociale || r.fields.nome || '—') : ((r.fields.nome || '') + ' ' + (r.fields.cognome || '')).trim();
+  if (!confirm('Vuoi RIFIUTARE l\'iscrizione di ' + nome + '?\n\nNon riceverà l\'email di pagamento ed esce dalla campanella.')) return;
+  const btn = document.getElementById('btn-rifiuta-conferma');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Rifiuto…'; }
+  if (modalitaAnteprima || String(r.id).startsWith('anteprima-') || typeof registrazioniReali === 'undefined') {
+    await new Promise(res => setTimeout(res, 600));
+    if (typeof registrazioniDemo !== 'undefined') registrazioniDemo = registrazioniDemo.filter(x => x.id !== r.id);
+    try { aggiornaCampanello(); } catch (e) {}
+    tornaListaNotifiche();
+    return;
+  }
+  try {
+    const res = await fetch(RIFIUTA_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: r.tipo, record_id: r.id })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
+    aggiornaCampanello();
+    tornaListaNotifiche();
+  } catch (e) {
+    console.error('Errore rifiuto:', e);
     if (btn) { btn.disabled = false; btn.textContent = '⚠️ Riprova'; }
   }
 }
