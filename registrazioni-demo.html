@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTruckConnect — Pagamenti e Registrazioni (FINTA — DEMO)</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080d16;
+  --surface:  #0e1623;
+  --surface2: #131d2e;
+  --border:   rgba(255,255,255,0.07);
+  --blue:     #3b82f6;
+  --green:    #22c55e;
+  --amber:    #f59e0b;
+  --text:     #f1f5f9;
+  --muted:    rgba(241,245,249,0.45);
+  --font-h:   'Syne', sans-serif;
+  --font-b:   'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;}
+h1,h2,h3{font-family:var(--font-h);}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--surface);}
+.logo{font-family:var(--font-h);font-weight:800;font-size:22px;}
+.logo span{color:var(--blue);}
+.back-link{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;}
+.back-link:hover{color:var(--text);}
+
+.wrap{max-width:1000px;margin:0 auto;padding:32px;}
+
+.page-title{font-size:26px;font-weight:800;margin-bottom:6px;}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+
+.note-box{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:var(--amber);}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.stat-label{font-size:13px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.stat-value{font-family:var(--font-h);font-size:32px;font-weight:800;color:var(--green);}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;}
+.section-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-b);}
+.btn:hover{background:#2563eb;}
+
+.reg-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.reg-row:last-child{border-bottom:none;}
+.reg-name{font-weight:700;font-size:14px;}
+.reg-contact{font-size:12px;color:var(--muted);margin-top:3px;}
+.reg-amount{background:rgba(34,197,94,0.15);color:var(--green);font-size:12px;font-weight:700;padding:4px 12px;border-radius:12px;white-space:nowrap;}
+.reg-date{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+.ect-gira{display:inline-block;animation:ectgira .8s linear infinite;}@keyframes ectgira{to{transform:rotate(360deg);}}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div style="position:sticky;top:0;z-index:999;background:#f97316;color:#fff;text-align:center;font-weight:800;padding:10px 14px;font-size:14px;">🎭 PAGAMENTI E REGISTRAZIONI — DEMO (FINTA): tutti i dati sono inventati, nessun pulsante tocca Shopify, Airtable o Make.</div>
+
+<div class="header">
+  <div class="logo">Eco<span>Truck</span>Connect</div>
+  <a href="dashboard-demo.html" class="back-link">← Torna alla Dashboard DEMO</a>
+</div>
+
+<div class="wrap">
+  <div class="page-title">💶 Pagamenti e Registrazioni</div>
+  <div class="page-sub">Chi ha pagato l'iscrizione (150 €) e chi ha pagato per prendere un carico (20 €): qui sono dati finti di esempio (nella Dashboard vera arrivano da Shopify e Airtable).</div>
+
+  <div class="note-box" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.08);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <span>✅ Ogni pagamento è incrociato con Airtable (trasportatore o azienda). Le prove interne (email SynAIMAX o pagate a 0 € con codice sconto) sono nascoste, a meno che tu non le mostri.</span>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;"><input type="checkbox" id="mostra-prove" onchange="render()" style="width:18px;height:18px;"> Mostra anche le prove</label>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Trasportatori iscritti</div>
+      <div class="stat-value" id="st-trasportatori">—</div>
+      <div class="stat-sub">Iscrizioni pagate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Aziende iscritte</div>
+      <div class="stat-value" id="st-aziende">—</div>
+      <div class="stat-sub">Iscrizioni pagate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Carichi pagati</div>
+      <div class="stat-value" id="st-carichi">—</div>
+      <div class="stat-sub">Commissioni da 20 €</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Totale incassato</div>
+      <div class="stat-value" id="st-totale">—</div>
+      <div class="stat-sub">Somma reale pagata (le prove valgono 0 €)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" style="flex-wrap:wrap;gap:10px;">
+      <span>Elenco pagamenti</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" id="btn-aggiorna-reg" onclick="aggiornaReg()">🔄 Aggiorna</button>
+        <button class="btn" onclick="scaricaCSV()">📥 Scarica CSV</button>
+        <button class="btn" onclick="stampaElenco()">🖨️ Stampa elenco</button>
+      </span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <input id="reg-cerca" oninput="render()" placeholder="🔎 Cerca per nome, email, telefono, ordine…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
+      <select id="reg-tipo" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Tutti</option><option value="Trasportatore">Solo trasportatori</option><option value="Azienda">Solo aziende</option>
+      </select>
+      <select id="reg-cosa" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Iscrizioni e carichi</option><option value="Iscrizione">Solo iscrizioni (150 €)</option><option value="Carico">Solo carichi (20 €)</option>
+      </select>
+      <select id="reg-periodo" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Sempre</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="30">30 giorni</option>
+      </select>
+    </div>
+    <div id="lista-registrazioni"><div class="empty-state">Caricamento…</div></div>
+  </div>
+</div>
+
+<script>
+const PROXY_WEBHOOK = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
+// Email interne da escludere sempre dai conteggi reali (test dello staff)
+const EMAIL_ESCLUSE = ['system.synaimax@gmail.com', 'synautomationpro@gmail.com'];
+
+let registrazioni = [];
+let pagamentiTutti = [];
+
+function estraiOrdini(body) {
+  const shopifyBody = body?.shopify || body;
+  const percorsi = [shopifyBody?.data?.orders?.nodes, shopifyBody?.orders?.nodes, shopifyBody?.body?.data?.orders?.nodes, shopifyBody?.body?.orders?.nodes];
+  for (const p of percorsi) { if (Array.isArray(p)) return p; }
+  return [];
+}
+function estraiEmailSet(records) {
+  const set = new Set();
+  (records || []).forEach(r => { const email = (r.fields || r)?.email; if (email) set.add(String(email).toLowerCase().trim()); });
+  return set;
+}
+function eTest(email) {
+  if (!email) return false;
+  const e = email.toLowerCase();
+  return EMAIL_ESCLUSE.some(x => e === x.toLowerCase()) || e.includes('synaimax');
+}
+function titoli(o) { return (o.lineItems?.nodes || []).map(i => i.title || '').join(' · '); }
+function cosaE(o) {
+  const t = titoli(o).toLowerCase();
+  if (t.includes('blocca carico') || t.includes('accaparramento') || t.includes('carico')) return 'Carico';
+  if (t.includes('innovazione digitale') || t.includes('ingresso') || t.includes('iscrizione') || t.includes('ecotruckconnect')) return 'Iscrizione';
+  return null;
+}
+function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function euroR(n) { return '€ ' + Number(n || 0).toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function dataOraR(d) { return d ? new Date(d).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+async function carica() {
+  // DEMO: dati inventati, nessuna chiamata a Make o Shopify
+  const g = (d, h) => new Date(Date.now() - d * 86400000 - (h || 0) * 3600000).toISOString();
+  const persone = [
+    ['Marco Russo (DEMO)', 'marco.russo@esempio.it', '333 0000001', 'Trasportatore'],
+    ['Giuseppe Lo Bue (DEMO)', 'g.lobue@esempio.it', '333 0000002', 'Trasportatore'],
+    ['Antonio Greco (DEMO)', 'a.greco@esempio.it', '333 0000003', 'Trasportatore'],
+    ['Salvatore Vella (DEMO)', 's.vella@esempio.it', '333 0000004', 'Trasportatore'],
+    ['Trasporti Belfiore Srl (DEMO)', 'info@belfiore-esempio.it', '0922 000000', 'Azienda'],
+    ['Edil Sud Srl (DEMO)', 'info@edilsud-esempio.it', '0922 000001', 'Azienda'],
+    ['Eco Recuperi Sicilia (DEMO)', 'info@ecorecuperi-esempio.it', '0922 000002', 'Azienda'],
+    ['Gilda Srl (DEMO)', 'info@gilda-esempio.it', '0922 000003', 'Azienda']
+  ];
+  let n = 1100;
+  const riga = (p, cosa, d, h) => ({ cosa: cosa, nome: p[0], email: p[1], telefono: p[2], data: g(d, h),
+    importo: cosa === 'Iscrizione' ? 150 : 20, valuta: 'EUR', ordine: 'SY-' + (n++),
+    prodotto: cosa === 'Iscrizione' ? 'Iscrizione annuale EcoTruckConnect (DEMO)' : 'Accaparramento carico EcoTruckConnect (DEMO)',
+    tipo: p[3], prova: false });
+  pagamentiTutti = [
+    riga(persone[0], 'Iscrizione', 62, 3), riga(persone[4], 'Iscrizione', 58, 5), riga(persone[1], 'Iscrizione', 41, 2),
+    riga(persone[5], 'Iscrizione', 33, 6), riga(persone[6], 'Iscrizione', 21, 4), riga(persone[2], 'Iscrizione', 12, 1),
+    riga(persone[7], 'Iscrizione', 5, 3), riga(persone[3], 'Iscrizione', 0, 2)
+  ];
+  [[0,55],[0,48],[1,39],[0,30],[1,27],[0,22],[2,15],[1,11],[0,9],[2,6],[1,4],[0,3],[2,2],[1,1],[0,0],[3,0]].forEach(([k, d], i) =>
+    pagamentiTutti.push(riga(persone[k], 'Carico', d, (i % 5) + 1)));
+  pagamentiTutti.sort((a, b) => String(b.data).localeCompare(String(a.data)));
+  render();
+}
+async function aggiornaReg() {
+  const b = document.getElementById('btn-aggiorna-reg');
+  b.disabled = true; b.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno…';
+  await carica();
+  b.innerHTML = '✅ Aggiornato'; setTimeout(() => { b.disabled = false; b.innerHTML = '🔄 Aggiorna'; }, 1500);
+}
+
+function render() {
+  const prove = document.getElementById('mostra-prove').checked;
+  const q = (document.getElementById('reg-cerca').value || '').trim().toLowerCase();
+  const tipo = document.getElementById('reg-tipo').value;
+  const cosa = document.getElementById('reg-cosa').value;
+  const per = parseInt(document.getElementById('reg-periodo').value || '0', 10);
+  const limite = per ? (function () { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - (per - 1)); return d; })() : null;
+  const base = pagamentiTutti.filter(r => prove || !r.prova);
+  const iscr = base.filter(r => r.cosa === 'Iscrizione');
+  document.getElementById('st-trasportatori').textContent = iscr.filter(r => r.tipo === 'Trasportatore').length;
+  document.getElementById('st-aziende').textContent = iscr.filter(r => r.tipo === 'Azienda').length;
+  document.getElementById('st-carichi').textContent = base.filter(r => r.cosa === 'Carico').length;
+  document.getElementById('st-totale').textContent = euroR(base.reduce((s, r) => s + r.importo, 0));
+
+  registrazioni = base.filter(r => (!tipo || r.tipo === tipo) && (!cosa || r.cosa === cosa) &&
+      (!limite || (r.data && new Date(r.data) >= limite)) &&
+      (!q || [r.nome, r.email, r.telefono, r.ordine, r.prodotto].join(' ').toLowerCase().includes(q)))
+    .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+  const el = document.getElementById('lista-registrazioni');
+  if (!registrazioni.length) {
+    el.innerHTML = '<div class="empty-state">Nessun pagamento trovato' + (prove ? '' : ' (le prove sono nascoste: spunta «Mostra anche le prove»)') + '.</div>';
+    return;
+  }
+  el.innerHTML = registrazioni.map((r, i) => {
+    const tipoColore = r.tipo === 'Trasportatore' ? 'var(--blue)' : (r.tipo === 'Azienda' ? 'var(--amber)' : 'var(--muted)');
+    return `<div class="reg-row">
+      <div style="flex:1;min-width:220px;">
+        <div class="reg-name">${esc(r.nome)} <span style="color:${tipoColore};font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px;">${esc(r.tipo)}</span>
+          <span style="font-size:11px;font-weight:700;margin-left:6px;color:${r.cosa === 'Carico' ? '#a78bfa' : 'var(--green)'};">${r.cosa === 'Carico' ? '🚚 CARICO' : '🎫 ISCRIZIONE'}</span>
+          ${r.prova ? '<span style="font-size:10px;font-weight:700;margin-left:6px;color:var(--amber);border:1px solid rgba(245,158,11,0.5);border-radius:6px;padding:1px 6px;">PROVA</span>' : ''}</div>
+        <div class="reg-contact">✉️ ${esc(r.email)} &nbsp; 📞 ${esc(r.telefono)} &nbsp; 🧾 ${esc(r.ordine)}</div>
+      </div>
+      <div class="reg-amount">${euroR(r.importo)}</div>
+      <div class="reg-date">${dataOraR(r.data)}</div>
+      <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="stampaRiga(${i})">🖨️ Stampa</button>
+    </div>`;
+  }).join('');
+}
+
+function finestraStampa(titolo, html) {
+  const w = window.open('', '_blank');
+  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${esc(titolo)}</title><style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:28px;font-size:13px;}
+    h1{font-size:19px;margin:0 0 4px;} .sub{color:#555;font-size:12px;margin-bottom:18px;}
+    table{width:100%;border-collapse:collapse;} td,th{border:1px solid #ccc;padding:7px 9px;text-align:left;vertical-align:top;} th{background:#f1f5f9;width:32%;}
+    .barra{margin-bottom:16px;} .barra button{padding:9px 16px;font-size:13px;font-weight:700;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;margin-right:6px;}
+    @media print{.barra{display:none;}}
+  </style></head><body><div class="barra"><button onclick="window.print()">🖨️ Stampa / 📄 Salva PDF</button></div>
+  <h1>${esc(titolo)}</h1><div class="sub">EcoTruckConnect — SynAIMAX S.R.L.S. · stampato il ${new Date().toLocaleString('it-IT')}</div>${html}</body></html>`);
+  w.document.close();
+}
+function stampaRiga(i) {
+  const r = registrazioni[i]; if (!r) return;
+  const righe = [['Cosa', r.cosa === 'Carico' ? 'Pagamento per prendere un carico (commissione)' : 'Iscrizione alla piattaforma'],
+    ['Nome', r.nome], ['Tipo utente', r.tipo], ['Email', r.email], ['Telefono', r.telefono],
+    ['Ordine Shopify', r.ordine], ['Prodotto', r.prodotto], ['Importo pagato', euroR(r.importo) + ' ' + r.valuta],
+    ['Data e ora', dataOraR(r.data)], ['Nota', r.prova ? 'PROVA INTERNA (codice sconto o email SynAIMAX)' : 'Pagamento reale']];
+  finestraStampa('Pagamento ' + r.ordine + ' — ' + r.nome, '<table>' + righe.map(x => `<tr><th>${esc(x[0])}</th><td>${esc(x[1])}</td></tr>`).join('') + '</table>');
+}
+function stampaElenco() {
+  if (!registrazioni.length) { alert('Nessun pagamento da stampare con questi filtri.'); return; }
+  const tot = registrazioni.reduce((s, r) => s + r.importo, 0);
+  const html = '<table><tr><th style="width:auto">Data e ora</th><th style="width:auto">Cosa</th><th style="width:auto">Nome</th><th style="width:auto">Tipo</th><th style="width:auto">Email / Telefono</th><th style="width:auto">Ordine</th><th style="width:auto">Importo</th></tr>' +
+    registrazioni.map(r => `<tr><td>${esc(dataOraR(r.data))}</td><td>${esc(r.cosa)}${r.prova ? ' (prova)' : ''}</td><td>${esc(r.nome)}</td><td>${esc(r.tipo)}</td><td>${esc(r.email)}<br>${esc(r.telefono)}</td><td>${esc(r.ordine)}</td><td>${esc(euroR(r.importo))}</td></tr>`).join('') +
+    `<tr><th colspan="6" style="text-align:right">Totale</th><td><b>${esc(euroR(tot))}</b></td></tr></table>`;
+  finestraStampa('Elenco pagamenti (' + registrazioni.length + ')', html);
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v).replace(/"/g, '""');
+  return /[",;\n]/.test(s) ? `"${s}"` : s;
+}
+function scaricaCSV() {
+  if (!registrazioni.length) { alert('Nessun pagamento da scaricare con questi filtri.'); return; }
+  const header = ['Data e ora', 'Cosa', 'Nome', 'Tipo', 'Email', 'Telefono', 'Importo', 'Valuta', 'Numero Ordine', 'Prova'].map(csvEscape).join(';');
+  const righe = registrazioni.map(r => [dataOraR(r.data), r.cosa, r.nome, r.tipo, r.email, r.telefono, r.importo.toFixed(2).replace('.', ','), r.valuta, r.ordine, r.prova ? 'sì' : 'no'].map(csvEscape).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + header + '\n' + righe], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `pagamenti_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+carica();
+</script>
+</body>
+</html>
