@@ -1233,6 +1233,12 @@ async function eseguiAttivazione() {
 
 // 30/9: Rifiuta iscrizione -> stato "Rifiutato" su Airtable (scenario Make dedicato 7694561).
 // Nessuna email parte: la persona esce solo dalla campanella.
+// Stesso controllo dell'Approva: login da gestore + Google Authenticator (verificato su Make).
+async function corpoRifiutaConAccesso(corpo) {
+  try { if (window.ectTokenAccesso) { const t = await window.ectTokenAccesso(); if (t) corpo.token = t; } } catch (e) {}
+  try { const tk = JSON.parse(localStorage.getItem('ect_mfa_ticket') || 'null'); if (tk && tk.dati) { corpo.ticket_dati = tk.dati; corpo.ticket_firma = tk.firma; } } catch (e) {}
+  return corpo;
+}
 const RIFIUTA_WEBHOOK = 'https://hook.eu1.make.com/il6nrbitqrtf8dmhnwp0zifl91usr96h';
 async function rifiutaIscrizione() {
   if (!recordApertoCorrente) return;
@@ -1252,7 +1258,7 @@ async function rifiutaIscrizione() {
     const res = await fetch(RIFIUTA_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipo: r.tipo, record_id: r.id })
+      body: JSON.stringify(await corpoRifiutaConAccesso({ tipo: r.tipo, record_id: r.id }))
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
