@@ -662,7 +662,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         </div>
         <h4 style="color:#fff;font-family:var(--font-h);font-size:14px;margin-bottom:10px;">Tipi di notifica</h4>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
-          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-nuovo-carico" checked style="width:16px;height:16px;"><label for="notif-nuovo-carico" style="color:#fff;font-size:13px;cursor:pointer;">Nuovo carico disponibile nella tua zona</label></div>
+          <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-nuovo-carico" checked style="width:16px;height:16px;"><label for="notif-nuovo-carico" style="color:#fff;font-size:13px;cursor:pointer;">Nuovo carico disponibile adatto ai tuoi mezzi</label></div>
           <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-pagamento" checked style="width:16px;height:16px;"><label for="notif-pagamento" style="color:#fff;font-size:13px;cursor:pointer;">Aggiornamenti sui pagamenti</label></div>
           <div style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="notif-promemoria" style="width:16px;height:16px;"><label for="notif-promemoria" style="color:#fff;font-size:13px;cursor:pointer;">Promemoria e novità della piattaforma</label></div>
         </div>
@@ -738,7 +738,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
     </div>
     <div class="ins-box" id="sezione-azienda" style="display:none;">
       <div class="ins-title">📦 Pubblica un Carico</div>
-      <div class="ins-sub">Inserisci i dettagli del carico. Il sistema trova automaticamente il trasportatore giusto nella zona.</div>
+      <div class="ins-sub">Inserisci i dettagli del trasporto. Il sistema lo mostra solo ai trasportatori con il mezzo e l'autorizzazione che hai richiesto.</div>
       <div class="ins-grid">
         <div class="ins-field"><label>CAP Partenza *</label><input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026" inputmode="numeric" oninput="autocompilaCittaCarico('part')"></div>
         <div class="ins-field"><label>CAP Arrivo *</label><input type="text" id="ins-cap-arr" maxlength="5" placeholder="es. 90100" inputmode="numeric" oninput="autocompilaCittaCarico('arr')"></div>
@@ -829,8 +829,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
       </div>
 
       <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica Carico</button>
-      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;">✏️ Hai sbagliato qualcosa dopo la pubblicazione? Per <b>modificare o annullare</b> un carico già pubblicato scrivici dal modulo <b>"Scrivici"</b> in fondo alla pagina, indicando il <b>numero ordine</b>: lo sistemiamo noi e avvisiamo i trasportatori.</div>
-      <div class="ins-ok" id="ins-ok">✅ Carico pubblicato! I trasportatori nella zona riceveranno la notifica.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;">✏️ Hai sbagliato qualcosa dopo la pubblicazione? Finché nessun trasportatore l'ha preso, puoi usare <b>Modifica</b> o <b>Annulla</b> nello <b>Storico</b> qui sotto. Se è già stato preso, usa <b>Richiedi annullamento</b>: lo valutiamo noi.</div>
+      <div class="ins-ok" id="ins-ok">✅ Pubblicato! I trasportatori con il mezzo e l'autorizzazione giusti riceveranno la notifica.</div>
       <div class="ins-err" id="ins-err"></div>
     </div>
     <div id="contenuto-normale-portale">
@@ -988,7 +988,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
         <div class="assist-txt">
           <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
           <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
-          <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Come prendo un carico? Dove trovo il riepilogo dei miei movimenti?</p>
+          <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Dove trovo il riepilogo dei miei movimenti? Come cambio i miei dati?</p>
           <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
         </div>
         <div>
@@ -2533,7 +2533,7 @@ function renderCarichi(carichi) {
   }
   ultimiCarichiVisibili = filtrati;
   if (!filtrati.length) {
-    lista.innerHTML = '<div class="carico-empty">Nessun carico disponibile in questo momento.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Riceverai una notifica su Telegram appena arriva un carico nella tua zona.</span></div>';
+    lista.innerHTML = '<div class="carico-empty">Nessun carico disponibile in questo momento.<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Riceverai una notifica su Telegram appena arriva un carico adatto ai tuoi mezzi.</span></div>';
     if (statRiga) statRiga.innerHTML = '';
     return;
   }
@@ -3579,7 +3579,7 @@ function renderResoconto() {
     card(euro(S.tot), az ? 'totale del periodo' : 'totale da fatturare nel periodo', 'var(--green)') +
     card(euro(S.fatto), az ? 'già pagato' : 'già incassato') +
     card(euro(S.resta), az ? 'ancora da pagare' : 'ancora da incassare', S.resta > 0 ? 'var(--amber)' : 'var(--green)');
-  if (!az) cont += card(euro(S.n * 20), 'commissioni EcoTruckConnect (' + S.n + ' × 20 €)');
+  if (!az) cont += card(euro(S.n * 20), 'commissioni EcoTruckConnect pagate (' + S.n + (S.n === 1 ? ' carico)' : ' carichi)'));
   cont += card(SS.n + ' · ' + euro(SS.tot), (az ? 'trasporti' : 'carichi') + ' da sempre' + (rsScelto ? ' con ' + rsScelto : ''));
   document.getElementById('rs-contatori').innerHTML = cont;
   document.getElementById('rs-scelto').innerHTML = rsScelto
@@ -4577,7 +4577,7 @@ function renderModaleGiorno() {
     dettaglioModaleGiornoAperto = null;
   }
   if (!capModaleGiornoCarichi.length) {
-    corpo.innerHTML = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno nella tua zona.</div>`;
+    corpo.innerHTML = `<div class="cal-modal-empty">Nessun carico in questa data.<br>Riceverai una notifica Telegram appena ne arriva uno adatto ai tuoi mezzi.</div>`;
     return;
   }
   const disponibili = capModaleGiornoCarichi.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE');
