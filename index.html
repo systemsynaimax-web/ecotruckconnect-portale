@@ -1948,6 +1948,38 @@ async function doLogin() {
   }
 }
 
+function mostraAccountNonRiconosciuto(email) {
+  const main = document.querySelector('#app .main');
+  const hero = document.getElementById('hero-personale');
+  if (main) main.style.display = 'none';
+  if (hero) hero.style.display = 'none';
+  const gestore = (email || '').toLowerCase() === 'system.synaimax@gmail.com';
+  if (gestore) return; // per i gestori resta solo l'avviso con il pulsante della Dashboard Gestori
+  let box = document.getElementById('ect-non-riconosciuto');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'ect-non-riconosciuto';
+    box.style.cssText = 'max-width:560px;margin:60px auto;padding:28px;border-radius:16px;background:var(--surface);border:1px solid rgba(245,158,11,0.45);color:var(--text);font-size:15px;line-height:1.6;text-align:center;';
+    const nav = document.querySelector('#app .navbar');
+    if (nav) nav.insertAdjacentElement('afterend', box); else document.getElementById('app').prepend(box);
+  }
+  const rete = (typeof ultimoErroreRete !== 'undefined') && ultimoErroreRete;
+  box.innerHTML = rete
+    ? '<div style="font-size:34px;margin-bottom:8px;">📡</div><b>Problema di connessione.</b><br>Non sono riuscito a caricare il tuo account. Riprova tra qualche secondo.'
+      + '<div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn-cap" onclick="location.reload()">🔄 Riprova</button><button class="btn-esci" onclick="doLogout()">⏻ Esci</button></div>'
+    : '<div style="font-size:34px;margin-bottom:8px;">⏳</div><b>Il tuo account non risulta ancora attivo.</b><br>Questa email (' + String(email || '').replace(/[<>&"]/g, '') + ') non è ancora collegata a un\'azienda o a un trasportatore approvato.<br>Se hai appena completato l\'iscrizione, riprova tra qualche minuto, oppure scrivi a <a href="mailto:ecotruckconnect@synaimaxpro.com" style="color:var(--blue);">ecotruckconnect@synaimaxpro.com</a>.'
+      + '<div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn-cap" onclick="location.reload()">🔄 Riprova</button><button class="btn-esci" onclick="doLogout()">⏻ Esci</button></div>';
+}
+
+function nascondiAccountNonRiconosciuto() {
+  const box = document.getElementById('ect-non-riconosciuto');
+  if (box) box.remove();
+  const main = document.querySelector('#app .main');
+  const hero = document.getElementById('hero-personale');
+  if (main) main.style.display = '';
+  if (hero) hero.style.display = '';
+}
+
 function doLogout() {
   // USCITA ISTANTANEA (26/9/2026): non aspetta piu' la risposta del widget Netlify
   // (che a volte non arrivava e lasciava la clessidra "Uscita..." bloccata).
@@ -3010,6 +3042,10 @@ async function caricaDati(email) {
     document.getElementById('cap-bar-section').style.display = 'none';
     document.getElementById('sezione-azienda').style.display = 'none';
     const recId = await rilevaTipoUtente(email);
+    // 1/10: niente piu' "terza schermata". Se l'email non e' ne' Azienda ne' Trasportatore,
+    // non mostriamo il portale a meta' (testi da trasportatore, niente modulo, dati che non arrivano).
+    if (!recId && !tipoUtente) { mostraAccountNonRiconosciuto(email); return; }
+    nascondiAccountNonRiconosciuto();
     let rawCarichi = [];
     let erroreCarichi = false;
     try {
@@ -3044,7 +3080,8 @@ async function caricaDati(email) {
     }
     if (!recId) { azzeraStats(); renderStorico([]); return; }
     let cands = [];
-    try {
+    // 1/10: i "carichi presi" si chiedono solo per il trasportatore. Prima partiva anche per l'azienda con il suo codice: richiesta sbagliata.
+    if (tipoUtente === 'trasportatore') try {
       const r3 = await fetch(PROXY_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
