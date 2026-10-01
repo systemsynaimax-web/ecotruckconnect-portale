@@ -4367,7 +4367,8 @@ async function sendBot() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       action: 'chat_bot',
-      message: msg
+      // 1/10: tolgo i caratteri che rompono il JSON su Make (virgolette doppie, barre rovesciate, a capo)
+      message: msg.replace(/[\u201C\u201D"]/g, "'").replace(/\\/g, '/').replace(/[\u0000-\u001F\u007F]+/g, ' ')
     })
   });
   try {
