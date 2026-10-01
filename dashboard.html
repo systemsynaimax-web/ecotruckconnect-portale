@@ -1086,9 +1086,70 @@ function bloccoVerifica(f, tipo) {
   const albo = tipo === 'azienda' ? '' : ' <a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener">🚛 Albo Autotrasportatori</a>';
   return '<div class="verifica-box">' + titolo + 'Controlla i dati ufficiali prima di decidere.<br>' +
     '<span style="color:var(--muted)">Partita IVA: <b style="color:#fff">' + piva + '</b></span><br>' +
+    (tipo === 'azienda' ? '' : '<div id="verifica-auto" style="margin:10px 0 4px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.5;">⏳ Controllo automatico della Partita IVA in corso…</div>' + avviaControlloPiva(piva, f)) +
     '<button type="button" class="btn-scarica" style="margin-top:8px;" onclick="verificaPiva(\'' + piva + '\')">🏛️ Verifica P.IVA (Agenzia Entrate)</button> ' + vies + albo +
     '<div id="verifica-msg" style="display:none;color:#4ade80;font-size:12px;margin-top:6px;"></div></div>';
 }
+// ===== CONTROLLO AUTOMATICO P.IVA (1/10/2026) — solo trasportatori, per ora =====
+const PIVA_WEBHOOK = 'https://hook.eu1.make.com/1brig2b3n71yqjn2w68ithtfkaxlct1e';
+function escV(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pivaFormale(p) {
+  if (!/^\d{11}$/.test(p)) return 'lunghezza';
+  const uff = parseInt(p.slice(7, 10), 10);
+  if (/^0+$/.test(p.slice(0, 7)) || !((uff >= 1 && uff <= 100) || uff === 120 || uff === 121 || uff === 888 || uff === 999)) return 'errata';
+  let s = 0;
+  for (let i = 0; i < 10; i++) { let n = +p[i]; if (i % 2 === 1) { n *= 2; if (n > 9) n -= 9; } s += n; }
+  return ((10 - s % 10) % 10 === +p[10]) ? 'ok' : 'errata';
+}
+function nomeRegistrato(f) {
+  f = f || {};
+  return f.ragione_sociale || f.nome_azienda || f.denominazione || [f.nome, f.cognome].filter(Boolean).join(' ') || '';
+}
+function parole(t) { return String(t || '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2 && ['SRL','SRLS','SNC','SAS','SPA','DITTA','DI','DEL','DELLA'].indexOf(w) === -1); }
+function avviaControlloPiva(piva, f) { setTimeout(function () { controllaPivaAuto(piva, f); }, 0); return ''; }
+async function controllaPivaAuto(piva, f) {
+  const box = document.getElementById('verifica-auto'); if (!box) return;
+  const p = String(piva || '').replace(/\D/g, '');
+  const stile = (bg, bordo) => { box.style.background = bg; box.style.border = '1px solid ' + bordo; };
+  const esito = pivaFormale(p);
+  if (esito === 'lunghezza') { stile('rgba(239,68,68,0.12)', 'rgba(239,68,68,0.5)'); box.innerHTML = '🔴 <b>Partita IVA sbagliata</b>: deve avere 11 numeri (qui ne ha ' + p.length + '). Chiedi la correzione prima di approvare.'; return; }
+  if (esito === 'errata') { stile('rgba(239,68,68,0.12)', 'rgba(239,68,68,0.5)'); box.innerHTML = '🔴 <b>Partita IVA sbagliata</b>: questo numero non può esistere (errore di battitura o numero inventato). Chiedi la correzione prima di approvare.'; return; }
+  box.innerHTML = '⏳ Numero scritto correttamente. Controllo nel registro europeo (VIES)…';
+  let d = null;
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 15000);
+    const r = await fetch(PIVA_WEBHOOK + '?piva=' + encodeURIComponent(p), { signal: ctrl.signal });
+    clearTimeout(t);
+    d = JSON.parse(await r.text());
+  } catch (e) { d = null; }
+  const riprova = ' <button type="button" class="btn-scarica" style="margin-top:6px;" onclick="controllaPivaAuto(\'' + p + '\', null)">🔄 Riprova</button>';
+  if (!d || (d.isValid !== true && d.isValid !== false) || /UNAVAILABLE|TIMEOUT|BUSY|ERROR/i.test(String(d.userError || ''))) {
+    stile('rgba(245,158,11,0.12)', 'rgba(245,158,11,0.5)');
+    box.innerHTML = '🟡 <b>Numero scritto correttamente</b>, ma il registro europeo in questo momento non risponde. Riprova tra poco oppure controlla a mano con il pulsante Agenzia Entrate.' + riprova;
+    return;
+  }
+  if (d.isValid === true) {
+    const nomeV = (d.name && d.name !== '---') ? d.name : '';
+    const indV = (d.address && d.address !== '---') ? String(d.address).replace(/\n/g, ', ') : '';
+    const reg = nomeRegistrato(f);
+    let conf = '';
+    if (nomeV && reg) {
+      const a = parole(nomeV), b = parole(reg);
+      const comuni = b.filter(w => a.indexOf(w) !== -1).length;
+      conf = comuni > 0
+        ? '<br>✅ <b>Coincide</b> con il nome della registrazione (' + escV(reg) + ').'
+        : '<br>⚠️ <b>Nome diverso</b> da quello della registrazione (' + escV(reg) + '): controlla bene.';
+    }
+    stile('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.5)');
+    box.innerHTML = '🟢 <b>Partita IVA valida e attiva</b> (registro europeo VIES)' +
+      (nomeV ? '<br>Denominazione ufficiale: <b>' + escV(nomeV) + '</b>' : '') +
+      (indV ? '<br>Sede ufficiale: ' + escV(indV) : '') + conf;
+    return;
+  }
+  stile('rgba(245,158,11,0.12)', 'rgba(245,158,11,0.5)');
+  box.innerHTML = '🟡 <b>Numero scritto correttamente</b>, ma non presente nel registro europeo VIES. Succede a molte ditte individuali e piccoli trasportatori: <b>non vuol dire che sia falsa</b>. Controlla a mano con il pulsante <b>Agenzia Entrate</b> qui sotto.';
+}
+
 function verificaPiva(piva) {
   window.open('https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva', '_blank', 'noopener');
   const msg = document.getElementById('verifica-msg');
