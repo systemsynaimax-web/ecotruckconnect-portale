@@ -47,7 +47,9 @@
         var tenere = extra.autorizzazioni || [];
         docsAnteprima = docsAnteprima.filter(function (d) { return tenere.indexOf(d.autorizzazione) !== -1; });
       }
-      if (azione === 'documenti_trasportatore') return { ok: true, documenti: [{ autorizzazione: 'Conto Terzi', nome: 'licenza-esempio.pdf', url: '#' }] };
+      if (azione === 'documenti_trasportatore') return { ok: true, documenti: [
+        { autorizzazione: 'Conto Terzi', nome: 'licenza-esempio.png', url: docEsempio('Conto Terzi'), tipo: 'image/png' },
+        { autorizzazione: 'Frigorifero (0°C)', nome: 'atp-esempio.png', url: docEsempio('Frigorifero (0°C) - ATP'), tipo: 'image/png' }] };
       await new Promise(function (r) { setTimeout(r, 500); });
       return { ok: true, documenti: docsAnteprima.slice() };
     }
@@ -58,6 +60,42 @@
       body: JSON.stringify(Object.assign({ azione: azione }, extra))
     });
     try { return await r.json(); } catch (e) { return { ok: false, errore: 'risposta_non_valida' }; }
+  }
+
+  function docEsempio(t) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="595" height="420"><rect width="595" height="420" fill="#fff" stroke="#333" stroke-width="4"/>' +
+      '<text x="297" y="90" font-family="Arial" font-size="28" text-anchor="middle" fill="#111">DOCUMENTO DI ESEMPIO</text>' +
+      '<text x="297" y="160" font-family="Arial" font-size="22" text-anchor="middle" fill="#1d4ed8">Autorizzazione: ' + t.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text>' +
+      '<text x="297" y="220" font-family="Arial" font-size="18" text-anchor="middle" fill="#444">Trasportatore: Mario Rossi</text>' +
+      '<text x="297" y="330" font-family="Arial" font-size="14" text-anchor="middle" fill="#888">Anteprima EcoTruckConnect - non e un documento reale</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /* popup di conferma, stesso stile degli altri del portale */
+  function conferma(o) {
+    return new Promise(function (fine) {
+      var vecchio = document.getElementById('ect-conferma'); if (vecchio) vecchio.remove();
+      var blu = o.colore === 'blu';
+      var ov = document.createElement('div');
+      ov.className = 'confirm-overlay'; ov.id = 'ect-conferma';
+      ov.innerHTML = '<div class="confirm-box">' +
+        '<div class="confirm-icon"' + (blu ? ' style="background:rgba(59,130,246,0.15);"' : '') + '>' + (o.icona || '⚠️') + '</div>' +
+        '<div class="confirm-title">' + esc(o.titolo) + '</div>' +
+        '<div class="confirm-text">' + o.testo + '</div>' +
+        '<div class="confirm-actions">' +
+        '<button type="button" class="confirm-btn confirm-btn-cancel" data-r="0">' + esc(o.no || 'Annulla') + '</button>' +
+        '<button type="button" class="confirm-btn confirm-btn-remove" data-r="1"' + (blu ? ' style="background:#3b82f6;"' : '') + '>' + esc(o.si) + '</button>' +
+        '</div></div>';
+      function chiudi(v) { ov.remove(); document.removeEventListener('keydown', tasto); fine(v); }
+      function tasto(e) { if (e.key === 'Escape') chiudi(false); }
+      ov.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-r]');
+        if (b) chiudi(b.getAttribute('data-r') === '1');
+        else if (e.target === ov) chiudi(false);
+      });
+      document.addEventListener('keydown', tasto);
+      document.body.appendChild(ov);
+    });
   }
 
   var ERRORI = {
@@ -113,7 +151,8 @@
       if (inCaricamento[a]) destra = '<span style="font-size:13px;color:#fbbf24;">⏳ Caricamento…</span>';
       else if (d) destra = '<span style="display:flex;align-items:center;gap:10px;">' +
         '<a href="' + esc(d.url) + '" target="_blank" rel="noopener" style="font-size:13px;color:#4ade80;text-decoration:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">✅ ' + esc(d.nome) + '</a>' +
-        '<button type="button" data-ect-carica="' + i + '" style="background:none;border:1px solid rgba(255,255,255,0.2);color:#cbd5e1;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">Sostituisci</button></span>';
+        '<button type="button" data-ect-carica="' + i + '" style="background:none;border:1px solid rgba(255,255,255,0.2);color:#cbd5e1;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">Sostituisci</button>' +
+        '<button type="button" data-ect-rimuovi="' + i + '" style="background:none;border:1px solid rgba(239,68,68,0.5);color:#fca5a5;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">Rimuovi</button></span>';
       else destra = '<button type="button" data-ect-carica="' + i + '" class="btn-cap" style="padding:7px 14px;font-size:13px;">📎 Carica file</button>';
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid ' + (rosso ? 'rgba(239,68,68,0.8)' : 'rgba(255,255,255,0.12)') + ';">' +
         '<span style="font-size:14px;color:#fff;">' + esc(a) + '</span>' + destra + '</div>';
@@ -125,7 +164,20 @@
     c.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:8px;">📄 Documenti delle autorizzazioni <b style="color:#fff;">(obbligatori)</b> — PDF, JPG o PNG, max 4 MB</div>' + righe + avviso +
       '<input type="file" id="docs-aut-file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;">';
     c.querySelectorAll('[data-ect-carica]').forEach(function (b) {
-      b.onclick = function () { scegliFile(sel[Number(b.getAttribute('data-ect-carica'))]); };
+      b.onclick = async function () {
+        var aut = sel[Number(b.getAttribute('data-ect-carica'))];
+        var d = docDi(aut);
+        if (d) {
+          var ok = await conferma({ icona: '🔄', colore: 'blu', titolo: 'Vuoi sostituire il documento?',
+            testo: 'Per <strong>"' + esc(aut) + '"</strong> hai già caricato <strong>' + esc(d.nome) + '</strong>.<br>Se vai avanti, il file attuale viene cancellato e al suo posto va quello nuovo che scegli adesso.',
+            si: 'Sì, sostituisci', no: 'No, lascia così' });
+          if (!ok) return;
+        }
+        scegliFile(aut);
+      };
+    });
+    c.querySelectorAll('[data-ect-rimuovi]').forEach(function (b) {
+      b.onclick = function () { rimuoviFile(sel[Number(b.getAttribute('data-ect-rimuovi'))]); };
     });
   }
 
@@ -180,6 +232,23 @@
       renderRighe(); decoraRiepilogo();
     };
     inp.click();
+  }
+
+  async function rimuoviFile(aut) {
+    var d = docDi(aut);
+    var ok = await conferma({ icona: '🗑️', titolo: 'Sei sicuro di voler rimuovere il documento?',
+      testo: 'Stai per cancellare <strong>' + esc(d ? d.nome : 'il documento') + '</strong> dell\'autorizzazione <strong>"' + esc(aut) + '"</strong>.<br>Non si può annullare. Per salvare il profilo dovrai caricarne un altro, oppure togliere questa autorizzazione.',
+      si: 'Sì, sono sicuro', no: 'No, annulla' });
+    if (!ok) return;
+    inCaricamento[aut] = true; renderRighe();
+    var tenere = documenti.map(function (d) { return d.autorizzazione; }).filter(function (a) { return a !== aut; });
+    var r = await chiamaDoc('allinea', { autorizzazioni: tenere }).catch(function () { return null; });
+    if (r && r.ok) {
+      documenti = r.documenti || [];
+      try { registraAttivita('Modifica Dati', 'Documento autorizzazione rimosso', 'Autorizzazione: ' + aut + '.'); } catch (e) {}
+    } else alert('Non sono riuscito a togliere il documento, riprova tra un momento.');
+    delete inCaricamento[aut];
+    renderRighe(); decoraRiepilogo();
   }
 
   /* chip del riquadro in alto "Le mie autorizzazioni" con lo stato del documento */
@@ -246,33 +315,133 @@
   /* =====================================================================
      2) DOCUMENTI NELLA SCHEDA DEL CARICO PRESO — AZIENDA
      ===================================================================== */
-  window.ectVediDocTrasp = async function (btn) {
-    var box = btn.parentNode.querySelector('.ect-doc-lista');
-    var email = btn.getAttribute('data-email');
-    btn.disabled = true; btn.textContent = '⏳ Carico i documenti…';
-    var r = await chiamaDoc('documenti_trasportatore', { email_trasportatore: email }).catch(function () { return null; });
-    btn.style.display = 'none';
-    if (!r || !r.ok) { box.innerHTML = '<span style="color:#f87171;">Documenti non disponibili in questo momento.</span>'; return; }
-    var docs = r.documenti || [];
-    box.innerHTML = docs.length ? docs.map(function (d) {
-      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span>' + esc(d.autorizzazione || 'Documento') + '</span>' +
-        '<a href="' + esc(d.url) + '" target="_blank" rel="noopener" style="color:#60a5fa;">📄 ' + esc(d.nome) + '</a></div>';
-    }).join('') : '<span style="color:var(--muted);">Il trasportatore non ha ancora caricato documenti.</span>';
+  var cacheDocAz = {};
+  function eImmagine(d) { return /^image\//.test(d.tipo || '') || /\.(png|jpe?g|gif|webp|svg)$/i.test(d.nome || '') || /^data:image\//.test(d.url || ''); }
+  function apriBloccato() { alert('Il browser ha bloccato la finestra: consenti i pop-up per questo sito.'); }
+  function finestraDoc(d, stampa) {
+    if (!eImmagine(d)) {
+      var w0 = window.open(d.url, '_blank');
+      if (!w0) { apriBloccato(); return; }
+      if (stampa) setTimeout(function () { alert('Il PDF si è aperto in una nuova scheda: per stamparlo usa il pulsante della stampante del visualizzatore (oppure Ctrl+P).'); }, 300);
+      return;
+    }
+    var w = window.open('', '_blank');
+    if (!w) { apriBloccato(); return; }
+    w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>' + esc(d.autorizzazione + ' - ' + d.nome) + '</title>' +
+      '<style>body{margin:0;font-family:Arial,sans-serif;text-align:center;} h1{font-size:14px;margin:12px;} img{max-width:100%;max-height:92vh;} @media print{h1{margin:4px;} img{max-height:none;}}</style></head><body>' +
+      '<h1>EcoTruckConnect - ' + esc(d.autorizzazione) + ' - ' + esc(d.nome) + '</h1><img id="i" src="' + esc(d.url) + '">' +
+      (stampa ? '<script>var i=document.getElementById("i");function p(){setTimeout(function(){window.print();},200);}if(i.complete)p();else i.onload=p;<\/script>' : '') + '</body></html>');
+    w.document.close();
+  }
+  window.ectApriDocAz = function (email, i, stampa) {
+    var c = cacheDocAz[email]; if (!c || !c.docs[i]) return;
+    finestraDoc(c.docs[i], !!stampa);
   };
+  window.ectStampaTuttiDocAz = function (email) {
+    var c = cacheDocAz[email]; if (!c || !c.docs.length) return;
+    var imm = c.docs.filter(eImmagine), pdf = c.docs.filter(function (d) { return !eImmagine(d); });
+    if (imm.length) {
+      var w = window.open('', '_blank');
+      if (!w) { apriBloccato(); return; }
+      w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Documenti autorizzazioni</title><style>body{font-family:Arial,sans-serif;margin:16px;} .p{page-break-after:always;text-align:center;} img{max-width:100%;} h1{font-size:14px;}</style></head><body>' +
+        imm.map(function (d) { return '<div class="p"><h1>' + esc(d.autorizzazione + ' - ' + d.nome) + '</h1><img src="' + esc(d.url) + '"></div>'; }).join('') +
+        '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>');
+      w.document.close();
+    }
+    pdf.forEach(function (d) { window.open(d.url, '_blank'); });
+    if (pdf.length) setTimeout(function () { alert('I documenti PDF si sono aperti in nuove schede: stampali dal visualizzatore (Ctrl+P).'); }, 400);
+  };
+  function htmlListaDoc(email, docs) {
+    if (!docs.length) return '<span style="color:var(--muted);">' + (email === '__mio__' ? 'Non hai ancora caricato documenti: aggiungili in «Le mie autorizzazioni».' : 'Il trasportatore non ha ancora caricato documenti.') + '</span>';
+    var bt = 'background:none;border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;';
+    var e = esc(email).replace(/'/g, '&#39;');
+    return docs.map(function (d, i) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">' +
+        '<span><b style="color:#fff;">' + esc(d.autorizzazione || 'Documento') + '</b><br><span style="color:var(--muted);font-size:12px;">' + esc(d.nome) + '</span></span>' +
+        '<span style="display:flex;gap:6px;">' +
+        '<button type="button" style="' + bt + '" onclick="event.stopPropagation();ectApriDocAz(\'' + e + '\',' + i + ',false)">👁️ Vedi</button>' +
+        '<button type="button" style="' + bt + '" onclick="event.stopPropagation();ectApriDocAz(\'' + e + '\',' + i + ',true)">🖨️ Stampa</button></span></div>';
+    }).join('') + (docs.length > 1 ? '<button type="button" class="btn-cap" style="margin-top:10px;padding:6px 14px;font-size:12px;" onclick="event.stopPropagation();ectStampaTuttiDocAz(\'' + e + '\')">🖨️ Stampa tutti i documenti</button>' : '') +
+      '<div style="font-size:11px;color:var(--muted);margin-top:8px;">' + (email === '__mio__' ? 'Sono i documenti del tuo profilo: li vede anche l\'azienda di questo carico.' : 'Documenti caricati dal trasportatore: controllali prima di affidare il trasporto.') + '</div>';
+  }
+  async function caricaDocPer(email) {
+    if (email === '__mio__') {
+      var r0 = await chiamaDoc('elenco').catch(function () { return null; });
+      if (r0 && r0.ok) { documenti = r0.documenti || []; docsCaricati = true; }
+      if (anteprima() && r0 && r0.ok && !r0.documenti.length) return { ok: true, documenti: [{ autorizzazione: 'Conto Terzi', nome: 'licenza-esempio.png', url: docEsempio('Conto Terzi'), tipo: 'image/png' }] };
+      return r0;
+    }
+    return await chiamaDoc('documenti_trasportatore', { email_trasportatore: email }).catch(function () { return null; });
+  }
+  function emailBox(f) {
+    if (!f || String(f.stato || '').toUpperCase() !== 'PRESO') return '';
+    if (tipo() === 'trasportatore') return '__mio__';
+    var e = tipo() === 'azienda' && (f.trasportatore_email || f.bloccato_da_id);
+    return e && /@/.test(e) ? e : '';
+  }
+  function htmlStampaDoc(email) {
+    var c = cacheDocAz[email];
+    var titolo = email === '__mio__' ? 'Le mie autorizzazioni' : 'Autorizzazioni del trasportatore';
+    if (!c) return '';
+    var corpo = c.docs.length ? c.docs.map(function (d) {
+      return '<div style="margin:8px 0;page-break-inside:avoid;"><b>' + esc(d.autorizzazione || 'Documento') + '</b> - ' + esc(d.nome) +
+        (eImmagine(d) ? '<br><img src="' + esc(d.url) + '" style="max-width:100%;max-height:340px;margin-top:6px;border:1px solid #ccc;">' : ' <i>(PDF: si stampa a parte dal portale)</i>') + '</div>';
+    }).join('') : '<i>Nessun documento caricato.</i>';
+    return '<div style="padding:10px;border:1px solid #ccc;border-radius:8px;margin-top:10px;"><b>📎 ' + titolo + '</b>' + corpo + '</div>';
+  }
+  async function riempiBoxDoc() {
+    var boxes = document.querySelectorAll('.ect-doc-box:not([data-caricato])');
+    for (var k = 0; k < boxes.length; k++) {
+      var box = boxes[k]; box.setAttribute('data-caricato', '1');
+      var email = box.getAttribute('data-email');
+      var lista = box.querySelector('.ect-doc-lista');
+      var c = cacheDocAz[email];
+      if (!c || Date.now() - c.quando > 30 * 60 * 1000) {
+        lista.innerHTML = '<span style="color:var(--muted);">⏳ Carico i documenti…</span>';
+        var r = await caricaDocPer(email);
+        if (!r || !r.ok) { lista.innerHTML = '<span style="color:#f87171;">Documenti non disponibili in questo momento.</span>'; box.removeAttribute('data-caricato'); continue; }
+        c = cacheDocAz[email] = { docs: r.documenti || [], quando: Date.now() };
+      }
+      document.querySelectorAll('.ect-doc-box').forEach(function (b) {
+        if (b.getAttribute('data-email') === email) { b.setAttribute('data-caricato', '1'); b.querySelector('.ect-doc-lista').innerHTML = htmlListaDoc(email, c.docs); }
+      });
+    }
+  }
+  var inStampa = false;
   if (typeof window.cpScheda === 'function') {
     var origScheda = window.cpScheda;
     window.cpScheda = function (f) {
       var html = origScheda.apply(this, arguments);
       try {
-        var email = f && (f.trasportatore_email || f.bloccato_da_id);
-        if (tipo() === 'azienda' && f && String(f.stato || '').toUpperCase() === 'PRESO' && email && /@/.test(email)) {
-          html += '<div style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
-            '<div style="font-weight:700;color:#fff;margin-bottom:8px;">📎 Documenti autorizzazioni del trasportatore</div>' +
-            '<button type="button" class="btn-cap" data-email="' + esc(email) + '" onclick="event.stopPropagation();ectVediDocTrasp(this)" style="padding:6px 14px;font-size:12px;">Vedi documenti</button>' +
-            '<div class="ect-doc-lista" style="margin-top:6px;"></div></div>';
+        var email = emailBox(f);
+        if (email) {
+          if (inStampa) return html + htmlStampaDoc(email);
+          html += '<div class="ect-doc-box" data-email="' + esc(email) + '" style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
+            '<div style="font-weight:700;color:#fff;margin-bottom:6px;">📎 ' + (email === '__mio__' ? 'Le tue autorizzazioni per questo trasporto' : 'Autorizzazioni del trasportatore') + '</div>' +
+            '<div class="ect-doc-lista"></div></div>';
+          setTimeout(riempiBoxDoc, 0);
         }
       } catch (e) {}
       return html;
+    };
+  }
+  /* la stampa dei carichi presi include anche le autorizzazioni */
+  if (typeof window.cpStampa === 'function') {
+    var origStampa = window.cpStampa;
+    window.cpStampa = async function (indici) {
+      try {
+        var lista = cpLista().lista;
+        var scelti = (indici && indici.length) ? indici.map(function (i) { return lista[i]; }).filter(Boolean) : lista;
+        var email = {};
+        scelti.forEach(function (c) { var e = emailBox(c.fields); if (e) email[e] = 1; });
+        var daCaricare = Object.keys(email).filter(function (e) { var c = cacheDocAz[e]; return !c || Date.now() - c.quando > 30 * 60 * 1000; });
+        for (var k = 0; k < daCaricare.length; k++) {
+          var r = await caricaDocPer(daCaricare[k]);
+          if (r && r.ok) cacheDocAz[daCaricare[k]] = { docs: r.documenti || [], quando: Date.now() };
+        }
+      } catch (e) {}
+      inStampa = true;
+      try { return origStampa.apply(this, arguments); } finally { inStampa = false; }
     };
   }
 
