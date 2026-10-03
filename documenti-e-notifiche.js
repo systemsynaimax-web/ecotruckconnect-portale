@@ -62,6 +62,8 @@
     try { return await r.json(); } catch (e) { return { ok: false, errore: 'risposta_non_valida' }; }
   }
 
+  window.ectChiamaDoc = chiamaDoc; // 3/10: usata dallo storico movimenti del portale
+
   function docEsempio(t) {
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="595" height="420"><rect width="595" height="420" fill="#fff" stroke="#333" stroke-width="4"/>' +
       '<text x="297" y="90" font-family="Arial" font-size="28" text-anchor="middle" fill="#111">DOCUMENTO DI ESEMPIO</text>' +
