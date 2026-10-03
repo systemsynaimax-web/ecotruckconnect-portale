@@ -16,6 +16,9 @@
 //   { azione: "movimenti" }                                    -> { ok, movimenti: [...] }
 //        solo i movimenti dell'utente entrato (Registro Attivita')
 //
+//   { azione: "file_elenco" | "file_carica" (nome_file, tipo, file) | "file_rimuovi" (id) }
+//        file facoltativi di "Modifica i miei dati" (campo documenti_miei_dati)
+//
 //   AZIENDA
 //   { azione: "documenti_trasportatore", email_trasportatore }  -> { ok, documenti: [...] }
 //        risponde SOLO se esiste un carico dell'azienda PRESO da quel trasportatore
@@ -117,6 +120,47 @@ exports.handler = async (event, context) => {
         tipo: (r.fields.tipo_attivita && r.fields.tipo_attivita.name) || r.fields.tipo_attivita || ''
       }));
       return risposta(200, { ok: true, movimenti: movimenti });
+    }
+
+    /* ============ FILE DI "MODIFICA I MIEI DATI" (3/10/2026) ============
+       Trasportatori e aziende possono caricare file facoltativi (visura,
+       patente, carta di circolazione...). Ognuno vede e tocca SOLO i suoi. */
+    if (azione === 'file_elenco' || azione === 'file_carica' || azione === 'file_rimuovi') {
+      const T_AZ = 'tblVSe1R3ayWgNDy9';
+      const CAMPO = { [T_TRASP]: 'fldbD25oCKsQscf7q', [T_AZ]: 'fldEKEt8RWW5STutO' };
+      const fe = "LOWER(TRIM({email}))='" + testoFormula(email) + "'";
+      let tab = T_TRASP;
+      let d = await airtable(T_TRASP + '?maxRecords=1&returnFieldsByFieldId=true&filterByFormula=' + encodeURIComponent(fe));
+      let rec = d.records && d.records[0];
+      if (!rec) { tab = T_AZ; d = await airtable(T_AZ + '?maxRecords=1&returnFieldsByFieldId=true&filterByFormula=' + encodeURIComponent(fe)); rec = d.records && d.records[0]; }
+      if (!rec) return risposta(200, { ok: false, errore: 'utente_non_trovato' });
+      const campo = CAMPO[tab];
+      const elenca = r => ((r && r.fields && r.fields[campo]) || []).map(f => ({ id: f.id, nome: f.filename || 'file', url: f.url, tipo: f.type || '', dimensione: f.size || 0 }));
+      if (azione === 'file_elenco') return risposta(200, { ok: true, file: elenca(rec) });
+      if (azione === 'file_rimuovi') {
+        const id = String(corpo.id || '');
+        const files = rec.fields[campo] || [];
+        const restano = files.filter(f => f.id !== id);
+        if (restano.length === files.length) return risposta(200, { ok: false, errore: 'file_non_trovato' });
+        const r2 = await airtable(tab + '/' + rec.id + '?returnFieldsByFieldId=true', { method: 'PATCH', body: JSON.stringify({ fields: { [campo]: restano.map(f => ({ id: f.id })) }, returnFieldsByFieldId: true }) });
+        return risposta(200, { ok: true, file: elenca(r2) });
+      }
+      // file_carica
+      const tipo = String(corpo.tipo || '');
+      if (!TIPI[tipo]) return risposta(200, { ok: false, errore: 'tipo_non_ammesso' });
+      const b64 = String(corpo.file || '').replace(/^data:[^,]*,/, '');
+      const byte = Math.floor(b64.length * 3 / 4);
+      if (!b64 || byte > MAX_BYTE) return risposta(200, { ok: false, errore: 'file_troppo_grande' });
+      if ((rec.fields[campo] || []).length >= 20) return risposta(200, { ok: false, errore: 'troppi_file' });
+      let nome = String(corpo.nome_file || 'documento').replace(/[\\/:*?"<>|\[\]]/g, '_').slice(0, 80);
+      if (!/\.[a-z0-9]{2,4}$/i.test(nome)) nome += '.' + TIPI[tipo];
+      const up = await fetch('https://content.airtable.com/v0/' + BASE + '/' + rec.id + '/' + campo + '/uploadAttachment', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: tipo, file: b64, filename: nome })
+      });
+      if (!up.ok) { console.error('upload file miei dati fallito', up.status, await up.text().catch(() => '')); return risposta(200, { ok: false, errore: 'caricamento_fallito' }); }
+      const d2 = await airtable(tab + '/' + rec.id + '?returnFieldsByFieldId=true');
+      return risposta(200, { ok: true, file: elenca(d2) });
     }
 
     /* ===================== AZIENDA ===================== */
