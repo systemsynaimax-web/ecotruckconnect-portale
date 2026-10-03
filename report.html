@@ -130,8 +130,53 @@ function periodoRapido(giorni) {
   applicaFiltro();
 }
 
-async function carica() {
+/* 3/10: dati per la fattura di ogni trasportatore (da Airtable, tabella Trasportatori) */
+let fiscaliPerEmail = {};
+const REPORT_DEMO = new URLSearchParams(location.search).get('demo') === '1';
+function chiaveT(v) { return String(v || '').toLowerCase().trim(); }
+function datiFiscali(key, f0) {
+  return fiscaliPerEmail[chiaveT(key)] || fiscaliPerEmail[chiaveT(f0 && f0.bloccato_da_id)] || fiscaliPerEmail['nome:' + chiaveT(f0 && (f0.assegnato_a_nome || f0.bloccato_da_nome))] || null;
+}
+function righeFiscali(d) {
+  if (!d) return [['Dati per la fattura', 'non trovati in anagrafica']];
+  const ind = [d.indirizzo || d.via, [d.cap, d.citta].filter(Boolean).join(' '), d.provincia ? '(' + d.provincia + ')' : ''].filter(x => String(x || '').trim()).join(' ');
+  return [['Ragione sociale', d.ragione_sociale || [d.nome, d.cognome].filter(Boolean).join(' ') || '—'], ['Partita IVA', d.p_iva || d.partita_iva || '—'], ['Codice fiscale', d.codice_fiscale || '—'],
+    ['PEC', d.pec || '—'], ['Codice SDI', d.codice_sdi || d.sdi || '—'], ['Indirizzo', ind || '—']];
+}
+async function caricaFiscali() {
   try {
+    const r = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_anagrafica_completa' }) });
+    const d = await r.json();
+    (d.trasportatori || []).forEach(x => { const f = x.fields || x; if (f.email) fiscaliPerEmail[chiaveT(f.email)] = f; const n = [f.nome, f.cognome].filter(Boolean).join(' '); if (n) fiscaliPerEmail['nome:' + chiaveT(n)] = f; });
+  } catch (e) { console.error('Anagrafica non caricata:', e); }
+}
+function datiDemo() {
+  const g = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString(); };
+  const mr = { assegnato_a_nome: 'Mario Rossi (DEMO)', assegnato_a_telefono: '333 0000000', bloccato_da_id: 'mario.rossi@demo.it' };
+  const lb = { assegnato_a_nome: 'Luca Bianchi (DEMO)', assegnato_a_telefono: '333 1111111', bloccato_da_id: 'luca.bianchi@demo.it' };
+  fiscaliPerEmail = {
+    'mario.rossi@demo.it': { ragione_sociale: 'ROSSI TRASPORTI (DEMO)', p_iva: '00000000000', codice_fiscale: 'RSSMRA80A01A089X', pec: 'rossitrasporti@pec.demo', codice_sdi: 'XXXXXXX', indirizzo: 'Via Roma 1', cap: '92026', citta: 'Favara', provincia: 'AG' },
+    'luca.bianchi@demo.it': { ragione_sociale: 'BIANCHI LOGISTICA SRL (DEMO)', p_iva: '11111111111', codice_fiscale: '11111111111', pec: 'bianchi@pec.demo', codice_sdi: 'YYYYYYY', indirizzo: 'Via Mare 5', cap: '92100', citta: 'Agrigento', provincia: 'AG' }
+  };
+  return [
+    Object.assign({ numero_ordine: 'ORD-DEMO-1', stato: 'PRESO', data_assegnato: g(2), citta_partenza: 'Favara', citta_arrivo: 'Palermo', nome_azienda: 'Gilda Srl (DEMO)', tipo_merce: 'Alimentare', importo_pattuito: '180', termini_pagamento: 'Bonifico a 30gg' }, mr),
+    Object.assign({ numero_ordine: 'ORD-DEMO-2', stato: 'PRESO', data_assegnato: g(5), citta_partenza: 'Agrigento', citta_arrivo: 'Catania', nome_azienda: 'P.R. Commerciale (DEMO)', tipo_merce: 'Materiali edili', importo_pattuito: '220', termini_pagamento: 'Bonifico a 60gg' }, mr),
+    Object.assign({ numero_ordine: 'ORD-DEMO-3', stato: 'PRESO', data_assegnato: g(9), citta_partenza: 'Licata', citta_arrivo: 'Gela', nome_azienda: 'Gilda Srl (DEMO)', tipo_merce: 'Rifiuti non pericolosi', importo_pattuito: '140', termini_pagamento: 'Bonifico a 30gg' }, lb)
+  ].map((f, i) => ({ id: 'demo' + i, fields: f }));
+}
+
+async function carica() {
+  if (REPORT_DEMO) {
+    tuttiCarichi = datiDemo();
+    const b = document.createElement('div');
+    b.style.cssText = 'background:#ea580c;color:#fff;text-align:center;padding:10px;font-weight:700;font-size:14px;';
+    b.textContent = '🎭 REPORT DEMO (FINTO) — tutti i dati sono inventati';
+    document.body.prepend(b);
+    periodoRapido(30);
+    return;
+  }
+  try {
+    await caricaFiscali();
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -188,6 +233,7 @@ function renderLista() {
         <div>
           <div class="trasp-name">👤 ${g.nome}</div>
           <div class="trasp-contact">📞 ${g.telefono} &nbsp; ✉️ ${g.email}</div>
+          <div class="trasp-contact" style="margin-top:6px;line-height:1.6;">🧾 <b>Dati per la fattura:</b> ${righeFiscali(datiFiscali(key, g.carichi[0])).map(r => r[0] + ': <b>' + escR(r[1]) + '</b>').join(' · ')}</div>
         </div>
         <div class="trasp-count">${g.carichi.length} viagg${g.carichi.length===1?'io':'i'}</div>
       </div>
@@ -219,7 +265,7 @@ function stampaTrasportatore(key) {
   const titolo = key === null ? 'Report di tutti i trasportatori' : 'Report di ' + (f0.assegnato_a_nome || f0.bloccato_da_nome || 'trasportatore');
   const da = document.getElementById('data-da').value, a = document.getElementById('data-a').value;
   const periodo = (da ? new Date(da + 'T00:00:00').toLocaleDateString('it-IT') : '') + ' – ' + (a ? new Date(a + 'T00:00:00').toLocaleDateString('it-IT') : '');
-  const intest = key === null ? '' : `<table style="margin-bottom:14px;"><tr><th>Trasportatore</th><td>${escR(f0.assegnato_a_nome || f0.bloccato_da_nome || '—')}</td></tr><tr><th>Email</th><td>${escR(f0.bloccato_da_id || '—')}</td></tr><tr><th>Telefono</th><td>${escR(f0.assegnato_a_telefono || '—')}</td></tr></table>`;
+  const intest = key === null ? '' : `<table style="margin-bottom:14px;"><tr><th>Trasportatore</th><td>${escR(f0.assegnato_a_nome || f0.bloccato_da_nome || '—')}</td></tr><tr><th>Email</th><td>${escR(f0.bloccato_da_id || '—')}</td></tr><tr><th>Telefono</th><td>${escR(f0.assegnato_a_telefono || '—')}</td></tr>${righeFiscali(datiFiscali(key, f0)).map(r => '<tr><th>' + escR(r[0]) + '</th><td>' + escR(r[1]) + '</td></tr>').join('')}</table>`;
   let totTrasp = 0;
   const righe = carichi.map(c => {
     const f = c.fields; const imp = parseFloat(String(f.importo_pattuito || '0').replace(',', '.')) || 0; totTrasp += imp;
@@ -276,7 +322,8 @@ function scaricaTrasportatore(key) {
     const f = c.fields;
     return [fmtData(f.data_assegnato), `${f.citta_partenza} → ${f.citta_arrivo}`, f.nome_azienda||'', f.numero_ordine||'', f.tipo_merce||''];
   });
-  const csv = generaCSV(righe, ['Data', 'Tratta', 'Azienda', 'Numero Ordine', 'Merce']);
+  const fis = righeFiscali(datiFiscali(key, carichi[0].fields));
+  const csv = generaCSV(fis.map(r => [r[0], r[1], '', '', '']).concat([['', '', '', '', '']], righe), ['Data', 'Tratta', 'Azienda', 'Numero Ordine', 'Merce']);
   scaricaFile(csv, `report_${nome.replace(/\s+/g,'')}_${document.getElementById('data-da').value}_${document.getElementById('data-a').value}.csv`);
 }
 

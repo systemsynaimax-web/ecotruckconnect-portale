@@ -19,7 +19,7 @@
   'use strict';
 
   var CHIAVE_VISTI = 'ect_archivio_visti_demo';
-  var TOLLERANZA = 3;
+  var TOLLERANZA = 2; /* 3/10: 48 ore dopo la scadenza, poi sospeso */
 
   /* ---------------- utilita' ---------------- */
   function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -81,7 +81,7 @@
       promemoria: [{ t: 'Promemoria: scade tra 15 giorni', q: fra(-16, 8, 0) }, { t: 'Promemoria: scade tra 7 giorni', q: fra(-8, 8, 0) }, { t: 'Ultimo avviso: scade domani', q: fra(-2, 8, 0) }, { t: 'Iscrizione scaduta: 3 giorni per rinnovare', q: fra(-1, 8, 0) }],
       cambi: [],
       attivita: [{ q: fra(-1, 8, 47), t: 'Accesso al portale', d: 'ha aperto la pagina del rinnovo' }],
-      interventi: [{ id: 'i3', q: fra(-1, 8, 0), t: 'Iscrizione scaduta', d: 'Partiti i 3 giorni di tolleranza: senza rinnovo l\'account verrà sospeso', grave: true }]
+      interventi: [{ id: 'i3', q: fra(-1, 8, 0), t: 'Iscrizione scaduta', d: 'Partite le 48 ore di tolleranza: senza rinnovo l\'account verrà sospeso', grave: true }]
     },
     { id: 'T4', tipo: 'trasportatore', nome: 'Salvatore Greco (DEMO)', ragione: 'Greco Salvatore — ditta individuale', email: 's.greco@esempio.it', tel: '388 9990011', piva: '07778889990', sede: 'Via Kennedy 9, 90100 Palermo (PA)', stato: 'In attesa di approvazione', iscritto: fra(0, 11, 37), scadenza: null,
       mezzi: ['Motrice centinata'], aut: [{ a: 'Conto Terzi', f: 'licenza-greco.jpg', q: fra(0, 11, 45) }],
@@ -126,7 +126,7 @@
     if (g > 7) return { txt: 'Scade tra ' + g + ' giorni', cls: 'arc-amb', blink: false, g: g };
     if (g > 1) return { txt: 'Scade tra ' + g + ' giorni', cls: 'arc-amb', blink: true, g: g };
     if (g === 1) return { txt: 'Ultimo giorno: scade domani', cls: 'arc-red', blink: true, g: g };
-    if (g === 0) return { txt: 'Scade oggi', cls: 'arc-red', blink: true, g: g };
+    if (g === 0) return { txt: 'Scaduta oggi — 48 ore per rinnovare', cls: 'arc-red', blink: true, g: g };
     var resto = TOLLERANZA + g;
     if (resto > 0) return { txt: 'Scaduta — ' + resto + (resto === 1 ? ' giorno' : ' giorni') + ' per rinnovare', cls: 'arc-red', blink: true, g: g };
     return { txt: 'Sospeso per mancato rinnovo', cls: 'arc-red', blink: false, g: g };
@@ -252,7 +252,7 @@
       var g = giorniA(u.scadenza), s = statoScadenza(u);
       function fase(lbl, cond, qui) { return '<div class="' + (qui ? 'qui' : (cond ? 'on' : '')) + '">' + lbl + '</div>'; }
       var line = '<div class="arc-line">' + fase('-15 gg<br>email', g <= 15, g <= 15 && g > 7) + fase('-7 gg<br>email', g <= 7, g <= 7 && g > 1) + fase('-1 gg<br>ultimo avviso', g <= 1, g === 1) +
-        fase('Scaduta<br>3 gg per rinnovare', g <= 0, g <= 0 && g > -TOLLERANZA) + fase('+1, +2<br>può rinnovare', g <= -1, false) + fase('+3 gg<br>sospeso', g <= -TOLLERANZA, g <= -TOLLERANZA) + '</div>';
+        fase('Scaduta<br>48 ore per rinnovare', g <= 0, g === 0) + fase('+1 gg<br>ultimo avviso', g <= -1, g === -1) + fase('+2 gg<br>sospeso', g <= -TOLLERANZA, g <= -TOLLERANZA) + '</div>';
       return li('Scadenza iscrizione: <b>' + soloData(u.scadenza) + '</b> — <span class="arc-pill ' + (s.cls || 'arc-gry') + '">' + esc(s.txt) + '</span>', '') + line +
         (u.promemoria.length ? u.promemoria.map(function (p) { return li('✉️ ' + esc(p.t), 'inviata il ' + dataOra(p.q)); }).join('') : vuoto('Nessun promemoria inviato finora.'));
     } });

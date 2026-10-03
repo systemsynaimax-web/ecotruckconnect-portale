@@ -1493,6 +1493,8 @@ function smDaRegistro(m) {
   if (/document/i.test(tit)) { cat = 'documenti'; ico = '📎'; }
   else if (/cambio dati|modific|anagrafica|profilo/i.test(tit)) { cat = 'dati'; ico = '✏️'; }
   else if (/password|codice/i.test(tit)) { cat = 'sicurezza'; ico = '🔑'; }
+  else if (/promemoria scadenza|iscrizione scaduta|ultimo avviso|account sospeso/i.test(tit)) { cat = 'scadenze'; ico = '⏰'; }
+  else if (/accesso al portale/i.test(tit)) { cat = 'accessi'; ico = '🚪'; }
   else if (/carico/i.test(tit)) { cat = 'carichi'; ico = '🚚'; }
   let titolo = tit.replace(/^cambio dati:\s*/i, 'Cambio dati — ');
   if (tipoUtente === 'azienda') {
@@ -2085,7 +2087,19 @@ function avviaApp() {
   document.getElementById('nav-name').textContent = nome;
   document.getElementById('nav-av').textContent = nome[0].toUpperCase();
   document.getElementById('sc-email').value = email;
-  caricaDati(email);
+  Promise.resolve(caricaDati(email)).then(registraAccessoPortale).catch(() => {});
+}
+
+/* 3/10: ogni accesso al portale finisce nello storico (una volta per sessione del browser) */
+function registraAccessoPortale() {
+  try {
+    if (window.__ANTEPRIMA_SCUDO || !tipoUtente) return;
+    const k = 'ect_accesso_registrato_' + ((currentUser && currentUser.email) || '');
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, '1');
+    const dove = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'da telefono o tablet' : 'da computer';
+    registraAttivita('Comunicazione', 'Accesso al portale', 'Entrato nel portale ' + dove + '.');
+  } catch (e) {}
 }
 
 function togglePw() {

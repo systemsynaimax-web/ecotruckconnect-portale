@@ -19,7 +19,7 @@
   'use strict';
 
   var CHIAVE_VISTI = 'ect_archivio_visti_reale';
-  var TOLLERANZA = 3;
+  var TOLLERANZA = 2; /* 3/10: 48 ore dopo la scadenza, poi sospeso */
 
   /* ---------------- utilita' ---------------- */
   function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -48,10 +48,11 @@
     return REGISTRO.filter(function (r) { var f = r.fields || r; var a = lo(f.autore_attivita || f.autore), e = lo(f.email_autore); return chiavi.indexOf(a) !== -1 || (e && e === email); });
   }
   function daRegistro(email, nomi) {
-    var cambi = [], attivita = [], interventi = [];
+    var cambi = [], attivita = [], interventi = [], promemoria = [];
     registroDi(email, nomi).forEach(function (r) {
       var f = r.fields || r, q = f.data_ora_attivita || r.createdTime || null;
       var tipo = sel(f.tipo_attivita), tit = String(f.titolo_attivita || tipo || 'Attività'), des = String(f.descrizione_attivita || '');
+      if (/^(promemoria scadenza|iscrizione scaduta|ultimo avviso|account sospeso)/i.test(tit)) { promemoria.push({ t: tit + (des ? ' — ' + des : ''), q: q }); return; }
       var pd = des.match(/^prima:\s*([\s\S]*?)\s*\|\s*dopo:\s*([\s\S]*)$/);
       if (/eliminazion/i.test(tit + ' ' + tipo)) interventi.push({ id: 'r' + r.id, q: q, t: tit, d: des || 'Richiesta dal portale — da gestire entro 30 giorni (GDPR)', grave: true });
       else if (/^iscrizione (approvata|rifiutata)/i.test(tit)) interventi.push({ id: 'r' + r.id, q: q, t: tit, d: des, grave: /rifiut/i.test(tit) });
@@ -59,14 +60,14 @@
       else if (/modific|cambio dati/i.test(tit + ' ' + tipo)) cambi.push({ id: 'r' + r.id, q: q, campo: tit, prima: '', dopo: des, sens: /iva|iban|document|autorizz/i.test(tit + ' ' + des) });
       else attivita.push({ q: q, t: tit, d: des });
     });
-    return { cambi: cambi, attivita: attivita, interventi: interventi };
+    return { cambi: cambi, attivita: attivita, interventi: interventi, promemoria: promemoria };
   }
   function interventiDaStato(stato, iscritto, scadenza) {
     var x = [];
     if (/attesa/i.test(stato)) x.push({ id: 'st-attesa', q: iscritto, t: 'Richiesta di iscrizione', d: 'In attesa della vostra approvazione', grave: false });
     if (/rifiut/i.test(stato)) x.push({ id: 'st-rifiutato', q: null, t: 'Iscrizione rifiutata', d: 'Rifiutata dalla dashboard', grave: false });
     if (/approv/i.test(stato)) x.push({ id: 'st-approvato', q: null, t: 'Iscrizione approvata', d: 'Approvata dalla dashboard', grave: false });
-    if (scadenza && giorniA(scadenza) < 0) x.push({ id: 'st-scaduta-' + scadenza, q: scadenza, t: 'Iscrizione scaduta', d: giorniA(scadenza) > -TOLLERANZA ? 'Partiti i 3 giorni di tolleranza: senza rinnovo l\'account verrà sospeso' : 'Account da sospendere per mancato rinnovo', grave: true });
+    if (scadenza && giorniA(scadenza) < 0) x.push({ id: 'st-scaduta-' + scadenza, q: scadenza, t: 'Iscrizione scaduta', d: giorniA(scadenza) > -TOLLERANZA ? 'Partite le 48 ore di tolleranza: senza rinnovo l\'account verrà sospeso' : 'Account da sospendere per mancato rinnovo', grave: true });
     return x;
   }
   function unisciInterventi(daStato, daReg) {
@@ -96,7 +97,7 @@
         email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
         mezzi: f.tipo_camion || [], aut: aut, autCaricati: aut.filter(function (d) { return !d.manca; }).length,
         viaggi: viaggi, viaggiTot: viaggi.length, pagamenti: pagamenti,
-        promemoria: f.promemoria_scadenza_inviato ? [{ t: 'Promemoria di scadenza inviato (data non ancora registrata)', q: null }] : [],
+        promemoria: reg.promemoria.sort(function (x, y) { return new Date(y.q) - new Date(x.q); }),
         cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
     }).sort(function (x, y) { return x.nome.localeCompare(y.nome, 'it'); });
     var perEmailT = {}; TRASP.forEach(function (t) { if (t.email) perEmailT[lo(t.email)] = t.id; });
@@ -112,7 +113,7 @@
       return { id: r.id, tipo: 'azienda', nome: f.ragione_sociale || f.nome || [f.nome_referente, f.cognome_referente].filter(Boolean).join(' ') || f.email || '—', ragione: f.ragione_sociale || f.nome || '',
         referente: [f.nome_referente, f.cognome_referente].filter(Boolean).join(' '), email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
         pubblicati: pubblicati, pagamenti: scadenza ? [{ t: 'Pagamento iscrizione', q: iscrizionePagata(scadenza), n: 'Iscrizione annuale' }] : [],
-        promemoria: f.promemoria_scadenza_inviato ? [{ t: 'Promemoria di scadenza inviato (data non ancora registrata)', q: null }] : [],
+        promemoria: reg.promemoria.sort(function (x, y) { return new Date(y.q) - new Date(x.q); }),
         cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
     }).sort(function (x, y) { return x.nome.localeCompare(y.nome, 'it'); });
   }
@@ -129,7 +130,7 @@
     if (g > 7) return { txt: 'Scade tra ' + g + ' giorni', cls: 'arc-amb', blink: false, g: g };
     if (g > 1) return { txt: 'Scade tra ' + g + ' giorni', cls: 'arc-amb', blink: true, g: g };
     if (g === 1) return { txt: 'Ultimo giorno: scade domani', cls: 'arc-red', blink: true, g: g };
-    if (g === 0) return { txt: 'Scade oggi', cls: 'arc-red', blink: true, g: g };
+    if (g === 0) return { txt: 'Scaduta oggi — 48 ore per rinnovare', cls: 'arc-red', blink: true, g: g };
     var resto = TOLLERANZA + g;
     if (resto > 0) return { txt: 'Scaduta — ' + resto + (resto === 1 ? ' giorno' : ' giorni') + ' per rinnovare', cls: 'arc-red', blink: true, g: g };
     return { txt: 'Sospeso per mancato rinnovo', cls: 'arc-red', blink: false, g: g };
@@ -255,7 +256,7 @@
       var g = giorniA(u.scadenza), s = statoScadenza(u);
       function fase(lbl, cond, qui) { return '<div class="' + (qui ? 'qui' : (cond ? 'on' : '')) + '">' + lbl + '</div>'; }
       var line = '<div class="arc-line">' + fase('-15 gg<br>email', g <= 15, g <= 15 && g > 7) + fase('-7 gg<br>email', g <= 7, g <= 7 && g > 1) + fase('-1 gg<br>ultimo avviso', g <= 1, g === 1) +
-        fase('Scaduta<br>3 gg per rinnovare', g <= 0, g <= 0 && g > -TOLLERANZA) + fase('+1, +2<br>può rinnovare', g <= -1, false) + fase('+3 gg<br>sospeso', g <= -TOLLERANZA, g <= -TOLLERANZA) + '</div>';
+        fase('Scaduta<br>48 ore per rinnovare', g <= 0, g === 0) + fase('+1 gg<br>ultimo avviso', g <= -1, g === -1) + fase('+2 gg<br>sospeso', g <= -TOLLERANZA, g <= -TOLLERANZA) + '</div>';
       return li('Scadenza iscrizione: <b>' + soloData(u.scadenza) + '</b> — <span class="arc-pill ' + (s.cls || 'arc-gry') + '">' + esc(s.txt) + '</span>', '') + line +
         (u.promemoria.length ? u.promemoria.map(function (p) { return li('✉️ ' + esc(p.t), 'inviata il ' + dataOra(p.q)); }).join('') : vuoto('Nessun promemoria inviato finora.'));
     } });
