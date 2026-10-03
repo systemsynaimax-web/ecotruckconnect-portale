@@ -691,7 +691,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
       </div>
       <div id="dash-sezione-storico" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:6px;">🕓 Il mio storico movimenti</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:12px;">Tutto quello che hai fatto sulla piattaforma, con data e ora: cambi dei tuoi dati (prima → dopo), documenti, mezzi e autorizzazioni, carichi presi e pagamenti. Lo vedi solo tu.</div>
+        <div id="sm-descr" style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:12px;">Tutto quello che hai fatto sulla piattaforma, con data e ora: cambi dei tuoi dati (prima → dopo), documenti, mezzi e autorizzazioni, carichi presi e pagamenti. Lo vedi solo tu.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
           <select id="sm-periodo" onchange="renderStoricoMovimenti()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;">
             <option value="0">📅 Da sempre</option><option value="7">Ultimi 7 giorni</option><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 3 mesi</option>
@@ -756,7 +756,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
       <span id="profilo-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
     </div>
     <div class="ins-box" id="sezione-azienda" style="display:none;">
-      <div class="ins-title">📦 Pubblica un Carico</div>
+      <div class="ins-title">📦 Pubblica un trasporto</div>
       <div class="ins-sub">Inserisci i dettagli del trasporto. Il sistema lo mostra solo ai trasportatori con il mezzo e l'autorizzazione che hai richiesto.</div>
       <div class="ins-grid">
         <div class="ins-field"><label>CAP Partenza *</label><input type="text" id="ins-cap-part" maxlength="5" placeholder="es. 92026" inputmode="numeric" oninput="autocompilaCittaCarico('part')"></div>
@@ -764,7 +764,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div class="ins-field"><label>Città Partenza *</label><input type="text" id="ins-citta-part" placeholder="es. Favara"></div>
         <div class="ins-field"><label>Città Arrivo *</label><input type="text" id="ins-citta-arr" placeholder="es. Palermo"></div>
         <div class="ins-field ins-full" id="ins-km-info" style="display:none;font-size:13px;color:var(--muted);margin-top:-4px;"></div>
-        <div class="ins-field"><label>Data Carico *</label><input type="date" id="ins-data"></div>
+        <div class="ins-field"><label>Data del trasporto *</label><input type="date" id="ins-data"></div>
         <div class="ins-field" style="position:relative;">
           <label>Tipo Merce *</label>
           <input type="text" id="ins-merce-ricerca" placeholder="Cerca o scrivi un tipo di merce..." autocomplete="off" onclick="apriTendinaMerce()" oninput="filtraTendinaMerce(this.value)">
@@ -780,15 +780,15 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div class="ins-field ins-full"><label>Specifica <span style="opacity:.6;font-weight:400;">(facoltativo)</span></label><input type="text" id="ins-specifica" placeholder="Dettaglio della merce, es. tipo di pallet, quantità, condizioni particolari..."></div>
         <div class="ins-field ins-full"><label>Note <span style="opacity:.6;font-weight:400;">(facoltativo)</span></label><textarea id="ins-note" rows="2" placeholder="Peso approssimativo, istruzioni speciali, orario di ritiro... (niente telefoni o indirizzi: vanno nei campi di ritiro e consegna)"></textarea></div>
       </div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione carico</h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione della merce</h4>
       <div class="ins-grid">
         <div class="ins-field" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
           <input type="checkbox" id="ins-rifiuto" style="width:18px;height:18px;" onchange="document.getElementById('ins-cer-wrap').style.display = this.checked ? 'flex' : 'none';">
-          <label style="margin:0;cursor:pointer;" onclick="document.getElementById('ins-rifiuto').click();">È un carico di rifiuti</label>
+          <label style="margin:0;cursor:pointer;" onclick="document.getElementById('ins-rifiuto').click();">Si tratta di rifiuti</label>
         </div>
         <div class="ins-field" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
           <input type="checkbox" id="ins-pericoloso" style="width:18px;height:18px;">
-          <label style="margin:0;cursor:pointer;" onclick="document.getElementById('ins-pericoloso').click();">Il carico è pericoloso</label>
+          <label style="margin:0;cursor:pointer;" onclick="document.getElementById('ins-pericoloso').click();">La merce è pericolosa</label>
         </div>
         <div class="ins-field" id="ins-cer-wrap" style="display:none;">
           <label>Codice CER <span style="opacity:.5;font-weight:400;" id="cer-hint">(obbligatorio solo se rifiuto)</span></label>
@@ -847,7 +847,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         📊 <span id="testo-contatore-trasportatori">Seleziona mezzo e autorizzazione per vedere quanti trasportatori sono disponibili</span>
       </div>
 
-      <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica Carico</button>
+      <button class="btn-pubblica" onclick="pubblicaCarico()" style="margin-top:20px;">📦 Pubblica</button>
       <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;">✏️ Hai sbagliato qualcosa dopo la pubblicazione? Finché nessun trasportatore l'ha preso, puoi usare <b>Modifica</b> o <b>Annulla</b> nello <b>Storico</b> qui sotto. Se è già stato preso, usa <b>Richiedi annullamento</b>: lo valutiamo noi.</div>
       <div class="ins-ok" id="ins-ok">✅ Pubblicato! I trasportatori con il mezzo e l'autorizzazione giusti riceveranno la notifica.</div>
       <div class="ins-err" id="ins-err"></div>
@@ -974,7 +974,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div id="report-trasportatore-body"></div>
       </div>
       <div class="sec-head" id="storico-sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <span>📦 Storico Carichi</span>
+        <span id="storico-titolo">📦 Storico Carichi</span>
         <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <div style="position:relative;">
             <button class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();toggleFiltroFatture('storico')">📅 <span id="filtro-fatture-label-storico">Tutti</span> ▾</button>
@@ -1494,8 +1494,27 @@ function smDaRegistro(m) {
   else if (/cambio dati|modific|anagrafica|profilo/i.test(tit)) { cat = 'dati'; ico = '✏️'; }
   else if (/password|codice/i.test(tit)) { cat = 'sicurezza'; ico = '🔑'; }
   else if (/carico/i.test(tit)) { cat = 'carichi'; ico = '🚚'; }
-  return { q: m.q, cat: cat, ico: ico, titolo: tit.replace(/^cambio dati:\s*/i, 'Cambio dati — '), prima: pd ? pd[1] : '', dopo: pd ? pd[2] : '', testo: pd ? '' : des,
+  let titolo = tit.replace(/^cambio dati:\s*/i, 'Cambio dati — ');
+  if (tipoUtente === 'azienda') {
+    if (/carico pubblicato/i.test(titolo)) { titolo = 'Pubblicazione inserita'; ico = '📦'; cat = 'pubblicazioni'; }
+    else titolo = titolo.replace(/\bcarichi\b/gi, 'pubblicazioni').replace(/\bcarico\b/gi, 'trasporto');
+  }
+  return { q: m.q, cat: cat, ico: ico, titolo: titolo, prima: pd ? pd[1] : '', dopo: pd ? pd[2] : '', testo: pd ? '' : des,
     sens: /iva|iban|document|autorizz/i.test(tit) };
+}
+function smDaPubblicazioni() {
+  if (tipoUtente !== 'azienda') return [];
+  const out = [];
+  (typeof carichiPubblicatiAzienda !== 'undefined' ? carichiPubblicatiAzienda : []).forEach(c => {
+    const f = c.fields || {}, st = String((f.stato && f.stato.name) || f.stato || '').toUpperCase();
+    const tratta = (f.citta_partenza || f.cap_partenza || '') + ' → ' + (f.citta_arrivo || f.cap_arrivo || '');
+    const ord = f.numero_ordine ? ' · ' + f.numero_ordine : '';
+    const chi = f.assegnato_a_nome || f.bloccato_da_nome || 'un trasportatore';
+    if (/PRESO|RIMBORS/.test(st) && (f.data_assegnato || f.data_pubblicazione)) out.push({ q: f.data_assegnato || f.data_pubblicazione, cat: 'pubblicazioni', ico: '🤝', titolo: 'Trasporto preso da ' + chi, testo: tratta + ord });
+    if (/RIMBORS/.test(st)) out.push({ q: f.data_assegnato || f.data_pubblicazione, cat: 'pubblicazioni', ico: '↩️', titolo: 'Trasporto annullato dopo la presa (commissione rimborsata al trasportatore)', testo: tratta + ord });
+    if (/ANNULL/.test(st)) out.push({ q: f.data_annullamento || f.data_pubblicazione, cat: 'pubblicazioni', ico: '❌', titolo: 'Pubblicazione annullata', testo: tratta + ord });
+  });
+  return out;
 }
 function smDaCarichi() {
   if (tipoUtente !== 'trasportatore') return [];
@@ -1511,6 +1530,13 @@ function smDaCarichi() {
 }
 function smAnteprima() {
   const ora = Date.now(), h = 3600000;
+  if (tipoUtente === 'azienda') return [
+    { q: new Date(ora - 3*h).toISOString(), titolo: 'Cambio dati: PEC', descrizione: 'prima: vecchia@pec.it | dopo: amministrazione@pec.it' },
+    { q: new Date(ora - 20*h).toISOString(), titolo: 'Carico pubblicato', descrizione: 'Favara → Palermo (Alimentare) pubblicato da Azienda Anteprima Srl.' },
+    { q: new Date(ora - 52*h).toISOString(), titolo: 'Cambio dati: Telefono', descrizione: 'prima: 333 1234567 | dopo: 091 7654321' },
+    { q: new Date(ora - 75*h).toISOString(), titolo: 'Password cambiata con codice email', descrizione: '' },
+    { q: new Date(ora - 99*h).toISOString(), titolo: 'Cambio dati: Partita IVA', descrizione: 'prima: 01234567890 | dopo: 01234567891' }
+  ];
   return [
     { q: new Date(ora - 2*h).toISOString(), titolo: 'Cambio dati: Telefono', descrizione: 'prima: 333 1234567 | dopo: 340 7654321' },
     { q: new Date(ora - 26*h).toISOString(), titolo: 'Cambio dati: Documento Conto Terzi', descrizione: 'prima: (nessun documento) | dopo: licenza-esempio.pdf' },
@@ -1531,7 +1557,11 @@ async function caricaStoricoMovimenti() {
     } catch (e) { errore = 'errore'; }
   }
   const daReg = reg.filter(m => !/accaparrat/i.test(m.titolo || '')).map(smDaRegistro);
-  storicoMovimenti = daReg.concat(smDaCarichi()).sort((a, b) => new Date(b.q || 0) - new Date(a.q || 0));
+  storicoMovimenti = daReg.concat(smDaCarichi(), smDaPubblicazioni()).sort((a, b) => new Date(b.q || 0) - new Date(a.q || 0));
+  const dsc = document.getElementById('sm-descr');
+  if (dsc) dsc.textContent = tipoUtente === 'azienda'
+    ? 'Tutto quello che hai fatto sulla piattaforma, con data e ora: cambi dei tuoi dati (prima → dopo), pubblicazioni inserite, trasporti presi dai trasportatori e annullamenti. Lo vedi solo tu.'
+    : 'Tutto quello che hai fatto sulla piattaforma, con data e ora: cambi dei tuoi dati (prima → dopo), documenti, mezzi e autorizzazioni, carichi presi e pagamenti. Lo vedi solo tu.';
   renderStoricoMovimenti(errore);
 }
 function smFiltrati() {
@@ -1544,7 +1574,7 @@ function renderStoricoMovimenti(errore) {
   const box = document.getElementById('sm-lista'); if (!box) return;
   const lista = smFiltrati();
   if (!lista.length) {
-    box.innerHTML = '<div style="padding:28px;text-align:center;color:var(--muted);line-height:1.6;">' + (errore ? '⚠️ Non riesco a caricare lo storico in questo momento. Riprova tra poco.' : 'Nessun movimento nel periodo scelto.<br><span style="font-size:12px;">Qui compariranno i tuoi cambi dati, i documenti, i carichi presi e i pagamenti.</span>') + '</div>';
+    box.innerHTML = '<div style="padding:28px;text-align:center;color:var(--muted);line-height:1.6;">' + (errore ? '⚠️ Non riesco a caricare lo storico in questo momento. Riprova tra poco.' : 'Nessun movimento nel periodo scelto.<br><span style="font-size:12px;">' + (tipoUtente === 'azienda' ? 'Qui compariranno i tuoi cambi dati, le pubblicazioni e i trasporti presi.' : 'Qui compariranno i tuoi cambi dati, i documenti, i carichi presi e i pagamenti.') + '</span>') + '</div>';
     return;
   }
   box.innerHTML = lista.map(m => {
@@ -3328,17 +3358,19 @@ function cambiaFiltroFatture(giorni, ctx) {
   renderTabelleFatture();
 }
 
+function aggiornaTitoloStorico() { const t = document.getElementById('storico-titolo'); if (t) t.textContent = (typeof tipoUtente !== 'undefined' && tipoUtente === 'azienda') ? '📦 Storico pubblicazioni' : '📦 Storico Carichi'; }
 /* Costruisce SIA la tabella "Storico Carichi" (home) SIA "Le mie fatture"
    (Dashboard) dalla stessa fonte dati filtrata — un utente nuovo senza
    nulla pubblicato/accaparrato vede sempre "Nessun carico", mai numeri
    finti: i dati grezzi (ultimeCandidatureRaw / carichiPubblicatiAzienda)
    arrivano solo da una vera ricerca Airtable per quell'email specifica. */
 function renderTabelleFatture() {
+  try { aggiornaTitoloStorico(); } catch (e) {}
   if (tipoUtente === 'azienda') {
     carichiFatturaAziendaFiltrati = filtraPerPeriodo(carichiPubblicatiAzienda, 'data_pubblicazione', filtroFatturePeriodoGiorni);
     const headerHtml = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
     const bodyHtml = !carichiFatturaAziendaFiltrati.length
-      ? '<tr><td colspan="5" class="empty">Nessun carico in questo periodo.</td></tr>'
+      ? '<tr><td colspan="5" class="empty">Nessuna pubblicazione in questo periodo.</td></tr>'
       : carichiFatturaAziendaFiltrati
           .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
           .map(c => {
@@ -3448,7 +3480,7 @@ function parseImportoPattuito(v) {
 }
 
 // ===== DOMANDE FREQUENTI (27/9): diverse per trasportatore e azienda =====
-const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Vai in «Dashboard» → «Notifiche» → «Collega Telegram». Si apre il bot: premi «Avvia». Da quel momento ti arrivano in privato i carichi compatibili con i tuoi mezzi."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Dashboard» → «Riepilogo movimenti» trovi tutte le commissioni pagate. In «I miei report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Quanto costa pubblicare un carico?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come pubblico un carico?", "Nel riquadro «Pubblica un Carico» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica Carico». Puoi anche cliccare un giorno del «Calendario Carichi» per scegliere subito la data."], ["Come pubblico un carico di rifiuti?", "Nel modulo spunta «È un carico di rifiuti» e scrivi il codice CER, che è obbligatorio. Se la merce è pericolosa spunta anche «Il carico è pericoloso». Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva il mio carico?", "Solo ai trasportatori verificati che hanno il mezzo e l'autorizzazione che hai richiesto. Lo ricevono anche in privato su Telegram."], ["Come so che il mio carico è stato preso?", "Quando un trasportatore lo prende e paga, il carico diventa rosso («preso») nel calendario e in «Riepilogo movimenti»."], ["Posso modificare o annullare un carico?", "Per ora scrivici con il modulo «Scrivici» o all'email del supporto, indicando il carico: lo sistemiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]]};
+const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Vai in «Dashboard» → «Notifiche» → «Collega Telegram». Si apre il bot: premi «Avvia». Da quel momento ti arrivano in privato i carichi compatibili con i tuoi mezzi."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Dashboard» → «Riepilogo movimenti» trovi tutte le commissioni pagate. In «I miei report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Quanto costa pubblicare un trasporto?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come pubblico un trasporto?", "Nel riquadro «Pubblica un trasporto» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica». Puoi anche cliccare un giorno del calendario: la data si inserisce da sola."], ["Come pubblico un trasporto di rifiuti?", "Nel modulo spunta «Si tratta di rifiuti» e scrivi il codice CER, che è obbligatorio. Se la merce è pericolosa spunta anche «La merce è pericolosa». Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva la mia pubblicazione?", "Solo ai trasportatori approvati dalla piattaforma che hanno il mezzo e l'autorizzazione che hai richiesto. La ricevono anche in privato su Telegram."], ["Come so che il mio trasporto è stato preso?", "Quando un trasportatore lo prende e paga, la campanella in alto ti avvisa con il suo nome e il telefono, e la pubblicazione diventa rossa («presa») nel calendario e nello storico."], ["Posso modificare o annullare una pubblicazione?", "Sì: finché nessun trasportatore l'ha presa, usa «Modifica» o «Annulla» nello storico delle pubblicazioni. Se è già stata presa, usa «Richiedi annullamento»: lo valutiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email ecotruckconnect@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]]};
 function mostraFAQ() {
   const box = document.getElementById('faq-box'), lista = document.getElementById('faq-lista');
   if (!box || !lista || !FAQ_PORTALE[tipoUtente]) return false;
@@ -4650,7 +4682,7 @@ async function apriGiornoCalendario(dataStr) {
     const dataLeggibile = new Date(dataStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
     let corpo;
     if (carichiGiornoAzienda.length === 0) {
-      corpo = `<div class="cal-modal-empty">Nessun carico tuo pubblicato in questa data.</div>`;
+      corpo = `<div class="cal-modal-empty">Nessuna tua pubblicazione in questa data.</div>`;
     } else {
       corpo = carichiGiornoAzienda.map(c => {
         const f = c.fields;
