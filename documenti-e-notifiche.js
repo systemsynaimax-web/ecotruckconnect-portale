@@ -219,13 +219,14 @@
         if (!blob || blob.size > MAX_BYTE) { alert(ERRORI.file_troppo_grande); return; }
         tipoFile = 'image/jpeg'; nome = nome.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
       }
+      var __vecchio = docDi(aut);
       inCaricamento[aut] = true; renderRighe();
       try {
         var b64 = await leggiBase64(blob);
         var r = await chiamaDoc('carica', { autorizzazione: aut, nome_file: nome, tipo: tipoFile, file: b64, autorizzazioni_selezionate: autSelezionate() });
         if (r && r.ok) {
           documenti = r.documenti || documenti; docsCaricati = true;
-          try { registraAttivita('Modifica Dati', 'Documento autorizzazione caricato', 'Autorizzazione: ' + aut + '. File: ' + nome + '.'); } catch (e) {}
+          try { registraAttivita('Modifica Dati', 'Cambio dati: Documento ' + aut, 'prima: ' + (__vecchio ? __vecchio.nome : '(nessun documento)') + ' | dopo: ' + nome); } catch (e) {}
         } else alert(ERRORI[(r && r.errore)] || ERRORI.caricamento_fallito);
       } catch (e) { alert(ERRORI.caricamento_fallito); }
       delete inCaricamento[aut];
@@ -245,7 +246,7 @@
     var r = await chiamaDoc('allinea', { autorizzazioni: tenere }).catch(function () { return null; });
     if (r && r.ok) {
       documenti = r.documenti || [];
-      try { registraAttivita('Modifica Dati', 'Documento autorizzazione rimosso', 'Autorizzazione: ' + aut + '.'); } catch (e) {}
+      try { registraAttivita('Modifica Dati', 'Cambio dati: Documento ' + aut, 'prima: ' + (d ? d.nome : 'documento') + ' | dopo: (rimosso)'); } catch (e) {}
     } else alert('Non sono riuscito a togliere il documento, riprova tra un momento.');
     delete inCaricamento[aut];
     renderRighe(); decoraRiepilogo();

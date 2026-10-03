@@ -43,15 +43,19 @@
   function sede(f) { return [f.indirizzo, [f.cap, f.citta].filter(Boolean).join(' ') + (f.provincia ? ' (' + f.provincia + ')' : '')].filter(function (x) { return String(x || '').trim(); }).join(', ').replace(/\s+/g, ' '); }
   function prendiCarichi() { try { return (typeof tuttiCarichi !== 'undefined' ? tuttiCarichi : []).map(function (c) { return { id: c.id, f: c.fields || c }; }); } catch (e) { return []; } }
   function prendiUtenti(nome) { try { return nome === 't' ? (typeof tuttiTrasportatoriAnagrafica !== 'undefined' ? tuttiTrasportatoriAnagrafica : []) : (typeof tutteAziendeAnagrafica !== 'undefined' ? tutteAziendeAnagrafica : []); } catch (e) { return []; } }
-  function registroDi(email) {
-    return REGISTRO.filter(function (r) { var f = r.fields || r; return email && lo(f.autore_attivita || f.autore) === email; });
+  function registroDi(email, nomi) {
+    var chiavi = [email].concat(nomi || []).map(lo).filter(Boolean);
+    return REGISTRO.filter(function (r) { var f = r.fields || r; var a = lo(f.autore_attivita || f.autore), e = lo(f.email_autore); return chiavi.indexOf(a) !== -1 || (e && e === email); });
   }
-  function daRegistro(email) {
+  function daRegistro(email, nomi) {
     var cambi = [], attivita = [], interventi = [];
-    registroDi(email).forEach(function (r) {
+    registroDi(email, nomi).forEach(function (r) {
       var f = r.fields || r, q = f.data_ora_attivita || r.createdTime || null;
       var tipo = sel(f.tipo_attivita), tit = String(f.titolo_attivita || tipo || 'Attività'), des = String(f.descrizione_attivita || '');
+      var pd = des.match(/^prima:\s*([\s\S]*?)\s*\|\s*dopo:\s*([\s\S]*)$/);
       if (/eliminazion/i.test(tit + ' ' + tipo)) interventi.push({ id: 'r' + r.id, q: q, t: tit, d: des || 'Richiesta dal portale — da gestire entro 30 giorni (GDPR)', grave: true });
+      else if (/^iscrizione (approvata|rifiutata)/i.test(tit)) interventi.push({ id: 'r' + r.id, q: q, t: tit, d: des, grave: /rifiut/i.test(tit) });
+      else if (pd) cambi.push({ id: 'r' + r.id, q: q, campo: tit.replace(/^cambio dati:\s*/i, ''), prima: pd[1], dopo: pd[2], sens: /iva|iban|document|autorizz/i.test(tit) });
       else if (/modific|cambio dati/i.test(tit + ' ' + tipo)) cambi.push({ id: 'r' + r.id, q: q, campo: tit, prima: '', dopo: des, sens: /iva|iban|document|autorizz/i.test(tit + ' ' + des) });
       else attivita.push({ q: q, t: tit, d: des });
     });
@@ -64,6 +68,10 @@
     if (/approv/i.test(stato)) x.push({ id: 'st-approvato', q: null, t: 'Iscrizione approvata', d: 'Approvata dalla dashboard', grave: false });
     if (scadenza && giorniA(scadenza) < 0) x.push({ id: 'st-scaduta-' + scadenza, q: scadenza, t: 'Iscrizione scaduta', d: giorniA(scadenza) > -TOLLERANZA ? 'Partiti i 3 giorni di tolleranza: senza rinnovo l\'account verrà sospeso' : 'Account da sospendere per mancato rinnovo', grave: true });
     return x;
+  }
+  function unisciInterventi(daStato, daReg) {
+    var haApp = daReg.some(function (x) { return /approvata/i.test(x.t); }), haRif = daReg.some(function (x) { return /rifiutata/i.test(x.t); });
+    return daStato.filter(function (x) { return !((x.id === 'st-approvato' && haApp) || (x.id === 'st-rifiutato' && haRif)); }).concat(daReg);
   }
   function iscrizionePagata(scadenza) { if (!scadenza) return null; var d = new Date(scadenza); d.setDate(d.getDate() - 365); return d.toISOString(); }
   function costruisci() {
@@ -83,13 +91,13 @@
         .concat(miei.filter(function (c) { return /RIMBORS/i.test(sel(c.f.stato)); }).map(function (c) { return { t: 'Rimborso carico', q: c.f.data_assegnato || c.f.data_pubblicazione, n: c.f.numero_ordine || '' }; }));
       if (scadenza) pagamenti.push({ t: 'Pagamento iscrizione', q: iscrizionePagata(scadenza), n: 'Iscrizione annuale' });
       pagamenti.sort(function (x, y) { return new Date(y.q) - new Date(x.q); });
-      var reg = daRegistro(email);
+      var reg = daRegistro(email, [[f.nome, f.cognome].filter(Boolean).join(' '), f.ragione_sociale]);
       return { id: r.id, tipo: 'trasportatore', nome: [f.nome, f.cognome].filter(Boolean).join(' ') || f.ragione_sociale || f.email || '—', ragione: f.ragione_sociale || [f.nome, f.cognome].filter(Boolean).join(' '),
         email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
         mezzi: f.tipo_camion || [], aut: aut, autCaricati: aut.filter(function (d) { return !d.manca; }).length,
         viaggi: viaggi, viaggiTot: viaggi.length, pagamenti: pagamenti,
         promemoria: f.promemoria_scadenza_inviato ? [{ t: 'Promemoria di scadenza inviato (data non ancora registrata)', q: null }] : [],
-        cambi: reg.cambi, attivita: reg.attivita, interventi: interventiDaStato(stato, iscritto, scadenza).concat(reg.interventi) };
+        cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
     }).sort(function (x, y) { return x.nome.localeCompare(y.nome, 'it'); });
     var perEmailT = {}; TRASP.forEach(function (t) { if (t.email) perEmailT[lo(t.email)] = t.id; });
     AZIENDE = prendiUtenti('a').map(function (r) {
@@ -100,12 +108,12 @@
         return { n: g.numero_ordine || '', q: g.data_pubblicazione || null, da: g.citta_partenza || g.cap_partenza || '', a: g.citta_arrivo || g.cap_arrivo || '', stato: st,
           da_chi: g.assegnato_a_nome || g.bloccato_da_nome || '', idT: perEmailT[lo(g.trasportatore_email || g.bloccato_da_id)] || null, preso: g.data_assegnato || null };
       }).sort(function (x, y) { return new Date(y.q) - new Date(x.q); });
-      var reg = daRegistro(email);
+      var reg = daRegistro(email, [f.ragione_sociale, f.nome]);
       return { id: r.id, tipo: 'azienda', nome: f.ragione_sociale || f.nome || [f.nome_referente, f.cognome_referente].filter(Boolean).join(' ') || f.email || '—', ragione: f.ragione_sociale || f.nome || '',
         referente: [f.nome_referente, f.cognome_referente].filter(Boolean).join(' '), email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
         pubblicati: pubblicati, pagamenti: scadenza ? [{ t: 'Pagamento iscrizione', q: iscrizionePagata(scadenza), n: 'Iscrizione annuale' }] : [],
         promemoria: f.promemoria_scadenza_inviato ? [{ t: 'Promemoria di scadenza inviato (data non ancora registrata)', q: null }] : [],
-        cambi: reg.cambi, attivita: reg.attivita, interventi: interventiDaStato(stato, iscritto, scadenza).concat(reg.interventi) };
+        cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
     }).sort(function (x, y) { return x.nome.localeCompare(y.nome, 'it'); });
   }
   function trovaT(id) { return TRASP.filter(function (t) { return t.id === id; })[0]; }

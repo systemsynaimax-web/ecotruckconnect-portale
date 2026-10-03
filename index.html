@@ -1539,6 +1539,20 @@ async function salvaDashDati() {
     provincia: document.getElementById('dd-provincia').value.trim().toUpperCase(),
     telefono: document.getElementById('dd-telefono').value.trim()
   };
+  // 3/10: fotografia dei dati PRIMA del salvataggio, per registrare "prima -> dopo" nello storico
+  const __azi = tipoUtente === 'azienda';
+  const __f = __azi ? profiloAzienda : trasportatoreFieldsCorrenti;
+  const __prima = {
+    nome: (__azi ? __f.referente_nome : __f.nome) || '', cognome: (__azi ? __f.referente_cognome : __f.cognome) || '',
+    ragione_sociale: __f.ragione_sociale || (__azi ? __f.nome : '') || '', codice_fiscale: __f.codice_fiscale || '',
+    partita_iva: __f.partita_iva || __f.p_iva || '', pec: __f.pec || '', codice_sdi: __f.codice_sdi || '',
+    camera_commerciale: __f.camera_commerciale || __f.camera_commercio || '', numero_rea: __f.numero_rea || '', nome_amministratore: __f.nome_amministratore || '',
+    via: __f.via || __f.indirizzo || '', cap: __f.cap || '', citta: __f.citta || '', provincia: __f.provincia || '', telefono: __f.telefono || ''
+  };
+  const __etichette = { nome: __azi ? 'Nome referente' : 'Nome', cognome: __azi ? 'Cognome referente' : 'Cognome', ragione_sociale: 'Ragione sociale', codice_fiscale: 'Codice fiscale',
+    partita_iva: 'Partita IVA', pec: 'PEC', codice_sdi: 'Codice SDI', camera_commerciale: 'Camera di commercio', numero_rea: 'Numero REA', nome_amministratore: 'Amministratore',
+    via: 'Indirizzo', cap: 'CAP', citta: 'Città', provincia: 'Provincia', telefono: 'Telefono' };
+  const __cambi = Object.keys(__etichette).filter(k => String(__prima[k] || '').trim() !== String(dati[k] || '').trim());
   try {
     await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -1555,7 +1569,8 @@ async function salvaDashDati() {
       });
     }
     else { Object.assign(trasportatoreFieldsCorrenti, dati); }
-    registraAttivita('Modifica Dati', 'Anagrafica modificata', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha aggiornato i propri dati anagrafici.`);
+    if (__cambi.length) __cambi.forEach(k => registraAttivita('Modifica Dati', 'Cambio dati: ' + __etichette[k], 'prima: ' + (String(__prima[k] || '').trim() || '(vuoto)') + ' | dopo: ' + (String(dati[k] || '').trim() || '(vuoto)')));
+    else registraAttivita('Modifica Dati', 'Anagrafica salvata senza cambi', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha salvato i propri dati senza modificarli.`);
     document.getElementById('dd-salvato-msg').style.display = 'inline';
     document.getElementById('dd-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
     setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
@@ -1744,11 +1759,15 @@ async function salvaProfiloTrasportatore() {
         specifica: specificaMezzo
       })
     });
+    const __mPrima = (trasportatoreFieldsCorrenti.tipo_camion || []).join(', '), __aPrima = (trasportatoreFieldsCorrenti.autorizzazioni || []).join(', ');
+    const __mDopo = mezziSelezionati.join(', '), __aDopo = autSelezionate.join(', ');
     trasportatoreFieldsCorrenti.tipo_camion = mezziSelezionati;
     trasportatoreFieldsCorrenti.autorizzazioni = autSelezionate;
     trasportatoreFieldsCorrenti.specifica = specificaMezzo;
     aggiornaRiepilogoProfiloTrasportatore();
-    registraAttivita('Modifica Dati', 'Profilo mezzi/autorizzazioni aggiornato', `Mezzi: ${mezziSelezionati.join(', ') || 'nessuno'}. Autorizzazioni: ${autSelezionate.join(', ') || 'nessuna'}.`);
+    if (__mPrima !== __mDopo) registraAttivita('Modifica Dati', 'Cambio dati: Mezzi', 'prima: ' + (__mPrima || '(nessuno)') + ' | dopo: ' + (__mDopo || '(nessuno)'));
+    if (__aPrima !== __aDopo) registraAttivita('Modifica Dati', 'Cambio dati: Autorizzazioni', 'prima: ' + (__aPrima || '(nessuna)') + ' | dopo: ' + (__aDopo || '(nessuna)'));
+    if (__mPrima === __mDopo && __aPrima === __aDopo) registraAttivita('Modifica Dati', 'Profilo mezzi/autorizzazioni salvato senza cambi', `Mezzi: ${__mDopo || 'nessuno'}. Autorizzazioni: ${__aDopo || 'nessuna'}.`);
     document.getElementById('profilo-salvato-msg').style.display = 'inline';
     setTimeout(() => { document.getElementById('profilo-salvato-msg').style.display = 'none'; }, 3000);
   } catch(e) {

@@ -1282,6 +1282,7 @@ async function eseguiAttivazione() {
       body: JSON.stringify({ action: action, record_id: r.id })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    logIntervento(r, 'Iscrizione approvata', 'Approvata dalla Dashboard Gestori: partita l\'email con il link per completare l\'iscrizione.');
 
     registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
     aggiornaCampanello();
@@ -1292,6 +1293,15 @@ async function eseguiAttivazione() {
   }
 }
 
+// 3/10: approvazioni e rifiuti finiscono nello storico dell'utente (archivio), con data e ora
+function logIntervento(r, titolo, dettaglio) {
+  try {
+    const email = (r.fields && r.fields.email) || '';
+    fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'log_attivita', tipo_attivita: 'Nota Generale', titolo_attivita: titolo, descrizione_attivita: dettaglio, autore: email, email_autore: email }) })
+      .catch(e => console.error('Registro non raggiunto (non bloccante):', e));
+  } catch (e) {}
+}
 // 30/9: Rifiuta iscrizione -> stato "Rifiutato" su Airtable (scenario Make dedicato 7694561).
 // Nessuna email parte: la persona esce solo dalla campanella.
 // Stesso controllo dell'Approva: login da gestore + Google Authenticator (verificato su Make).
@@ -1322,6 +1332,7 @@ async function rifiutaIscrizione() {
       body: JSON.stringify(await corpoRifiutaConAccesso({ tipo: r.tipo, record_id: r.id }))
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    logIntervento(r, 'Iscrizione rifiutata', 'Rifiutata dalla Dashboard Gestori.');
     registrazioniReali = registrazioniReali.filter(x => x.id !== r.id);
     aggiornaCampanello();
     tornaListaNotifiche();
