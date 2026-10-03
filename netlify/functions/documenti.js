@@ -12,6 +12,10 @@
 //   { azione: "allinea", autorizzazioni: [...] }                -> { ok, documenti: [...] }
 //        toglie i file delle autorizzazioni che non ha piu' selezionato
 //
+//   TUTTI (trasportatore e azienda)
+//   { azione: "movimenti" }                                    -> { ok, movimenti: [...] }
+//        solo i movimenti dell'utente entrato (Registro Attivita')
+//
 //   AZIENDA
 //   { azione: "documenti_trasportatore", email_trasportatore }  -> { ok, documenti: [...] }
 //        risponde SOLO se esiste un carico dell'azienda PRESO da quel trasportatore
@@ -90,6 +94,31 @@ exports.handler = async (event, context) => {
   const azione = corpo.azione;
 
   try {
+    /* ===================== STORICO MOVIMENTI (3/10/2026) =====================
+       Restituisce SOLO i movimenti dell'utente entrato (riconosciuto dal token),
+       presi dalla tabella Registro Attività. Vale per trasportatori e aziende. */
+    if (azione === 'movimenti') {
+      const T_AZ = 'tblVSe1R3ayWgNDy9', T_REG = 'tbleTTKVwdEEEOkaC';
+      const fe = "LOWER(TRIM({email}))='" + testoFormula(email) + "'";
+      const tr = await airtable(T_TRASP + '?maxRecords=1&filterByFormula=' + encodeURIComponent(fe));
+      let rec = tr.records && tr.records[0];
+      if (!rec) { const az = await airtable(T_AZ + '?maxRecords=1&filterByFormula=' + encodeURIComponent(fe)); rec = az.records && az.records[0]; }
+      if (!rec) return risposta(200, { ok: false, errore: 'utente_non_trovato' });
+      const f = rec.fields || {};
+      const nomi = new Set([email]);
+      [[f.nome, f.cognome].filter(Boolean).join(' '), f.ragione_sociale, f.nome].forEach(x => { if (x && String(x).trim()) nomi.add(String(x).toLowerCase().trim()); });
+      const cond = Array.from(nomi).map(n => "LOWER(TRIM({autore_attivita}))='" + testoFormula(n) + "'").join(',');
+      const q = T_REG + '?pageSize=100&sort%5B0%5D%5Bfield%5D=data_ora_attivita&sort%5B0%5D%5Bdirection%5D=desc&filterByFormula=' + encodeURIComponent('OR(' + cond + ')');
+      const d = await airtable(q);
+      const movimenti = (d.records || []).map(r => ({
+        q: r.fields.data_ora_attivita || r.createdTime || null,
+        titolo: r.fields.titolo_attivita || '',
+        descrizione: r.fields.descrizione_attivita || '',
+        tipo: (r.fields.tipo_attivita && r.fields.tipo_attivita.name) || r.fields.tipo_attivita || ''
+      }));
+      return risposta(200, { ok: true, movimenti: movimenti });
+    }
+
     /* ===================== AZIENDA ===================== */
     if (azione === 'documenti_trasportatore') {
       const et = String(corpo.email_trasportatore || '').toLowerCase().trim();
