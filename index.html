@@ -620,8 +620,13 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <button class="btn-cap" onclick="salvaDashDati()" style="margin-top:16px;">💾 Salva i miei dati</button>
         <span id="dd-salvato-msg" style="display:none;color:#4caf50;margin-left:12px;font-weight:600;">✅ Salvato!</span>
         <div id="dd-ultima-modifica" style="font-size:12px;color:var(--muted);margin-top:10px;">Ultima modifica: mai</div>
-        <h4 style="color:#fff;font-family:var(--font-h);margin:28px 0 6px;">📎 I miei documenti</h4>
-        <div style="color:var(--muted);font-size:13px;line-height:1.6;">🔜 In arrivo — qui potrai caricare documento d'identità, patente (trasportatore) o visura camerale (azienda).</div>
+        <h4 style="color:#fff;font-family:var(--font-h);margin:28px 0 6px;">📎 I miei file <span style="font-size:12px;color:var(--muted);font-weight:400;">(facoltativi)</span></h4>
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:10px;">Se vuoi, carica qui altri tuoi documenti (per esempio documento d'identità, patente, carta di circolazione, visura camerale). PDF, JPG o PNG, massimo 4 MB.</div>
+        <input type="file" id="mf-input" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;" onchange="mfCarica(this)">
+        <button class="btn-cap" onclick="document.getElementById('mf-input').click()">📤 Carica file</button>
+        <span id="mf-stato" style="font-size:12px;color:var(--muted);margin-left:10px;"></span>
+        <div id="mf-lista" style="margin-top:12px;"></div>
+        <datalist id="dd-cap-list"></datalist><datalist id="dd-citta-list"></datalist>
       </div>
       <div id="dash-sezione-fatture" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -1473,6 +1478,7 @@ function apriDashSezione(nome) {
   if (nome === 'fatture') aggiornaDashFatture();
   if (nome === 'report') aggiornaDashReport();
   if (nome === 'storico') caricaStoricoMovimenti();
+  if (nome === 'dati') mfElenco();
   document.getElementById('sezione-dashboard').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -1605,6 +1611,97 @@ function csvStoricoMovimenti() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'storico-movimenti.csv'; a.click();
 }
 
+
+/* ====================================================================
+   📎 I MIEI FILE + SUGGERIMENTI CAP/CITTÀ in "Modifica i miei dati" (3/10/2026)
+   ==================================================================== */
+let mieiFile = [], mfAnteprima = [{ id: 'p1', nome: 'carta-identita-esempio.pdf', url: '#', tipo: 'application/pdf' }];
+function mfEsc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function mfRender() {
+  const box = document.getElementById('mf-lista'); if (!box) return;
+  if (!mieiFile.length) { box.innerHTML = '<div style="font-size:13px;color:var(--muted);">Nessun file caricato.</div>'; return; }
+  box.innerHTML = mieiFile.map(f => '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">' +
+    '<span style="flex:1;min-width:160px;font-size:13px;">📄 ' + mfEsc(f.nome) + '</span>' +
+    '<button class="btn-cap" onclick="mfApri(\'' + f.id + '\',false)">👁️ Vedi</button>' +
+    '<button class="btn-cap" onclick="mfApri(\'' + f.id + '\',true)">🖨️ Stampa</button>' +
+    '<button class="btn-cap" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);" onclick="mfRimuovi(\'' + f.id + '\')">🗑️ Rimuovi file</button></div>').join('');
+}
+async function mfElenco() {
+  if (window.__ANTEPRIMA_SCUDO) { mieiFile = mfAnteprima.slice(); mfRender(); return; }
+  try { const r = window.ectChiamaDoc ? await window.ectChiamaDoc('file_elenco') : null; mieiFile = (r && r.ok && r.file) || []; } catch (e) { mieiFile = []; }
+  mfRender();
+}
+function mfApri(id, stampa) {
+  const f = mieiFile.find(x => x.id === id); if (!f) return;
+  if (window.__ANTEPRIMA_SCUDO) { alert('Anteprima: qui si aprirebbe il file «' + f.nome + '».'); return; }
+  const w = window.open(f.url, '_blank'); if (!w) { alert('Consenti i pop-up per vedere il file.'); return; }
+  if (stampa) { try { w.addEventListener('load', () => { try { w.print(); } catch (e) {} }); } catch (e) {} }
+}
+async function mfRimuovi(id) {
+  const f = mieiFile.find(x => x.id === id); if (!f) return;
+  if (!confirm('Vuoi davvero rimuovere il file «' + f.nome + '»?')) return;
+  const st = document.getElementById('mf-stato');
+  if (window.__ANTEPRIMA_SCUDO) { mieiFile = mieiFile.filter(x => x.id !== id); mfAnteprima = mieiFile.slice(); mfRender(); return; }
+  st.textContent = 'Rimozione in corso…';
+  try {
+    const r = await window.ectChiamaDoc('file_rimuovi', { id: id });
+    if (r && r.ok) { mieiFile = r.file || []; st.textContent = '✅ File rimosso.'; registraAttivita('Modifica Dati', 'Cambio dati: Documento (i miei file)', 'prima: ' + f.nome + ' | dopo: (rimosso)'); }
+    else st.textContent = '⚠️ Non sono riuscito a rimuovere il file. Riprova.';
+  } catch (e) { st.textContent = '⚠️ Non sono riuscito a rimuovere il file. Riprova.'; }
+  mfRender();
+}
+function mfBase64(file) { return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = ko; r.readAsDataURL(file); }); }
+async function mfCarica(inp) {
+  const file = inp.files && inp.files[0]; inp.value = ''; if (!file) return;
+  const st = document.getElementById('mf-stato');
+  const tipo = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
+  if (!/^(application\/pdf|image\/jpeg|image\/png)$/.test(tipo)) { st.textContent = '⚠️ Formato non ammesso: usa PDF, JPG o PNG.'; return; }
+  if (file.size > 4 * 1024 * 1024) { st.textContent = '⚠️ File troppo grande: massimo 4 MB.'; return; }
+  if (window.__ANTEPRIMA_SCUDO) { mieiFile.push({ id: 'p' + Date.now(), nome: file.name, url: '#', tipo: tipo }); mfAnteprima = mieiFile.slice(); st.textContent = '✅ Caricato (anteprima).'; mfRender(); return; }
+  st.textContent = 'Caricamento in corso…';
+  try {
+    const r = await window.ectChiamaDoc('file_carica', { nome_file: file.name, tipo: tipo, file: await mfBase64(file) });
+    if (r && r.ok) { mieiFile = r.file || []; st.textContent = '✅ File caricato.'; registraAttivita('Modifica Dati', 'Cambio dati: Documento (i miei file)', 'prima: (nessuno) | dopo: ' + file.name); }
+    else st.textContent = '⚠️ ' + ({ troppi_file: 'Hai già caricato 20 file: rimuovine uno.', file_troppo_grande: 'File troppo grande: massimo 4 MB.', tipo_non_ammesso: 'Formato non ammesso.' }[r && r.errore] || 'Caricamento non riuscito. Riprova.');
+  } catch (e) { st.textContent = '⚠️ Caricamento non riuscito. Riprova.'; }
+  mfRender();
+}
+/* Suggerimenti: CAP -> città e provincia; città -> CAP e provincia (tutti i comuni d'Italia, da cap-comuni.js) */
+let ddIndiceCitta = null;
+function ddComuni(v) { return v ? (Array.isArray(v) ? v : [v]) : []; }
+function ddIndice() {
+  if (ddIndiceCitta || !window.ECT_CAP) return ddIndiceCitta || [];
+  ddIndiceCitta = [];
+  Object.keys(window.ECT_CAP).forEach(cap => ddComuni(window.ECT_CAP[cap]).forEach(x => { const p = String(x).split('|'); ddIndiceCitta.push({ cap: cap, citta: p[0], prov: p[1] || '' }); }));
+  return ddIndiceCitta;
+}
+function ddSuggerisciCap() {
+  const capEl = document.getElementById('dd-cap'), cap = capEl.value.trim();
+  const dl = document.getElementById('dd-cap-list'); dl.innerHTML = '';
+  if (!window.ECT_CAP || cap.length < 2) return;
+  if (cap.length === 5 && window.ECT_CAP[cap]) {
+    const c = ddComuni(window.ECT_CAP[cap]).map(x => String(x).split('|'));
+    document.getElementById('dd-citta-list').innerHTML = c.map(x => '<option value="' + mfEsc(x[0]) + '">' + mfEsc(x[1]) + '</option>').join('');
+    if (c.length === 1) { document.getElementById('dd-citta').value = c[0][0]; document.getElementById('dd-provincia').value = c[0][1]; }
+    else { document.getElementById('dd-citta').placeholder = 'scegli: ' + c.slice(0, 3).map(x => x[0]).join(', ') + (c.length > 3 ? '…' : ''); document.getElementById('dd-provincia').value = c[0][1]; }
+    return;
+  }
+  dl.innerHTML = Object.keys(window.ECT_CAP).filter(k => k.indexOf(cap) === 0).slice(0, 12).map(k => '<option value="' + k + '">' + mfEsc(ddComuni(window.ECT_CAP[k]).map(x => String(x).replace('|', ' (') + ')').slice(0, 2).join(', ')) + '</option>').join('');
+}
+function ddSuggerisciCitta() {
+  const v = document.getElementById('dd-citta').value.trim().toLowerCase();
+  const dl = document.getElementById('dd-citta-list'); if (v.length < 2) { dl.innerHTML = ''; return; }
+  const trov = ddIndice().filter(x => x.citta.toLowerCase().indexOf(v) === 0);
+  const visti = {}; dl.innerHTML = trov.filter(x => !visti[x.citta + x.prov] && (visti[x.citta + x.prov] = 1)).slice(0, 12).map(x => '<option value="' + mfEsc(x.citta) + '">' + mfEsc(x.cap + ' · ' + x.prov) + '</option>').join('');
+  const esatti = trov.filter(x => x.citta.toLowerCase() === v);
+  if (esatti.length) { document.getElementById('dd-provincia').value = esatti[0].prov; if (!document.getElementById('dd-cap').value.trim()) document.getElementById('dd-cap').value = esatti[0].cap; }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const cap = document.getElementById('dd-cap'), cit = document.getElementById('dd-citta');
+  if (cap) { cap.setAttribute('list', 'dd-cap-list'); cap.setAttribute('inputmode', 'numeric'); cap.addEventListener('input', ddSuggerisciCap); }
+  if (cit) { cit.setAttribute('list', 'dd-citta-list'); cit.addEventListener('input', ddSuggerisciCitta); }
+});
+
 function apriMezziDaDashboard() {
   chiudiDashMenu();
   dashSezioneCorrente = 'mezzi';
@@ -1624,28 +1721,30 @@ function chiudiDashSezione() {
   }
 }
 
+/* 3/10: i campi restano VUOTI; in grigio si vede il dato attuale. Si scrive solo quello che si vuole cambiare. */
+function ddVuoto(id, attuale) { const e = document.getElementById(id); if (!e) return; e.value = ''; const v = String(attuale || '').trim(); e.placeholder = v ? 'attuale: ' + v : 'non inserito'; }
 function precompilaDashDati() {
   const f = tipoUtente === 'azienda' ? profiloAzienda : trasportatoreFieldsCorrenti;
   const azi = tipoUtente === 'azienda';
-  document.getElementById('dd-nome').value = (azi ? f.referente_nome : f.nome) || '';
-  document.getElementById('dd-cognome').value = (azi ? f.referente_cognome : f.cognome) || '';
+  ddVuoto('dd-nome', (azi ? f.referente_nome : f.nome) || '');
+  ddVuoto('dd-cognome', (azi ? f.referente_cognome : f.cognome) || '');
   try {
     document.getElementById('dd-nome').previousElementSibling.textContent = azi ? 'Nome del referente' : 'Nome';
     document.getElementById('dd-cognome').previousElementSibling.textContent = azi ? 'Cognome del referente' : 'Cognome';
   } catch (e) {}
-  document.getElementById('dd-ragione-sociale').value = f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '';
-  document.getElementById('dd-cf').value = f.codice_fiscale || '';
-  document.getElementById('dd-piva').value = f.partita_iva || f.p_iva || '';
-  document.getElementById('dd-pec').value = f.pec || '';
-  document.getElementById('dd-sdi').value = f.codice_sdi || '';
-  document.getElementById('dd-cciaa').value = f.camera_commerciale || f.camera_commercio || '';
-  document.getElementById('dd-rea').value = f.numero_rea || '';
-  document.getElementById('dd-admin').value = f.nome_amministratore || '';
-  document.getElementById('dd-via').value = f.via || f.indirizzo || '';
-  document.getElementById('dd-cap').value = f.cap || '';
-  document.getElementById('dd-citta').value = f.citta || '';
-  document.getElementById('dd-provincia').value = f.provincia || '';
-  document.getElementById('dd-telefono').value = f.telefono || '';
+  ddVuoto('dd-ragione-sociale', f.ragione_sociale || (tipoUtente === 'azienda' ? f.nome : '') || '');
+  ddVuoto('dd-cf', f.codice_fiscale || '');
+  ddVuoto('dd-piva', f.partita_iva || f.p_iva || '');
+  ddVuoto('dd-pec', f.pec || '');
+  ddVuoto('dd-sdi', f.codice_sdi || '');
+  ddVuoto('dd-cciaa', f.camera_commerciale || f.camera_commercio || '');
+  ddVuoto('dd-rea', f.numero_rea || '');
+  ddVuoto('dd-admin', f.nome_amministratore || '');
+  ddVuoto('dd-via', f.via || f.indirizzo || '');
+  ddVuoto('dd-cap', f.cap || '');
+  ddVuoto('dd-citta', f.citta || '');
+  ddVuoto('dd-provincia', f.provincia || '');
+  ddVuoto('dd-telefono', f.telefono || '');
   document.getElementById('dd-email').value = (currentUser && currentUser.email) || '';
 }
 
@@ -1700,6 +1799,7 @@ async function salvaDashDati() {
   const __etichette = { nome: __azi ? 'Nome referente' : 'Nome', cognome: __azi ? 'Cognome referente' : 'Cognome', ragione_sociale: 'Ragione sociale', codice_fiscale: 'Codice fiscale',
     partita_iva: 'Partita IVA', pec: 'PEC', codice_sdi: 'Codice SDI', camera_commerciale: 'Camera di commercio', numero_rea: 'Numero REA', nome_amministratore: 'Amministratore',
     via: 'Indirizzo', cap: 'CAP', citta: 'Città', provincia: 'Provincia', telefono: 'Telefono' };
+  Object.keys(__etichette).forEach(k => { if (!String(dati[k] || '').trim()) dati[k] = __prima[k]; }); // vuoto = resta com'era
   const __cambi = Object.keys(__etichette).filter(k => String(__prima[k] || '').trim() !== String(dati[k] || '').trim());
   try {
     await fetch(PROXY_WEBHOOK, {
@@ -1719,6 +1819,7 @@ async function salvaDashDati() {
     else { Object.assign(trasportatoreFieldsCorrenti, dati); }
     if (__cambi.length) __cambi.forEach(k => registraAttivita('Modifica Dati', 'Cambio dati: ' + __etichette[k], 'prima: ' + (String(__prima[k] || '').trim() || '(vuoto)') + ' | dopo: ' + (String(dati[k] || '').trim() || '(vuoto)')));
     else registraAttivita('Modifica Dati', 'Anagrafica salvata senza cambi', `${tipoUtente === 'azienda' ? 'Azienda' : 'Trasportatore'} ha salvato i propri dati senza modificarli.`);
+    try { setTimeout(precompilaDashDati, 50); } catch (e) {}
     document.getElementById('dd-salvato-msg').style.display = 'inline';
     document.getElementById('dd-ultima-modifica').textContent = 'Ultima modifica: ' + formatDataOra();
     setTimeout(() => { document.getElementById('dd-salvato-msg').style.display = 'none'; }, 3000);
