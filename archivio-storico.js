@@ -212,6 +212,12 @@
       return li('<b>' + esc(u.ragione) + '</b>' + (u.referente ? '<br>Referente: ' + esc(u.referente) : ''), 'iscritto il ' + dataOra(u.iscritto)) +
         li('P.IVA ' + esc(u.piva), '') + li('📍 ' + esc(u.sede), '') + li('📞 ' + esc(u.tel) + ' · ✉️ ' + esc(u.email), '') + li('Stato: <b>' + esc(u.stato) + '</b>', '');
     } });
+    var fileU = u.file || [{ nome: 'documenti-vari-esempio.pdf', url: '' }];
+    lista.push({ k: 'file', t: '📂 I suoi file (' + fileU.length + ')', html: function () {
+      return fileU.map(function (d, i) {
+        return li('📄 ' + esc(d.nome) + ' <button class="arc-btn" onclick="event.stopPropagation();ectArcFile(\'' + u.id + '\',' + i + ',false)">👁 Vedi</button> <button class="arc-btn" onclick="event.stopPropagation();ectArcFile(\'' + u.id + '\',' + i + ',true)">🖨 Stampa</button>', 'caricato da Modifica i miei dati');
+      }).join('') || vuoto('Nessun file caricato in Modifica i miei dati.');
+    } });
     if (T) {
       lista.push({ k: 'mezzi', t: '🚚 Mezzi', html: function () { return u.mezzi.map(function (m) { return li(esc(m), ''); }).join('') || vuoto('Nessun mezzo.'); } });
       lista.push({ k: 'aut', t: '📎 Autorizzazioni e documenti', html: function () {
@@ -385,6 +391,12 @@
   window.ectArcSpunta = function (id, k, v) { sceltaStampa[id][k] = v; };
   window.ectArcAzzera = function () { visti = {}; sessNuovi = {}; aperti = {}; salvaVisti(visti); renderTutto(); };
 
+  window.ectArcFile = function (id, i, stampa) {
+    var u = utente(id); var f = u && (u.file || [{ nome: 'documenti-vari-esempio.pdf', url: '' }])[i]; if (!f) return;
+    if (!f.url) { alert('DEMO: qui si aprirebbe il file ' + f.nome); return; }
+    var w = window.open(f.url, '_blank'); if (!w) { alert('Consenti i pop-up per vedere il file.'); return; }
+    if (stampa) { try { w.addEventListener('load', function () { try { w.print(); } catch (e) {} }); } catch (e) {} }
+  };
   window.ectArcDoc = function (id, i, stampa) {
     var u = utente(id); if (!u || !u.aut[i]) return;
     var d = u.aut[i], url = docEsempio(d.a, u.nome);
