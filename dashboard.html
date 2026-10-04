@@ -1086,11 +1086,11 @@ function bloccoVerifica(f, tipo) {
   const albo = tipo === 'azienda' ? '' : ' <a class="btn-scarica" style="margin-top:8px;display:inline-block;text-decoration:none;" href="https://www.alboautotrasporto.it/web/portale-albo/imprese-iscritte" target="_blank" rel="noopener">🚛 Albo Autotrasportatori</a>';
   return '<div class="verifica-box">' + titolo + 'Controlla i dati ufficiali prima di decidere.<br>' +
     '<span style="color:var(--muted)">Partita IVA: <b style="color:#fff">' + piva + '</b></span><br>' +
-    (tipo === 'azienda' ? '' : '<div id="verifica-auto" style="margin:10px 0 4px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.5;">⏳ Controllo automatico della Partita IVA in corso…</div>' + avviaControlloPiva(piva, f)) +
+    ('<div id="verifica-auto" style="margin:10px 0 4px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.5;">⏳ Controllo automatico della Partita IVA in corso…</div>' + avviaControlloPiva(piva, f)) +
     '<button type="button" class="btn-scarica" style="margin-top:8px;" onclick="verificaPiva(\'' + piva + '\')">🏛️ Verifica P.IVA (Agenzia Entrate)</button> ' + vies + albo +
     '<div id="verifica-msg" style="display:none;color:#4ade80;font-size:12px;margin-top:6px;"></div></div>';
 }
-// ===== CONTROLLO AUTOMATICO P.IVA (1/10/2026) — solo trasportatori, per ora =====
+// ===== CONTROLLO AUTOMATICO P.IVA (1/10/2026; dal 4/10 anche per le aziende) =====
 const PIVA_WEBHOOK = 'https://hook.eu1.make.com/1brig2b3n71yqjn2w68ithtfkaxlct1e';
 function escV(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pivaFormale(p) {
