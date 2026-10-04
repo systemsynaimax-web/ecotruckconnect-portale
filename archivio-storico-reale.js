@@ -95,7 +95,7 @@
       var reg = daRegistro(email, [[f.nome, f.cognome].filter(Boolean).join(' '), f.ragione_sociale]);
       return { id: r.id, tipo: 'trasportatore', nome: [f.nome, f.cognome].filter(Boolean).join(' ') || f.ragione_sociale || f.email || '—', ragione: f.ragione_sociale || [f.nome, f.cognome].filter(Boolean).join(' '),
         email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
-        mezzi: f.tipo_camion || [], aut: aut, autCaricati: aut.filter(function (d) { return !d.manca; }).length,
+        mezzi: f.tipo_camion || [], aut: aut, file: (f.documenti_miei_dati || []).map(function (x) { return { nome: x.filename || 'file', url: x.url || '' }; }), autCaricati: aut.filter(function (d) { return !d.manca; }).length,
         viaggi: viaggi, viaggiTot: viaggi.length, pagamenti: pagamenti,
         promemoria: reg.promemoria.sort(function (x, y) { return new Date(y.q) - new Date(x.q); }),
         cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
@@ -112,7 +112,7 @@
       var reg = daRegistro(email, [f.ragione_sociale, f.nome]);
       return { id: r.id, tipo: 'azienda', nome: f.ragione_sociale || f.nome || [f.nome_referente, f.cognome_referente].filter(Boolean).join(' ') || f.email || '—', ragione: f.ragione_sociale || f.nome || '',
         referente: [f.nome_referente, f.cognome_referente].filter(Boolean).join(' '), email: f.email || '', tel: f.telefono || '', piva: f.p_iva || '', sede: sede(f), stato: stato, iscritto: iscritto, scadenza: scadenza,
-        pubblicati: pubblicati, pagamenti: scadenza ? [{ t: 'Pagamento iscrizione', q: iscrizionePagata(scadenza), n: 'Iscrizione annuale' }] : [],
+        file: (f.documenti_miei_dati || []).map(function (x) { return { nome: x.filename || 'file', url: x.url || '' }; }), pubblicati: pubblicati, pagamenti: scadenza ? [{ t: 'Pagamento iscrizione', q: iscrizionePagata(scadenza), n: 'Iscrizione annuale' }] : [],
         promemoria: reg.promemoria.sort(function (x, y) { return new Date(y.q) - new Date(x.q); }),
         cambi: reg.cambi, attivita: reg.attivita, interventi: unisciInterventi(interventiDaStato(stato, iscritto, scadenza), reg.interventi) };
     }).sort(function (x, y) { return x.nome.localeCompare(y.nome, 'it'); });
@@ -215,6 +215,12 @@
     lista.push({ k: 'anagrafica', t: '🪪 Anagrafica', html: function () {
       return li('<b>' + esc(u.ragione) + '</b>' + (u.referente ? '<br>Referente: ' + esc(u.referente) : ''), 'iscritto il ' + dataOra(u.iscritto)) +
         li('P.IVA ' + esc(u.piva), '') + li('📍 ' + esc(u.sede), '') + li('📞 ' + esc(u.tel) + ' · ✉️ ' + esc(u.email), '') + li('Stato: <b>' + esc(u.stato) + '</b>', '');
+    } });
+    var fileU = u.file || [];
+    lista.push({ k: 'file', t: '📂 I suoi file (' + fileU.length + ')', html: function () {
+      return fileU.map(function (d, i) {
+        return li('📄 ' + esc(d.nome) + ' <button class="arc-btn" onclick="event.stopPropagation();ectArcFile(\'' + u.id + '\',' + i + ',false)">👁 Vedi</button> <button class="arc-btn" onclick="event.stopPropagation();ectArcFile(\'' + u.id + '\',' + i + ',true)">🖨 Stampa</button>', 'caricato da Modifica i miei dati');
+      }).join('') || vuoto('Nessun file caricato in Modifica i miei dati.');
     } });
     if (T) {
       lista.push({ k: 'mezzi', t: '🚚 Mezzi', html: function () { return u.mezzi.map(function (m) { return li(esc(m), ''); }).join('') || vuoto('Nessun mezzo.'); } });
@@ -389,6 +395,12 @@
   window.ectArcSpunta = function (id, k, v) { sceltaStampa[id][k] = v; };
   window.ectArcAzzera = function () { visti = {}; sessNuovi = {}; aperti = {}; salvaVisti(visti); renderTutto(); };
 
+  window.ectArcFile = function (id, i, stampa) {
+    var u = utente(id); var f = u && (u.file || [])[i]; if (!f) return;
+    if (!f.url) { alert('File non disponibile.'); return; }
+    var w = window.open(f.url, '_blank'); if (!w) { alert('Consenti i pop-up per vedere il file.'); return; }
+    if (stampa) { try { w.addEventListener('load', function () { try { w.print(); } catch (e) {} }); } catch (e) {} }
+  };
   window.ectArcDoc = function (id, i, stampa) {
     var u = utente(id); if (!u || !u.aut[i]) return;
     var d = u.aut[i];
