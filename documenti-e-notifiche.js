@@ -588,4 +588,227 @@
       return 'https://shop.synaimaxpro.com/cart/' + ECT_VARIANTE_CARICO + ':1?' + p.join('&');
     };
   }
+  /* =====================================================================
+     6) SUGGERIMENTI SU TUTTI I CAMPI (7/10/2026)
+     Aggiunge i suggerimenti dove mancavano: CAP, indirizzi (completati con
+     CAP e citta'), provincia, destinatario, telefono, specifica, note.
+     Non toglie nulla di quello che c'era. Riusa la stessa tendina di index.html.
+     ===================================================================== */
+  (function () {
+    if (typeof ECT_SUGG === 'undefined') return;
+    var capLista = null;
+    function peso(prov) {
+      var p = provinciaUtente(); if (!p || !prov) return 3;
+      if (prov === p) return 0; return REGIONE[prov] && REGIONE[prov] === REGIONE[p] ? 1 : 2;
+    }
+    function elencoCap() {
+      if (capLista) return capLista;
+      var tab = window.ECT_CAP; if (!tab) return [];
+      var out = [];
+      Object.keys(tab).forEach(function (cap) {
+        var v = Array.isArray(tab[cap]) ? tab[cap] : [tab[cap]];
+        var p = v.map(function (x) { return String(x).split('|'); });
+        out.push({ testo: cap, nota: p.slice(0, 2).map(function (x) { return x[0] + (x[1] ? ' ' + x[1] : ''); }).join(', ') + (p.length > 2 ? '…' : ''),
+                   citta: p[0][0], prov: p[0][1] || '', w: Math.min.apply(null, p.map(function (x) { return peso(x[1]); })) });
+      });
+      out.sort(function (a, b) { return (a.w - b.w) || (a.testo < b.testo ? -1 : 1); });
+      return (capLista = out);
+    }
+    function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
+    function provDa(cap, citta) {
+      var v = window.ECT_CAP && window.ECT_CAP[cap]; if (!v) return '';
+      v = Array.isArray(v) ? v : [v];
+      var m = v.map(function (x) { return String(x).split('|'); });
+      var g = m.filter(function (x) { return x[0].toLowerCase() === String(citta || '').toLowerCase(); })[0] || m[0];
+      return g[1] || '';
+    }
+    var TIPI_VIA = ['Via', 'Viale', 'Piazza', 'Piazzale', 'Corso', 'Largo', 'Strada', 'Strada Statale', 'Contrada', 'Località', 'Zona Industriale'];
+    function indirizzo(idCampo, idCap, idCitta, storico) {
+      return function () {
+        var q = val(idCampo), out = [];
+        var cap = val(idCap), citta = val(idCitta), prov = provDa(cap, citta);
+        var coda = [cap, citta].filter(Boolean).join(' ') + (prov && citta ? ' (' + prov + ')' : '');
+        if (q.length >= 3 && /\d/.test(q) && coda && q.toLowerCase().indexOf(String(citta || cap).toLowerCase()) === -1) {
+          out.push({ testo: q.replace(/[,\s]+$/, '') + ', ' + coda, nota: 'completa con CAP e città' });
+        }
+        if (q.length <= 9 && !/\s/.test(q)) TIPI_VIA.forEach(function (t) { out.push({ testo: t + ' ', nota: 'tipo di via' }); });
+        var base = []; try { base = storico() || []; } catch (e) {}
+        return out.concat(base);
+      };
+    }
+    var vecchioRitiro = ECT_SUGG['ins-indirizzo-ritiro'] && ECT_SUGG['ins-indirizzo-ritiro'].fonte;
+    var vecchioConsegna = ECT_SUGG['ins-indirizzo-consegna'] && ECT_SUGG['ins-indirizzo-consegna'].fonte;
+    ECT_SUGG['ins-indirizzo-ritiro'] = { min: 2, fonte: indirizzo('ins-indirizzo-ritiro', 'ins-cap-part', 'ins-citta-part', vecchioRitiro || function () { return []; }) };
+    ECT_SUGG['ins-indirizzo-consegna'] = { min: 2, fonte: indirizzo('ins-indirizzo-consegna', 'ins-cap-arr', 'ins-citta-arr', vecchioConsegna || function () { return []; }) };
+    ECT_SUGG['dd-via'] = { min: 2, fonte: indirizzo('dd-via', 'dd-cap', 'dd-citta', function () { return []; }) };
+
+    function sceltoCap(idCitta, idProv) {
+      return function (s) {
+        var c = document.getElementById(idCitta); if (c && s.citta) c.value = s.citta;
+        var p = idProv && document.getElementById(idProv); if (p && s.prov) p.value = s.prov;
+      };
+    }
+    ECT_SUGG['ins-cap-part'] = { min: 2, fonte: elencoCap, scelto: sceltoCap('ins-citta-part') };
+    ECT_SUGG['ins-cap-arr'] = { min: 2, fonte: elencoCap, scelto: sceltoCap('ins-citta-arr') };
+    ECT_SUGG['dd-cap'] = { min: 2, fonte: elencoCap, scelto: sceltoCap('dd-citta', 'dd-provincia') };
+    ECT_SUGG['cap-temp-input'] = { min: 2, fonte: elencoCap };
+    ECT_SUGG['dd-provincia'] = { min: 1, fonte: function () { return Object.keys(REGIONE).sort().map(function (p) { return { testo: p, nota: '' }; }); },
+      scelto: function () {} };
+
+    var vecchioDest = ECT_SUGG['ins-destinatario-nome'] && ECT_SUGG['ins-destinatario-nome'].fonte;
+    if (vecchioDest) ECT_SUGG['ins-destinatario-nome'].fonte = function () {
+      var base = []; try { base = vecchioDest() || []; } catch (e) {}
+      var nome = ''; try { nome = profiloAzienda && profiloAzienda.nome; } catch (e) {}
+      return base.concat(nome ? [{ testo: nome, nota: 'la tua azienda', tel: (profiloAzienda && profiloAzienda.telefono) || '' }] : []);
+    };
+    ECT_SUGG['ins-destinatario-telefono'] = { min: 3, fonte: function () {
+      var lista = [];
+      try { (typeof ectMieiCarichi === 'function' ? ectMieiCarichi() : []).forEach(function (c) { if (c.fields.destinatario_telefono) lista.push({ testo: c.fields.destinatario_telefono, nota: c.fields.destinatario_nome || 'già usato' }); }); } catch (e) {}
+      try { if (profiloAzienda && profiloAzienda.telefono) lista.push({ testo: profiloAzienda.telefono, nota: 'il tuo numero' }); } catch (e) {}
+      return ectUnici(lista);
+    } };
+    var vecchioSpec = ECT_SUGG['ins-specifica'] && ECT_SUGG['ins-specifica'].fonte;
+    ECT_SUGG['ins-specifica'] = { min: 2, fonte: function () {
+      var base = []; try { base = vecchioSpec ? vecchioSpec() : []; } catch (e) {}
+      return base.concat(['Pallet 120x80', 'Colli su pallet', 'Merce sfusa', 'Big bag', 'Rotoli', 'Cassette', 'Materiale in cassone', 'Container'].map(function (t) { return { testo: t, nota: 'esempio' }; }));
+    } };
+    ECT_SUGG['ins-note'] = { min: 3, fonte: function () {
+      return ['Ritiro solo la mattina', 'Ritiro solo il pomeriggio', 'Serve sponda idraulica', 'Merce da non capovolgere', 'Peso approssimativo: '].map(function (t) { return { testo: t, nota: 'esempio' }; });
+    } };
+
+    function attiva() { try { ectAttivaSuggerimenti(); } catch (e) {} }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attiva); else attiva();
+  })();
+  /* =====================================================================
+     7) DOCUMENTI DELL'AZIENDA PER IL TRASPORTATORE — SOLO ANTEPRIMA AZIENDA (7/10/2026)
+     Nella scheda del carico PRESO (azienda finta) compare "Documenti vari e
+     autorizzazioni" con "Carica". Facoltativo. Nel portale vero NON compare
+     niente. In anteprima i file restano solo nel browser (nessuna chiamata).
+     ===================================================================== */
+  var DOC_AZ_CHIAVE = 'ect_prev_docs_azienda_v1';
+  var docAz = {};
+  try { docAz = JSON.parse(localStorage.getItem(DOC_AZ_CHIAVE) || '{}') || {}; } catch (e) { docAz = {}; }
+  function docAzSalva() {
+    try {
+      var leggero = {};
+      Object.keys(docAz).forEach(function (k) { leggero[k] = (docAz[k] || []).filter(function (d) { return String(d.url || '').length < 1200000; }); });
+      localStorage.setItem(DOC_AZ_CHIAVE, JSON.stringify(leggero));
+    } catch (e) {}
+  }
+  function docAzChiave(f) { return String(f.numero_ordine || f.richiesta_id || ((f.citta_partenza || '') + '>' + (f.citta_arrivo || ''))); }
+  var BT_DOC = 'background:none;border:1px solid rgba(255,255,255,0.2);color:#cbd5e1;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;';
+  function docAzHtml(key) {
+    var docs = docAz[key] || [];
+    var righe = docs.map(function (d, i) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">' +
+        '<span style="color:#4ade80;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">✅ ' + esc(d.nome) + '</span>' +
+        '<span style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<button type="button" style="' + BT_DOC + '" data-az-vedi="' + i + '">👁️ Vedi</button>' +
+        '<button type="button" style="' + BT_DOC + '" data-az-sost="' + i + '">Sostituisci</button>' +
+        '<button type="button" style="' + BT_DOC + 'border-color:rgba(239,68,68,0.5);color:#fca5a5;" data-az-rim="' + i + '">Rimuovi</button></span></div>';
+    }).join('');
+    return '<div class="ect-az-docs" data-key="' + esc(key) + '" style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
+      '<div style="font-weight:700;color:#fff;margin-bottom:8px;">📎 Documenti vari e autorizzazioni <span style="font-weight:400;color:var(--muted);">(facoltativo)</span></div>' +
+      righe +
+      '<button type="button" class="btn-cap" data-az-carica style="margin-top:10px;padding:7px 16px;font-size:13px;">📎 Carica</button>' +
+      '<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;"></div>';
+  }
+  var docTrasp = [];
+  function docTraspHtml() {
+    var tutti = [];
+    Object.keys(docAz).forEach(function (k) { (docAz[k] || []).forEach(function (d) { tutti.push(d); }); });
+    if (!tutti.length) tutti = [{ nome: 'autorizzazione-trasporto-esempio.png', tipo: 'image/png', url: docEsempio('Autorizzazione di trasporto') }];
+    docTrasp = tutti;
+    return '<div class="ect-tr-docs" style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
+      '<div style="font-weight:700;color:#fff;margin-bottom:6px;">📎 Documenti dell\'azienda</div>' +
+      tutti.map(function (d, i) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">' +
+          '<span style="color:#4ade80;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">✅ ' + esc(d.nome) + '</span>' +
+          '<button type="button" style="' + BT_DOC + '" data-tr-vedi="' + i + '">👁️ Vedi</button></div>';
+      }).join('') + '</div>';
+  }
+  function docAzLeggi(blob) {
+    return new Promise(function (ok, ko) { var fr = new FileReader(); fr.onload = function () { ok(String(fr.result)); }; fr.onerror = function () { ko(new Error('lettura')); }; fr.readAsDataURL(blob); });
+  }
+  function docAzScegli(box, key, indice) {
+    var inp = box.querySelector('input[type=file]'); if (!inp) return;
+    inp.value = ''; inp.multiple = indice < 0; inp.setAttribute('data-indice', String(indice));
+    inp.click();
+  }
+  document.addEventListener('change', async function (e) {
+    var inp = e.target; if (!inp || !inp.closest || inp.type !== 'file') return;
+    var box = inp.closest('.ect-az-docs'); if (!box) return;
+    var key = box.getAttribute('data-key'), indice = Number(inp.getAttribute('data-indice') || -1);
+    var files = Array.from(inp.files || []); if (!files.length) return;
+    var lista = docAz[key] = docAz[key] || [];
+    for (var k = 0; k < files.length; k++) {
+      var f = files[k];
+      var tipoFile = f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : '');
+      if (!TIPI_OK[tipoFile]) { alert(ERRORI.tipo_non_ammesso); continue; }
+      var blob = f, nome = f.name;
+      if (f.size > MAX_BYTE) {
+        if (tipoFile === 'application/pdf') { alert(ERRORI.file_troppo_grande); continue; }
+        blob = await comprimiImmagine(f);
+        if (!blob || blob.size > MAX_BYTE) { alert(ERRORI.file_troppo_grande); continue; }
+        tipoFile = 'image/jpeg'; nome = nome.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+      }
+      var url = '';
+      try { url = await docAzLeggi(blob); } catch (er) { alert(ERRORI.caricamento_fallito); continue; }
+      var nuovo = { nome: nome, tipo: tipoFile, url: url };
+      if (indice >= 0 && lista[indice]) lista[indice] = nuovo; else lista.push(nuovo);
+    }
+    docAzSalva();
+    var vivo = document.querySelector('.ect-az-docs[data-key="' + key.replace(/"/g, '\\"') + '"]');
+    if (vivo) vivo.outerHTML = docAzHtml(key);
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var box = t.closest('.ect-az-docs'), trb = t.closest('.ect-tr-docs');
+    if (!box && !trb) return;
+    e.stopPropagation();
+    var b = t.closest('button'); if (!b) return;
+    if (trb) {
+      var d0 = docTrasp[Number(b.getAttribute('data-tr-vedi'))];
+      if (d0) finestraDoc({ url: d0.url, tipo: d0.tipo, nome: d0.nome, autorizzazione: 'Documenti dell\'azienda' }, false);
+      return;
+    }
+    e.preventDefault();
+    var key = box.getAttribute('data-key'), lista = docAz[key] = docAz[key] || [];
+    if (b.hasAttribute('data-az-carica')) return docAzScegli(box, key, -1);
+    if (b.hasAttribute('data-az-vedi')) {
+      var d = lista[Number(b.getAttribute('data-az-vedi'))];
+      if (d) finestraDoc({ url: d.url, tipo: d.tipo, nome: d.nome, autorizzazione: 'Documenti vari e autorizzazioni' }, false);
+      return;
+    }
+    if (b.hasAttribute('data-az-sost')) {
+      var i = Number(b.getAttribute('data-az-sost')), dd = lista[i]; if (!dd) return;
+      conferma({ icona: '🔄', colore: 'blu', titolo: 'Vuoi sostituire il documento?',
+        testo: 'Hai già caricato <strong>' + esc(dd.nome) + '</strong>.<br>Se vai avanti, il file attuale viene cancellato e al suo posto va quello nuovo che scegli adesso.',
+        si: 'Sì, sostituisci', no: 'No, lascia così' }).then(function (ok) { if (ok) docAzScegli(box, key, i); });
+      return;
+    }
+    if (b.hasAttribute('data-az-rim')) {
+      var j = Number(b.getAttribute('data-az-rim')), dr = lista[j]; if (!dr) return;
+      conferma({ icona: '🗑️', titolo: 'Sei sicuro di voler rimuovere il documento?',
+        testo: 'Stai per cancellare <strong>' + esc(dr.nome) + '</strong>. Non si può annullare.', si: 'Sì, sono sicuro', no: 'No, annulla' }).then(function (ok) {
+        if (!ok) return;
+        lista.splice(j, 1); docAzSalva();
+        var vivo = document.querySelector('.ect-az-docs[data-key="' + key.replace(/"/g, '\\"') + '"]'); if (vivo) vivo.outerHTML = docAzHtml(key);
+      });
+    }
+  }, true);
+  /* aggancio alla scheda del carico preso (solo anteprima) */
+  if (typeof window.cpScheda === 'function') {
+    var cpSchedaPrimaDocAz = window.cpScheda;
+    window.cpScheda = function (f) {
+      var html = cpSchedaPrimaDocAz.apply(this, arguments);
+      try {
+        if (!inStampa && anteprima() && f && String(f.stato || '').toUpperCase() === 'PRESO') {
+          if (tipo() === 'azienda') html += docAzHtml(docAzChiave(f));
+          else if (tipo() === 'trasportatore') html += docTraspHtml();
+        }
+      } catch (e) {}
+      return html;
+    };
+  }
 })();
