@@ -354,6 +354,26 @@
     pdf.forEach(function (d) { window.open(d.url, '_blank'); });
     if (pdf.length) setTimeout(function () { alert('I documenti PDF si sono aperti in nuove schede: stampali dal visualizzatore (Ctrl+P).'); }, 400);
   };
+  /* SCARICA (8/10/2026): al posto di Stampa nelle autorizzazioni del trasportatore. Se il browser non permette il download diretto, apre il file in una nuova scheda. */
+  window.ectScaricaUrl = async function (url, nome) {
+    if (!url || url === '#') { alert('Anteprima: qui si scaricherebbe il file «' + (nome || 'documento') + '».'); return; }
+    try {
+      var r = await fetch(url); if (!r.ok) throw new Error('http');
+      var b = await r.blob(); var u = URL.createObjectURL(b);
+      var a = document.createElement('a'); a.href = u; a.download = nome || 'documento'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+    } catch (e) {
+      var w = window.open(url, '_blank'); if (!w) apriBloccato();
+    }
+  };
+  window.ectScaricaDocAz = function (email, i) {
+    var c = cacheDocAz[email]; if (!c || !c.docs[i]) return;
+    window.ectScaricaUrl(c.docs[i].url, c.docs[i].nome);
+  };
+  window.ectScaricaTuttiDocAz = async function (email) {
+    var c = cacheDocAz[email]; if (!c || !c.docs.length) return;
+    for (var k = 0; k < c.docs.length; k++) { await window.ectScaricaUrl(c.docs[k].url, c.docs[k].nome); await new Promise(function (r) { setTimeout(r, 400); }); }
+  };
   function htmlListaDoc(email, docs) {
     if (!docs.length) return '<span style="color:var(--muted);">' + (email === '__mio__' ? 'Non hai ancora caricato documenti: aggiungili in «Le mie autorizzazioni».' : 'Il trasportatore non ha ancora caricato documenti.') + '</span>';
     var bt = 'background:none;border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;';
@@ -363,8 +383,8 @@
         '<span><b style="color:#fff;">' + esc(d.autorizzazione || 'Documento') + '</b><br><span style="color:var(--muted);font-size:12px;">' + esc(d.nome) + '</span></span>' +
         '<span style="display:flex;gap:6px;">' +
         '<button type="button" style="' + bt + '" onclick="event.stopPropagation();ectApriDocAz(\'' + e + '\',' + i + ',false)">👁️ Vedi</button>' +
-        '<button type="button" style="' + bt + '" onclick="event.stopPropagation();ectApriDocAz(\'' + e + '\',' + i + ',true)">🖨️ Stampa</button></span></div>';
-    }).join('') + (docs.length > 1 ? '<button type="button" class="btn-cap" style="margin-top:10px;padding:6px 14px;font-size:12px;" onclick="event.stopPropagation();ectStampaTuttiDocAz(\'' + e + '\')">🖨️ Stampa tutti i documenti</button>' : '') +
+        '<button type="button" style="' + bt + '" onclick="event.stopPropagation();ectScaricaDocAz(\'' + e + '\',' + i + ')">⬇️ Scarica</button></span></div>';
+    }).join('') + (docs.length > 1 ? '<button type="button" class="btn-cap" style="margin-top:10px;padding:6px 14px;font-size:12px;" onclick="event.stopPropagation();ectScaricaTuttiDocAz(\'' + e + '\')">⬇️ Scarica tutti i documenti</button>' : '') +
       '<div style="font-size:11px;color:var(--muted);margin-top:8px;">' + (email === '__mio__' ? 'Sono i documenti del tuo profilo: li vede anche l\'azienda di questo carico.' : 'Documenti caricati dal trasportatore: controllali prima di affidare il trasporto.') + '</div>';
   }
   async function caricaDocPer(email) {
@@ -697,6 +717,7 @@
   }
   function docAzChiave(f) { return String(f.numero_ordine || f.richiesta_id || ((f.citta_partenza || '') + '>' + (f.citta_arrivo || ''))); }
   var BT_DOC = 'background:none;border:1px solid rgba(255,255,255,0.2);color:#cbd5e1;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;';
+  var CHIAVE_FORM = 'nuovo-carico', CHIAVE_PUBBLICATI = 'pubblicati';
   function docAzHtml(key) {
     var docs = docAz[key] || [];
     var righe = docs.map(function (d, i) {
@@ -707,16 +728,15 @@
         '<button type="button" style="' + BT_DOC + '" data-az-sost="' + i + '">Sostituisci</button>' +
         '<button type="button" style="' + BT_DOC + 'border-color:rgba(239,68,68,0.5);color:#fca5a5;" data-az-rim="' + i + '">Rimuovi</button></span></div>';
     }).join('');
-    return '<div class="ect-az-docs" data-key="' + esc(key) + '" style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
-      '<div style="font-weight:700;color:#fff;margin-bottom:8px;">📎 Documenti vari e autorizzazioni <span style="font-weight:400;color:var(--muted);">(facoltativo)</span></div>' +
+    return '<div class="ect-az-docs" data-key="' + esc(key) + '" style="max-width:520px;margin-top:6px;font-size:13px;">' +
       righe +
-      '<button type="button" class="btn-cap" data-az-carica style="margin-top:10px;padding:7px 16px;font-size:13px;">📎 Carica</button>' +
+      '<button type="button" class="btn-cap" data-az-carica style="margin-top:10px;padding:8px 18px;font-size:13px;">\ud83d\udcce Carica file</button>' +
       '<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;"></div>';
   }
   var docTrasp = [];
   function docTraspHtml() {
     var tutti = [];
-    Object.keys(docAz).forEach(function (k) { (docAz[k] || []).forEach(function (d) { tutti.push(d); }); });
+    (docAz[CHIAVE_PUBBLICATI] || []).forEach(function (d) { tutti.push(d); });
     if (!tutti.length) tutti = [{ nome: 'autorizzazione-trasporto-esempio.png', tipo: 'image/png', url: docEsempio('Autorizzazione di trasporto') }];
     docTrasp = tutti;
     return '<div class="ect-tr-docs" style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:12px;font-size:13px;">' +
@@ -804,11 +824,40 @@
       var html = cpSchedaPrimaDocAz.apply(this, arguments);
       try {
         if (!inStampa && anteprima() && f && String(f.stato || '').toUpperCase() === 'PRESO') {
-          if (tipo() === 'azienda') html += docAzHtml(docAzChiave(f));
-          else if (tipo() === 'trasportatore') html += docTraspHtml();
+          if (tipo() === 'trasportatore') html += docTraspHtml();
         }
       } catch (e) {}
       return html;
+    };
+  }
+  /* box nel modulo "Pubblica un trasporto", sotto "Autorizzazione richiesta al trasportatore" (solo anteprima azienda) */
+  function docAzNelModulo() {
+    if (!anteprima() || tipo() !== 'azienda') return;
+    var tags = document.getElementById('tags-autRichiesta');
+    if (!tags || document.getElementById('docs-az-modulo')) return;
+    var w = document.createElement('div');
+    w.id = 'docs-az-modulo';
+    w.innerHTML = '<h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Documenti e autorizzazioni <span style="font-weight:400;font-size:13px;color:var(--muted);">(facoltativo)</span></h4>' + docAzHtml(CHIAVE_FORM);
+    tags.insertAdjacentElement('afterend', w);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(docAzNelModulo, 0); });
+  else setTimeout(docAzNelModulo, 0);
+  /* dopo "Pubblica" riuscita i file passano al carico pubblicato e il modulo si svuota */
+  if (typeof window.pubblicaCarico === 'function') {
+    var pubblicaPrimaDocAz = window.pubblicaCarico;
+    window.pubblicaCarico = async function () {
+      var r = await pubblicaPrimaDocAz.apply(this, arguments);
+      try {
+        if (anteprima() && tipo() === 'azienda') {
+          var campo = document.getElementById('ins-citta-part');
+          if (campo && !campo.value && (docAz[CHIAVE_FORM] || []).length) {
+            docAz[CHIAVE_PUBBLICATI] = (docAz[CHIAVE_PUBBLICATI] || []).concat(docAz[CHIAVE_FORM]);
+            docAz[CHIAVE_FORM] = []; docAzSalva();
+            var vivo = document.querySelector('.ect-az-docs[data-key="' + CHIAVE_FORM + '"]'); if (vivo) vivo.outerHTML = docAzHtml(CHIAVE_FORM);
+          }
+        }
+      } catch (e) {}
+      return r;
     };
   }
 })();
