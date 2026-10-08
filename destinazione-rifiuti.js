@@ -89,7 +89,34 @@
 
   function campo(parte, nome, etichetta, valore, tipo) {
     return '<label style="' + STILE_LAB + '">' + etichetta + '</label>' +
-      '<input type="' + (tipo || 'text') + '" data-parte="' + parte + '" data-campo="' + nome + '" value="' + esc(valore) + '" style="' + STILE_IN + '" maxlength="' + (nome === 'indirizzo' ? 250 : 200) + '">';
+      '<input type="' + (tipo || 'text') + '"' + ((tipo || 'text') === 'text' ? ' list="ect-dl-' + nome + '" autocomplete="off"' : '') + ' data-parte="' + parte + '" data-campo="' + nome + '" value="' + esc(valore) + '" style="' + STILE_IN + '" maxlength="' + (nome === 'indirizzo' ? 250 : 200) + '">';
+  }
+  /* ---------------- suggerimenti mentre si scrive ---------------- */
+  var ENTI = ['Albo Nazionale Gestori Ambientali', 'Albo Gestori Ambientali - Sezione regionale', 'Regione', 'Provincia', 'Libero Consorzio Comunale', 'Città Metropolitana', 'Comune', 'SUAP', 'ARPA', 'Ministero dell\'Ambiente e della Sicurezza Energetica', 'Camera di Commercio'];
+  var CHIAVE_SUGG = 'ect_dest_suggerimenti';
+  function suggLeggi() { try { return JSON.parse(localStorage.getItem(CHIAVE_SUGG) || '{}') || {}; } catch (e) { return {}; } }
+  function suggRicorda(dati) {
+    try {
+      var s = suggLeggi();
+      ['impianto', 'intermediario'].forEach(function (parte) {
+        var d = (dati && dati[parte]) || {};
+        ['ragione_sociale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio'].forEach(function (c) {
+          var v = String(d[c] || '').trim(); if (!v) return;
+          var l = (s[c] || []).filter(function (x) { return x.toLowerCase() !== v.toLowerCase(); });
+          l.unshift(v); s[c] = l.slice(0, 40);
+        });
+      });
+      localStorage.setItem(CHIAVE_SUGG, JSON.stringify(s));
+    } catch (e) {}
+  }
+  function optionsDi(lista) { return lista.map(function (v) { return '<option value="' + esc(v) + '"></option>'; }).join(''); }
+  function datalists() {
+    var s = suggLeggi();
+    var enti = (s.ente_rilascio || []).concat(ENTI.filter(function (e) { return (s.ente_rilascio || []).map(function (x) { return x.toLowerCase(); }).indexOf(e.toLowerCase()) === -1; }));
+    return '<datalist id="ect-dl-ragione_sociale">' + optionsDi(s.ragione_sociale || []) + '</datalist>' +
+      '<datalist id="ect-dl-indirizzo">' + optionsDi(s.indirizzo || []) + '</datalist>' +
+      '<datalist id="ect-dl-n_autorizzazione">' + optionsDi(s.n_autorizzazione || []) + '</datalist>' +
+      '<datalist id="ect-dl-ente_rilascio">' + optionsDi(enti) + '</datalist>';
   }
   function righeFile(ord, p, parte, ruolo) {
     var l = (p.file || []).filter(function (x) { return x.parte === parte; });
@@ -149,7 +176,7 @@
       if (inModifica) {
         html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Per i carichi di rifiuti puoi indicare l\'impianto dove vanno i rifiuti e un eventuale intermediario. Il trasportatore li vede per controllare le autorizzazioni e per compilare il formulario.</div>' +
           sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
-          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (se c\'è)') +
+          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (se c\'è)') + datalists() +
           '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button>' +
           (haQualcosa ? '<button type="button" style="' + STILE_BT + '" onclick="event.stopPropagation();ectDestAnnulla(\'' + o + '\')">Annulla</button>' : '') +
           '<span data-stato style="font-size:12px;"></span></div>' +
@@ -214,6 +241,7 @@
       var r = await chiama('dest_salva', { numero_ordine: ord, impianto: dati.impianto, intermediario: dati.intermediario });
       if (r && r.ok && r.applicabile) {
         modo[ord] = 'vista';
+        suggRicorda(r.dati);
         ridisegnaTutti(ord, r);
         stato(ord, '✅ Salvato.', '#4ade80');
         var cambiato = !(prima && stessi(prima, r.dati));
