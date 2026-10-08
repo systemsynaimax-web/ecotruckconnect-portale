@@ -176,7 +176,7 @@
       if (inModifica) {
         html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Per i carichi di rifiuti puoi indicare l\'impianto dove vanno i rifiuti e un eventuale intermediario. Il trasportatore li vede per controllare le autorizzazioni e per compilare il formulario.</div>' +
           sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
-          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (se c\'è)') + datalists() +
+          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (facoltativo)') + datalists() +
           '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button>' +
           (haQualcosa ? '<button type="button" style="' + STILE_BT + '" onclick="event.stopPropagation();ectDestAnnulla(\'' + o + '\')">Annulla</button>' : '') +
           '<span data-stato style="font-size:12px;"></span></div>' +
