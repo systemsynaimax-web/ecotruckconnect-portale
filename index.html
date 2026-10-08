@@ -1634,7 +1634,7 @@ function mfRender() {
   box.innerHTML = mieiFile.map(f => '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">' +
     '<span style="flex:1;min-width:160px;font-size:13px;">📄 ' + mfEsc(f.nome) + '</span>' +
     '<button class="btn-cap" onclick="mfApri(\'' + f.id + '\',false)">👁️ Vedi</button>' +
-    '<button class="btn-cap" onclick="mfApri(\'' + f.id + '\',true)">🖨️ Stampa</button>' +
+    '<button class="btn-cap" onclick="mfApri(\'' + f.id + '\',true)">⬇️ Scarica</button>' +
     '<button class="btn-cap" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);" onclick="mfRimuovi(\'' + f.id + '\')">🗑️ Rimuovi file</button></div>').join('');
 }
 async function mfElenco() {
@@ -1645,8 +1645,8 @@ async function mfElenco() {
 function mfApri(id, stampa) {
   const f = mieiFile.find(x => x.id === id); if (!f) return;
   if (window.__ANTEPRIMA_SCUDO) { alert('Anteprima: qui si aprirebbe il file «' + f.nome + '».'); return; }
+  if (stampa) { window.ectScaricaUrl ? window.ectScaricaUrl(f.url, f.nome) : window.open(f.url, '_blank'); return; }   // il secondo parametro ora significa "scarica"
   const w = window.open(f.url, '_blank'); if (!w) { alert('Consenti i pop-up per vedere il file.'); return; }
-  if (stampa) { try { w.addEventListener('load', () => { try { w.print(); } catch (e) {} }); } catch (e) {} }
 }
 async function mfRimuovi(id) {
   const f = mieiFile.find(x => x.id === id); if (!f) return;
@@ -4893,5 +4893,6 @@ function chiudiModaleCalendario() {
 }
 </script>
 <script src="/documenti-e-notifiche.js"></script>
+<script src="/destinazione-rifiuti.js"></script>
 </body>
 </html>
