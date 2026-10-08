@@ -23,6 +23,7 @@
 
   var sim = {};   // simulazione in anteprima / demo (solo in memoria)
   var cache = {}; // ultimo pacchetto letto per ogni carico
+  var modo = {};  // per ogni carico: 'mod' = l'azienda sta modificando (altrimenti vede il riepilogo)
 
   function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
   function ruoloPagina() {
@@ -143,11 +144,21 @@
     var html = titoloBox(ruolo);
     if (ruolo === 'azienda') {
       var o = esc(ord).replace(/'/g, '&#39;');
-      html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Per i carichi di rifiuti puoi indicare l\'impianto dove vanno i rifiuti e un eventuale intermediario. Il trasportatore li vede per controllare le autorizzazioni e per compilare il formulario.</div>' +
-        sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
-        sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (se c\'è)') +
-        '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button><span data-stato style="font-size:12px;"></span></div>' +
-        agg + '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
+      var haQualcosa = ['impianto', 'intermediario'].some(function (k) { var d = p.dati[k] || {}; return d.ragione_sociale || d.indirizzo || d.n_autorizzazione || d.ente_rilascio || d.scadenza; }) || (p.file || []).length > 0;
+      var inModifica = modo[ord] === 'mod' || !haQualcosa;
+      if (inModifica) {
+        html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Per i carichi di rifiuti puoi indicare l\'impianto dove vanno i rifiuti e un eventuale intermediario. Il trasportatore li vede per controllare le autorizzazioni e per compilare il formulario.</div>' +
+          sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
+          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (se c\'è)') +
+          '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button>' +
+          (haQualcosa ? '<button type="button" style="' + STILE_BT + '" onclick="event.stopPropagation();ectDestAnnulla(\'' + o + '\')">Annulla</button>' : '') +
+          '<span data-stato style="font-size:12px;"></span></div>' +
+          agg + '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
+      } else {
+        html += sezioneLettura(ord, p, 'impianto', '🏭 Impianto di destinazione', 'azienda') + sezioneLettura(ord, p, 'intermediario', '🔁 Intermediario', 'azienda') +
+          '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestModifica(\'' + o + '\')">✏️ Modifica</button><span data-stato style="font-size:12px;"></span></div>' +
+          agg + '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
+      }
     } else {
       html += sezioneLettura(ord, p, 'impianto', '🏭 Impianto di destinazione', ruolo) + sezioneLettura(ord, p, 'intermediario', '🔁 Intermediario', ruolo) + agg +
         '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + (ruolo === 'trasportatore' ? DISCLAIMER_TR : DISCLAIMER_AZ) + (ruolo === 'trasportatore' ? ' Utile per controllare l\'autorizzazione dell\'impianto e per compilare il formulario.' : '') + '</div>';
@@ -192,6 +203,9 @@
   function stessi(a, b) { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
   function logga(titolo, dettaglio) { try { if (typeof registraAttivita === 'function') registraAttivita('Modifica Dati', titolo, dettaglio); } catch (e) {} }
 
+  window.ectDestModifica = function (ord) { modo[ord] = 'mod'; if (cache[ord]) ridisegnaTutti(ord, cache[ord]); };
+  window.ectDestAnnulla = function (ord) { modo[ord] = 'vista'; if (cache[ord]) ridisegnaTutti(ord, cache[ord]); };
+
   window.ectDestSalva = async function (ord) {
     var dati = leggiForm(ord);
     var prima = cache[ord] && cache[ord].dati;
@@ -199,6 +213,7 @@
     try {
       var r = await chiama('dest_salva', { numero_ordine: ord, impianto: dati.impianto, intermediario: dati.intermediario });
       if (r && r.ok && r.applicabile) {
+        modo[ord] = 'vista';
         ridisegnaTutti(ord, r);
         stato(ord, '✅ Salvato.', '#4ade80');
         var cambiato = !(prima && stessi(prima, r.dati));
@@ -223,6 +238,7 @@
       var dati = leggiForm(ord);
       var r = await chiama('dest_file_carica', { numero_ordine: ord, parte: parte, nome_file: file.name, tipo: tipo, file: b64 });
       if (r && r.ok && r.applicabile) {
+        modo[ord] = 'mod';
         ridisegnaTutti(ord, r);
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
         stato(ord, '✅ File caricato.', '#4ade80');
@@ -236,10 +252,12 @@
     var p = cache[ord]; var f = p && (p.file || []).filter(function (x) { return x.id === id; })[0];
     if (!confirm('Vuoi davvero rimuovere il file «' + (f ? f.nome : 'file') + '»? Poi puoi caricarne un altro.')) return;
     var dati = leggiForm(ord);
+    var inForm = !!(trovaBox(ord)[0] && trovaBox(ord)[0].querySelector('input[data-campo]'));
     stato(ord, 'Rimozione…', '');
     try {
       var r = await chiama('dest_file_rimuovi', { numero_ordine: ord, id: id });
       if (r && r.ok && r.applicabile) {
+        if (inForm) modo[ord] = 'mod';
         ridisegnaTutti(ord, r);
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
         stato(ord, '✅ File rimosso.', '#4ade80');
