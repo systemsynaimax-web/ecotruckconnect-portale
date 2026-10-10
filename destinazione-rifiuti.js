@@ -174,7 +174,7 @@
       var haQualcosa = ['impianto', 'intermediario'].some(function (k) { var d = p.dati[k] || {}; return d.ragione_sociale || d.indirizzo || d.n_autorizzazione || d.ente_rilascio || d.scadenza; }) || (p.file || []).length > 0;
       var inModifica = modo[ord] === 'mod' || !haQualcosa;
       if (inModifica) {
-        html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Per i carichi di rifiuti puoi indicare l\'impianto dove vanno i rifiuti e un eventuale intermediario. Il trasportatore li vede per controllare le autorizzazioni e per compilare il formulario.</div>' +
+        html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Qui puoi indicare l\'impianto di destinazione e l\'eventuale intermediario. Il trasportatore li vede dopo aver preso il carico, per controllare le autorizzazioni e compilare il formulario.</div>' +
           sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
           sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (facoltativo)') + datalists() +
           '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button>' +
@@ -431,8 +431,8 @@
     if (!w || w.getAttribute('data-dest-pub')) return;
     w.setAttribute('data-dest-pub', '1');
     w.setAttribute('style', STILE_BOX + 'font-size:13px;line-height:1.5;transition:opacity .15s;');
-    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo, solo per i rifiuti)</span></div>' +
-      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Per compilare questa parte spunta prima «Si tratta di rifiuti» qui sopra.</div>' +
+    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span></div>' +
+      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Si attiva quando spunti «Si tratta di rifiuti» qui sopra.</div>' +
       '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Se li conosci già, puoi indicarli adesso: il trasportatore li vedrà solo dopo aver preso il carico (cioè dopo aver pagato i €20). ' +
       'Se non li hai ancora, lasciali vuoti: potrai inserirli o modificarli dopo dallo <b>Storico pubblicazioni</b> (pulsante ♻️) e da <b>Trasporti presi</b>.</div>' +
       pubSezione('impianto', '🏭 Impianto di destinazione') + pubSezione('intermediario', '🔁 Intermediario') + datalists() +
