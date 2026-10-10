@@ -1209,6 +1209,8 @@
       function etichetta(testo, col) { var sp = document.createElement('span'); sp.textContent = testo; sp.style.cssText = 'font-size:12px;font-weight:600;color:' + col + ';'; fila.appendChild(sp); }
       btn('⬇️ Scarica', 'blu', function () { window.__ectModoScarica = true; try { stampaCarico(f, tr); } finally { window.__ectModoScarica = false; } }); fila.lastChild.classList.add('ect-stampa-riga');
       btn('🔁 Duplica', 'blu', function () { if (typeof duplicaCarico === 'function') duplicaCarico(id); });
+      var _v = f.tipo_rifiuto, _rif = _v === true || ['true', 'si', 'sì', 'yes', '1'].indexOf(String(Array.isArray(_v) ? _v[0] : _v).toLowerCase().trim()) !== -1 || String(f.codice_cer || '').trim().length > 0;
+      if (_rif && st.indexOf('ANNULLATO') !== 0 && typeof window.ectDestApriModale === 'function') btn('♻️ Impianto e intermediario', 'blu', function () { window.ectDestApriModale(no); });
       if (st === 'DISPONIBILE') {
         btn('✏️ Modifica', 'blu', function () { if (finto && typeof anteprimaModificaCarico === 'function') anteprimaModificaCarico(id); else apriModifica(f); });
         btn('❌ Annulla', 'rosso', function () { if (finto && typeof anteprimaEliminaCarico === 'function') anteprimaEliminaCarico(id); else apriAnnulla(f); });

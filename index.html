@@ -799,7 +799,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Classificazione della merce</h4>
       <div class="ins-grid">
         <div class="ins-field" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
-          <input type="checkbox" id="ins-rifiuto" style="width:18px;height:18px;" onchange="document.getElementById('ins-cer-wrap').style.display = this.checked ? 'flex' : 'none';">
+          <input type="checkbox" id="ins-rifiuto" style="width:18px;height:18px;" onchange="document.getElementById('ins-cer-wrap').style.display = this.checked ? 'flex' : 'none';document.getElementById('ins-rif-nota').style.display = this.checked ? 'block' : 'none';">
           <label style="margin:0;cursor:pointer;" onclick="document.getElementById('ins-rifiuto').click();">Si tratta di rifiuti</label>
         </div>
         <div class="ins-field" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
@@ -811,6 +811,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <input type="text" id="ins-cer" placeholder="es. 17 04 05">
         </div>
       </div>
+      <div id="ins-rif-nota" style="display:none;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5;">♻️ <b>Impianto di destinazione e intermediario</b> (facoltativi) li inserisci dopo, in <b>Trasporti presi</b>, quando il carico è stato preso: il trasportatore potrà vederli e scaricare i documenti.</div>
       <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo richiesto *</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-mezzoRichiesto" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('mezzoRichiesto')">
@@ -1107,21 +1108,27 @@ const AUTORIZZAZIONI_STRUTTURA = [
 ];
 let autAccordionAperto = { aut: null, autRichiesta: null };
 
+let autFiltro = { aut: '', autRichiesta: '' };
 function renderAutorizzazioniAccordion(which, selezionate) {
   const containerId = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
   const cont = document.getElementById(containerId);
   cont.innerHTML = '';
+  const q = (autFiltro[which] || '').trim().toLowerCase();
+  const cerca = q.length >= 2;
+  const mostrate = [];
+  const lab = (v, size, pad) => '<label style="display:flex;align-items:center;gap:8px;padding:' + pad + ';border-radius:6px;cursor:pointer;font-size:' + size + ';color:#fff;">' +
+    '<input type="checkbox" value="' + v + '" ' + (selezionate.includes(v) ? 'checked' : '') + ' onchange="toggleAutFoglia(\'' + which + '\')"> ' + v + '</label>';
   AUTORIZZAZIONI_STRUTTURA.forEach((cat, i) => {
+    const catMatch = cat.nome.toLowerCase().includes(q);
     if (cat.sub === null) {
-      const checked = selezionate.includes(cat.nome);
-      cont.insertAdjacentHTML('beforeend',
-        '<label style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#fff;">' +
-        '<input type="checkbox" value="'+cat.nome+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+cat.nome+
-        '</label>'
-      );
+      if (cerca && !catMatch) return;
+      mostrate.push(cat.nome);
+      cont.insertAdjacentHTML('beforeend', lab(cat.nome, '13px', '8px 6px'));
     } else {
+      const subVis = cerca ? cat.sub.filter(s => catMatch || s.toLowerCase().includes(q)) : cat.sub;
+      if (cerca && !subVis.length) return;
       const nSel = cat.sub.filter(s => selezionate.includes(s)).length;
-      const aperto = autAccordionAperto[which] === i;
+      const aperto = cerca || autAccordionAperto[which] === i;
       const wrap = document.createElement('div');
       wrap.style.marginBottom = '4px';
       wrap.innerHTML =
@@ -1130,17 +1137,17 @@ function renderAutorizzazioniAccordion(which, selezionate) {
         '</div>';
       if (aperto) {
         let subHtml = '<div style="margin-left:14px;border-left:2px solid rgba(255,255,255,0.15);padding-left:10px;">';
-        cat.sub.forEach(s => {
-          const checked = selezionate.includes(s);
-          subHtml += '<label style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;cursor:pointer;font-size:12px;color:#fff;">' +
-            '<input type="checkbox" value="'+s+'" '+(checked?'checked':'')+' onchange="toggleAutFoglia(\''+which+'\')"> '+s+
-            '</label>';
-        });
+        subVis.forEach(s => { mostrate.push(s); subHtml += lab(s, '12px', '6px'); });
         subHtml += '</div>';
         wrap.insertAdjacentHTML('beforeend', subHtml);
       }
       cont.appendChild(wrap);
     }
+  });
+  if (cerca && !mostrate.length) cont.insertAdjacentHTML('beforeend', '<div style="font-size:12px;color:rgba(255,255,255,0.5);padding:8px 6px;">Nessuna autorizzazione trovata per "' + q.replace(/</g, '&lt;') + '"</div>');
+  // le voci scelte ma non visibili (categoria chiusa o filtro attivo) restano selezionate: input nascosti
+  selezionate.filter(v => !mostrate.includes(v)).forEach(v => {
+    cont.insertAdjacentHTML('beforeend', '<input type="checkbox" checked hidden style="display:none" value="' + String(v).replace(/"/g, '&quot;') + '" onchange="toggleAutFoglia(\'' + which + '\')">');
   });
 }
 
@@ -3267,6 +3274,7 @@ async function pubblicaCarico() {
   }
   let kmTratta = null;
   try { kmTratta = await calcolaKmTratta(cittaPart, capPart, cittaArr, capArr); } catch (e) { kmTratta = null; }
+  const numeroOrdineNuovo = 'ORD-' + Date.now();
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -3274,7 +3282,7 @@ async function pubblicaCarico() {
       body: JSON.stringify({
         action: 'crea_carico',
         km_tratta: kmTratta || '',
-        numero_ordine: 'ORD-' + Date.now(),
+        numero_ordine: numeroOrdineNuovo,
         cap_partenza: capPart,
         cap_arrivo: capArr,
         citta_partenza: cittaPart,
@@ -3302,6 +3310,7 @@ async function pubblicaCarico() {
     });
     if (res.ok) {
       ok.style.display = 'block';
+      try { if (rifiuto && window.ectDestDopoPubblica) window.ectDestDopoPubblica(numeroOrdineNuovo); } catch (e) { console.error('impianto/intermediario:', e); }
       registraAttivita('Nuovo Carico', 'Carico pubblicato', `${cittaPart} → ${cittaArr} (${merce}) pubblicato da ${profiloAzienda.nome || 'azienda'}.`);
       document.getElementById('ins-cap-part').value = '';
       document.getElementById('ins-cap-arr').value  = '';
@@ -4897,6 +4906,135 @@ function chiudiModaleCalendario() {
 </script>
 <script src="/documenti-e-notifiche.js"></script>
 <script src="/destinazione-rifiuti.js"></script>
+<script>
+/* Suggerimenti mentre si scrive (2-3 lettere): mezzi, autorizzazioni, città/CAP/provincia. Additivo: non cambia il resto. */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  var QUALI = ['camion', 'aut', 'mezzoRichiesto', 'autRichiesta'];
+
+  /* ---------- 1) campo di ricerca sempre visibile sopra ogni tendina ---------- */
+  function applicaFiltro(which, v) {
+    var interno = $('ricerca-' + which);
+    if (which === 'aut' || which === 'autRichiesta') {
+      autFiltro[which] = v;
+      var cid = which === 'aut' ? 'checkbox-autorizzazioni' : 'checkbox-aut-richiesta';
+      var sel = Array.prototype.map.call(document.querySelectorAll('#' + cid + ' input:checked'), function (e) { return e.value; });
+      renderAutorizzazioniAccordion(which, sel);
+    } else {
+      if (interno) interno.value = v;
+      filtraOpzioniDropdown(which, v);
+    }
+  }
+  function primaVoce(which) {
+    var cid = DROPDOWN_CONFIG[which].containerId;
+    var l = Array.prototype.filter.call(document.querySelectorAll('#' + cid + ' label'), function (x) { return x.style.display !== 'none'; })[0];
+    return l ? l.querySelector('input') : null;
+  }
+  function creaRicerca(which) {
+    if ($('cerca-' + which)) return;
+    var btn = $('dd-btn-' + which); if (!btn) return;
+    var wrap = btn.closest('.dd-wrap'); if (!wrap) return;
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.id = 'cerca-' + which; inp.autocomplete = 'off';
+    inp.placeholder = '🔎 Scrivi 2-3 lettere per cercare (es. ' + (/aut/i.test(which) ? 'alb, adr, ter' : 'fri, cen, cis') + ')';
+    inp.style.cssText = 'display:block;width:100%;max-width:520px;box-sizing:border-box;margin:12px 0 0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;';
+    wrap.parentNode.insertBefore(inp, wrap);
+    wrap.style.marginTop = '6px';
+    var interno = $('ricerca-' + which); if (interno) interno.style.display = 'none';
+    inp.addEventListener('input', function () {
+      var panel = $('dd-panel-' + which);
+      if (inp.value.trim().length >= 2 && panel && (panel.style.display === 'none' || !panel.style.display)) {
+        var f = (which === 'aut' || which === 'autRichiesta') ? null : 1;
+        panel.style.display = 'block';
+        Object.keys(DROPDOWN_CONFIG).forEach(function (w) { if (w !== which) { var p = $('dd-panel-' + w); if (p) p.style.display = 'none'; } });
+      }
+      applicaFiltro(which, inp.value.trim().length >= 2 ? inp.value : '');
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var c = primaVoce(which);
+        if (which === 'aut' || which === 'autRichiesta') c = document.querySelector('#' + DROPDOWN_CONFIG[which].containerId + ' label input');
+        if (c) { c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles: true })); inp.value = ''; applicaFiltro(which, ''); }
+      }
+    });
+  }
+  /* quando la tendina si apre col pulsante, il campo si svuota */
+  if (typeof toggleDropdown === 'function') {
+    var orig = toggleDropdown;
+    window.toggleDropdown = toggleDropdown = function (which) {
+      orig.apply(this, arguments);
+      var i = $('cerca-' + which); if (i) { i.value = ''; if (which === 'aut' || which === 'autRichiesta') autFiltro[which] = ''; }
+    };
+  }
+  /* il filtro dentro la tendina "Autorizzazioni" del profilo/pubblica non serve piu' a niente: lo azzero quando si chiude */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.dd-wrap') || e.target.closest('[id^="cerca-"]')) return;
+    ['aut', 'autRichiesta'].forEach(function (w) { autFiltro[w] = ''; var i = $('cerca-' + w); if (i) i.value = ''; });
+  });
+
+  /* ---------- 2) città / CAP / provincia nel modulo "Pubblica" ---------- */
+  function indice() { return (typeof ddIndice === 'function') ? ddIndice() : []; }
+  function dlCitta(id) {
+    var dl = $('dl-ins-' + id);
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'dl-ins-' + id; document.body.appendChild(dl); }
+    return dl;
+  }
+  function infoProv(lato, testo) {
+    var el = $('ins-prov-' + lato);
+    if (!el) {
+      var inp = $('ins-citta-' + lato); if (!inp) return;
+      el = document.createElement('div'); el.id = 'ins-prov-' + lato; el.style.cssText = 'font-size:12px;color:#4ade80;margin-top:5px;min-height:15px;';
+      inp.parentNode.appendChild(el);
+    }
+    el.textContent = testo || '';
+  }
+  function daCap(lato) {
+    var cap = ($('ins-cap-' + lato).value || '').trim(), citta = $('ins-citta-' + lato), dl = dlCitta(lato);
+    if (cap.length !== 5 || !window.ECT_CAP || !window.ECT_CAP[cap]) { if (cap.length === 5) infoProv(lato, ''); return false; }
+    var c = ddComuni(window.ECT_CAP[cap]).map(function (x) { return String(x).split('|'); });
+    dl.innerHTML = c.map(function (x) { return '<option value="' + mfEsc(x[0]) + '">' + mfEsc(x[1]) + '</option>'; }).join('');
+    citta.setAttribute('list', dl.id);
+    if (c.length === 1) { citta.value = c[0][0]; infoProv(lato, '📍 ' + c[0][0] + ' (' + c[0][1] + ') · CAP ' + cap); }
+    else { var cur = c.filter(function (x) { return x[0].toLowerCase() === citta.value.trim().toLowerCase(); })[0];
+      if (cur) infoProv(lato, '📍 ' + cur[0] + ' (' + cur[1] + ') · CAP ' + cap);
+      else { citta.value = ''; citta.placeholder = 'scegli: ' + c.slice(0, 3).map(function (x) { return x[0]; }).join(', ') + (c.length > 3 ? '…' : ''); infoProv(lato, 'Questo CAP ha più comuni (' + c[0][1] + '): scegli la città dall\'elenco.'); } }
+    return true;
+  }
+  function daCitta(lato) {
+    var citta = $('ins-citta-' + lato), v = citta.value.trim().toLowerCase(), cap = $('ins-cap-' + lato), dl = dlCitta(lato);
+    citta.setAttribute('list', dl.id);
+    if (v.length < 2) { dl.innerHTML = ''; return; }
+    var trov = indice().filter(function (x) { return x.citta.toLowerCase().indexOf(v) === 0; });
+    var visti = {};
+    dl.innerHTML = trov.filter(function (x) { var k = x.citta + x.prov; if (visti[k]) return false; visti[k] = 1; return true; }).slice(0, 15)
+      .map(function (x) { return '<option value="' + mfEsc(x.citta) + '">' + mfEsc(x.citta + ' (' + x.prov + ') · CAP ' + x.cap) + '</option>'; }).join('');
+    var esatti = trov.filter(function (x) { return x.citta.toLowerCase() === v; });
+    if (esatti.length) {
+      var e = esatti[0], capsDiQuestaCitta = esatti.map(function (x) { return x.cap; });
+      if (!cap.value.trim() || capsDiQuestaCitta.indexOf(cap.value.trim()) === -1) cap.value = e.cap;
+      infoProv(lato, '📍 ' + e.citta + ' (' + e.prov + ') · CAP ' + cap.value.trim() + (capsDiQuestaCitta.length > 1 ? ' — questa città ha più CAP: se serve correggi' : ''));
+    }
+  }
+  function aggancia() {
+    ['part', 'arr'].forEach(function (lato) {
+      var c = $('ins-cap-' + lato), t = $('ins-citta-' + lato);
+      if (!c || !t || c.__sug) return; c.__sug = true;
+      t.setAttribute('autocomplete', 'off'); c.setAttribute('autocomplete', 'off');
+      c.addEventListener('input', function () { daCap(lato); });
+      t.addEventListener('input', function () { daCitta(lato); });
+      t.addEventListener('change', function () { daCitta(lato); });
+    });
+    QUALI.forEach(creaRicerca);
+  }
+  /* autocompilaCittaCarico (inline sul CAP) chiama un servizio esterno: se il CAP e' nel nostro elenco non serve */
+  var vecchia = window.autocompilaCittaCarico;
+  window.autocompilaCittaCarico = function (lato) { try { if (daCap(lato)) return; } catch (e) {} if (vecchia) return vecchia.apply(this, arguments); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aggancia); else aggancia();
+  setTimeout(aggancia, 1500);
+})();
+</script>
 <script src="/menu-laterale.js"></script>
 </body>
 </html>

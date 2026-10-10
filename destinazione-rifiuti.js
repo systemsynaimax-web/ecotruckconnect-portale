@@ -3,7 +3,7 @@
    Si carica in fondo a index.html (portale) e a dashboard.html, DOPO gli altri script.
 
    IMPIANTO DI DESTINAZIONE E INTERMEDIARIO dei carichi di RIFIUTI (richiesta di Gerlando)
-   - Facoltativo. Compare solo sui carichi di rifiuti GIA' ACCETTATI (stato PRESO).
+   - Facoltativo. 10/10: l'azienda puo' inserirli GIA' ALLA PUBBLICAZIONE e anche dopo; il trasportatore li vede solo dopo aver preso il carico (PRESO).
    - AZIENDA: scrive i dati (modificabili quando vuole) e allega i file
      (Vedi / Scarica / Rimuovi: rimuove solo lei, i file non si modificano: si rimuovono e si ricaricano).
    - TRASPORTATORE: vede solo (dati + Vedi / Scarica). Niente stampa, niente modifica.
@@ -395,4 +395,123 @@
       return r;
     };
   }
+
+  /* =====================================================================
+     10/10 — IMPIANTO E INTERMEDIARIO GIA' ALLA PUBBLICAZIONE (facoltativo)
+     - Nel modulo "Pubblica" compare (solo se spunti "Si tratta di rifiuti") il riquadro con gli stessi campi
+       e gli allegati. Dati e file partono DOPO la pubblicazione, quando il carico esiste.
+     - Si possono inserire / modificare anche dopo: dallo Storico pubblicazioni (pulsante ♻️) e da Trasporti presi.
+     - Il trasportatore li vede solo dopo aver preso il carico (lo decide il server).
+     ===================================================================== */
+  var pubFile = { impianto: [], intermediario: [] };
+  var PUB_MAX_FILE = 3;
+  function pubRidisegnaFile(parte) {
+    ['impianto', 'intermediario'].forEach(function (p) {
+      if (parte && p !== parte) return;
+      var el = document.querySelector('#ins-rif-nota [data-pf="' + p + '"]'); if (!el) return;
+      el.innerHTML = pubFile[p].length ? pubFile[p].map(function (f, i) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="flex:1;">📎 ' + esc(f.name) + '</span>' +
+          '<button type="button" style="' + STILE_BT + 'background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);" onclick="ectDestPubTogli(\'' + p + '\',' + i + ')">✕ Rimuovi</button></div>';
+      }).join('') : '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;margin:6px 0;">Nessun file allegato.</div>';
+    });
+  }
+  function pubSezione(parte, titolo) {
+    return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);"><div style="font-weight:700;color:#fff;">' + titolo + '</div>' +
+      campo(parte, 'ragione_sociale', 'Ragione sociale', '') +
+      (parte === 'impianto' ? campo(parte, 'indirizzo', 'Indirizzo', '') : '') +
+      campo(parte, 'n_autorizzazione', 'Numero di autorizzazione / iscrizione', '') +
+      campo(parte, 'ente_rilascio', 'Ente che l\'ha rilasciata', '') +
+      campo(parte, 'scadenza', 'Scadenza', '', 'date') +
+      '<div style="margin-top:10px;font-size:12px;font-weight:600;">Allegati (PDF, JPG o PNG, max 4 MB, fino a ' + PUB_MAX_FILE + ')</div><div data-pf="' + parte + '"></div>' +
+      '<div style="margin-top:6px;"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;" onchange="ectDestPubFile(\'' + parte + '\',this)">' +
+      '<button type="button" style="' + STILE_BT + '" onclick="this.previousElementSibling.click()">📤 Carica file</button></div></div>';
+  }
+  function pubInizializza() {
+    var w = document.getElementById('ins-rif-nota');
+    if (!w || w.getAttribute('data-dest-pub')) return;
+    w.setAttribute('data-dest-pub', '1');
+    w.setAttribute('style', 'display:none;' + STILE_BOX + 'font-size:13px;line-height:1.5;');
+    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span></div>' +
+      '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Se li conosci già, puoi indicarli adesso: il trasportatore li vedrà solo dopo aver preso il carico (cioè dopo aver pagato i €20). ' +
+      'Se non li hai ancora, lasciali vuoti: potrai inserirli o modificarli dopo dallo <b>Storico pubblicazioni</b> (pulsante ♻️) e da <b>Trasporti presi</b>.</div>' +
+      pubSezione('impianto', '🏭 Impianto di destinazione') + pubSezione('intermediario', '🔁 Intermediario') + datalists() +
+      '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:10px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
+    pubRidisegnaFile();
+  }
+  window.ectDestPubFile = async function (parte, inp) {
+    var file = inp && inp.files && inp.files[0]; if (!file) return;
+    inp.value = '';
+    var tipo = file.type; if (!tipo && /\.pdf$/i.test(file.name)) tipo = 'application/pdf';
+    var es = window.ectEsito ? window.ectEsito('Carico il file «' + file.name + '»…') : null;
+    var fine = function (m, ok) { return es ? es.fine(m, ok) : Promise.resolve(); };
+    if (!TIPI_OK[tipo]) { await fine('Sono ammessi solo PDF, JPG e PNG.', false); return; }
+    if (file.size > MAX_BYTE) { await fine('Il file è troppo grande (massimo 4 MB).', false); return; }
+    if (pubFile[parte].length >= PUB_MAX_FILE) { await fine('Massimo ' + PUB_MAX_FILE + ' file per voce: rimuovine uno prima.', false); return; }
+    pubFile[parte].push({ name: file.name, tipo: tipo, file: file });
+    pubRidisegnaFile(parte);
+    await fine('File caricato: ' + file.name + ' (parte con la pubblicazione)', true);
+  };
+  window.ectDestPubTogli = function (parte, i) { pubFile[parte].splice(i, 1); pubRidisegnaFile(parte); };
+  function pause(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+
+  /* chiamata da pubblicaCarico() (index.html) subito dopo la pubblicazione riuscita */
+  window.ectDestDopoPubblica = function (ord) {
+    var w = document.getElementById('ins-rif-nota'); if (!w || !ord) return;
+    var dati = { impianto: {}, intermediario: {} }, ha = false;
+    w.querySelectorAll('input[data-campo]').forEach(function (i) { var v = i.value.trim(); dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')] = v; if (v) ha = true; i.value = ''; });
+    var file = { impianto: pubFile.impianto.slice(), intermediario: pubFile.intermediario.slice() };
+    var nf = file.impianto.length + file.intermediario.length;
+    pubFile = { impianto: [], intermediario: [] }; pubRidisegnaFile(); w.style.display = 'none';
+    if (!ha && !nf) return;
+    pubInvia(ord, dati, file, ha, nf);
+  };
+  async function pubInvia(ord, dati, file, ha, nf) {
+    var es = window.ectEsito ? window.ectEsito('Salvo impianto e intermediario del carico…') : null;
+    var fine = function (m, ok) { return es ? es.fine(m, ok) : Promise.resolve(); };
+    var DOVE = 'Il carico è pubblicato, ma impianto e intermediario non sono stati salvati: aprili da Storico pubblicazioni → ♻️ e riprova.';
+    var ok = false, dataErrata = false;
+    try {
+      // il carico arriva su Airtable da Make: se non c'e' ancora riprovo ogni 3 secondi (fino a ~1 minuto)
+      for (var t = 0; t < 20 && !ok; t++) {
+        var r = await chiama(ha ? 'dest_salva' : 'dest_leggi', Object.assign({ numero_ordine: ord }, ha ? { impianto: dati.impianto, intermediario: dati.intermediario } : {}));
+        if (r && r.ok && r.applicabile) { ok = true; break; }
+        if (r && r.errore === 'data_non_valida') { dataErrata = true; break; }
+        await pause(3000);
+      }
+      if (dataErrata) { await fine('Carico pubblicato. La data di scadenza non è valida: correggila da Storico pubblicazioni → ♻️.', false); return; }
+      if (!ok) { await fine(DOVE, false); return; }
+      var falliti = 0;
+      for (var parte of ['impianto', 'intermediario']) {
+        for (var k = 0; k < file[parte].length; k++) {
+          try {
+            var b64 = await base64(file[parte][k].file);
+            var rf = await chiama('dest_file_carica', { numero_ordine: ord, parte: parte, nome_file: file[parte][k].name, tipo: file[parte][k].tipo, file: b64 });
+            if (!(rf && rf.ok)) falliti++;
+          } catch (e) { falliti++; }
+        }
+      }
+      if (ha) suggRicorda(dati);
+      logga('Impianto e intermediario rifiuti: inseriti alla pubblicazione', 'Carico ' + ord);
+      if (falliti) await fine('Dati salvati, ma ' + falliti + ' file non caricati: riprova da Storico pubblicazioni → ♻️.', false);
+      else await fine('Impianto e intermediario salvati' + (nf ? ' (' + nf + ' file)' : '') + '.', true);
+    } catch (e) { await fine(DOVE, false); }
+  }
+
+  /* finestra con il riquadro per un carico (Storico pubblicazioni, qualsiasi stato) */
+  window.ectDestApriModale = function (ord) {
+    var vecchio = document.getElementById('ect-dest-modale'); if (vecchio) vecchio.remove();
+    var ov = document.createElement('div'); ov.id = 'ect-dest-modale';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:4500;background:rgba(2,6,23,0.78);overflow:auto;padding:24px 14px;display:flex;justify-content:center;align-items:flex-start;';
+    ov.innerHTML = '<div style="width:100%;max-width:680px;background:#0f172a;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:18px;color:#f1f5f9;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="font-weight:700;font-size:15px;">Carico ' + esc(ord) + '</div>' +
+      '<button type="button" style="' + STILE_BT + '" id="ect-dest-chiudi">✕ Chiudi</button></div>' + segnaposto(ord) + '</div>';
+    document.body.appendChild(ov);
+    var chiudi = function () { ov.remove(); };
+    ov.querySelector('#ect-dest-chiudi').onclick = chiudi;
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) chiudi(); });
+    pianifica();
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pubInizializza); else pubInizializza();
+  setTimeout(pubInizializza, 800);
 })();
