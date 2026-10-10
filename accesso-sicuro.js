@@ -1024,7 +1024,7 @@
       add('Tratta', (f.citta_partenza || '') + ' (' + (f.cap_partenza || '') + ') → ' + (f.citta_arrivo || '') + ' (' + (f.cap_arrivo || '') + ')');
       add('Data del carico', dataOra(f.data_consegna)); add('Pubblicato il', dataOra(f.data_pubblicazione));
       add('Tipo merce', f.tipo_merce); add('Specifica', f.specifica); add('Note', f.note);
-      add('Mezzo richiesto', f.tipo_mezzo_richiesto); add('Autorizzazione richiesta', f.autorizzazione_richiesta);
+      add('Mezzo che serve', f.tipo_mezzo_richiesto); add('Autorizzazioni che deve avere il trasportatore', f.autorizzazione_richiesta);
       if (f.codice_cer) add('Codice CER', f.codice_cer);
       add('Importo pattuito', f.importo_pattuito ? euroTxt(f.importo_pattuito) : ''); add('Termini di pagamento', f.termini_pagamento);
       add('Azienda', f.nome_azienda); add('Telefono azienda', f.telefono_azienda);

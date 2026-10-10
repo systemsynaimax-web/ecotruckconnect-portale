@@ -47,8 +47,7 @@
   var PAG = {
     home:     { c: 'home', t: 'Dashboard', d: 'La tua pagina iniziale: i numeri di oggi e cosa fare adesso.' },
     dati:     { c: 'dash', dash: 'dati', t: 'I miei dati (modifica)', d: 'I tuoi dati di anagrafica (nome, indirizzo, telefono, P.IVA). Scrivi solo quello che vuoi cambiare. Qui puoi anche caricare i tuoi file facoltativi.' },
-    mezzi:    { c: 'profilo', part: 'mezzi', t: 'I miei mezzi', d: 'Indica i camion e i veicoli che possiedi: è la prima cosa da fare, così ti arrivano solo i carichi adatti a te.' },
-    aut:      { c: 'profilo', part: 'aut', t: 'Le mie autorizzazioni', d: 'Le autorizzazioni sono i permessi che la legge richiede per certi trasporti (per esempio conto terzi, alimentare ATP, rifiuti). Servono per essere abbinato ai carichi che puoi fare davvero. Per ognuna carichi il documento (PDF, JPG o PNG, max 4 MB).' },
+    mezzi:    { c: 'profilo', part: 'tutto', t: 'Mezzi e autorizzazioni', d: 'Indica i mezzi che possiedi e le autorizzazioni che hai: è la prima cosa da fare. Perché? Quando un’azienda pubblica un carico indica il mezzo e le autorizzazioni che servono, e il carico lo vedi solo se hai proprio quel mezzo e quelle autorizzazioni: così non perdi tempo con carichi che non puoi fare. Per ogni autorizzazione puoi caricare il documento (PDF, JPG o PNG, max 4 MB), scaricarlo o rimuoverlo. Puoi modificare tutto quando vuoi.' },
     tg:       { c: 'tg', t: 'Telegram', d: 'Collega il tuo Telegram per ricevere i nuovi carichi sul telefono, in privato. Si fa una volta sola.' },
     carichi:  { c: 'normale', blocchi: ['carichi-disponibili-wrap'], cap: true, t: 'Carichi disponibili', d: 'I carichi liberi nella tua zona, pronti da prendere. Premi «Vedi dettagli» per tutti i dati prima di decidere.' },
     presi:    { c: 'normale', dl: 1, blocchi: ['carichi-presi-wrap'], t: 'Carichi presi', d: 'I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti dall’azienda (che puoi scaricare).' },
@@ -64,10 +63,7 @@
     scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa il bot 🤖 in basso a destra per una risposta subito.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
     /* solo azienda */
-    pubblica: { c: 'azienda', part: 'carico', t: 'Pubblica · Il carico', d: 'Cosa trasporti e dove: CAP e città di partenza e arrivo, data, tipo di merce, note. Se è un rifiuto indica il codice CER. Pubblicare è gratis.' },
-    azmezzi:  { c: 'azienda', part: 'mezzi', t: 'Pubblica · Mezzo richiesto', d: 'Scegli i mezzi che servono per questo trasporto: il sistema lo mostra solo ai trasportatori che hanno proprio quel mezzo. In fondo vedi quanti trasportatori sono disponibili.' },
-    azaut:    { c: 'azienda', part: 'aut', t: 'Pubblica · Autorizzazione richiesta', d: 'Le autorizzazioni sono i permessi che il trasportatore deve avere per fare questo trasporto (per esempio conto terzi, alimentare ATP, rifiuti). Il sistema lo mostra solo a chi le ha. Qui puoi anche allegare i documenti.' },
-    azindirizzi: { c: 'azienda', part: 'indirizzi', t: 'Pubblica · Ritiro, consegna e importo', d: 'Indirizzo preciso di ritiro e consegna, chi riceve e il suo cellulare, importo pattuito e termini di pagamento. Questi dati li vede solo il trasportatore che prende il carico. Alla fine premi Pubblica.' },
+    pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Impianto di destinazione e intermediario (solo rifiuti) li inserisci dopo, in Trasporti presi.' },
     azcal:    { c: 'dash', dash: 'overview', t: 'Calendario', d: 'Le tue pubblicazioni giorno per giorno. Clicca un giorno per vedere o inserire un carico.' },
     azpagare: { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da pagare', d: 'Quanto devi ai trasportatori, diviso per trasportatore e per giorno. Scarica per la fattura o il CSV.' },
     azreptr:  { c: 'normale', dl: 1, blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.' },
@@ -91,7 +87,7 @@
   var MENU = {
     trasportatore: [
       { id: 'home', t: 'Dashboard', i: '🏠', c: '148,163,184', e: 'La tua pagina iniziale' },
-      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'Dati, mezzi, autorizzazioni, Telegram', s: [['mezzi', 'I miei mezzi'], ['aut', 'Le mie autorizzazioni'], ['dati', 'I miei dati'], ['tg', 'Telegram']] },
+      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'Mezzi, autorizzazioni, dati, Telegram', s: [['mezzi', 'Mezzi e autorizzazioni'], ['dati', 'I miei dati'], ['tg', 'Telegram']] },
       { id: 'carichi', t: 'Carichi', i: '🚛', c: '59,130,246', e: 'I carichi liberi da prendere', p: 'carichi' },
       { id: 'presi', t: 'Presi', i: '✅', c: '74,222,128', e: 'I carichi che hai già preso', p: 'presi' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'I carichi giorno per giorno', p: 'cal' },
@@ -104,7 +100,7 @@
     ],
     azienda: [
       { id: 'home', t: 'Dashboard', i: '🏠', c: '148,163,184', e: 'La tua pagina iniziale' },
-      { id: 'pubblica', t: 'Pubblica', i: '📦', c: '59,130,246', e: 'Inserisci un nuovo carico', s: [['pubblica', 'Il carico'], ['azmezzi', 'Mezzo richiesto'], ['azaut', 'Autorizzazione richiesta'], ['azindirizzi', 'Ritiro, consegna e importo']] },
+      { id: 'pubblica', t: 'Pubblica', i: '📦', c: '59,130,246', e: 'Inserisci un nuovo carico', p: 'pubblica' },
       { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'I tuoi dati aziendali e i tuoi file', p: 'dati' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'Le pubblicazioni giorno per giorno', p: 'azcal' },
       { id: 'presi', t: 'Trasporti presi', i: '✅', c: '74,222,128', e: 'Chi ha preso i tuoi carichi', p: 'presi' },
@@ -180,7 +176,7 @@
       '#ms-intro .ms-st{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--font-b);}',
       /* pagina Telegram */
       'body[data-ms-part="mezzi"] #docs-aut{display:none!important;}',
-      'body[data-ms-azpart]:not([data-ms-azpart="aut"]) #docs-az-modulo{display:none!important;}',
+      'body[data-ms-azpart]:not([data-ms-azpart="aut"]):not([data-ms-azpart="tutto"]) #docs-az-modulo{display:none!important;}',
       '#ms-rapide{display:none;margin:0 0 22px;}',
       'body.ms-on #ms-rapide{display:block;}',
       '#ms-rapide .ms-rt{font-family:var(--font-h);font-size:16px;color:#fff;margin-bottom:10px;}',
@@ -400,7 +396,7 @@
       var daMezzi = i >= idxMezzi && i < idxAut;
       var daAut = i >= idxAut && i < idxBtn;
       var resto = !(daMezzi || daAut);       // titolo, sottotitolo, pulsante Salva, messaggio
-      var vis = resto || (part === 'mezzi' ? daMezzi : daAut);
+      var vis = part === 'tutto' || resto || (part === 'mezzi' ? daMezzi : daAut);
       k.classList[vis ? 'remove' : 'add']('ms-off');
     });
     var t = box.querySelector('.ins-title'), s = box.querySelector('.ins-sub');
@@ -425,7 +421,7 @@
       else if (i < iInd) zona = 'aut';
       else if (i < iFine) zona = 'indirizzi';
       else zona = 'sempre';
-      var vis = zona === 'sempre' || zona === part;
+      var vis = part === 'tutto' ? zona !== 'titolo' : (zona === 'sempre' || zona === part);
       k.classList[vis ? 'remove' : 'add']('ms-off');
     });
     document.body.setAttribute('data-ms-azpart', part);
@@ -608,7 +604,7 @@
     // 3) riquadro "I miei mezzi / Le mie autorizzazioni" della home -> pagine dedicate
     if (typeof window.apriProfiloTrasportatore === 'function' && !window.apriProfiloTrasportatore.__ms) {
       var pOrig = window.apriProfiloTrasportatore;
-      var pw = function () { if (inGo || !pronto) return pOrig.apply(this, arguments); vai(cur === 'aut' ? 'aut' : 'mezzi'); };
+      var pw = function () { if (inGo || !pronto) return pOrig.apply(this, arguments); vai('mezzi'); };
       pw.__ms = true; window.apriProfiloTrasportatore = pw;
       apriProfiloOrig = pOrig;
     }

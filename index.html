@@ -735,8 +735,8 @@ select option:checked{background:#1d4ed8;color:#fff;}
     </div>
     <div class="ins-box" id="sezione-profilo-trasportatore" style="display:none;">
       <div class="ins-title">🚚 Il Mio Profilo — Parco Mezzi e Autorizzazioni</div>
-      <div class="ins-sub">Seleziona tutti i mezzi che possiedi e le autorizzazioni che hai. Puoi tornare qui e modificarle quando vuoi.</div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo (seleziona tutti quelli che hai)</h4>
+      <div class="ins-sub">Seleziona i mezzi che possiedi e le autorizzazioni che hai. Perché? Quando un'azienda pubblica un carico indica il mezzo e le autorizzazioni che servono: tu lo vedi solo se hai proprio quelli, così non perdi tempo con carichi che non puoi fare. Puoi tornare qui e modificarli quando vuoi.</div>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">I miei mezzi (seleziona tutti quelli che hai)</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-camion" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('camion')">
           <span id="dd-label-camion">Seleziona i mezzi...</span>
@@ -757,7 +757,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <input type="text" id="specifica-trasp" placeholder="Descrivi il mezzo non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('camion');}">
         <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('camion')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
       </div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni possedute</h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Le mie autorizzazioni (quelle che hai)</h4>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-aut" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('aut')">
           <span id="dd-label-aut">Seleziona le autorizzazioni...</span>
@@ -812,7 +812,8 @@ select option:checked{background:#1d4ed8;color:#fff;}
         </div>
       </div>
       <div id="ins-rif-nota" style="display:none;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5;">♻️ <b>Impianto di destinazione e intermediario</b> (facoltativi) li inserisci dopo, in <b>Trasporti presi</b>, quando il carico è stato preso: il trasportatore potrà vederli e scaricare i documenti.</div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Tipo di mezzo richiesto *</h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Che mezzo serve per questo trasporto *</h4>
+      <div style="font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5;">Scegli il mezzo che serve al trasportatore per questo carico. Lo vedranno solo i trasportatori che hanno proprio quel mezzo.</div>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-mezzoRichiesto" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('mezzoRichiesto')">
           <span id="dd-label-mezzoRichiesto">Seleziona i mezzi richiesti...</span>
@@ -833,7 +834,8 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <input type="text" id="specifica-mezzoRichiesto" placeholder="Descrivi il mezzo richiesto non presente nell'elenco, poi premi Invio" onkeydown="if(event.key==='Enter'){event.preventDefault();confermaSpecificaAltro('mezzoRichiesto');}">
         <button type="button" class="btn-cap" onclick="confermaSpecificaAltro('mezzoRichiesto')" style="margin-top:8px;">✓ Conferma questo mezzo</button>
       </div>
-      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazione richiesta al trasportatore *</h4>
+      <h4 style="margin-top:20px;color:#fff;font-family:var(--font-h);">Autorizzazioni che deve avere il trasportatore *</h4>
+      <div style="font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5;">Sono i permessi che il trasportatore deve avere per fare questo trasporto (per esempio Conto Terzi, Albo Gestori Ambientali per i rifiuti, ADR per le merci pericolose). Il carico lo vedranno solo i trasportatori che li hanno.</div>
       <div class="dd-wrap" style="position:relative;max-width:520px;margin:12px 0;">
         <button type="button" class="btn-cap" id="dd-btn-autRichiesta" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="toggleDropdown('autRichiesta')">
           <span id="dd-label-autRichiesta">Seleziona le autorizzazioni richieste...</span>
@@ -3232,12 +3234,12 @@ async function pubblicaCarico() {
     return;
   }
   if (mezzoRichiesto.length === 0) {
-    err.textContent = '⚠️ Seleziona almeno un tipo di mezzo richiesto.';
+    err.textContent = '⚠️ Seleziona almeno un mezzo (Che mezzo serve per questo trasporto).';
     err.style.display = 'block';
     return;
   }
   if (autRichiesta.length === 0) {
-    err.textContent = '⚠️ Seleziona almeno un\'autorizzazione richiesta.';
+    err.textContent = '⚠️ Seleziona almeno un\'autorizzazione (Autorizzazioni che deve avere il trasportatore).';
     err.style.display = 'block';
     return;
   }
