@@ -1668,13 +1668,15 @@ async function mfCarica(inp) {
   const tipo = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
   if (!/^(application\/pdf|image\/jpeg|image\/png)$/.test(tipo)) { st.textContent = '⚠️ Formato non ammesso: usa PDF, JPG o PNG.'; return; }
   if (file.size > 4 * 1024 * 1024) { st.textContent = '⚠️ File troppo grande: massimo 4 MB.'; return; }
-  if (window.__ANTEPRIMA_SCUDO) { mieiFile.push({ id: 'p' + Date.now(), nome: file.name, url: '#', tipo: tipo }); mfAnteprima = mieiFile.slice(); st.textContent = '✅ Caricato (anteprima).'; mfRender(); return; }
-  st.textContent = 'Caricamento in corso…';
+  if (window.__ANTEPRIMA_SCUDO) { st.textContent = '⏳ Caricamento in corso…'; if (window.ectEsito) { const __ea = window.ectEsito('Caricamento di «' + file.name + '»…'); await __ea.fine('File caricato: ' + file.name, true); } mieiFile.push({ id: 'p' + Date.now(), nome: file.name, url: '#', tipo: tipo }); mfAnteprima = mieiFile.slice(); st.textContent = '✅ File caricato (anteprima).'; mfRender(); return; }
+  st.textContent = '⏳ Caricamento in corso…';
+  const __es = window.ectEsito ? window.ectEsito('Caricamento di «' + file.name + '»…') : null;
   try {
     const r = await window.ectChiamaDoc('file_carica', { nome_file: file.name, tipo: tipo, file: await mfBase64(file) });
+    if (__es) await __es.fine(r && r.ok ? 'File caricato: ' + file.name : 'Caricamento non riuscito', !!(r && r.ok));
     if (r && r.ok) { mieiFile = r.file || []; st.textContent = '✅ File caricato.'; registraAttivita('Modifica Dati', 'Cambio dati: Documento (i miei file)', 'prima: (nessuno) | dopo: ' + file.name); }
     else st.textContent = '⚠️ ' + ({ troppi_file: 'Hai già caricato 20 file: rimuovine uno.', file_troppo_grande: 'File troppo grande: massimo 4 MB.', tipo_non_ammesso: 'Formato non ammesso.' }[r && r.errore] || 'Caricamento non riuscito. Riprova.');
-  } catch (e) { st.textContent = '⚠️ Caricamento non riuscito. Riprova.'; }
+  } catch (e) { if (__es) await __es.fine('Caricamento non riuscito', false); st.textContent = '⚠️ Caricamento non riuscito. Riprova.'; }
   mfRender();
 }
 /* Suggerimenti: CAP -> città e provincia; città -> CAP e provincia (tutti i comuni d'Italia, da cap-comuni.js) */
@@ -4894,5 +4896,6 @@ function chiudiModaleCalendario() {
 </script>
 <script src="/documenti-e-notifiche.js"></script>
 <script src="/destinazione-rifiuti.js"></script>
+<script src="/menu-laterale.js"></script>
 </body>
 </html>

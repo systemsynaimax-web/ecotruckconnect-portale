@@ -116,6 +116,43 @@
   var inCaricamento = {};
   var mostraMancanti = false;
 
+
+  /* =====================================================================
+     ESITO FILE (10/10/2026): per ogni file che si carica o si riceve compare
+     una clessidra per almeno 2 secondi, poi "File caricato" (o l'errore).
+     Uso:  var es = window.ectEsito('Caricamento…');  ...  await es.fine('File caricato', true);
+     ===================================================================== */
+  (function () {
+    if (window.ectEsito) return;
+    var st = document.createElement('style');
+    st.textContent = '#ect-esito{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:5000;max-width:min(92vw,520px);padding:14px 20px;border-radius:14px;font:600 15px/1.4 var(--font-b,Arial);color:#fff;background:#0e1623;border:1px solid rgba(251,191,36,.6);box-shadow:0 14px 40px rgba(0,0,0,.55);display:none;align-items:center;gap:12px;}' +
+      '#ect-esito.ok{border-color:rgba(74,222,128,.7);}#ect-esito.ko{border-color:rgba(248,113,113,.8);}' +
+      '#ect-esito .cl{font-size:22px;display:inline-block;animation:ectclessidra 1.2s ease-in-out infinite;}@keyframes ectclessidra{0%,100%{transform:rotate(0)}50%{transform:rotate(180deg)}}';
+    (document.head || document.documentElement).appendChild(st);
+    var tmr = null;
+    function box() { var b = document.getElementById('ect-esito'); if (!b) { b = document.createElement('div'); b.id = 'ect-esito'; b.setAttribute('role', 'status'); document.body.appendChild(b); } return b; }
+    function mostra(html, classe, ms) {
+      var b = box(); clearTimeout(tmr); b.className = classe || ''; b.innerHTML = html; b.style.display = 'flex';
+      if (ms) tmr = setTimeout(function () { b.style.display = 'none'; }, ms);
+    }
+    window.ectEsito = function (testo) {
+      var t0 = Date.now();
+      mostra('<span class="cl">⏳</span><span>' + esc(testo || 'Un attimo…') + '</span>', '', 0);
+      return {
+        fine: function (msg, ok) {
+          var resto = 2000 - (Date.now() - t0); if (resto < 0) resto = 0;
+          return new Promise(function (r) {
+            setTimeout(function () {
+              if (ok === false) mostra('<span>⚠️</span><span>' + esc(msg) + '</span>', 'ko', 5000);
+              else mostra('<span>✅</span><span>' + esc(msg) + '</span>', 'ok', 3500);
+              r();
+            }, resto);
+          });
+        }
+      };
+    };
+  })();
+
   function autSelezionate() {
     return Array.from(document.querySelectorAll('#checkbox-autorizzazioni input:checked')).map(function (el) { return el.value; });
   }
@@ -222,15 +259,17 @@
         tipoFile = 'image/jpeg'; nome = nome.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
       }
       var __vecchio = docDi(aut);
+      var __es = window.ectEsito('Caricamento di «' + nome + '»…');
       inCaricamento[aut] = true; renderRighe();
       try {
         var b64 = await leggiBase64(blob);
         var r = await chiamaDoc('carica', { autorizzazione: aut, nome_file: nome, tipo: tipoFile, file: b64, autorizzazioni_selezionate: autSelezionate() });
+        await __es.fine(r && r.ok ? 'File caricato: ' + nome : (ERRORI[(r && r.errore)] || ERRORI.caricamento_fallito), !!(r && r.ok));
         if (r && r.ok) {
           documenti = r.documenti || documenti; docsCaricati = true;
           try { registraAttivita('Modifica Dati', 'Cambio dati: Documento ' + aut, 'prima: ' + (__vecchio ? __vecchio.nome : '(nessun documento)') + ' | dopo: ' + nome); } catch (e) {}
-        } else alert(ERRORI[(r && r.errore)] || ERRORI.caricamento_fallito);
-      } catch (e) { alert(ERRORI.caricamento_fallito); }
+        }
+      } catch (e) { await __es.fine(ERRORI.caricamento_fallito, false); }
       delete inCaricamento[aut];
       renderRighe(); decoraRiepilogo();
     };
@@ -243,13 +282,15 @@
       testo: 'Stai per cancellare <strong>' + esc(d ? d.nome : 'il documento') + '</strong> dell\'autorizzazione <strong>"' + esc(aut) + '"</strong>.<br>Non si può annullare. Per salvare il profilo dovrai caricarne un altro, oppure togliere questa autorizzazione.',
       si: 'Sì, sono sicuro', no: 'No, annulla' });
     if (!ok) return;
+    var __er = window.ectEsito('Rimozione del documento…');
     inCaricamento[aut] = true; renderRighe();
     var tenere = documenti.map(function (d) { return d.autorizzazione; }).filter(function (a) { return a !== aut; });
     var r = await chiamaDoc('allinea', { autorizzazioni: tenere }).catch(function () { return null; });
+    await __er.fine(r && r.ok ? 'Documento rimosso' : 'Non sono riuscito a togliere il documento, riprova tra un momento.', !!(r && r.ok));
     if (r && r.ok) {
       documenti = r.documenti || [];
       try { registraAttivita('Modifica Dati', 'Cambio dati: Documento ' + aut, 'prima: ' + (d ? d.nome : 'documento') + ' | dopo: (rimosso)'); } catch (e) {}
-    } else alert('Non sono riuscito a togliere il documento, riprova tra un momento.');
+    }
     delete inCaricamento[aut];
     renderRighe(); decoraRiepilogo();
   }
@@ -356,13 +397,16 @@
   };
   /* SCARICA (8/10/2026): al posto di Stampa nelle autorizzazioni del trasportatore. Se il browser non permette il download diretto, apre il file in una nuova scheda. */
   window.ectScaricaUrl = async function (url, nome) {
-    if (!url || url === '#') { alert('Anteprima: qui si scaricherebbe il file «' + (nome || 'documento') + '».'); return; }
+    var __ed = window.ectEsito('Preparo il file «' + (nome || 'documento') + '»…');
+    if (!url || url === '#') { await __ed.fine('Anteprima: qui si scaricherebbe «' + (nome || 'documento') + '»', true); return; }
     try {
       var r = await fetch(url); if (!r.ok) throw new Error('http');
       var b = await r.blob(); var u = URL.createObjectURL(b);
+      await __ed.fine('File ricevuto: ' + (nome || 'documento'), true);
       var a = document.createElement('a'); a.href = u; a.download = nome || 'documento'; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
     } catch (e) {
+      await __ed.fine('Apro il file in una nuova scheda', true);
       var w = window.open(url, '_blank'); if (!w) apriBloccato();
     }
   };
@@ -761,6 +805,8 @@
     var key = box.getAttribute('data-key'), indice = Number(inp.getAttribute('data-indice') || -1);
     var files = Array.from(inp.files || []); if (!files.length) return;
     var lista = docAz[key] = docAz[key] || [];
+    var __ea = window.ectEsito(files.length > 1 ? 'Caricamento di ' + files.length + ' file…' : 'Caricamento di «' + files[0].name + '»…');
+    var __n = 0;
     for (var k = 0; k < files.length; k++) {
       var f = files[k];
       var tipoFile = f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : '');
@@ -776,7 +822,9 @@
       try { url = await docAzLeggi(blob); } catch (er) { alert(ERRORI.caricamento_fallito); continue; }
       var nuovo = { nome: nome, tipo: tipoFile, url: url };
       if (indice >= 0 && lista[indice]) lista[indice] = nuovo; else lista.push(nuovo);
+      __n++;
     }
+    await __ea.fine(__n ? (__n > 1 ? __n + ' file caricati' : 'File caricato: ' + files[0].name) : 'Nessun file caricato', __n > 0);
     docAzSalva();
     var vivo = document.querySelector('.ect-az-docs[data-key="' + key.replace(/"/g, '\\"') + '"]');
     if (vivo) vivo.outerHTML = docAzHtml(key);
