@@ -2624,6 +2624,7 @@ async function rilevaTipoUtente(email) {
     document.getElementById('hero-personale').classList.add('tipo-azienda');
     aziendaRecordId = aziende[0].id;
     const af = aziende[0].fields;
+    window.__ectAziendaFields = af;   // per la pagina «Iscrizione» del menu laterale
     gestisciPasswordTemporanea(af);
     profiloAzienda.nome = af.ragione_sociale || af.nome_azienda || af.nome_referente || af.nome || '';
     profiloAzienda.telefono = af.telefono_azienda || af.telefono || '';
@@ -3497,14 +3498,14 @@ function renderTabelleFatture() {
   try { aggiornaTitoloStorico(); } catch (e) {}
   if (tipoUtente === 'azienda') {
     carichiFatturaAziendaFiltrati = filtraPerPeriodo(carichiPubblicatiAzienda, 'data_pubblicazione', filtroFatturePeriodoGiorni);
-    const headerHtml = '<th>Data</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
+    const headerHtml = '<th>Data e ora</th><th>Numero Ordine</th><th>Stato</th><th>Trasportatore</th><th>Azione</th>';
     const bodyHtml = !carichiFatturaAziendaFiltrati.length
       ? '<tr><td colspan="5" class="empty">Nessuna pubblicazione in questo periodo.</td></tr>'
       : carichiFatturaAziendaFiltrati
           .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
           .map(c => {
             const f = c.fields;
-            const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
+            const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
             const azioniAnteprima = window.__ANTEPRIMA_SCUDO ? pulsantiAnteprimaCarico(c) : '';
             return `<tr><td>${data}</td><td style="font-family:monospace;font-size:12px;">${f.numero_ordine || '—'}</td><td>${f.stato || '—'}</td><td>${(f.stato || '').toUpperCase() === 'PRESO' ? (f.assegnato_a_nome || f.bloccato_da_nome || '—') : '—'}</td><td style="white-space:nowrap;"><button class="btn-cap" style="padding:5px 12px;font-size:11px;" onclick="duplicaCarico('${c.id}')">🔁 Duplica</button>${azioniAnteprima}</td></tr>`;
           }).join('');
@@ -3523,14 +3524,14 @@ function renderTabelleFatture() {
   }
 
   ultimeCandidature = filtraPerPeriodo(ultimeCandidatureRaw, 'data_candidatura', filtroFatturePeriodoGiorni);
-  const headerHtml = '<th>Data</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th>';
+  const headerHtml = '<th>Data e ora</th><th>ID Richiesta</th><th>Stato</th><th>Commissione pagata</th>';
   const bodyHtml = !ultimeCandidature.length
     ? `<tr><td colspan="4" class="empty">Nessun carico in questo periodo.${ultimeCandidatureRaw.length === 0 ? '<br><span style="font-size:12px;color:rgba(255,255,255,0.25);">Il tuo storico apparira\' qui non appena accaparri il primo carico.</span>' : ''}</td></tr>`
     : ultimeCandidature
         .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
         .map(c => {
           const f = c.fields;
-          const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+          const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
           const stato = f.stato || '—';
           const cls = stato.toLowerCase().includes('complet') || stato.toLowerCase().includes('accett') || stato.toLowerCase().includes('pagat') || stato.toUpperCase() === 'PRESO'
             ? 's-ok'
@@ -4464,7 +4465,7 @@ function scaricaStoricoPDF() {
     .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
     .map(c => {
       const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleDateString('it-IT') : '—';
+      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
       return [data, f.richiesta_id || '—', f.stato || '—', `${euro(PREZZO)}`];
     });
   doc.autoTable({

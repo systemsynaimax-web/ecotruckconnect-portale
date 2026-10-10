@@ -126,7 +126,7 @@
     if (window.ectEsito) return;
     var st = document.createElement('style');
     st.textContent = '#ect-esito{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:5000;max-width:min(92vw,520px);padding:14px 20px;border-radius:14px;font:600 15px/1.4 var(--font-b,Arial);color:#fff;background:#0e1623;border:1px solid rgba(251,191,36,.6);box-shadow:0 14px 40px rgba(0,0,0,.55);display:none;align-items:center;gap:12px;}' +
-      '#ect-esito.ok{border-color:rgba(74,222,128,.7);}#ect-esito.ko{border-color:rgba(248,113,113,.8);}' +
+      '#ect-esito.ok{background:#0b3b22;border-color:#22c55e;color:#dcfce7;}#ect-esito.ko{border-color:rgba(248,113,113,.8);}' +
       '#ect-esito .cl{font-size:22px;display:inline-block;animation:ectclessidra 1.2s ease-in-out infinite;}@keyframes ectclessidra{0%,100%{transform:rotate(0)}50%{transform:rotate(180deg)}}';
     (document.head || document.documentElement).appendChild(st);
     var tmr = null;
@@ -151,6 +151,96 @@
         }
       };
     };
+  })();
+
+
+  /* =====================================================================
+     SCARICA (10/10/2026): scarica un PDF vero (non apre la stampa).
+     ectScarica(titolo, [nodi della pagina], 'html extra con tabelle')
+     ===================================================================== */
+  window.ectScarica = async function (titolo, nodi, htmlExtra) {
+    var es = window.ectEsito('Preparo il file «' + titolo + '»…');
+    var nomeFile = String(titolo || 'documento').toLowerCase().replace(/[^a-z0-9àèéìòù]+/g, '-').replace(/^-+|-+$/g, '') || 'documento';
+    try {
+      if (!(window.jspdf && window.jspdf.jsPDF)) throw new Error('jspdf');
+      var cont = document.createElement('div'); cont.innerHTML = htmlExtra || '';
+      (nodi || []).forEach(function (n) {
+        if (!n) return;
+        var c = n.cloneNode(true);
+        c.querySelectorAll('button, input, select, textarea, script, style, .ect-stampa-bar, .feed-actions, .spiega-apri').forEach(function (x) { x.remove(); });
+        cont.appendChild(c);
+      });
+      var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+      var W = doc.internal.pageSize.getWidth(), Hh = doc.internal.pageSize.getHeight(), M = 40, y = 52;
+      doc.setFontSize(16); doc.text('EcoTruckConnect — ' + titolo, M, y); y += 18;
+      doc.setFontSize(9); doc.setTextColor(110); doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), M, y); y += 18; doc.setTextColor(20);
+      function testoDi(n) {
+        if (n.nodeType === 3) return n.nodeValue;
+        if (n.nodeType !== 1) return '';
+        var t = n.tagName; if (t === 'BR') return '\n';
+        var s = ''; n.childNodes.forEach(function (c) { s += testoDi(c); });
+        if (/^(DIV|P|H[1-6]|LI|TR|SECTION|DETAILS|SUMMARY|UL|OL)$/.test(t)) s = '\n' + s + '\n';
+        else if (t === 'TD' || t === 'TH') s += '  ';
+        return s;
+      }
+      function scrivi(n) {
+        if (n.nodeType !== 1) return;
+        if (n.tagName === 'TABLE') {
+          doc.autoTable({ html: n, startY: y, margin: { left: M, right: M }, styles: { fontSize: 8, cellPadding: 3 }, headStyles: { fillColor: [29, 78, 216] } });
+          y = doc.lastAutoTable.finalY + 12; return;
+        }
+        if (n.querySelector('table')) { Array.prototype.forEach.call(n.children, scrivi); return; }
+        var t = testoDi(n).replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{2,}/g, '\n').trim();
+        if (!t) return;
+        doc.setFontSize(9.5);
+        doc.splitTextToSize(t, W - 2 * M).forEach(function (riga) {
+          if (y > Hh - 50) { doc.addPage(); y = 50; }
+          doc.text(riga, M, y); y += 13;
+        });
+        y += 6;
+      }
+      Array.prototype.forEach.call(cont.children, scrivi);
+      var pagine = doc.internal.getNumberOfPages();
+      for (var i = 1; i <= pagine; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text('Documento di riepilogo EcoTruckConnect — SynAIMAX S.R.L.S. Non sostituisce la fattura fiscale. · pag. ' + i + '/' + pagine, M, Hh - 24); }
+      await es.fine('File scaricato: ' + nomeFile + '.pdf', true);
+      doc.save(nomeFile + '.pdf');
+    } catch (e) {
+      console.error('ectScarica', e);
+      await es.fine('Non sono riuscito a preparare il file. Riprova tra un momento.', false);
+    }
+  };
+
+
+  /* =====================================================================
+     SALVATAGGI (10/10/2026): ogni "Salva" mostra la clessidra per almeno 2 secondi
+     e poi "Salvato" in verde (oppure l'errore). Non cambia il salvataggio: lo avvolge.
+     ===================================================================== */
+  (function () {
+    var LISTA = [
+      ['salvaProfiloTrasportatore', 'profilo-salvato-msg', 'Salvataggio di mezzi e autorizzazioni…', 'Salvato: mezzi e autorizzazioni'],
+      ['salvaDashDati', 'dd-salvato-msg', 'Salvataggio dei tuoi dati…', 'Salvato: i tuoi dati'],
+      ['salvaNotifiche', 'notif-salvato-msg', 'Salvataggio delle notifiche…', 'Salvato: preferenze notifiche'],
+      ['rigeneraPassword', 'rigenera-pw-msg', 'Creo la nuova password…', 'Nuova password creata'],
+      ['salvaNuovaPassword', 'cpw-ok', 'Salvataggio della password…', 'Salvata: la tua nuova password'],
+      ['pubblicaCarico', 'ins-ok', 'Pubblicazione del carico…', 'Carico pubblicato']
+    ];
+    function visibile(id) { var e = document.getElementById(id); if (!e) return true; return getComputedStyle(e).display !== 'none'; }
+    function avvolgi(v) {
+      var o = window[v[0]]; if (typeof o !== 'function' || o.__esito) return !!(o && o.__esito);
+      var w = async function () {
+        var es = window.ectEsito(v[2]), r;
+        try { r = await o.apply(this, arguments); }
+        catch (e) { await es.fine('Non salvato: riprova tra un momento.', false); throw e; }
+        var ok = visibile(v[1]);
+        await es.fine(ok ? v[3] : 'Non salvato: controlla i messaggi in pagina.', ok);
+        return r;
+      };
+      w.__esito = true; window[v[0]] = w; return true;
+    }
+    var giri = 0, t = setInterval(function () {
+      giri++; var tutte = LISTA.map(avvolgi).every(Boolean);
+      if (tutte || giri > 60) clearInterval(t);
+    }, 500);
   })();
 
   function autSelezionate() {

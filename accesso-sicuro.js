@@ -944,6 +944,8 @@
 
   // Stampa in una finestra pulita: solo il contenuto scelto, senza strisce, pulsanti e menu
   function ectStampa(titolo, nodi, htmlExtra) {
+    // 10/10: nel portale si SCARICA (PDF vero). Se e' attivo il modo "scarica" non apro la finestra di stampa.
+    if (window.__ectModoScarica && typeof window.ectScarica === 'function') { window.ectScarica(titolo, nodi, htmlExtra); return; }
     var w = window.open('', '_blank', 'width=900,height=700');
     if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
     var corpo = '';
@@ -1041,9 +1043,9 @@
       var testo = tr.textContent;
       var no = numeroOrdine(tr); var m = no ? [no] : testo.match(/rec[A-Za-z0-9]{14}/);
       var btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'btn-cap ect-stampa-riga'; btn.textContent = '🖨️ Stampa';
+      btn.type = 'button'; btn.className = 'btn-cap ect-stampa-riga'; btn.textContent = '⬇️ Scarica';
       btn.style.cssText = 'padding:5px 10px;font-size:11px;margin-left:6px;';
-      btn.onclick = function (ev) { ev.stopPropagation(); stampaCarico(m ? trovaCarico(m[0]) : null, tr); };
+      btn.onclick = function (ev) { ev.stopPropagation(); window.__ectModoScarica = true; try { stampaCarico(m ? trovaCarico(m[0]) : null, tr); } finally { window.__ectModoScarica = false; } };
       tr.cells[tr.cells.length - 1].appendChild(btn);
     });
   }
@@ -1055,10 +1057,10 @@
     var bar = document.createElement('div');
     bar.className = 'ect-stampa-bar';
     bar.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px;flex-wrap:wrap;';
-    ['🖨️ Stampa', '📄 Salva PDF'].forEach(function (t) {
+    ['⬇️ Scarica'].forEach(function (t) {
       var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
       b.style.cssText = 'background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;';
-      b.onclick = function (ev) { ev.stopPropagation(); ectStampa(titoloFn(), [cont]); };
+      b.onclick = function (ev) { ev.stopPropagation(); window.__ectModoScarica = true; try { ectStampa(titoloFn(), [cont]); } finally { window.__ectModoScarica = false; } };
       bar.appendChild(b);
     });
     cont.insertBefore(bar, cont.firstChild);
@@ -1205,7 +1207,7 @@
         b.onclick = function (ev) { ev.stopPropagation(); fn(); }; fila.appendChild(b);
       }
       function etichetta(testo, col) { var sp = document.createElement('span'); sp.textContent = testo; sp.style.cssText = 'font-size:12px;font-weight:600;color:' + col + ';'; fila.appendChild(sp); }
-      btn('🖨️ Stampa', 'blu', function () { stampaCarico(f, tr); }); fila.lastChild.classList.add('ect-stampa-riga');
+      btn('⬇️ Scarica', 'blu', function () { window.__ectModoScarica = true; try { stampaCarico(f, tr); } finally { window.__ectModoScarica = false; } }); fila.lastChild.classList.add('ect-stampa-riga');
       btn('🔁 Duplica', 'blu', function () { if (typeof duplicaCarico === 'function') duplicaCarico(id); });
       if (st === 'DISPONIBILE') {
         btn('✏️ Modifica', 'blu', function () { if (finto && typeof anteprimaModificaCarico === 'function') anteprimaModificaCarico(id); else apriModifica(f); });

@@ -35,7 +35,7 @@
 
   /* ---------- blocchi gestiti (nascosti/mostrati con la classe ms-off) ---------- */
   var CONTENITORI = ['hero-personale', 'riquadro-profilo-trasp', 'cap-bar-section', 'sezione-dashboard',
-    'sezione-profilo-trasportatore', 'sezione-azienda', 'contenuto-normale-portale', 'ms-tg'];
+    'sezione-profilo-trasportatore', 'sezione-azienda', 'contenuto-normale-portale', 'ms-tg', 'ms-isc'];
   var BLOCCHI = ['carichi-disponibili-wrap', 'calendario-carichi-wrap', 'cards-riepilogo-wrap', 'cards-riepilogo-azienda',
     'carichi-presi-wrap', 'rs-wrap', 'report-trasportatore-wrap', 'storico-sec-head', 'ms-storico-box', 'faq-box', 'ms-assist'];
 
@@ -46,28 +46,32 @@
      part: 'mezzi' | 'aut' (la scheda profilo e' una sola: la divido in due pagine)  */
   var PAG = {
     home:     { c: 'home', t: 'Dashboard', d: 'La tua pagina iniziale: i numeri di oggi e cosa fare adesso.' },
-    dati:     { c: 'dash', dash: 'dati', t: 'I miei dati', d: 'I tuoi dati di anagrafica (nome, indirizzo, telefono, P.IVA). Scrivi solo quello che vuoi cambiare. Qui puoi anche caricare i tuoi file facoltativi.' },
+    dati:     { c: 'dash', dash: 'dati', t: 'I miei dati (modifica)', d: 'I tuoi dati di anagrafica (nome, indirizzo, telefono, P.IVA). Scrivi solo quello che vuoi cambiare. Qui puoi anche caricare i tuoi file facoltativi.' },
     mezzi:    { c: 'profilo', part: 'mezzi', t: 'I miei mezzi', d: 'Indica i camion e i veicoli che possiedi: è la prima cosa da fare, così ti arrivano solo i carichi adatti a te.' },
     aut:      { c: 'profilo', part: 'aut', t: 'Le mie autorizzazioni', d: 'Le autorizzazioni sono i permessi che la legge richiede per certi trasporti (per esempio conto terzi, alimentare ATP, rifiuti). Servono per essere abbinato ai carichi che puoi fare davvero. Per ognuna carichi il documento (PDF, JPG o PNG, max 4 MB).' },
     tg:       { c: 'tg', t: 'Telegram', d: 'Collega il tuo Telegram per ricevere i nuovi carichi sul telefono, in privato. Si fa una volta sola.' },
     carichi:  { c: 'normale', blocchi: ['carichi-disponibili-wrap'], cap: true, t: 'Carichi disponibili', d: 'I carichi liberi nella tua zona, pronti da prendere. Premi «Vedi dettagli» per tutti i dati prima di decidere.' },
-    presi:    { c: 'normale', blocchi: ['carichi-presi-wrap'], t: 'Carichi presi', d: 'I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti dall’azienda (che puoi scaricare).' },
+    presi:    { c: 'normale', dl: 1, blocchi: ['carichi-presi-wrap'], t: 'Carichi presi', d: 'I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti dall’azienda (che puoi scaricare).' },
     cal:      { c: 'normale', blocchi: ['calendario-carichi-wrap'], t: 'Calendario', d: 'I carichi giorno per giorno. Blu = disponibile, arancione = in pagamento, rosso = preso. Clicca un giorno per vedere i carichi.' },
-    inc:      { c: 'normale', blocchi: ['rs-wrap'], t: 'Da incassare', d: 'Quanto devi ancora incassare dalle aziende, diviso per azienda e per giorno. Puoi stampare e scaricare.' },
-    fatture:  { c: 'dash', dash: 'fatture', t: 'Riepilogo movimenti', d: 'Ogni carico accaparrato con data e commissione pagata. È un riepilogo: non sostituisce la fattura fiscale.' },
-    storico:  { c: 'normale', blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico carichi', d: 'Tutti i carichi dall’inizio, con stato e commissione. Filtra per periodo, stampa o scarica.' },
-    movimenti:{ c: 'dash', dash: 'storico', t: 'Il mio storico movimenti', d: 'Tutto quello che hai fatto sulla piattaforma con data e ora: cambi dati, documenti, password, carichi.' },
-    report:   { c: 'dash', dash: 'report', t: 'I miei report', d: 'I tuoi numeri riassunti: carichi, periodi e totali.' },
+    inc:      { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da incassare', d: 'Quanto devi ancora incassare dalle aziende, diviso per azienda e per giorno. Puoi scaricare il PDF e il CSV.' },
+    fatture:  { c: 'dash', dl: 1, dash: 'fatture', t: 'Commissioni da €20', d: 'Una riga per ogni carico preso, con data, ora e commissione da €20. È un riepilogo: non sostituisce la fattura fiscale.' },
+    isc:      { c: 'isc', dl: 1, t: 'Iscrizione annuale €150', d: 'La quota annuale è separata dalle commissioni: qui trovi quando inizia e quando scade.' },
+    storico:  { c: 'normale', dl: 1, blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico carichi', d: 'Tutti i carichi dall’inizio, con stato e commissione. Filtra per periodo e scarica.' },
+    movimenti:{ c: 'dash', dl: 1, dash: 'storico', t: 'Il mio storico movimenti', d: 'Tutto quello che hai fatto sulla piattaforma con data e ora: cambi dati, documenti, password, carichi.' },
+    report:   { c: 'dash', dl: 1, dash: 'report', t: 'I miei report', d: 'I tuoi numeri riassunti: carichi, periodi e totali.' },
     notifiche:{ c: 'dash', dash: 'notifiche', t: 'Notifiche e suoni', d: 'Scegli cosa ricevere, in quali orari e con quale tono. Qui colleghi anche Telegram.' },
     faq:      { c: 'normale', blocchi: ['faq-box'], t: 'Domande frequenti', d: 'Le risposte alle domande più comuni. Clicca una domanda per aprirla.' },
     scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa il bot 🤖 in basso a destra per una risposta subito.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
     /* solo azienda */
-    pubblica: { c: 'azienda', t: 'Pubblica un trasporto', d: 'Inserisci un nuovo carico: appena lo pubblichi i trasportatori della zona lo vedono. Pubblicare è gratis.' },
+    pubblica: { c: 'azienda', part: 'carico', t: 'Pubblica · Il carico', d: 'Cosa trasporti e dove: CAP e città di partenza e arrivo, data, tipo di merce, note. Se è un rifiuto indica il codice CER. Pubblicare è gratis.' },
+    azmezzi:  { c: 'azienda', part: 'mezzi', t: 'Pubblica · Mezzo richiesto', d: 'Scegli i mezzi che servono per questo trasporto: il sistema lo mostra solo ai trasportatori che hanno proprio quel mezzo. In fondo vedi quanti trasportatori sono disponibili.' },
+    azaut:    { c: 'azienda', part: 'aut', t: 'Pubblica · Autorizzazione richiesta', d: 'Le autorizzazioni sono i permessi che il trasportatore deve avere per fare questo trasporto (per esempio conto terzi, alimentare ATP, rifiuti). Il sistema lo mostra solo a chi le ha. Qui puoi anche allegare i documenti.' },
+    azindirizzi: { c: 'azienda', part: 'indirizzi', t: 'Pubblica · Ritiro, consegna e importo', d: 'Indirizzo preciso di ritiro e consegna, chi riceve e il suo cellulare, importo pattuito e termini di pagamento. Questi dati li vede solo il trasportatore che prende il carico. Alla fine premi Pubblica.' },
     azcal:    { c: 'dash', dash: 'overview', t: 'Calendario', d: 'Le tue pubblicazioni giorno per giorno. Clicca un giorno per vedere o inserire un carico.' },
-    azpagare: { c: 'normale', blocchi: ['rs-wrap'], t: 'Da pagare', d: 'Quanto devi ai trasportatori, diviso per trasportatore e per giorno. Stampa per la fattura o scarica il CSV.' },
-    azreptr:  { c: 'normale', blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.' },
-    azstorico:{ c: 'normale', blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico pubblicazioni', d: 'Tutto quello che hai pubblicato, con stato e dettagli. Filtra per periodo, stampa o scarica.' }
+    azpagare: { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da pagare', d: 'Quanto devi ai trasportatori, diviso per trasportatore e per giorno. Scarica per la fattura o il CSV.' },
+    azreptr:  { c: 'normale', dl: 1, blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.' },
+    azstorico:{ c: 'normale', dl: 1, blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico pubblicazioni', d: 'Tutto quello che hai pubblicato, con stato e dettagli. Filtra per periodo e scarica.' }
   };
 
   /* testi diversi per l'azienda */
@@ -75,7 +79,8 @@
     presi: { t: 'Trasporti presi', d: 'Chi ha preso i tuoi carichi: scheda completa del trasportatore, indirizzi e documenti che hai allegato.' },
     notifiche: { d: 'Scegli cosa ricevere (campanella ed email), in quali orari e con quale tono.' },
     dati: { d: 'I dati della tua azienda (ragione sociale, P.IVA, PEC, sede, telefono). Scrivi solo quello che vuoi cambiare. Qui puoi anche caricare i tuoi file facoltativi.' },
-    report: { d: 'I tuoi numeri riassunti: pubblicazioni, trasporti presi e totali da pagare.' }
+    report: { d: 'I tuoi numeri riassunti: pubblicazioni, trasporti presi e totali da pagare.' },
+    fatture: { t: 'Riepilogo movimenti', d: 'Ogni tua pubblicazione con data, stato e trasportatore. È un riepilogo: non sostituisce la fattura fiscale.' }
   };
   function testo(nome) {
     var p = PAG[nome], o = (tipo() === 'azienda' && PAZ[nome]) || {};
@@ -90,7 +95,7 @@
       { id: 'carichi', t: 'Carichi', i: '🚛', c: '59,130,246', e: 'I carichi liberi da prendere', p: 'carichi' },
       { id: 'presi', t: 'Presi', i: '✅', c: '74,222,128', e: 'I carichi che hai già preso', p: 'presi' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'I carichi giorno per giorno', p: 'cal' },
-      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto incassare e commissioni', s: [['inc', 'Da incassare'], ['fatture', 'Riepilogo movimenti']] },
+      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto incassare e commissioni', s: [['inc', 'Da incassare'], ['fatture', 'Commissioni da €20'], ['isc', 'Iscrizione €150']] },
       { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['storico', 'Storico carichi'], ['movimenti', 'Il mio storico movimenti']] },
       { id: 'rep', t: 'Report', i: '📈', c: '45,212,191', e: 'I tuoi numeri riassunti', p: 'report' },
       { id: 'not', t: 'Avvisi e suoni', i: '📣', c: '250,204,21', e: 'Cosa ricevere e come', p: 'notifiche' },
@@ -99,12 +104,12 @@
     ],
     azienda: [
       { id: 'home', t: 'Dashboard', i: '🏠', c: '148,163,184', e: 'La tua pagina iniziale' },
-      { id: 'pubblica', t: 'Pubblica', i: '📦', c: '59,130,246', e: 'Inserisci un nuovo carico', p: 'pubblica' },
-      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'I tuoi dati aziendali e i tuoi file', s: [['dati', 'I miei dati']] },
+      { id: 'pubblica', t: 'Pubblica', i: '📦', c: '59,130,246', e: 'Inserisci un nuovo carico', s: [['pubblica', 'Il carico'], ['azmezzi', 'Mezzo richiesto'], ['azaut', 'Autorizzazione richiesta'], ['azindirizzi', 'Ritiro, consegna e importo']] },
+      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'I tuoi dati aziendali e i tuoi file', p: 'dati' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'Le pubblicazioni giorno per giorno', p: 'azcal' },
       { id: 'presi', t: 'Trasporti presi', i: '✅', c: '74,222,128', e: 'Chi ha preso i tuoi carichi', p: 'presi' },
-      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto pagare ai trasportatori', s: [['azpagare', 'Da pagare'], ['azreptr', 'Report per trasportatore'], ['fatture', 'Riepilogo movimenti']] },
-      { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['azstorico', 'Storico pubblicazioni'], ['movimenti', 'Il mio storico movimenti']] },
+      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto pagare ai trasportatori', s: [['azpagare', 'Da pagare'], ['azreptr', 'Report per trasportatore'], ['isc', 'Iscrizione €150']] },
+      { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['azstorico', 'Storico pubblicazioni'], ['fatture', 'Riepilogo movimenti'], ['movimenti', 'Il mio storico movimenti']] },
       { id: 'rep', t: 'Report', i: '📈', c: '45,212,191', e: 'I tuoi numeri riassunti', p: 'report' },
       { id: 'not', t: 'Avvisi e suoni', i: '📣', c: '250,204,21', e: 'Cosa ricevere e come', p: 'notifiche' },
       { id: 'aiuto', t: 'Aiuto', i: '❓', c: '125,211,252', e: 'Domande e assistenza', s: [['faq', 'Domande frequenti'], ['scrivici', 'Scrivici']] },
@@ -175,6 +180,7 @@
       '#ms-intro .ms-st{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--font-b);}',
       /* pagina Telegram */
       'body[data-ms-part="mezzi"] #docs-aut{display:none!important;}',
+      'body[data-ms-azpart]:not([data-ms-azpart="aut"]) #docs-az-modulo{display:none!important;}',
       '#ms-rapide{display:none;margin:0 0 22px;}',
       'body.ms-on #ms-rapide{display:block;}',
       '#ms-rapide .ms-rt{font-family:var(--font-h);font-size:16px;color:#fff;margin-bottom:10px;}',
@@ -183,7 +189,18 @@
       '#ms-rapide button span{font-size:22px;}',
       '#ms-rapide button:hover{background:rgba(59,130,246,.28);}',
       '#ms-tg #ect-qr-tg{display:none!important;}',
-      '#ms-tg{display:none;}',
+      '#ms-tg,#ms-isc{display:none;}',
+      '.ms-isc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0;}',
+      '.ms-isc-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;}',
+      '.ms-isc-c small{display:block;color:rgba(241,245,249,.6);font-size:12px;margin-bottom:4px;}',
+      '.ms-isc-c b{font-size:18px;color:#fff;}',
+      '.ms-pg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:13px;color:#e2e8f0;}',
+      '.ms-pg .ms-sp{flex:1 1 10px;}',
+      '.ms-pg .ms-info{flex:1 1 100%;color:rgba(241,245,249,.65);font-size:12px;}',
+      '.ms-pg label{display:inline-flex;align-items:center;gap:6px;}',
+      '.ms-pg input,.ms-pg select{background:#0f172a;color:#f1f5f9;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:6px 8px;font-size:13px;}',
+      '.ms-ch2{background:rgba(255,255,255,.07);color:#f1f5f9;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;}',
+      '.ms-ch2.on{background:#16a34a;border-color:#16a34a;color:#fff;font-weight:700;}',
       '#ms-tg .ms-tgbox{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;}',
       '#ms-tg ol{margin:0 0 14px 18px;color:#e2e8f0;font-size:14px;line-height:1.8;}',
       '#ms-tg .ms-qr{background:#fff;padding:10px;border-radius:12px;display:inline-block;}',
@@ -202,7 +219,7 @@
     // titolo pagina
     if (!$('ms-intro')) {
       var intro = document.createElement('div'); intro.id = 'ms-intro';
-      intro.innerHTML = '<div><h2 id="ms-t"></h2><p id="ms-d"></p></div><button type="button" class="ms-st" onclick="window.print()">🖨️ Stampa questa pagina</button>';
+      intro.innerHTML = '<div><h2 id="ms-t"></h2><p id="ms-d"></p></div><button type="button" class="ms-st" id="ms-dl" onclick="ectMenu.scarica()">⬇️ Scarica questa pagina</button>';
       main.insertBefore(intro, main.firstChild);
     }
     // azioni rapide della Dashboard
@@ -222,6 +239,10 @@
         '<div class="ms-tgbox"><div><ol><li>Premi il pulsante qui sotto (o inquadra il codice con il telefono).</li><li>Si apre Telegram: premi <b>Avvia</b> (o <b>Start</b>).</li><li>Fatto: il bot ti scrive che il collegamento è attivo.</li></ol>' +
         '<a href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank" rel="noopener" class="btn-cap" style="display:inline-flex;text-decoration:none;">🔗 Apri Telegram e collega</a></div></div>';
       var sd = $('sezione-dashboard'); sd.parentNode.insertBefore(tg, sd);
+    }
+    if (!$('ms-isc')) {
+      var isc = document.createElement('div'); isc.id = 'ms-isc'; isc.className = 'ins-box';
+      var sd2 = $('sezione-dashboard'); if (sd2) sd2.parentNode.insertBefore(isc, sd2);
     }
     return true;
   }
@@ -334,8 +355,12 @@
       } else if (p.c === 'azienda') {
         mostra('sezione-azienda', true);
         var s2 = $('sezione-azienda'); if (s2) s2.style.display = 'block';
+        dividiPubblica(p.part);
         var sd = $('sezione-dashboard'); if (sd) sd.style.display = 'none';
         var cn = $('contenuto-normale-portale'); if (cn) cn.style.display = 'block';
+      } else if (p.c === 'isc') {
+        mostra('ms-isc', true); var ii = $('ms-isc'); if (ii) ii.style.display = 'block';
+        disegnaIscrizione();
       } else if (p.c === 'tg') {
         mostra('ms-tg', true);
         var t = $('ms-tg'); if (t) t.style.display = 'block';
@@ -343,7 +368,9 @@
       }
       // contenitori che il vecchio codice ha lasciato "aperti" e che qui non servono restano spenti da ms-off
       var tx = testo(nome), ti = $('ms-t'), de = $('ms-d'); if (ti) ti.textContent = tx.t; if (de) de.textContent = tx.d;
+      try { mostraBarre(nome); } catch (e) { console.error('menu-laterale barre:', e); }
       var mi = $('ms-intro'); if (mi) mi.classList[p.c === 'home' ? 'add' : 'remove']('ms-off');
+      var dl = $('ms-dl'); if (dl) dl.style.display = p.dl ? '' : 'none';
       var mr = $('ms-rapide'); if (mr) mr.classList[p.c === 'home' ? 'remove' : 'add']('ms-off');
     } finally { inGo = false; }
     // il gruppo della voce resta aperto
@@ -382,7 +409,155 @@
     document.body.setAttribute('data-ms-part', part);
   }
 
+  /* Il modulo "Pubblica un trasporto" e' uno solo: lo mostro in 4 pagine (carico, mezzo, autorizzazione, indirizzi).
+     Contatore, pulsante Pubblica e messaggi restano su tutte le pagine. */
+  function dividiPubblica(part) {
+    var box = $('sezione-azienda'); if (!box) return;
+    var kids = Array.prototype.slice.call(box.children);
+    var h4 = kids.filter(function (k) { return k.tagName === 'H4'; });
+    var iMezzi = kids.indexOf(h4[1]), iAut = kids.indexOf(h4[2]), iInd = kids.indexOf(h4[3]);
+    var iFine = kids.indexOf($('box-contatore-trasportatori'));
+    kids.forEach(function (k, i) {
+      var zona;
+      if (i < 2) zona = 'titolo';
+      else if (i < iMezzi) zona = 'carico';
+      else if (i < iAut) zona = 'mezzi';
+      else if (i < iInd) zona = 'aut';
+      else if (i < iFine) zona = 'indirizzi';
+      else zona = 'sempre';
+      var vis = zona === 'sempre' || zona === part;
+      k.classList[vis ? 'remove' : 'add']('ms-off');
+    });
+    document.body.setAttribute('data-ms-azpart', part);
+    kids.forEach(function (k) {
+      if (k.tagName === 'DIV' && /Hai sbagliato qualcosa/.test(k.textContent) && !k.__ms) {
+        k.__ms = true;
+        var w = document.createTreeWalker(k, NodeFilter.SHOW_TEXT, null), n;
+        while ((n = w.nextNode())) n.nodeValue = n.nodeValue.replace('nello Storico qui sotto', 'in Archivio storico → Storico pubblicazioni');
+      }
+    });
+  }
+
+
+  /* ---------- Iscrizione annuale €150 ---------- */
+  function dataIt(v) { if (!v) return null; var d = new Date(v); if (isNaN(d)) return null; return d; }
+  function fmtData(d) { return d ? d.toLocaleDateString('it-IT') : '—'; }
+  function disegnaIscrizione() {
+    var box = $('ms-isc'); if (!box) return;
+    var az = tipo() === 'azienda', f = {}, esempio = false;
+    try { f = az ? (window.__ectAziendaFields || {}) : (trasportatoreFieldsCorrenti || {}); } catch (e) {}
+    var anteprima = false; try { anteprima = !!modalitaAnteprimaAttiva; } catch (e) {}
+    var reg = dataIt(f.data_registrazione), sca = dataIt(f.data_scadenza_accesso);
+    if (anteprima && !sca) { esempio = true; reg = new Date(Date.now() - 28 * 86400000); sca = new Date(reg.getTime()); sca.setFullYear(sca.getFullYear() + 1); }
+    var giorni = sca ? Math.ceil((sca.getTime() - Date.now()) / 86400000) : null;
+    var stato = !sca ? '—' : (giorni < 0 ? 'Scaduta' : 'Attiva');
+    var col = !sca ? '#fff' : (giorni < 0 ? '#f87171' : giorni <= 30 ? '#fbbf24' : '#4ade80');
+    box.innerHTML = '<div class="ins-title">🎫 Iscrizione annuale — €150 all’anno</div>' +
+      '<div class="ins-sub">' + (az ? 'Per le aziende pubblicare i carichi è gratis; la quota annuale è di €150.' : 'La quota annuale dà accesso alla piattaforma. Per ogni carico che prendi si paga a parte la commissione da €20 (la trovi in «Commissioni da €20»).') + '</div>' +
+      (esempio ? '<div style="margin:10px 0;color:#fbbf24;font-size:13px;">🎭 Anteprima: date di esempio.</div>' : '') +
+      '<div class="ms-isc-g">' +
+      '<div class="ms-isc-c"><small>Stato</small><b style="color:' + col + '">' + stato + '</b></div>' +
+      '<div class="ms-isc-c"><small>Iscritto dal</small><b>' + fmtData(reg) + '</b></div>' +
+      '<div class="ms-isc-c"><small>Valida fino al</small><b>' + fmtData(sca) + '</b></div>' +
+      '<div class="ms-isc-c"><small>Giorni rimasti</small><b style="color:' + col + '">' + (giorni == null ? '—' : (giorni < 0 ? 'scaduta da ' + (-giorni) : giorni)) + '</b></div>' +
+      '<div class="ms-isc-c"><small>Importo annuale</small><b>€ 150,00</b></div></div>' +
+      '<div style="font-size:13px;color:rgba(241,245,249,.65);line-height:1.6;">Prima della scadenza ricevi un promemoria per email con il link di pagamento (pagina sicura Shopify). ' +
+      (sca ? '' : 'La data di scadenza non è ancora registrata sul tuo profilo. ') + 'Qui compaiono la data di iscrizione e la scadenza; i singoli pagamenti li gestiamo noi.</div>';
+  }
+
+  /* ---------- elenchi: pagine da 25/50/100 + ultima giornata + calendario ---------- */
+  var LISTE = {
+    storico:   { id: 'storico-body', ancora: 'ms-storico-box' },
+    fatture:   { id: 'dash-fatture-body', ancora: null },
+    movimenti: { id: 'sm-lista', ancora: null },
+    presi:     { id: 'cp-body', ancora: null },
+    rs:        { id: 'rs-giorni', ancora: null }
+  };
+  var PAGINA_LISTA = { storico: 'storico', azstorico: 'storico', fatture: 'fatture', movimenti: 'movimenti', presi: 'presi', inc: 'rs', azpagare: 'rs' };
+  var statoL = {};
+  function stL(k) { return statoL[k] || (statoL[k] = { modo: 'ultimo', dal: '', al: '', per: 25, pag: 1 }); }
+  function dataRiga(el) {
+    var m = (el.textContent || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); if (!m) return null;
+    return m[3] + '-' + m[2] + '-' + m[1];
+  }
+  function giorniFaISO(n) { var d = new Date(Date.now() - n * 86400000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function itIso(iso) { return iso ? iso.split('-').reverse().join('/') : '—'; }
+  function barra(k) {
+    var cfg = LISTE[k], cont = $(cfg.id); if (!cont) return null;
+    var b = $('ms-pg-' + k);
+    if (b) return b;
+    b = document.createElement('div'); b.id = 'ms-pg-' + k; b.className = 'ms-pg ms-off';
+    var ancora = (cfg.ancora && $(cfg.ancora)) || (cont.closest('.table-box')) || cont;
+    ancora.parentNode.insertBefore(b, ancora);
+    return b;
+  }
+  function righe(k) {
+    var cont = $(LISTE[k].id); if (!cont) return [];
+    return Array.prototype.slice.call(cont.children).filter(function (e) { return !(e.querySelector && e.querySelector('td.empty')) && !e.classList.contains('empty'); });
+  }
+  function disegnaBarra(k, tot, filtrate, da, a, ultima) {
+    var b = barra(k); if (!b) return;
+    var s = stL(k), pagine = Math.max(1, Math.ceil(filtrate / s.per));
+    var chip = function (m, t) { return '<button type="button" class="ms-ch2' + (s.modo === m ? ' on' : '') + '" data-m="' + m + '">' + t + '</button>'; };
+    b.innerHTML = chip('ultimo', 'Ultima giornata') + chip('7', 'Ultimi 7 giorni') + chip('tutto', 'Tutto') +
+      '<span class="ms-sp"></span><label>Dal <input type="date" data-r="dal" value="' + s.dal + '"></label><label>Al <input type="date" data-r="al" value="' + s.al + '"></label>' +
+      '<label>Per pagina <select data-per>' + [25, 50, 100].map(function (n) { return '<option' + (s.per === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
+      '<button type="button" class="ms-ch2" data-p="-1"' + (s.pag <= 1 ? ' disabled style="opacity:.4"' : '') + '>◀</button><span>Pagina ' + s.pag + ' di ' + pagine + '</span>' +
+      '<button type="button" class="ms-ch2" data-p="1"' + (s.pag >= pagine ? ' disabled style="opacity:.4"' : '') + '>▶</button>' +
+      '<div class="ms-info">' + (filtrate ? 'Mostro ' + (da + 1) + '–' + a + ' di ' + filtrate : 'Nessun elemento in questo periodo') + (filtrate !== tot ? ' (su ' + tot + ' totali)' : '') +
+      (s.modo === 'ultimo' && ultima ? ' · ultima giornata: ' + itIso(ultima) : '') + '</div>';
+    b.onclick = function (e) {
+      var t = e.target.closest('button'); if (!t || t.disabled) return;
+      if (t.hasAttribute('data-m')) { s.modo = t.getAttribute('data-m'); s.dal = s.al = ''; s.pag = 1; }
+      else if (t.hasAttribute('data-p')) { s.pag += Number(t.getAttribute('data-p')); }
+      applicaLista(k);
+    };
+    b.onchange = function (e) {
+      var t = e.target;
+      if (t.hasAttribute('data-per')) { s.per = Number(t.value); s.pag = 1; }
+      else if (t.hasAttribute('data-r')) { s[t.getAttribute('data-r')] = t.value; s.modo = 'range'; s.pag = 1; }
+      applicaLista(k);
+    };
+  }
+  function applicaLista(k) {
+    var cont = $(LISTE[k].id); if (!cont) return;
+    var s = stL(k), rr = righe(k);
+    var date = rr.map(dataRiga), conData = date.filter(Boolean);
+    var ultima = conData.length ? conData.slice().sort().pop() : null;
+    var visibili = [];
+    rr.forEach(function (el, i) {
+      var d = date[i], ok = true;
+      if (conData.length) {
+        if (s.modo === 'ultimo') ok = d === ultima;
+        else if (s.modo === '7') ok = !!d && d >= giorniFaISO(6);
+        else if (s.modo === 'range') ok = !!d && (!s.dal || d >= s.dal) && (!s.al || d <= s.al);
+      }
+      if (ok) visibili.push(el); else el.classList.add('ms-off');
+    });
+    var pagine = Math.max(1, Math.ceil(visibili.length / s.per));
+    if (s.pag > pagine) s.pag = pagine;
+    if (s.pag < 1) s.pag = 1;
+    var da = (s.pag - 1) * s.per, a = Math.min(visibili.length, da + s.per);
+    visibili.forEach(function (el, i) { el.classList[i >= da && i < a ? 'remove' : 'add']('ms-off'); });
+    disegnaBarra(k, rr.length, visibili.length, da, a, ultima);
+  }
+  var timerL = {};
+  function osservaListe() {
+    Object.keys(LISTE).forEach(function (k) {
+      var cont = $(LISTE[k].id); if (!cont || cont.__msOss) return;
+      cont.__msOss = true;
+      new MutationObserver(function () { clearTimeout(timerL[k]); timerL[k] = setTimeout(function () { applicaLista(k); }, 60); }).observe(cont, { childList: true });
+      applicaLista(k);
+    });
+  }
+  function mostraBarre(nome) {
+    var kk = PAGINA_LISTA[nome];
+    Object.keys(LISTE).forEach(function (k) { var b = $('ms-pg-' + k); if (b) b.classList[k === kk ? 'remove' : 'add']('ms-off'); });
+    if (kk) { osservaListe(); applicaLista(kk); var b2 = $('ms-pg-' + kk); if (b2) b2.classList.remove('ms-off'); }
+  }
+
   /* ---------- QR Telegram ---------- */
+
   function disegnaQrTelegram() {
     var tg = $('ms-tg'); if (!tg) return;
     var a = tg.querySelector('a[href^="https://t.me/"]');
@@ -472,6 +647,47 @@
     };
   }
 
+  /* ---------- "Stampa" diventa "Scarica" ----------
+     Chi vuole stampare, scarica il PDF e lo stampa da solo. I pulsanti Stampa che gia' esistono
+     (carichi presi, resoconto, storico...) ora scaricano un PDF con lo stesso contenuto. */
+  function eStampa(b) {
+    if (!b || !b.closest || b.closest('#ms-intro') || b.closest('#ms-side')) return false;
+    var oc = b.getAttribute('onclick') || '';
+    if (/DocAz/.test(oc)) return false;                  // documenti dell'azienda: hanno gia' il loro "Scarica"
+    return /Stampa/.test(b.textContent || '');
+  }
+  function rinomina() {
+    document.querySelectorAll('button').forEach(function (b) {
+      if (!eStampa(b) || b.__msRen) return;
+      b.__msRen = true;
+      var w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT, null);
+      var n; while ((n = w.nextNode())) { n.nodeValue = n.nodeValue.replace('🖨️', '⬇️').replace('🖨', '⬇️').replace(/Stampa/g, 'Scarica'); }
+    });
+  }
+  window.addEventListener('click', function (e) {
+    if (!pronto) return;
+    var b = e.target.closest && e.target.closest('button'); if (!b || !b.__msRen) return;
+    var oc = b.getAttribute('onclick') || '';
+    if (!/stampa|Stampa/.test(oc) && !b.classList.contains('ect-stampa-riga')) return;
+    if (b.classList.contains('ect-stampa-riga')) return;           // righe: gia' gestite (modo scarica)
+    // le funzioni di stampa aprono una finestra e ci scrivono il documento: la intercetto e ne faccio un PDF
+    var orig = window.open, html = '';
+    window.open = function () {
+      return { document: { write: function (h) { html += h; }, close: function () {}, open: function () {} }, focus: function () {}, print: function () {}, close: function () {}, closed: false };
+    };
+    window.__ectModoScarica = true;
+    setTimeout(function () {
+      window.open = orig; window.__ectModoScarica = false;
+      if (!html) return;
+      try {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var titolo = (doc.title || '').replace(/^EcoTruckConnect\s*[—-]\s*/, '') || 'Documento';
+        doc.querySelectorAll('style,script').forEach(function (x) { x.remove(); });
+        if (typeof window.ectScarica === 'function') window.ectScarica(titolo, [doc.body]);
+      } catch (er) { console.error('menu-laterale scarica', er); }
+    }, 120);
+  }, true);
+
   /* ---------- avvio ---------- */
   function appVisibile() { var a = $('app'); return !!a && a.style.display !== 'none' && getComputedStyle(a).display !== 'none'; }
 
@@ -500,6 +716,7 @@
     else if (ok && pronto) {
       // il nome del menu dipende dal tipo: se cambia (nuovo accesso) lo ricostruisco
       if (!$('ms-side')) { costruisciMenu(); }
+      rinomina();
       var top = document.querySelector('#app > .navbar'); if (top) document.body.style.setProperty('--ms-top', Math.round(top.getBoundingClientRect().bottom > 40 ? top.getBoundingClientRect().bottom : top.offsetHeight) + 'px');
     }
   }, 350);
@@ -509,5 +726,11 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && drawer) chiudiDrawer(); });
 
   // per chi vuole aprire una pagina da fuori (es. test): ectMenu.vai('presi')
-  window.ectMenu = { vai: vai, pagine: PAG, menu: MENU };
+  function scaricaPagina() {
+    var p = PAG[cur]; if (!p || !p.dl) return;
+    var ids = p.c === 'dash' ? ['dash-sezione-' + p.dash] : p.c === 'isc' ? ['ms-isc'] : (p.blocchi || []);
+    var nodi = ids.map($).filter(Boolean);
+    if (typeof window.ectScarica === 'function') window.ectScarica(testo(cur).t, nodi);
+  }
+  window.ectMenu = { vai: vai, pagine: PAG, menu: MENU, scarica: scaricaPagina };
 })();
