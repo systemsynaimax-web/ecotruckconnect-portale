@@ -1,7 +1,7 @@
 // FUNZIONE SERVERLESS NETLIFY — destinazione.js (8/10/2026)
 //
 // IMPIANTO DI DESTINAZIONE E INTERMEDIARI dei carichi di RIFIUTI (richiesta di Gerlando).
-// Facoltativo. L'azienda che ha ordinato il carico, DOPO che il trasportatore lo ha
+// Facoltativo. L'azienda che ha ordinato il carico, alla pubblicazione E DOPO che il trasportatore lo ha
 // accettato (stato PRESO), puo' scrivere i dati dell'impianto di destinazione e di un
 // eventuale intermediario e allegare i file delle autorizzazioni.
 // Il trasportatore che ha preso il carico li puo' SOLO vedere e scaricare.
@@ -131,8 +131,15 @@ exports.handler = async (event, context) => {
     else if (minuscolo(f.bloccato_da_id) === email || minuscolo(f.trasportatore_email) === email) ruolo = 'trasportatore';
     if (!ruolo) return risposta(200, { ok: false, errore: 'non_autorizzato' });
 
-    // vale solo per carichi di rifiuti gia' accettati (PRESO)
-    if (String(f.stato || '').toUpperCase() !== 'PRESO' || !eRifiuto(f)) {
+    // 10/10: vale per i carichi di RIFIUTI.
+    //  - AZIENDA: puo' scrivere/allegare/modificare fin dalla pubblicazione (qualsiasi stato tranne annullato/scaduto) e dopo che il carico e' stato preso
+    //  - TRASPORTATORE: vede e scarica SOLO dopo aver preso il carico (stato PRESO = ha gia' pagato i 20 euro)
+    //  - GESTORE: vede/scarica sempre
+    const statoCarico = String(f.stato || '').toUpperCase();
+    let applicabile = eRifiuto(f);
+    if (ruolo === 'trasportatore' && statoCarico !== 'PRESO') applicabile = false;
+    if (ruolo === 'azienda' && (statoCarico.indexOf('ANNULLATO') === 0 || statoCarico === 'SCADUTO')) applicabile = false;
+    if (!applicabile) {
       return risposta(200, { ok: true, applicabile: false, ruolo: ruolo });
     }
     // un trasportatore che non e' piu' quello del carico non vede niente (controllato sopra); i gestori solo leggono/aprono
