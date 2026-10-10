@@ -196,6 +196,27 @@
   function ridisegnaTutti(ord, p) { trovaBox(ord).forEach(function (b) { disegna(b, p); }); }
   function stato(ord, testo, colore) { trovaBox(ord).forEach(function (b) { var s = b.querySelector('[data-stato]'); if (s) { s.textContent = testo; s.style.color = colore || ''; } }); }
 
+  /* avviso ben visibile in cima al riquadro + posizione della pagina bloccata */
+  function avviso(ord, testo, colore, sparisciMs) {
+    trovaBox(ord).forEach(function (b) {
+      var a = b.querySelector('[data-avviso]');
+      if (!a) {
+        a = document.createElement('div'); a.setAttribute('data-avviso', '1');
+        a.style.cssText = 'margin:6px 0 8px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid currentColor;';
+        b.insertBefore(a, b.firstChild && b.firstChild.nextSibling ? b.firstChild.nextSibling : null);
+      }
+      a.textContent = testo; a.style.color = colore || '#e2e8f0'; a.style.background = 'rgba(255,255,255,0.06)';
+      if (a._t) clearTimeout(a._t);
+      if (sparisciMs) a._t = setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, sparisciMs);
+    });
+  }
+  function bloccaPosizione(ord) {
+    var b = trovaBox(ord)[0]; var salvati = [{ el: window, x: window.scrollX, y: window.scrollY }];
+    for (var el = b; el && el !== document.body; el = el.parentElement) { if (el.scrollHeight > el.clientHeight) salvati.push({ el: el, x: el.scrollLeft, y: el.scrollTop }); }
+    return function () { salvati.forEach(function (s) { try { if (s.el === window) window.scrollTo(s.x, s.y); else { s.el.scrollLeft = s.x; s.el.scrollTop = s.y; } } catch (e) {} }); };
+  }
+  function attesaMinima(t0, ms) { var r = ms - (Date.now() - t0); return new Promise(function (ok) { setTimeout(ok, r > 0 ? r : 0); }); }
+
   async function riempi() {
     if (inCorso) return; inCorso = true;
     try { await riempiBox(); } finally { inCorso = false; }
@@ -236,19 +257,23 @@
   window.ectDestSalva = async function (ord) {
     var dati = leggiForm(ord);
     var prima = cache[ord] && cache[ord].dati;
-    stato(ord, 'Salvataggio…', '');
+    var t0 = Date.now();
+    avviso(ord, '⏳ Salvataggio in corso…', '#fbbf24');
     try {
       var r = await chiama('dest_salva', { numero_ordine: ord, impianto: dati.impianto, intermediario: dati.intermediario });
+      await attesaMinima(t0, 1500);
       if (r && r.ok && r.applicabile) {
+        var ripristina = bloccaPosizione(ord);
         modo[ord] = 'vista';
         suggRicorda(r.dati);
         ridisegnaTutti(ord, r);
-        stato(ord, '✅ Salvato.', '#4ade80');
+        ripristina();
+        avviso(ord, '✅ Dati salvati.', '#4ade80', 6000);
         var cambiato = !(prima && stessi(prima, r.dati));
         if (cambiato) logga('Impianto e intermediario rifiuti: dati salvati', 'Carico ' + ord + ' · impianto «' + (r.dati.impianto.ragione_sociale || '—') + '» · intermediario «' + (r.dati.intermediario.ragione_sociale || '—') + '»');
-      } else if (r && r.errore === 'data_non_valida') stato(ord, '⚠️ Controlla la data di scadenza.', '#f87171');
-      else stato(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171');
-    } catch (e) { stato(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171'); }
+      } else if (r && r.errore === 'data_non_valida') avviso(ord, '⚠️ Controlla la data di scadenza.', '#f87171', 8000);
+      else avviso(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171', 8000);
+    } catch (e) { avviso(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171', 8000); }
   };
 
   function base64(file) { return new Promise(function (ok, ko) { var r = new FileReader(); r.onload = function () { ok(String(r.result).split(',')[1] || ''); }; r.onerror = ko; r.readAsDataURL(file); }); }
@@ -259,39 +284,48 @@
     if (!tipo && /\.pdf$/i.test(file.name)) tipo = 'application/pdf';
     if (!TIPI_OK[tipo]) { stato(ord, '⚠️ Sono ammessi solo PDF, JPG e PNG.', '#f87171'); return; }
     if (file.size > MAX_BYTE) { stato(ord, '⚠️ Il file è troppo grande (massimo 4 MB).', '#f87171'); return; }
-    stato(ord, 'Carico il file…', '');
+    var t0 = Date.now();
+    avviso(ord, '⏳ Caricamento in corso…', '#fbbf24');
+    stato(ord, '', '');
     try {
       var b64 = await base64(file);
       // se nel frattempo l'azienda ha scritto dei dati senza premere Salva, non li perdiamo: restano nel modulo
       var dati = leggiForm(ord);
       var r = await chiama('dest_file_carica', { numero_ordine: ord, parte: parte, nome_file: file.name, tipo: tipo, file: b64 });
+      await attesaMinima(t0, 2000);
       if (r && r.ok && r.applicabile) {
+        var ripristina = bloccaPosizione(ord);
         modo[ord] = 'mod';
         ridisegnaTutti(ord, r);
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
-        stato(ord, '✅ File caricato.', '#4ade80');
+        ripristina();
+        avviso(ord, '✅ Caricamento inviato: ' + file.name, '#4ade80', 6000);
         logga('Impianto e intermediario rifiuti: file caricato', 'Carico ' + ord + ' · ' + (parte === 'impianto' ? 'impianto' : 'intermediario') + ' · ' + file.name);
-      } else if (r && r.errore === 'troppi_file') stato(ord, '⚠️ Massimo 3 file per voce: rimuovine uno prima.', '#f87171');
-      else if (r && r.errore === 'file_troppo_grande') stato(ord, '⚠️ Il file è troppo grande (massimo 4 MB).', '#f87171');
-      else stato(ord, '⚠️ Non sono riuscito a caricare il file. Riprova.', '#f87171');
-    } catch (e) { stato(ord, '⚠️ Non sono riuscito a caricare il file. Riprova.', '#f87171'); }
+      } else if (r && r.errore === 'troppi_file') avviso(ord, '⚠️ Massimo 3 file per voce: rimuovine uno prima.', '#f87171', 8000);
+      else if (r && r.errore === 'file_troppo_grande') avviso(ord, '⚠️ Il file è troppo grande (massimo 4 MB).', '#f87171', 8000);
+      else avviso(ord, '⚠️ Non sono riuscito a caricare il file. Riprova.', '#f87171', 8000);
+    } catch (e) { avviso(ord, '⚠️ Non sono riuscito a caricare il file. Riprova.', '#f87171', 8000); }
   };
   window.ectDestRimuovi = async function (ord, id) {
     var p = cache[ord]; var f = p && (p.file || []).filter(function (x) { return x.id === id; })[0];
     if (!confirm('Vuoi davvero rimuovere il file «' + (f ? f.nome : 'file') + '»? Poi puoi caricarne un altro.')) return;
     var dati = leggiForm(ord);
     var inForm = !!(trovaBox(ord)[0] && trovaBox(ord)[0].querySelector('input[data-campo]'));
-    stato(ord, 'Rimozione…', '');
+    var t0 = Date.now();
+    avviso(ord, '⏳ Rimozione in corso…', '#fbbf24');
     try {
       var r = await chiama('dest_file_rimuovi', { numero_ordine: ord, id: id });
+      await attesaMinima(t0, 1500);
       if (r && r.ok && r.applicabile) {
+        var ripristina = bloccaPosizione(ord);
         if (inForm) modo[ord] = 'mod';
         ridisegnaTutti(ord, r);
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
-        stato(ord, '✅ File rimosso.', '#4ade80');
+        ripristina();
+        avviso(ord, '✅ File rimosso.', '#4ade80', 6000);
         logga('Impianto e intermediario rifiuti: file rimosso', 'Carico ' + ord + ' · ' + (r.rimosso || (f && f.nome) || 'file'));
-      } else stato(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171');
-    } catch (e) { stato(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171'); }
+      } else avviso(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171', 8000);
+    } catch (e) { avviso(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171', 8000); }
   };
 
   /* ---------------- Vedi / Scarica / Stampa (il file passa dal server) ---------------- */
