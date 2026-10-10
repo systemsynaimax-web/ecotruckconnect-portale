@@ -430,14 +430,27 @@
     var w = document.getElementById('ins-rif-nota');
     if (!w || w.getAttribute('data-dest-pub')) return;
     w.setAttribute('data-dest-pub', '1');
-    w.setAttribute('style', 'display:none;' + STILE_BOX + 'font-size:13px;line-height:1.5;');
-    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span></div>' +
+    w.setAttribute('style', STILE_BOX + 'font-size:13px;line-height:1.5;transition:opacity .15s;');
+    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo, solo per i rifiuti)</span></div>' +
+      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Per compilare questa parte spunta prima «Si tratta di rifiuti» qui sopra.</div>' +
       '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Se li conosci già, puoi indicarli adesso: il trasportatore li vedrà solo dopo aver preso il carico (cioè dopo aver pagato i €20). ' +
       'Se non li hai ancora, lasciali vuoti: potrai inserirli o modificarli dopo dallo <b>Storico pubblicazioni</b> (pulsante ♻️) e da <b>Trasporti presi</b>.</div>' +
       pubSezione('impianto', '🏭 Impianto di destinazione') + pubSezione('intermediario', '🔁 Intermediario') + datalists() +
       '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:10px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
     pubRidisegnaFile();
+    var chk = document.getElementById('ins-rifiuto');
+    if (chk) chk.addEventListener('change', window.ectDestPubStato);
+    window.ectDestPubStato();
+    setInterval(window.ectDestPubStato, 1000);
   }
+  /* il riquadro e' sempre visibile; si attiva solo se e' spuntato «Si tratta di rifiuti» */
+  window.ectDestPubStato = function () {
+    var w = document.getElementById('ins-rif-nota'), c = document.getElementById('ins-rifiuto'); if (!w || !c) return;
+    var on = !!c.checked;
+    w.style.opacity = on ? '1' : '0.5';
+    var campi = w.querySelectorAll('input,button'); campi.forEach(function (e) { e.disabled = !on; });
+    var h = w.querySelector('[data-pub-hint]'); if (h) h.style.display = on ? 'none' : 'block';
+  };
   window.ectDestPubFile = async function (parte, inp) {
     var file = inp && inp.files && inp.files[0]; if (!file) return;
     inp.value = '';
@@ -461,7 +474,7 @@
     w.querySelectorAll('input[data-campo]').forEach(function (i) { var v = i.value.trim(); dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')] = v; if (v) ha = true; i.value = ''; });
     var file = { impianto: pubFile.impianto.slice(), intermediario: pubFile.intermediario.slice() };
     var nf = file.impianto.length + file.intermediario.length;
-    pubFile = { impianto: [], intermediario: [] }; pubRidisegnaFile(); w.style.display = 'none';
+    pubFile = { impianto: [], intermediario: [] }; pubRidisegnaFile(); setTimeout(window.ectDestPubStato, 50);
     if (!ha && !nf) return;
     pubInvia(ord, dati, file, ha, nf);
   };

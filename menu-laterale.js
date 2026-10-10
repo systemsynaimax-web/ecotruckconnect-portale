@@ -63,7 +63,7 @@
     scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa il bot 🤖 in basso a destra per una risposta subito.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
     /* solo azienda */
-    pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Impianto di destinazione e intermediario (solo rifiuti) li inserisci dopo, in Trasporti presi.' },
+    pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Se è un carico di rifiuti, più sotto trovi (facoltativo) impianto di destinazione e intermediario: li puoi inserire qui oppure dopo, da Storico pubblicazioni e Trasporti presi.' },
     azcal:    { c: 'dash', dash: 'overview', t: 'Calendario', d: 'Le tue pubblicazioni giorno per giorno. Clicca un giorno per vedere o inserire un carico.' },
     azpagare: { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da pagare', d: 'Quanto devi ai trasportatori, diviso per trasportatore e per giorno. Scarica per la fattura o il CSV.' },
     azreptr:  { c: 'normale', dl: 1, blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.' },
