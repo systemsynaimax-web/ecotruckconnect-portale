@@ -472,44 +472,23 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
 
-  <div class="sec-title">🧾 Annullamenti e rimborsi — NUOVO (DEMO, da approvare con Gerlando)</div>
-  <div class="section">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Qui arrivano le richieste di annullamento dei carichi già PRESI (pagati 20 € dal trasportatore). Il gestore decide: rimborsa, annulla senza rimborso o rifiuta. Dati finti: prova a cliccare.</div>
-    <div id="demo-annullamenti"></div>
-    <div id="demo-annullamenti-log" style="margin-top:14px;"></div>
-  </div>
-
-  <div class="spiega">
-    <h4>Come funziona</h4>
-    <b>1. Portale azienda — Modifica ed Elimina carico.</b> Apri l'<a href="https://ecotruckconnect-portale.netlify.app/?preview=azienda" target="_blank" style="color:var(--blue);">anteprima azienda</a> → Dashboard ▾ → Riepilogo movimenti. Accanto a ogni carico ci sono pulsanti diversi secondo lo stato:<br>
-    &nbsp;• <b>DISPONIBILE</b> (nessuno l'ha preso): ✏️ Modifica e 🗑️ Elimina, con popup "Sei sicuro?". Eliminare non cancella: il carico diventa ANNULLATO e resta nello storico. I trasportatori che avevano ricevuto il Telegram vengono avvisati.<br>
-    &nbsp;• <b>IN PAGAMENTO</b> (un trasportatore sta pagando): pulsanti bloccati per 5 minuti.<br>
-    &nbsp;• <b>PRESO</b> (il trasportatore ha pagato 20 €): niente Elimina, solo "Richiedi annullamento" con motivo obbligatorio. La richiesta arriva qui sopra, in "Annullamenti e rimborsi".<br>
-    <b>2. Dashboard gestori — Annullamenti e rimborsi.</b> Per ogni richiesta il gestore vede azienda, carico, trasportatore, motivo, ordine Shopify e quante volte quell'azienda ha già annullato. Tre pulsanti:<br>
-    &nbsp;• <b>💶 Conferma rimborso 20 €</b> → Make chiede a Shopify di rimborsare l'ordine → i soldi tornano sulla carta del trasportatore → Telegram "rimborso eseguito" → nota di credito automatica.<br>
-    &nbsp;• <b>Annulla senza rimborso</b> → carico ANNULLATO, Telegram al trasportatore, nessun soldo restituito.<br>
-    &nbsp;• <b>Rifiuta</b> → il carico resta PRESO, l'azienda lo vede nella sua campanellina.<br>
-    Il rimborso è "a un clic": lo fa il sistema, ma parte solo quando il gestore preme. Dopo un periodo di prova si può rendere automatico, con limiti anti-abuso (es. oltre 2 annullamenti al mese → torna al gestore).<br>
-    <b>3. Portale trasportatore.</b> Nell'<a href="https://ecotruckconnect-portale.netlify.app/?preview=trasportatore" target="_blank" style="color:var(--blue);">anteprima trasportatore</a>, in Riepilogo movimenti, compare una riga "RIMBORSATO" con "€ 20 rimborsati": così vede che i soldi gli tornano.<br>
-    
-    <h4 class="sotto">⚖️ Penalità per annullamento — proposta</h4>
-    
-    <b>Cosa fanno gli altri:</b> Uber Freight lascia annullare gratis fino a 24 ore prima del ritiro; entro le 24 ore, se c'è già un trasportatore assegnato, l'azienda paga un indennizzo al trasportatore (negli USA si chiama TONU, "camion prenotato e non usato", di solito tra 150 e 300 dollari, più alto per mezzi speciali o se il camion è già sul posto). In Italia il codice civile (art. 1685) permette al mittente di annullare il trasporto, ma con l'obbligo di rimborsare le spese e i danni al trasportatore (da verificare con un legale).<br><br>
-    <b>Proposta per EcoTruckConnect:</b><br>
-    <div style="overflow-x:auto;margin:8px 0 10px;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-      <tr style="text-align:left;color:var(--muted);"><th style="padding:6px;">Quando l'azienda annulla</th><th style="padding:6px;">Penale azienda</th><th style="padding:6px;">Trasportatore</th></tr>
-      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Carico non ancora preso da nessuno</td><td style="padding:6px;color:var(--green);">Nessuna</td><td style="padding:6px;">Nessun effetto (avviso Telegram)</td></tr>
-      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Preso, più di 24 ore prima del ritiro</td><td style="padding:6px;color:var(--green);">Nessuna</td><td style="padding:6px;">Rimborso 20 €</td></tr>
-      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Preso, meno di 24 ore prima del ritiro</td><td style="padding:6px;color:var(--red);">❓❓❓ Penale piattaforma 20 € (Shopify) + indennizzo al trasportatore</td><td style="padding:6px;">Rimborso 20 € + indennizzo pagato dall'azienda</td></tr>
-      <tr style="border-top:1px solid var(--border);"><td style="padding:6px;">Trasportatore già partito o sul posto</td><td style="padding:6px;color:var(--red);">❓❓❓ Come sopra + spese di viaggio documentate</td><td style="padding:6px;">Rimborso 20 € + indennizzo + spese</td></tr>
-    </table></div>
-    • <b>Recidiva:</b> 3 annullamenti tardivi in 30 giorni → account sospeso, decidono i gestori.<br>
-    • <b>Chi incassa cosa:</b> la penale di 20 € la incassa SynAIMAX su Shopify (è una vostra commissione, copre il rimborso al trasportatore). L'indennizzo del trasportatore lo paga l'azienda <b>direttamente a lui</b>, come l'importo del trasporto: SynAIMAX non gestisce soldi del trasporto (decisione dell'11/9).<br>
-    • <b>Serve un campo nuovo:</b> oggi il carico ha solo la data. Per calcolare le 24 ore serve anche l'<b>orario di ritiro</b> nel modulo "Pubblica un Carico".<br>
-    • Va scritto nei <b>Termini e Condizioni su Iubenda</b> e l'azienda lo vede nel popup prima di annullare.<br><br>
-    
-    <h4 class="sotto">Da decidere con Gerlando <span class="decidere">DA DECIDERE</span></h4>
-    <ul><li>Se il <b>trasportatore ci ripensa</b> dopo aver pagato 20 €: rimborso mai, sempre, o solo entro 2 ore (e almeno 24 ore prima del carico, max 2 volte al mese)?</li><li><b>Penale all'azienda</b> se annulla un carico già preso a meno di 24 ore dal ritiro: sì o no? Quanto (penale piattaforma e indennizzo al trasportatore)? Soglia 24 ore o altra?</li><li>Va bene che il rimborso lo confermi sempre un gestore, o preferisce subito l'automatico?</li><li>Iscrizione 150 €: non rimborsabile dopo l'attivazione, salvo errore nostro? (da scrivere nei Termini Iubenda)</li></ul>
+  <div class="sec-title">↩️ Annullamenti e rimborsi</div>
+  <div class="section" id="mg-rimb-box">
+    <div style="font-size:13px;line-height:1.7;margin-bottom:14px;">
+  <b>Come funziona (tutti i soldi passano dalla società, tramite Shopify):</b><br>
+  • <b>Il trasportatore prende un carico</b>: paga 20 € alla società.<br>
+  • <b>Il trasportatore rinuncia</b>: perde i 20 € già pagati e paga altri <b>10 €</b> alla società (pulsante «Rinuncia al carico»). Appena il pagamento risulta, il carico torna DISPONIBILE per tutti.<br>
+  • <b>L'azienda annulla un carico già preso</b>: paga <b>20 €</b> alla società (pulsante «Annulla carico»). Appena il pagamento risulta, il carico diventa ANNULLATO e arriva a Gerlando la mail <b>«DA FARE: rimborsa 20 €»</b>: i 20 € del trasportatore vanno rimborsati da Shopify (Ordini, apri l'ordine, Rimborsa). Il trasportatore riceve una mail di avviso.<br>
+  • <b>Se non pagano</b>: nessun tempo di attesa. Compare una schermata rossa che blocca il resto del portale; se escono e rientrano la ritrovano uguale. Vale per il trasportatore (10 €) e per l'azienda (20 €).<br>
+  • <b>Se hanno già pagato ma restano bloccati</b> (per esempio hanno scritto un'altra email nel pagamento): in Airtable, tabella Trasportatori o Aziende, togli la spunta <b>da_pagare</b> a quella persona.
+</div>
+    <div style="font-size:12px;color:#fbbf24;margin-bottom:10px;">🎭 Esempi finti: nella dashboard vera qui compaiono gli utenti e i carichi veri.</div>
+    <div style="font-weight:700;margin:10px 0 6px;">⏳ Pagamenti in sospeso (utenti con la schermata rossa)</div>
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;"><div style="font-weight:700;font-size:13px;">🚚 Giuseppe Lo Bue (DEMO)</div><div style="font-size:12px;color:var(--muted);margin-top:3px;">deve versare <b>10 € (rinuncia)</b> · carico ORD-DEMO-003</div></div>
+    <div style="font-weight:700;margin:16px 0 6px;">📩 Annullamenti chiesti dall'azienda, in attesa del pagamento di 20 €</div>
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;"><div style="font-weight:700;font-size:13px;">Palermo → Catania <span style="font-weight:400;color:var(--muted);">· ORD-DEMO-004</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px;">Azienda: <b>Edil Sud Srl (DEMO)</b> · trasportatore che l'aveva preso: <b>Marco Russo (DEMO)</b></div></div>
+    <div style="font-weight:700;margin:16px 0 6px;">💶 Carichi annullati dopo essere stati presi: da rimborsare 20 € al trasportatore</div>
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;"><div style="font-weight:700;font-size:13px;">Agrigento → Trapani <span style="font-weight:400;color:var(--muted);">· ORD-DEMO-001</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px;">Rimborsa 20 € a <b>Marco Russo (DEMO)</b> · azienda: Edil Sud Srl (DEMO)</div></div>
   </div>
 
   <div class="sec-title">🏛️ Fatturazione elettronica — NUOVO (DEMO, da decidere con il commercialista)</div>
