@@ -4069,6 +4069,8 @@ function renderCarichiPresi() {
         (stato !== 'PRESO' ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
           '<a class="btn-cap" href="' + cpMaps(f) + '" target="_blank" rel="noopener" style="font-size:12px;text-decoration:none;">🗺️ Apri il percorso su Google Maps</a>' +
           '<button class="btn-cap" style="font-size:12px;" onclick="cpStampa([' + i + '])">🖨️ Stampa questo carico</button>' +
+          (tipoUtente === 'trasportatore' ? '<button class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">⚠️ Rinuncia al carico</button>' : '') +
+          (tipoUtente === 'azienda' ? '<button class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">❌ Annulla carico (20 €)</button>' : '') +
         '</div>') +
       '</div>' +
     '</div>';
