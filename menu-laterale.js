@@ -35,7 +35,7 @@
 
   /* ---------- blocchi gestiti (nascosti/mostrati con la classe ms-off) ---------- */
   var CONTENITORI = ['hero-personale', 'riquadro-profilo-trasp', 'cap-bar-section', 'sezione-dashboard',
-    'sezione-profilo-trasportatore', 'sezione-azienda', 'contenuto-normale-portale', 'ms-tg', 'ms-isc'];
+    'sezione-profilo-trasportatore', 'sezione-azienda', 'contenuto-normale-portale', 'ms-tg', 'ms-isc', 'ms-rimb'];
   var BLOCCHI = ['carichi-disponibili-wrap', 'calendario-carichi-wrap', 'cards-riepilogo-wrap', 'cards-riepilogo-azienda',
     'carichi-presi-wrap', 'rs-wrap', 'report-trasportatore-wrap', 'storico-sec-head', 'ms-storico-box', 'faq-box', 'ms-assist'];
 
@@ -54,6 +54,7 @@
     cal:      { c: 'normale', blocchi: ['calendario-carichi-wrap'], t: 'Calendario', d: 'I carichi giorno per giorno. Blu = disponibile, arancione = in pagamento, rosso = preso. Clicca un giorno per vedere i carichi.' },
     inc:      { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da incassare', d: 'Quanto devi ancora incassare dalle aziende, diviso per azienda e per giorno. Puoi scaricare il PDF e il CSV.' },
     fatture:  { c: 'dash', dl: 1, dash: 'fatture', t: 'Commissioni da €20', d: 'Una riga per ogni carico preso, con data, ora e commissione da €20. È un riepilogo: non sostituisce la fattura fiscale.' },
+    rimb:     { c: 'rimb', t: 'Rinunce e annullamenti', d: 'Cosa succede se rinunci a un carico preso (trasportatore) o annulli un carico già preso (azienda), quanto si paga e come funziona il rimborso.' },
     isc:      { c: 'isc', dl: 1, t: 'Iscrizione annuale €150', d: 'La quota annuale è separata dalle commissioni: qui trovi quando inizia e quando scade.' },
     storico:  { c: 'normale', dl: 1, blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico carichi', d: 'Tutti i carichi dall’inizio, con stato e commissione. Filtra per periodo e scarica.' },
     movimenti:{ c: 'dash', dl: 1, dash: 'storico', t: 'Il mio storico movimenti', d: 'Tutto quello che hai fatto sulla piattaforma con data e ora: cambi dati, documenti, password, carichi.' },
@@ -91,7 +92,7 @@
       { id: 'carichi', t: 'Carichi', i: '🚛', c: '59,130,246', e: 'I carichi liberi da prendere', p: 'carichi' },
       { id: 'presi', t: 'Presi', i: '✅', c: '74,222,128', e: 'I carichi che hai già preso', p: 'presi' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'I carichi giorno per giorno', p: 'cal' },
-      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto incassare e commissioni', s: [['inc', 'Da incassare'], ['fatture', 'Commissioni da €20'], ['isc', 'Iscrizione €150']] },
+      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto incassare e commissioni', s: [['inc', 'Da incassare'], ['fatture', 'Commissioni da €20'], ['rimb', 'Rinunce e annullamenti'], ['isc', 'Iscrizione €150']] },
       { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['storico', 'Storico carichi'], ['movimenti', 'Il mio storico movimenti']] },
       { id: 'rep', t: 'Report', i: '📈', c: '45,212,191', e: 'I tuoi numeri riassunti', p: 'report' },
       { id: 'not', t: 'Avvisi e suoni', i: '📣', c: '250,204,21', e: 'Cosa ricevere e come', p: 'notifiche' },
@@ -104,7 +105,7 @@
       { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'I tuoi dati aziendali e i tuoi file', p: 'dati' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'Le pubblicazioni giorno per giorno', p: 'azcal' },
       { id: 'presi', t: 'Trasporti presi', i: '✅', c: '74,222,128', e: 'Chi ha preso i tuoi carichi', p: 'presi' },
-      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto pagare ai trasportatori', s: [['azpagare', 'Da pagare'], ['azreptr', 'Report per trasportatore'], ['isc', 'Iscrizione €150']] },
+      { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto pagare ai trasportatori', s: [['azpagare', 'Da pagare'], ['azreptr', 'Report per trasportatore'], ['rimb', 'Rinunce e annullamenti'], ['isc', 'Iscrizione €150']] },
       { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['azstorico', 'Storico pubblicazioni'], ['fatture', 'Riepilogo movimenti'], ['movimenti', 'Il mio storico movimenti']] },
       { id: 'rep', t: 'Report', i: '📈', c: '45,212,191', e: 'I tuoi numeri riassunti', p: 'report' },
       { id: 'not', t: 'Avvisi e suoni', i: '📣', c: '250,204,21', e: 'Cosa ricevere e come', p: 'notifiche' },
@@ -185,7 +186,7 @@
       '#ms-rapide button span{font-size:22px;}',
       '#ms-rapide button:hover{background:rgba(59,130,246,.28);}',
       '#ms-tg #ect-qr-tg{display:none!important;}',
-      '#ms-tg,#ms-isc{display:none;}',
+      '#ms-tg,#ms-isc,#ms-rimb{display:none;}',
       '.ms-isc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0;}',
       '.ms-isc-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;}',
       '.ms-isc-c small{display:block;color:rgba(241,245,249,.6);font-size:12px;margin-bottom:4px;}',
@@ -239,6 +240,10 @@
     if (!$('ms-isc')) {
       var isc = document.createElement('div'); isc.id = 'ms-isc'; isc.className = 'ins-box';
       var sd2 = $('sezione-dashboard'); if (sd2) sd2.parentNode.insertBefore(isc, sd2);
+    }
+    if (!$('ms-rimb')) {
+      var rb = document.createElement('div'); rb.id = 'ms-rimb'; rb.className = 'ins-box';
+      var sd3 = $('sezione-dashboard'); if (sd3) sd3.parentNode.insertBefore(rb, sd3);
     }
     return true;
   }
@@ -357,6 +362,9 @@
       } else if (p.c === 'isc') {
         mostra('ms-isc', true); var ii = $('ms-isc'); if (ii) ii.style.display = 'block';
         disegnaIscrizione();
+      } else if (p.c === 'rimb') {
+        mostra('ms-rimb', true); var rr = $('ms-rimb'); if (rr) rr.style.display = 'block';
+        disegnaRimborsi();
       } else if (p.c === 'tg') {
         mostra('ms-tg', true);
         var t = $('ms-tg'); if (t) t.style.display = 'block';
@@ -459,6 +467,43 @@
       '<div class="ms-isc-c"><small>Importo annuale</small><b>€ 150,00</b></div></div>' +
       '<div style="font-size:13px;color:rgba(241,245,249,.65);line-height:1.6;">Prima della scadenza ricevi un promemoria per email con il link di pagamento (pagina sicura Shopify). ' +
       (sca ? '' : 'La data di scadenza non è ancora registrata sul tuo profilo. ') + 'Qui compaiono la data di iscrizione e la scadenza; i singoli pagamenti li gestiamo noi.</div>';
+  }
+
+  /* ---------- Rinunce e annullamenti (18/10) ---------- */
+  function escR(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function disegnaRimborsi() {
+    var box = $('ms-rimb'); if (!box) return;
+    var az = tipo() === 'azienda', f = {};
+    try { f = az ? (window.__ectAziendaFields || {}) : (trasportatoreFieldsCorrenti || {}); } catch (e) {}
+    var anteprima = false; try { anteprima = !!modalitaAnteprimaAttiva; } catch (e) {}
+    var pend = (f.da_pagare === true || String(f.da_pagare).toLowerCase() === 'true') ? String(f.da_pagare_tipo || '').toLowerCase() : '';
+    var riga = function (t) { return '<div style="margin:6px 0;">' + t + '</div>'; };
+    var h = '<div class="ins-title">↩️ Rinunce e annullamenti</div><div class="ins-sub">Tutti i pagamenti passano dalla società, con pagamento sicuro Shopify.</div>';
+    if (pend) h += '<div style="margin:12px 0;padding:12px 14px;border:2px solid #ef4444;border-radius:12px;background:rgba(239,68,68,.12);color:#fecaca;font-size:14px;">🔴 Hai un pagamento da completare: <b>' + (pend === 'rinuncia' ? '10 € (rinuncia)' : '20 € (annullamento)') + '</b>. <button type="button" class="btn-cap" style="margin-left:8px;" onclick="window.ectPagaPendente&&window.ectPagaPendente()">Completa il pagamento</button></div>';
+    h += '<div style="font-size:14px;line-height:1.7;color:rgba(241,245,249,.85);">';
+    if (!az) {
+      h += riga('<b>Hai preso un carico e vuoi rinunciare?</b> Vai in «Presi», apri il carico e premi <b>«Rinuncia al carico»</b>.') +
+        riga('• I <b>20 €</b> già versati per prendere il carico <b>non vengono restituiti</b>.') +
+        riga('• Si versano altri <b>10 €</b> alla società: si apre subito la pagina di pagamento.') +
+        riga('• Appena il pagamento risulta, il carico torna disponibile per tutti gli altri trasportatori.') +
+        riga('<b>Se l’azienda annulla un carico che avevi preso</b>: i tuoi 20 € ti vengono <b>rimborsati dalla società</b> e ricevi una email di avviso.') +
+        riga('<b>Se non salda</b>, compare una schermata rossa e il resto del portale resta in pausa finché il pagamento non risulta; se esci e rientri la ritrovi uguale.');
+    } else {
+      h += riga('<b>Hai pubblicato un carico e vuoi annullarlo?</b>') +
+        riga('• Se <b>nessuno lo ha ancora preso</b>: annulli gratis dallo «Storico pubblicazioni» (resta nello storico come ANNULLATO).') +
+        riga('• Se <b>è già stato preso</b>: premi <b>«Annulla carico (20 €)»</b>. Si versano <b>20 €</b> alla società: si apre subito la pagina di pagamento. Appena il pagamento risulta il carico è annullato e il trasportatore viene rimborsato dalla società.') +
+        riga('<b>Se non salda</b>, compare una schermata rossa e il resto del portale resta in pausa finché il pagamento non risulta; se esci e rientri la ritrovi uguale.');
+      var lista = []; try { lista = (carichiPubblicatiAzienda || []).map(function (r) { return r.fields || r; }); } catch (e) {}
+      lista = lista.filter(function (c) { var s = String(c.stato || '').toUpperCase(); return s === 'ANNULLATO' || s === 'ANNULLAMENTO RICHIESTO'; });
+      if (anteprima && !lista.length) lista = [{ citta_partenza: 'Palermo', citta_arrivo: 'Catania', numero_ordine: 'ORD-DEMO-004', stato: 'ANNULLATO' }];
+      h += '</div><div style="margin-top:16px;font-weight:700;">I tuoi carichi annullati o in attesa di pagamento</div>' + (lista.length ? lista.map(function (c) {
+        var att = String(c.stato || '').toUpperCase() === 'ANNULLAMENTO RICHIESTO';
+        return '<div style="margin-top:8px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:13px;"><b>' + escR(c.citta_partenza || '—') + ' → ' + escR(c.citta_arrivo || '—') + '</b> · ' + escR(c.numero_ordine || '') + '<br><span style="color:' + (att ? '#fbbf24' : 'rgba(241,245,249,.6)') + ';">' + (att ? '⏳ In attesa del pagamento di 20 €' : 'Annullato') + '</span></div>';
+      }).join('') : '<div style="margin-top:8px;font-size:13px;color:rgba(241,245,249,.6);">Nessun carico annullato.</div>');
+      h += '<div>';
+    }
+    h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a ecotruckconnect@synaimaxpro.com.</div>';
+    box.innerHTML = h;
   }
 
   /* ---------- elenchi: pagine da 25/50/100 + ultima giornata + calendario ---------- */
