@@ -23,6 +23,10 @@
   var AZIONI_LISTE = ['get_carichi_pubblicati_azienda', 'get_candidature_trasportatore', 'conta_trasportatori_compatibili',
                       'get_dashboard_data', 'get_candidature', 'get_scadenze', 'get_registrazioni',
                       'modifica_carico', 'annulla_carico', 'richiedi_annullamento'];
+  /* 18/10: rinuncia del trasportatore e annullamento a pagamento di un carico GIA' PRESO.
+     Le gestisce lo scenario Make "Azioni portale" (stessi controlli di accesso). */
+  var PROXY_AZIONI = 'https://hook.eu1.make.com/f8cjoawt8yxkzle0qdovm5d6o90jgfpi';
+  var AZIONI_PAGAMENTO = ['rinuncia_carico', 'annulla_carico_preso'];
   var PROTETTI = [
     'hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak',
     'hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm'
@@ -175,6 +179,7 @@
         if (typeof opts.body === 'string' && opts.body) { try { corpo = JSON.parse(opts.body); } catch (e) { corpo = {}; } }
         if (corpo.action === 'chat_bot' && typeof corpo.message === 'string') corpo.message = componiDomandaBot(corpo.message);
         if (AZIONI_LISTE.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_LISTE;
+        if (AZIONI_PAGAMENTO.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_AZIONI;
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
           await garantisciCodice();
           var tok = await tokenAccesso();
@@ -1217,8 +1222,8 @@
       } else if (st.indexOf('PAGAMENTO') >= 0) {
         btn('🔒 Bloccato', 'spento', function () { alert('⏳ Un trasportatore sta pagando proprio ora questo carico: Modifica e Annulla sono bloccati per 5 minuti.'); });
       } else if (st === 'PRESO') {
-        btn('📩 Richiedi annullamento', 'ambra', function () { if (finto && typeof anteprimaRichiediAnnullamento === 'function') anteprimaRichiediAnnullamento(id); else apriRichiesta(f); });
-      } else if (st === 'ANNULLAMENTO RICHIESTO') etichetta('⏳ In attesa dei gestori', '#fbbf24');
+        btn('❌ Annulla carico (20 €)', 'rosso', function () { if (finto) { alert('Anteprima: qui si apre la conferma e poi il pagamento di 20 €.'); } else apriAnnullaPreso(f); });
+      } else if (st === 'ANNULLAMENTO RICHIESTO') btn('💳 Completa il pagamento', 'ambra', function () { window.ectPagaPendente && window.ectPagaPendente(); });
       else if (st === 'ANNULLATO') etichetta('Annullato', 'rgba(241,245,249,0.5)');
     });
   }
@@ -1358,6 +1363,99 @@
       };
     }
   }
+
+  /* ================= 11) RINUNCIA / ANNULLO A PAGAMENTO + SCHERMATA "DA PAGARE" (18/10) =================
+     Trasportatore che rinuncia: perde i 20 euro gia' versati e versa altri 10 euro alla societa';
+     il carico torna disponibile. Azienda che annulla un carico gia' preso: versa 20 euro alla societa'
+     (il trasportatore viene rimborsato dalla societa'). Finche' il pagamento non risulta, compare
+     la schermata rossa e il resto del portale resta in pausa (anche se l'utente esce e rientra). */
+  var VARIANTE = { rinuncia: '55399311737173', annullamento: '55399319535957' };
+  var IMPORTO = { rinuncia: '10', annullamento: '20' };
+  function emailUtente() {
+    try { if (currentUser && currentUser.email) return currentUser.email; } catch (e) {}
+    try { if (trasportatoreFieldsCorrenti && trasportatoreFieldsCorrenti.email) return trasportatoreFieldsCorrenti.email; } catch (e) {}
+    try { if (window.__ectAziendaFields && window.__ectAziendaFields.email) return window.__ectAziendaFields.email; } catch (e) {}
+    return '';
+  }
+  function urlCheckout(tipo, caricoId) {
+    return 'https://shop.synaimaxpro.com/cart/' + VARIANTE[tipo] + ':1?checkout%5Bemail%5D=' + encodeURIComponent(emailUtente()) +
+      '&attributes%5Bazione%5D=' + encodeURIComponent(tipo) + '&attributes%5Bcarico_id%5D=' + encodeURIComponent(caricoId || '');
+  }
+  function campiUtente() {
+    var t = ''; try { t = tipoUtente; } catch (e) {}
+    try { if (t === 'trasportatore') return trasportatoreFieldsCorrenti || null; } catch (e) {}
+    if (t === 'azienda') return window.__ectAziendaFields || null;
+    return null;
+  }
+  function pendente() {
+    var f = campiUtente(); if (!f) return null;
+    var dp = f.da_pagare === true || String(f.da_pagare).toLowerCase() === 'true';
+    var tipo = String(f.da_pagare_tipo || '').toLowerCase();
+    if (!dp || !VARIANTE[tipo]) return null;
+    return { tipo: tipo, carico: f.da_pagare_id_carico || '' };
+  }
+  window.ectPagaPendente = function () { var p = pendente(); if (p) window.location.href = urlCheckout(p.tipo, p.carico); };
+  async function ricontrollaPagamento(btn) {
+    var t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Controllo…';
+    try {
+      var r = await fetch(PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_utente', email: emailUtente() }) });
+      var d = await r.json();
+      var rec = ((d.trasportatore || [])[0]) || ((d.azienda || [])[0]);
+      if (rec && rec.fields) {
+        var f = campiUtente(); if (f) { f.da_pagare = rec.fields.da_pagare; f.da_pagare_tipo = rec.fields.da_pagare_tipo; f.da_pagare_id_carico = rec.fields.da_pagare_id_carico; }
+        if (!pendente()) { window.location.reload(); return; }
+      }
+      btn.textContent = 'Il pagamento non risulta ancora'; setTimeout(function () { btn.disabled = false; btn.textContent = t0; }, 2500);
+    } catch (e) { btn.disabled = false; btn.textContent = t0; }
+  }
+  function mostraDaPagare() {
+    var p = pendente(); var ex = document.getElementById('ect-da-pagare');
+    if (!p) { if (ex) ex.remove(); return; }
+    if (ex) return;
+    var az = p.tipo === 'annullamento';
+    var titolo = az ? 'Un ultimo passo per annullare il carico' : 'Un ultimo passo per rinunciare al carico';
+    var testo = az
+      ? 'Hai chiesto di annullare un carico che era già stato preso da un trasportatore. L’annullamento prevede ' + IMPORTO.annullamento + ' € a favore della società. Ti preghiamo di saldare per andare avanti e pubblicare altri carichi.'
+      : 'Hai rinunciato a un carico che avevi preso. La rinuncia prevede ' + IMPORTO.rinuncia + ' € a favore della società. Ti preghiamo di saldare per andare avanti e trovare altri carichi.';
+    var ov = document.createElement('div'); ov.id = 'ect-da-pagare';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#1a0a0c;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto;';
+    ov.innerHTML = '<div style="width:100%;max-width:480px;background:#2a1013;border:2px solid #ef4444;border-radius:16px;padding:26px;color:#fde8e8;font-family:DM Sans,system-ui,sans-serif;text-align:center;">' +
+      '<div style="font-size:42px;margin-bottom:8px;">🔴</div><div style="font-size:20px;font-weight:800;margin-bottom:12px;">' + titolo + '</div>' +
+      '<div style="font-size:14.5px;line-height:1.6;margin-bottom:8px;">' + testo + '</div>' +
+      '<div style="font-size:13px;line-height:1.5;opacity:0.8;margin-bottom:18px;">Finché il pagamento non risulta, il resto del portale resta in pausa. Se esci e rientri trovi questa stessa schermata.</div>' +
+      '<button type="button" class="ect-dp-paga" style="display:block;width:100%;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;">Salda ' + IMPORTO[p.tipo] + ' € e continua</button>' +
+      '<button type="button" class="ect-dp-ok" style="display:block;width:100%;background:rgba(255,255,255,0.08);color:#fde8e8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;">Ho già pagato: ricontrolla</button>' +
+      '<div style="font-size:12px;opacity:0.65;margin-top:14px;">Serve aiuto? ecotruckconnect@synaimaxpro.com</div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('.ect-dp-paga').onclick = function () { window.ectPagaPendente(); };
+    ov.querySelector('.ect-dp-ok').onclick = function () { ricontrollaPagamento(this); };
+  }
+  function impostaPendente(tipo, caricoId) {
+    var f = campiUtente(); if (f) { f.da_pagare = true; f.da_pagare_tipo = tipo; f.da_pagare_id_carico = caricoId; }
+  }
+  function apriAnnullaPreso(f) {
+    finestraCarico('❌ Annulla un carico già preso',
+      '<div style="font-size:13px;line-height:1.6;">Il carico <b>' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + '</b> è già stato preso da un trasportatore.<br><br>' +
+      'Per annullarlo si versano <b>' + IMPORTO.annullamento + ' €</b> alla società: il trasportatore viene rimborsato dalla società di quanto ha versato. Subito dopo si apre la pagina di pagamento.</div>',
+      async function () {
+        var r = await chiamaProxy({ action: 'annulla_carico_preso', carico_id: f.__id });
+        if (r && String(r.ok) === 'true') { impostaPendente('annullamento', r.carico_id || f.__id); window.location.href = urlCheckout('annullamento', r.carico_id || f.__id); return true; }
+        if (r && r.errore) return 'Non si può annullare: il carico non risulta più preso. Aggiorna la pagina.';
+        return 'Non riesco a procedere. Riprova tra poco.';
+      }, 'Vai al pagamento');
+  }
+  window.ectRinuncia = function (caricoId) {
+    finestraCarico('⚠️ Rinuncia al carico',
+      '<div style="font-size:13px;line-height:1.6;">Se rinunci a questo carico:<br>• i <b>20 €</b> già versati non vengono restituiti;<br>• si versano altri <b>' + IMPORTO.rinuncia + ' €</b> alla società;<br>• il carico torna disponibile per gli altri trasportatori.<br><br>Subito dopo si apre la pagina di pagamento.</div>',
+      async function () {
+        var r = await chiamaProxy({ action: 'rinuncia_carico', carico_id: caricoId });
+        if (r && String(r.ok) === 'true') { impostaPendente('rinuncia', r.carico_id || caricoId); window.location.href = urlCheckout('rinuncia', r.carico_id || caricoId); return true; }
+        if (r && r.errore) return 'Non si può rinunciare: il carico non risulta più tuo. Aggiorna la pagina.';
+        return 'Non riesco a procedere. Riprova tra poco.';
+      }, 'Rinuncio e vado al pagamento');
+  };
+  window.ectAnnullaPresoId = function (caricoId) { var f = trovaCarico(caricoId); apriAnnullaPreso(f || { __id: caricoId }); };
+  setInterval(function () { try { mostraDaPagare(); } catch (e) {} }, 1200);
 
   setInterval(function () { try { aggiungiStampaRighe(); aggiungiStampaFinestre(); nascondiTelegramAzienda(); aggiungiAzioniAzienda(); aggiungiOrari(); aggiungiFiltri(); qrTelegram(); aggiungiAggiorna(); } catch (e) {} }, 700);
 })();
