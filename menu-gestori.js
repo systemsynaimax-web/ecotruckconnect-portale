@@ -1,3 +1,28 @@
+/* === COOKIE: il banner compare UNA volta sola (18/10/2026) ===
+   Chi e' gia' entrato (login) o ha gia' premuto Accetta/Rifiuta/✕ non lo rivede piu',
+   ne' ricaricando la pagina ne' rientrando. Resta il pulsante a sinistra per cambiare idea. */
+(function () {
+  try {
+    var K = 'ect_cookie_scelta';
+    var fatto = false;
+    try { fatto = !!localStorage.getItem(K) || !!localStorage.getItem('gotrue.user'); } catch (e) {}
+    if (fatto) {
+      var s = document.createElement('style');
+      s.textContent = '#iubenda-cs-banner{display:none!important}';
+      (document.head || document.documentElement).appendChild(s);
+    }
+    document.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      if (t.closest('#iubenda-cs-banner .iubenda-cs-accept-btn, #iubenda-cs-banner .iubenda-cs-reject-btn, #iubenda-cs-banner .iubenda-cs-close-btn, .iubenda-cs-save-btn, #iubenda-cs-preferences .iubenda-cs-accept-btn, #iubenda-cs-preferences .iubenda-cs-reject-btn')) {
+        try { localStorage.setItem(K, String(Date.now())); } catch (e) {}
+      }
+    }, true);
+    /* chi entra con login dopo aver visto il banner: lo nascondo subito */
+    window.addEventListener('storage', function () {});
+  } catch (e) {}
+})();
+
 /* =====================================================================
    EcoTruckConnect — menu-gestori.js (10/10/2026)
    MENU LATERALE della Dashboard Gestori (dashboard.html e dashboard-demo.html).
