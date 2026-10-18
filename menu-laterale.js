@@ -502,7 +502,7 @@
       }).join('') : '<div style="margin-top:8px;font-size:13px;color:rgba(241,245,249,.6);">Nessun carico annullato.</div>');
       h += '<div>';
     }
-    h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a ecotruckconnect@synaimaxpro.com.</div>';
+    h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a system.synaimax@gmail.com.</div>';
     box.innerHTML = h;
   }
 
