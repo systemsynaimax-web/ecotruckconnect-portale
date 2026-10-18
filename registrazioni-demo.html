@@ -58,19 +58,37 @@ h1,h2,h3{font-family:var(--font-h);}
 .empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
 </style>
 <script>
-/* === COOKIE: il banner compare UNA volta sola (18/10/2026) ===
-   Chi e' gia' entrato (login) o ha gia' premuto Accetta/Rifiuta/✕ non lo rivede piu',
-   ne' ricaricando la pagina ne' rientrando. Resta il pulsante a sinistra per cambiare idea. */
+/* === COOKIE: il banner compare UNA volta sola (v2 - 18/10/2026) ===
+   Chi e' loggato, o ha gia' premuto Accetta/Rifiuta/✕, non rivede mai piu' il banner:
+   ne' cambiando pagina dal menu, ne' ricaricando, ne' rientrando senza essere uscito.
+   Resta il pulsante a sinistra per cambiare idea. */
 (function () {
+  var K = 'ect_cookie_scelta';
+  function fatto() {
+    try { if (localStorage.getItem(K)) return true; } catch (e) {}
+    try { if (localStorage.getItem('gotrue.user')) return true; } catch (e) {}
+    return false;
+  }
+  function nascondi() {
+    if (!fatto()) return;
+    var b = document.getElementById('iubenda-cs-banner');
+    if (!b) return;
+    if (b.style.getPropertyValue('display') !== 'none' || b.style.getPropertyPriority('display') !== 'important') {
+      b.style.setProperty('display', 'none', 'important');
+      b.style.setProperty('visibility', 'hidden', 'important');
+    }
+  }
   try {
-    var K = 'ect_cookie_scelta';
-    var fatto = false;
-    try { fatto = !!localStorage.getItem(K) || !!localStorage.getItem('gotrue.user'); } catch (e) {}
-    if (fatto) {
+    /* regola CSS con priorita' alta (batte anche #iubenda-cs-banner.iubenda-cs-visible) */
+    if (fatto()) {
       var s = document.createElement('style');
-      s.textContent = '#iubenda-cs-banner{display:none!important}';
+      s.textContent = 'html body #iubenda-cs-banner,html body #iubenda-cs-banner.iubenda-cs-visible,html body div#iubenda-cs-banner[class]{display:none!important;visibility:hidden!important;}';
       (document.head || document.documentElement).appendChild(s);
     }
+    /* se Iubenda lo crea o lo rimostra dopo, lo nascondo subito */
+    var mo = new MutationObserver(nascondi);
+    mo.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    var n = 0, iv = setInterval(function () { nascondi(); if (++n > 40) clearInterval(iv); }, 500);
     document.addEventListener('click', function (ev) {
       var t = ev.target;
       if (!t || !t.closest) return;
@@ -78,8 +96,6 @@ h1,h2,h3{font-family:var(--font-h);}
         try { localStorage.setItem(K, String(Date.now())); } catch (e) {}
       }
     }, true);
-    /* chi entra con login dopo aver visto il banner: lo nascondo subito */
-    window.addEventListener('storage', function () {});
   } catch (e) {}
 })();
 
