@@ -741,6 +741,19 @@
         } else if (giriSez > 40) clearInterval(vaiSez);
       }, 250);
     }
+    // anteprima: ?preview=...&pagina=presi apre direttamente quella pagina del menu laterale
+    var pagMenu = null; try { pagMenu = new URLSearchParams(location.search).get('pagina'); } catch (e) {}
+    if (window.__ANTEPRIMA_SCUDO && pagMenu) {
+      var giriPag = 0;
+      var vaiPag = setInterval(function () {
+        giriPag++;
+        var app2 = document.getElementById('app');
+        if (app2 && app2.style.display === 'block' && window.ectMenu && window.ectMenu.pagine && window.ectMenu.pagine[pagMenu] && document.getElementById('ms-voci')) {
+          clearInterval(vaiPag);
+          setTimeout(function () { try { window.ectMenu.vai(pagMenu); } catch (e) {} }, 700);
+        } else if (giriPag > 60) clearInterval(vaiPag);
+      }, 250);
+    }
     // anteprima: fa vedere anche la striscia rossa della password temporanea
     if (window.__ANTEPRIMA_SCUDO) {
       var mostraRossa = setInterval(function () {
@@ -1222,7 +1235,7 @@
       } else if (st.indexOf('PAGAMENTO') >= 0) {
         btn('🔒 Bloccato', 'spento', function () { alert('⏳ Un trasportatore sta pagando proprio ora questo carico: Modifica e Annulla sono bloccati per 5 minuti.'); });
       } else if (st === 'PRESO') {
-        btn('❌ Annulla carico (20 €)', 'rosso', function () { if (finto) { alert('Anteprima: qui si apre la conferma e poi il pagamento di 20 €.'); } else apriAnnullaPreso(f); });
+        btn('❌ Annulla carico (20 €)', 'rosso', function () { apriAnnullaPreso(f); });
       } else if (st === 'ANNULLAMENTO RICHIESTO') btn('💳 Completa il pagamento', 'ambra', function () { window.ectPagaPendente && window.ectPagaPendente(); });
       else if (st === 'ANNULLATO') etichetta('Annullato', 'rgba(241,245,249,0.5)');
     });
@@ -1394,8 +1407,9 @@
     if (!dp || !VARIANTE[tipo]) return null;
     return { tipo: tipo, carico: f.da_pagare_id_carico || '' };
   }
-  window.ectPagaPendente = function () { var p = pendente(); if (p) window.location.href = urlCheckout(p.tipo, p.carico); };
+  window.ectPagaPendente = function () { var p = pendente(); if (!p) return; if (inAnteprima()) { window.open(urlCheckout(p.tipo, ''), '_blank'); return; } window.location.href = urlCheckout(p.tipo, p.carico); };
   async function ricontrollaPagamento(btn) {
+    if (inAnteprima()) { var fa = campiUtente(); if (fa) { fa.da_pagare = false; } var o = document.getElementById('ect-da-pagare'); if (o) o.remove(); return; }
     var t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Controllo…';
     try {
       var r = await fetch(PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_utente', email: emailUtente() }) });
@@ -1430,14 +1444,18 @@
     ov.querySelector('.ect-dp-paga').onclick = function () { window.ectPagaPendente(); };
     ov.querySelector('.ect-dp-ok').onclick = function () { ricontrollaPagamento(this); };
   }
+  function inAnteprima() { try { if (window.__ANTEPRIMA_SCUDO) return true; } catch (e) {} try { return !!modalitaAnteprimaAttiva; } catch (e) { return false; } }
   function impostaPendente(tipo, caricoId) {
-    var f = campiUtente(); if (f) { f.da_pagare = true; f.da_pagare_tipo = tipo; f.da_pagare_id_carico = caricoId; }
+    var f = campiUtente();
+    if (!f) { var t = ''; try { t = tipoUtente; } catch (e) {} if (t === 'azienda') { window.__ectAziendaFields = window.__ectAziendaFields || {}; f = window.__ectAziendaFields; } }
+    if (f) { f.da_pagare = true; f.da_pagare_tipo = tipo; f.da_pagare_id_carico = caricoId; }
   }
   function apriAnnullaPreso(f) {
     finestraCarico('❌ Annulla un carico già preso',
       '<div style="font-size:13px;line-height:1.6;">Il carico <b>' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + '</b> è già stato preso da un trasportatore.<br><br>' +
       'Per annullarlo si versano <b>' + IMPORTO.annullamento + ' €</b> alla società: il trasportatore viene rimborsato dalla società di quanto ha versato. Subito dopo si apre la pagina di pagamento.</div>',
       async function () {
+        if (inAnteprima()) { impostaPendente('annullamento', 'ANTEPRIMA'); alert('🎭 ANTEPRIMA: nella versione vera si apre la pagina di pagamento Shopify da 20 €. Qui ti mostro la schermata rossa che compare finché non si paga.'); return true; }
         var r = await chiamaProxy({ action: 'annulla_carico_preso', carico_id: f.__id });
         if (r && String(r.ok) === 'true') { impostaPendente('annullamento', r.carico_id || f.__id); window.location.href = urlCheckout('annullamento', r.carico_id || f.__id); return true; }
         if (r && r.errore) return 'Non si può annullare: il carico non risulta più preso. Aggiorna la pagina.';
@@ -1448,6 +1466,7 @@
     finestraCarico('⚠️ Rinuncia al carico',
       '<div style="font-size:13px;line-height:1.6;">Se rinunci a questo carico:<br>• i <b>20 €</b> già versati non vengono restituiti;<br>• si versano altri <b>' + IMPORTO.rinuncia + ' €</b> alla società;<br>• il carico torna disponibile per gli altri trasportatori.<br><br>Subito dopo si apre la pagina di pagamento.</div>',
       async function () {
+        if (inAnteprima()) { impostaPendente('rinuncia', 'ANTEPRIMA'); alert('🎭 ANTEPRIMA: nella versione vera si apre la pagina di pagamento Shopify da 10 €. Qui ti mostro la schermata rossa che compare finché non si paga.'); return true; }
         var r = await chiamaProxy({ action: 'rinuncia_carico', carico_id: caricoId });
         if (r && String(r.ok) === 'true') { impostaPendente('rinuncia', r.carico_id || caricoId); window.location.href = urlCheckout('rinuncia', r.carico_id || caricoId); return true; }
         if (r && r.errore) return 'Non si può rinunciare: il carico non risulta più tuo. Aggiorna la pagina.';
