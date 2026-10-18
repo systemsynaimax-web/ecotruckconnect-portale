@@ -460,6 +460,53 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
   
 
+  <div class="sec-title">↩️ Annullamenti e rimborsi</div>
+  <div class="section" id="mg-rimb-box">
+    <div style="font-size:13px;line-height:1.7;margin-bottom:14px;">
+  <b>Come funziona (tutti i soldi passano dalla società, tramite Shopify):</b><br>
+  • <b>Il trasportatore prende un carico</b>: paga 20 € alla società.<br>
+  • <b>Il trasportatore rinuncia</b>: perde i 20 € già pagati e paga altri <b>10 €</b> alla società (pulsante «Rinuncia al carico»). Appena il pagamento risulta, il carico torna DISPONIBILE per tutti.<br>
+  • <b>L'azienda annulla un carico già preso</b>: paga <b>20 €</b> alla società (pulsante «Annulla carico»). Appena il pagamento risulta, il carico diventa ANNULLATO e arriva a Gerlando la mail <b>«DA FARE: rimborsa 20 €»</b>: i 20 € del trasportatore vanno rimborsati da Shopify (Ordini, apri l'ordine, Rimborsa). Il trasportatore riceve una mail di avviso.<br>
+  • <b>Se non pagano</b>: nessun tempo di attesa. Compare una schermata rossa che blocca il resto del portale; se escono e rientrano la ritrovano uguale. Vale per il trasportatore (10 €) e per l'azienda (20 €).<br>
+  • <b>Se hanno già pagato ma restano bloccati</b> (per esempio hanno scritto un'altra email nel pagamento): in Airtable, tabella Trasportatori o Aziende, togli la spunta <b>da_pagare</b> a quella persona.
+</div>
+    <div style="font-weight:700;margin:10px 0 6px;">⏳ Pagamenti in sospeso (utenti con la schermata rossa)</div>
+    <div id="rimb-sospesi"><div class="feed-empty">Caricamento…</div></div>
+    <div style="font-weight:700;margin:16px 0 6px;">📩 Annullamenti chiesti dall'azienda, in attesa del pagamento di 20 €</div>
+    <div id="rimb-attesa"><div class="feed-empty">Caricamento…</div></div>
+    <div style="font-weight:700;margin:16px 0 6px;">💶 Carichi annullati dopo essere stati presi: da rimborsare 20 € al trasportatore</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Controlla in Shopify se il rimborso è già stato fatto: il sistema non lo sa ancora (rimborso manuale).</div>
+    <div id="rimb-rimborsi"><div class="feed-empty">Caricamento…</div></div>
+  </div>
+  <script>
+  (function(){
+    function F(r){return (r&&r.fields)||r||{};}
+    function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+    function riga(t,s){return '<div style="border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;"><div style="font-weight:700;font-size:13px;">'+t+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px;">'+s+'</div></div>';}
+    function vuoto(t){return '<div class="feed-empty">'+t+'</div>';}
+    function disegna(){
+      var car=[],tr=[],az=[];
+      try{car=tuttiCarichi||[];}catch(e){}
+      try{tr=tuttiTrasportatoriAnagrafica||[];}catch(e){}
+      try{az=tutteAziendeAnagrafica||[];}catch(e){}
+      var sosp=tr.map(function(r){return {t:'🚚',f:F(r)};}).concat(az.map(function(r){return {t:'🏢',f:F(r)};})).filter(function(x){return x.f.da_pagare===true||String(x.f.da_pagare).toLowerCase()==='true';});
+      var b=document.getElementById('rimb-sospesi'); if(!b) return;
+      b.innerHTML=sosp.length?sosp.map(function(x){var tp=String(x.f.da_pagare_tipo||'');
+        return riga(x.t+' '+E(x.f.ragione_sociale||x.f.nome||x.f.email||'—'),E(x.f.email||'')+' · deve versare <b>'+(tp==='rinuncia'?'10 € (rinuncia)':tp==='annullamento'?'20 € (annullamento)':'—')+'</b> · carico '+E(x.f.da_pagare_id_carico||'—'));
+      }).join(''):vuoto('Nessun pagamento in sospeso.');
+      var att=car.map(F).filter(function(f){return String(f.stato||'').toUpperCase()==='ANNULLAMENTO RICHIESTO';});
+      document.getElementById('rimb-attesa').innerHTML=att.length?att.map(function(f){
+        return riga(E(f.citta_partenza||'—')+' → '+E(f.citta_arrivo||'—')+' <span style="font-weight:400;color:var(--muted);">· '+E(f.numero_ordine||'')+'</span>','Azienda: <b>'+E(f.nome_azienda||f.email_azienda||'—')+'</b> · trasportatore che l\'aveva preso: <b>'+E(f.assegnato_a_nome||'—')+'</b>');
+      }).join(''):vuoto('Nessun annullamento in attesa.');
+      var rim=car.map(F).filter(function(f){return String(f.stato||'').toUpperCase()==='ANNULLATO'&&f.trasportatore_email;});
+      document.getElementById('rimb-rimborsi').innerHTML=rim.length?rim.map(function(f){
+        return riga(E(f.citta_partenza||'—')+' → '+E(f.citta_arrivo||'—')+' <span style="font-weight:400;color:var(--muted);">· '+E(f.numero_ordine||'')+'</span>','Rimborsa 20 € a <b>'+E(f.assegnato_a_nome||'—')+'</b> ('+E(f.trasportatore_email)+') · azienda: '+E(f.nome_azienda||f.email_azienda||'—'));
+      }).join(''):vuoto('Nessun rimborso da fare.');
+    }
+    setInterval(disegna,3000); setTimeout(disegna,800);
+  })();
+  </script>
+
   <div class="sec-title">✅ Verifiche ufficiali <span class="etichetta-nuovo">NUOVO — DA PROVARE CON GERLANDO</span></div>
   <div class="toolbar-grid">
     <a class="tool-btn" href="https://telematici.agenziaentrate.gov.it/VerificaPIVA/Scegli.do?parameter=verificaPiva" target="_blank" rel="noopener"><span class="num">1</span><span class="icon">🏛️</span>Agenzia Entrate — Verifica P.IVA</a>

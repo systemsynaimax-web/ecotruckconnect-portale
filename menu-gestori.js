@@ -28,7 +28,7 @@
     anagrafica:{ i: '👥', t: 'Anagrafica', d: 'Tutti i trasportatori e le aziende registrati, con mezzi e autorizzazioni.' },
     analitica: { i: '📈', t: 'Analitica', d: 'Numeri in tempo reale, andamenti e grafici (carichi, incassi, iscrizioni, sicurezza).' },
     strumenti: { i: '🛠️', t: 'Strumenti', d: 'Tutti gli strumenti in una pagina: collegamenti ai servizi, verifiche ufficiali, fatturazione, condizioni d’uso e privacy.' },
-    annullamenti: { i: '↩️', t: 'Annullamenti e rimborsi', d: 'Richieste di annullamento e rimborsi da approvare.' },
+    annullamenti: { i: '↩️', t: 'Annullamenti e rimborsi', d: 'Rinunce dei trasportatori e annullamenti delle aziende: chi deve ancora pagare e quali rimborsi da 20 € fare ai trasportatori.' },
     proposte:  { i: '💡', t: 'Da decidere', d: 'Tutela assicurativa, idee future e proposte: nulla di tutto questo è attivo, serve la decisione di Gerlando.' },
     finti:     { i: '🧪', t: 'Dati finti', d: 'Le versioni di prova con dati di esempio: dashboard azienda, dashboard trasportatore e dashboard gestori. Si può cliccare tutto senza rischi.' },
     altro:     { i: '📄', t: 'Altro', d: '' }
@@ -60,7 +60,7 @@
     { href: 'report.html', i: '📋', t: 'Report trasportatori', e: 'Scheda di ogni trasportatore' },
     { p: 'analitica', e: 'Numeri, andamenti, grafici' },
     { p: 'strumenti', e: 'Tutti gli strumenti' },
-    { p: 'annullamenti', e: 'Da approvare' },
+    { p: 'annullamenti', e: 'Rinunce, annullamenti, rimborsi' },
     { p: 'proposte', e: 'Assicurazione, idee, proposte' },
     { p: 'finti', e: 'Dashboard di prova' }
   ];
@@ -93,7 +93,7 @@
     if (!$('mg-home')) {
       var h = document.createElement('div'); h.id = 'mg-home'; h.setAttribute('data-mg', 'home');
       var SC = [['registrazioni.html', '🆕', 'Registrazioni', 'Nuove iscrizioni da approvare', 1], ['storico', '📚', 'Storico movimenti', 'Tutto quello che è successo'],
-        ['archT', '🚚', 'Archivio trasportatori', 'Storia di ogni trasportatore'], ['archA', '🏢', 'Archivio aziende', 'Storia di ogni azienda'], ['analitica', '📈', 'Analitica', 'Numeri e grafici'], ['strumenti', '🛠️', 'Strumenti', 'Airtable, Make, Netlify…'], ['finti', '🧪', 'Dati finti', 'Dashboard di prova']];
+        ['archT', '🚚', 'Archivio trasportatori', 'Storia di ogni trasportatore'], ['archA', '🏢', 'Archivio aziende', 'Storia di ogni azienda'], ['annullamenti', '↩️', 'Annullamenti e rimborsi', 'Pagamenti in sospeso e rimborsi'], ['analitica', '📈', 'Analitica', 'Numeri e grafici'], ['strumenti', '🛠️', 'Strumenti', 'Airtable, Make, Netlify…'], ['finti', '🧪', 'Dati finti', 'Dashboard di prova']];
       h.innerHTML = '<div class="sec-title">Cosa vuoi fare adesso?</div><div class="mg-sc">' + SC.filter(function (s) { return s[4] || haContenuto(s[0]); }).map(function (s) {
         return '<button type="button" class="mg-card" data-go="' + s[0] + '"><span class="mg-ic">' + s[1] + '</span><b>' + s[2] + '</b><small>' + s[3] + '</small></button>';
       }).join('') + '<button type="button" class="mg-card" data-camp="1"><span class="mg-ic">🔔</span><b>Campanella</b><small>Iscrizioni da approvare</small></button></div>';
