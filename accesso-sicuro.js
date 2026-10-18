@@ -189,7 +189,7 @@
     'PAGAMENTI: iscrizione 150 euro all anno per trasportatori e aziende, con link di pagamento via email dopo la verifica dei dati. Il trasportatore paga 20 euro per ogni carico che prende. Per le aziende pubblicare i carichi e gratuito. Si paga su pagina sicura Shopify. Prima della scadenza annuale arriva un promemoria per email.',
     'RIEPILOGO: menu «Dashboard» e poi «Riepilogo movimenti» per vedere i movimenti; non e una fattura fiscale. «I miei report» mostra numeri e un grafico mese per mese. «Modifica i miei dati» per aggiornare i dati. In «Sicurezza» c e anche «Elimina il mio account».',
     'PRIVACY E REGOLE: il portale e privato, nessuno vede i dati degli altri. SynAIMAX mette in contatto aziende e trasportatori ma non e parte del contratto di trasporto: il prezzo del trasporto si accorda e si paga direttamente tra azienda e trasportatore.',
-    'SUPPORTO: modulo «Scrivici» nel portale oppure email ecotruckconnect@synaimaxpro.com. Modifica o annullamento di un carico: per ora scrivere al supporto.'
+    'SUPPORTO: modulo «Scrivici» nel portale oppure email system.synaimax@gmail.com. Modifica o annullamento di un carico: per ora scrivere al supporto.'
   ].join(' ');
   var BOT_TRASPORTATORE = [
     'L UTENTE E UN TRASPORTATORE.',
@@ -352,7 +352,7 @@
         '<button id="ect-cod-ok">Conferma →</button>' +
         '<div class="err" id="ect-cod-err"></div>' +
         '<button class="sec" id="ect-cod-esci">⏻ Esci</button>' +
-        '<div class="piccolo">Il codice cambia ogni 30 secondi: se non funziona, aspetta quello nuovo.<br>Hai perso o cambiato telefono? Scrivi a ecotruckconnect@synaimaxpro.com</div>');
+        '<div class="piccolo">Il codice cambia ogni 30 secondi: se non funziona, aspetta quello nuovo.<br>Hai perso o cambiato telefono? Scrivi a system.synaimax@gmail.com</div>');
       var inp = document.getElementById('ect-cod-in'), err = document.getElementById('ect-cod-err'), b = document.getElementById('ect-cod-ok');
       document.getElementById('ect-cod-esci').onclick = esciSubito;
       async function conferma() {
@@ -1480,7 +1480,7 @@
       '<div style="font-size:13px;line-height:1.5;opacity:0.8;margin-bottom:18px;">Finché il pagamento non risulta, il resto del portale resta in pausa. Se esci e rientri trovi questa stessa schermata.</div>' +
       '<button type="button" class="ect-dp-paga" style="display:block;width:100%;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;">Salda ' + IMPORTO[p.tipo] + ' € e continua</button>' +
       '<button type="button" class="ect-dp-ok" style="display:block;width:100%;background:rgba(255,255,255,0.08);color:#fde8e8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;">Ho già pagato: ricontrolla</button>' +
-      '<div style="font-size:12px;opacity:0.65;margin-top:14px;">Serve aiuto? ecotruckconnect@synaimaxpro.com</div></div>';
+      '<div style="font-size:12px;opacity:0.65;margin-top:14px;">Serve aiuto? system.synaimax@gmail.com</div></div>';
     document.body.appendChild(ov);
     ov.querySelector('.ect-dp-paga').onclick = function () { window.ectPagaPendente(); };
     ov.querySelector('.ect-dp-ok').onclick = function () { ricontrollaPagamento(this); };
