@@ -61,6 +61,7 @@
   /* ---------- le pagine ---------- */
   var PAG = {
     home:      { i: '🏠', t: 'Dashboard', d: 'La pagina iniziale: scorciatoie e collegamenti rapidi.' },
+    centralina:{ i: '🔔', t: 'Centralina', d: 'Lo stato di tutto EcoTruckConnect: 16 quadretti verdi, gialli o rossi. Se qualcosa si rompe, prima ci provano l’operaio e le riserve; se non basta, lo vedi qui.' },
     calendario:{ i: '📅', t: 'Calendario', d: 'I carichi giorno per giorno: disponibili, in pagamento, presi.' },
     storico:   { i: '📚', t: 'Storico movimenti', d: 'Archivio di tutto: filtra per periodo, stato, trasportatore o azienda. Scarica in CSV.' },
     archT:     { i: '🚚', t: 'Archivio trasportatori', d: 'Ogni trasportatore con tutta la sua storia: viaggi, pagamenti, cambi dati, attività. Cerca e scarica.' },
@@ -92,6 +93,7 @@
   var MENU = [
     { p: 'home', e: 'Scorciatoie e collegamenti' },
     { href: 'registrazioni.html', i: '🆕', t: 'Registrazioni', e: 'Nuove iscrizioni da approvare' },
+    { p: 'centralina', e: 'Verde, giallo, rosso: tutto sotto controllo' },
     { p: 'calendario', e: 'I carichi giorno per giorno' },
     { p: 'storico', e: 'Tutti i carichi e i movimenti' },
     { p: 'archT', e: 'Storia di ogni trasportatore' },
@@ -140,6 +142,13 @@
       }).join('') + '<button type="button" class="mg-card" data-camp="1"><span class="mg-ic">🔔</span><b>Campanella</b><small>Iscrizioni da approvare</small></button></div>';
       wrap.insertBefore(h, wrap.firstChild);
       (gruppi.home = gruppi.home || []).unshift(h);
+    }
+    /* centralina (18/10): il contenuto lo disegna centralina.js */
+    if (!$('mg-centralina')) {
+      var ct = document.createElement('div'); ct.id = 'mg-centralina'; ct.setAttribute('data-mg', 'centralina');
+      ct.innerHTML = '<div class="mg-nota">Sto leggendo la centralina…</div>';
+      wrap.appendChild(ct);
+      (gruppi.centralina = gruppi.centralina || []).push(ct);
     }
     /* pagina "Dati finti" nella dashboard reale (nella demo c'e' gia') */
     if (!gruppi.finti && !$('mg-finti')) {
