@@ -46,7 +46,7 @@
   };
   var PASSI = ['Operaio', 'Riserva 1', 'Riserva 2'];
 
-  var stato = { q: [], arch: [], collegata: false, errore: '', agg: null };
+  var stato = { q: [], arch: [], collegata: false, errore: '', agg: null, msgAgg: '' };
   var vista = 'griglia';           /* 'griglia' | id del quadretto */
   var meseVis = new Date(); meseVis.setDate(1);
   var giornoSel = '';
@@ -169,7 +169,7 @@
       : g === 'Verde' ? 'Tutto a posto' : g === 'Giallo' ? 'Qualcosa da guardare' : g === 'Rosso' ? 'C’è un guasto' : 'Nessun controllo ancora fatto';
     var sub = DEMO ? '🎭 DEMO: dati di esempio, niente di vero.' : (stato.errore ? esc(stato.errore) : (stato.collegata ? '' : 'Si accende dopo il collegamento con Make e Airtable.'));
     return '<div class="ct-bar"><div class="ct-glob">' + pallino(g, true) + '<span style="color:' + k.c + '">' + testo + '</span></div>' +
-      '<div class="ct-sm">' + conta('Verde') + ' verdi · ' + conta('Giallo') + ' gialli · ' + conta('Rosso') + ' rossi · aggiornato ' + fmt(stato.agg) + '<br>Controlli automatici: ' + ORARI + (sub ? '<br>' + sub : '') + '</div>' +
+      '<div class="ct-sm">' + conta('Verde') + ' verdi · ' + conta('Giallo') + ' gialli · ' + conta('Rosso') + ' rossi · aggiornato ' + fmt(stato.agg) + '<br>Controlli automatici: ' + ORARI + (sub ? '<br>' + sub : '') + (stato.msgAgg ? '<br><b style="color:#93c5fd">' + esc(stato.msgAgg) + '</b>' : '') + '</div>' +
       '<span style="margin-left:auto" class="ct-row"><button class="ct-btn" id="ct-agg"' + (occupato ? ' disabled' : '') + '>' + (occupato ? 'Controllo in corso…' : '↻ Aggiorna ora') + '</button></span></div>';
   }
 
@@ -178,9 +178,13 @@
     var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi; }).sort(function (a, b) { return new Date(b.quando) - new Date(a.quando); });
     var righe = ev.length ? ev.map(function (e) {
       var q = nomeQ(e.quadretto);
-      return '<div class="r"><span class="o">' + fmt(e.quando, 1) + '</span><span>' + tag(e.livello) + '</span><span><b>' + esc(e.titolo) + '</b><br><span class="ct-sm">' + esc(e.chi) + ': ' + esc(e.azione) + ' · ' + esc(e.esito) + (q ? ' · ' + esc(q) : '') + '</span></span></div>';
+      return '<div class="r"><span class="o">' + fmt(e.quando, 1) + '</span><span>' + tag(e.livello) + '</span><span style="flex:1"><b>' + esc(e.titolo) + '</b><br><span class="ct-sm">' + esc(e.chi) + ': ' + esc(e.azione) + ' · ' + esc(e.esito) + (q ? ' · ' + esc(q) : '') + '</span></span>' + (q ? '<button class="ct-btn sec" data-q="' + esc(e.quadretto) + '" style="padding:6px 12px">Vai al danno →</button>' : '') + '</div>';
     }).join('') : '<div class="r"><span class="ct-sm">Oggi nessun guasto registrato.</span></div>';
-    return '<div class="ct-h">Report di oggi</div><div class="ct-rep">' + righe + '</div>';
+    var aperti = stato.q.filter(function (x) { return x.stato === 'Giallo' || x.stato === 'Rosso'; });
+    var righeAperti = aperti.map(function (x) {
+      return '<div class="r"><span class="o">ORA</span><span>' + tag(x.stato) + '</span><span style="flex:1"><b>' + esc(x.id) + ' · ' + esc(x.nome) + '</b><br><span class="ct-sm">' + esc(x.dettaglio || 'Da controllare') + '</span></span><button class="ct-btn ' + (x.stato === 'Rosso' ? 'ros' : 'sec') + '" data-q="' + esc(x.id) + '" style="padding:6px 12px">Vai al danno →</button></div>';
+    }).join('');
+    return '<div class="ct-row" style="margin:22px 0 10px"><div class="ct-h" style="margin:0">Report di oggi</div><button class="ct-btn sec" data-az-rep="1" style="margin-left:auto">🖨 Stampa / scarica report</button></div><div class="ct-rep">' + righeAperti + righe + '</div>';
   }
   function nomeQ(id) { var x = stato.q.filter(function (y) { return String(y.id) === String(id); })[0]; return x ? x.nome : ''; }
 
@@ -303,16 +307,36 @@
       '<tr><td><b>Tentativi / ultimo intervento</b></td><td>' + (x.tentativi || 0) + ' · ' + esc(x.ultimo_intervento || 'Nessuno') + '</td></tr></table><script>window.onload=function(){window.print()}<\/script></body></html>');
     w.document.close();
   }
+  function stampaReport() {
+    var w = window.open('', '_blank'); if (!w) { alert('Il browser ha bloccato la finestra di stampa: consentila e riprova.'); return; }
+    var oggi = giornoDi(new Date().toISOString());
+    var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi; }).sort(function (a, b) { return new Date(a.quando) - new Date(b.quando); });
+    var g = globale();
+    var tq = stato.q.map(function (x) {
+      var m = META[x.id] || {};
+      return '<tr><td>' + esc(x.id) + '</td><td><b>' + esc(x.nome) + '</b></td><td>' + esc(x.stato) + '</td><td>' + esc(fmt(x.ultimo_controllo)) + '</td><td>' + esc(x.dettaglio || '') + (x.stato === 'Giallo' || x.stato === 'Rosso' ? '<br><small>Dove ripararlo: ' + esc(m.link || '') + '</small>' : '') + '</td></tr>';
+    }).join('');
+    var te = ev.length ? ev.map(function (e) { return '<tr><td>' + esc(fmt(e.quando, 1)) + '</td><td>' + esc(e.livello) + '</td><td>' + esc(e.titolo) + '</td><td>' + esc(e.chi) + ': ' + esc(e.azione) + '</td><td>' + esc(e.esito) + '</td></tr>'; }).join('') : '<tr><td colspan="5">Oggi nessun guasto registrato.</td></tr>';
+    w.document.write('<html><head><meta charset="utf-8"><title>Report centralina ' + oggi + '</title><style>body{font-family:Arial,sans-serif;padding:26px;color:#111}h1{margin:0 0 4px}h2{margin:22px 0 6px;font-size:15px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top}th{background:#eee}small{color:#555}</style></head><body><h1>EcoTruckConnect — Report centralina</h1><div>' + new Date().toLocaleString('it-IT') + ' · Stato generale: <b>' + esc(g) + '</b> · ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' + (DEMO ? ' · <b>DEMO: dati di esempio</b>' : '') + '</div><h2>I 16 quadretti</h2><table><tr><th>N.</th><th>Quadretto</th><th>Stato</th><th>Ultimo controllo</th><th>Dettaglio</th></tr>' + tq + '</table><h2>Cosa è successo oggi</h2><table><tr><th>Ora</th><th>Livello</th><th>Guasto</th><th>Chi e cosa</th><th>Esito</th></tr>' + te + '</table><script>window.onload=function(){window.print()}<\/script></body></html>');
+    w.document.close();
+  }
   function csv() {
     var righe = [['quando', 'quadretto', 'nome', 'livello', 'chi', 'azione', 'esito', 'titolo']].concat(stato.arch.map(function (e) { return [e.quando, e.quadretto, nomeQ(e.quadretto), e.livello, e.chi, e.azione, e.esito, e.titolo]; }));
     var t = righe.map(function (r) { return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\r\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + t], { type: 'text/csv;charset=utf-8' })); a.download = 'centralina-archivio' + (DEMO ? '-demo' : '') + '.csv'; document.body.appendChild(a); a.click(); a.remove();
   }
   function aggiornaOra() {
-    if (occupato) return; occupato = true; disegna();
-    var fine = function () { occupato = false; disegna(); };
-    if (DEMO) { setTimeout(function () { stato.q.forEach(function (x) { x.ultimo_controllo = new Date().toISOString(); }); stato.agg = new Date().toISOString(); fine(); }, 1400); return; }
-    carica(true).then(fine, fine);
+    if (occupato) return; occupato = true; stato.msgAgg = 'Controllo in corso…'; disegna();
+    var fine = function (testo) {
+      occupato = false; stato.agg = new Date().toISOString();
+      stato.msgAgg = testo + ' (' + fmt(stato.agg, 1) + ')'; disegna();
+      setTimeout(function () { stato.msgAgg = ''; disegna(); }, 12000);
+    };
+    if (DEMO) { setTimeout(function () { stato.q.forEach(function (x) { x.ultimo_controllo = new Date().toISOString(); }); fine('Aggiornato: ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi'); }, 1400); return; }
+    if (!CENTRALINA_URL) { setTimeout(function () { fine('Controllato, ma la centralina non è ancora collegata a Make: nessun controllo vero'); }, 700); return; }
+    carica(true).then(function () {
+      fine(stato.collegata ? 'Aggiornato: ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' : 'Non sono riuscito ad aggiornare' + (stato.errore ? ': ' + stato.errore : ''));
+    });
   }
 
   function legami(c) {
@@ -321,6 +345,7 @@
       var q = t.closest('[data-q]'); if (q) { vista = q.getAttribute('data-q'); disegna(); window.scrollTo(0, 0); return; }
       if (t.closest('[data-back]')) { vista = 'griglia'; disegna(); return; }
       if (t.closest('#ct-agg')) { aggiornaOra(); return; }
+      if (t.closest('[data-az-rep]')) { stampaReport(); return; }
       if (t.closest('#ct-csv')) { csv(); return; }
       var ms = t.closest('[data-mese]'); if (ms) { meseVis.setMonth(meseVis.getMonth() + Number(ms.getAttribute('data-mese'))); disegna(); return; }
       var g = t.closest('[data-g]'); if (g) { giornoSel = g.getAttribute('data-g'); disegna(); return; }
