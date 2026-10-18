@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   var DEMO = !!window.CENTRALINA_DEMO;
-  var CENTRALINA_URL = '';          /* <- indirizzo del webhook "Centralina Leggi" (si compila quando lo scenario e' pronto) */
+  var CENTRALINA_URL = 'https://hook.eu1.make.com/i2vvp1ly9alev23iubqxnt9txuvn5prp';          /* <- indirizzo del webhook "Centralina Leggi" (si compila quando lo scenario e' pronto) */
   var ORARI = '08:00 · 15:00 · 20:00';
 
   function $(id) { return document.getElementById(id); }
@@ -86,13 +86,23 @@
       if (!stato.q.length) stato.q = Object.keys(META).map(function (k) { return { id: k, nome: 'Quadretto ' + k, stato: 'Grigio', dettaglio: '', ultimo_intervento: 'Nessuno', tentativi: 0 }; });
       stato.collegata = false; disegna(); return Promise.resolve();
     }
-    return fetch(CENTRALINA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: forza ? 'centralina_aggiorna' : 'centralina_leggi' }) })
-      .then(function (r) { return r.text(); })
-      .then(function (t) {
-        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('risposta non valida'); }
-        if (!j || j.ok === false) throw new Error((j && j.errore) || 'accesso non consentito');
-        stato.q = (j.quadretti || []).sort(function (a, b) { return Number(a.id) - Number(b.id); });
-        stato.arch = j.archivio || [];
+    var chiama = function (body) {
+      return fetch(CENTRALINA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.text(); })
+        .then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { j = null; } return j; });
+    };
+    var prima = forza ? chiama({ action: 'centralina_aggiorna', id: '1' }).catch(function () { return null; }) : Promise.resolve();
+    return prima.then(function () { return chiama({ action: 'centralina_leggi' }); })
+      .then(function (j) {
+        if (!j) throw new Error('risposta non valida');
+        if (j.ok === false) throw new Error(j.errore || 'accesso non consentito');
+        var piatto = function (r) { var f = (r && r.fields) || {}; f._rec = r && r.id; return f; };
+        stato.q = (j.centr || []).map(piatto).map(function (f) {
+          return { id: String(f.id_quadretto), nome: f.nome || ('Quadretto ' + f.id_quadretto), stato: f.stato || 'Grigio', ultimo_controllo: f.ultimo_controllo || '', dettaglio: f.dettaglio || '', ultimo_intervento: f.ultimo_intervento || 'Nessuno', tentativi: Number(f.tentativi) || 0, priorita: f.priorita || '', attivo: !!f.attivo };
+        }).sort(function (a, b) { return Number(a.id) - Number(b.id); });
+        stato.arch = (j.arch || []).map(piatto).map(function (f) {
+          return { titolo: f.titolo || '', quadretto: String(f.quadretto || ''), livello: f.livello || 'Giallo', quando: f.quando || '', chi: f.chi || '', azione: f.azione || '', esito: f.esito || '', segnato_risolto: !!f.segnato_risolto };
+        });
         stato.collegata = true; stato.errore = ''; stato.agg = new Date().toISOString();
       })
       .catch(function (e) { stato.errore = String(e && e.message || e); stato.collegata = false; })
@@ -280,7 +290,7 @@
     if (DEMO) return azioneDemo(az, x);
     msg('Invio il comando…');
     fetch(CENTRALINA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'centralina_' + az, id: x.id }) })
-      .then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok === false) throw new Error(j.errore || 'comando rifiutato'); return carica(); })
+      .then(function (r) { return r.text(); }).then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) {} if (j && j.ok === false) throw new Error(j.errore === 'quadretto_non_ancora_attivo' ? 'questo quadretto non è ancora attivo' : (j.errore || 'comando rifiutato')); msg(''); return carica(); })
       .catch(function (e) { msg('Non è riuscito: ' + (e && e.message || e)); });
   }
   function azioneDemo(az, x) {

@@ -70,7 +70,8 @@
   var AZIONI_PAGAMENTO = ['rinuncia_carico', 'annulla_carico_preso'];
   var PROTETTI = [
     'hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak',
-    'hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm'
+    'hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm',
+    'hook.eu1.make.com/i2vvp1ly9alev23iubqxnt9txuvn5prp'
   ];
   var AZIONI_PUBBLICHE = ['reset_richiedi', 'reset_conferma'];
   var FUNZIONE = '/.netlify/functions/sicurezza';
