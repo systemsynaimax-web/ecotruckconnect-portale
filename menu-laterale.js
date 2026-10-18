@@ -50,7 +50,7 @@
     mezzi:    { c: 'profilo', part: 'tutto', t: 'Mezzi e autorizzazioni', d: 'Indica i mezzi che possiedi e le autorizzazioni che hai: è la prima cosa da fare. Perché? Quando un’azienda pubblica un carico indica il mezzo e le autorizzazioni che servono, e il carico lo vedi solo se hai proprio quel mezzo e quelle autorizzazioni: così non perdi tempo con carichi che non puoi fare. Per ogni autorizzazione puoi caricare il documento (PDF, JPG o PNG, max 4 MB), scaricarlo o rimuoverlo. Puoi modificare tutto quando vuoi.' },
     tg:       { c: 'tg', t: 'Telegram', d: 'Collega il tuo Telegram per ricevere i nuovi carichi sul telefono, in privato. Si fa una volta sola.' },
     carichi:  { c: 'normale', blocchi: ['carichi-disponibili-wrap'], cap: true, t: 'Carichi disponibili', d: 'I carichi liberi nella tua zona, pronti da prendere. Premi «Vedi dettagli» per tutti i dati prima di decidere.' },
-    presi:    { c: 'normale', dl: 1, blocchi: ['carichi-presi-wrap'], t: 'Carichi presi', d: 'I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti dall’azienda (che puoi scaricare).' },
+    presi:    { c: 'normale', dl: 1, blocchi: ['carichi-presi-wrap'], t: 'Carichi presi', d: 'I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti dall’azienda (che puoi scaricare). Se non puoi più farlo, su ogni carico trovi il pulsante «Rinuncia al carico» (si pagano 10 €).' },
     cal:      { c: 'normale', blocchi: ['calendario-carichi-wrap'], t: 'Calendario', d: 'I carichi giorno per giorno. Blu = disponibile, arancione = in pagamento, rosso = preso. Clicca un giorno per vedere i carichi.' },
     inc:      { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da incassare', d: 'Quanto devi ancora incassare dalle aziende, diviso per azienda e per giorno. Puoi scaricare il PDF e il CSV.' },
     fatture:  { c: 'dash', dl: 1, dash: 'fatture', t: 'Commissioni da €20', d: 'Una riga per ogni carico preso, con data, ora e commissione da €20. È un riepilogo: non sostituisce la fattura fiscale.' },
@@ -73,7 +73,7 @@
 
   /* testi diversi per l'azienda */
   var PAZ = {
-    presi: { t: 'Trasporti presi', d: 'Chi ha preso i tuoi carichi: scheda completa del trasportatore, indirizzi e documenti che hai allegato.' },
+    presi: { t: 'Trasporti presi', d: 'Chi ha preso i tuoi carichi: scheda completa del trasportatore, indirizzi e documenti che hai allegato. Su ogni carico trovi il pulsante «Annulla carico» (si pagano 20 €).' },
     notifiche: { d: 'Scegli cosa ricevere (campanella ed email), in quali orari e con quale tono.' },
     dati: { d: 'I dati della tua azienda (ragione sociale, P.IVA, PEC, sede, telefono). Scrivi solo quello che vuoi cambiare. Qui puoi anche caricare i tuoi file facoltativi.' },
     report: { d: 'I tuoi numeri riassunti: pubblicazioni, trasporti presi e totali da pagare.' },
