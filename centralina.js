@@ -185,7 +185,7 @@
 
   function reportOggi() {
     var oggi = giornoDi(new Date().toISOString());
-    var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi; }).sort(function (a, b) { return new Date(b.quando) - new Date(a.quando); });
+    var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi && ancoraAperto(e); }).sort(function (a, b) { return new Date(b.quando) - new Date(a.quando); });
     var righe = ev.length ? ev.map(function (e) {
       var q = nomeQ(e.quadretto);
       return '<div class="r"><span class="o">' + fmt(e.quando, 1) + '</span><span>' + tag(e.livello) + '</span><span style="flex:1"><b>' + esc(e.titolo) + '</b><br><span class="ct-sm">' + esc(e.chi) + ': ' + esc(e.azione) + ' · ' + esc(e.esito) + (q ? ' · ' + esc(q) : '') + '</span></span>' + (q ? '<button class="ct-btn sec" data-q="' + esc(e.quadretto) + '" style="padding:6px 12px">Vai al danno →</button>' : '') + '</div>';
@@ -195,6 +195,11 @@
       return '<div class="r"><span class="o">ORA</span><span>' + tag(x.stato) + '</span><span style="flex:1"><b>' + esc(x.id) + ' · ' + esc(x.nome) + '</b><br><span class="ct-sm">' + esc(x.dettaglio || 'Da controllare') + '</span></span><button class="ct-btn ' + (x.stato === 'Rosso' ? 'ros' : 'sec') + '" data-q="' + esc(x.id) + '" style="padding:6px 12px">Vai al danno →</button></div>';
     }).join('');
     return '<div class="ct-row" style="margin:22px 0 10px"><div class="ct-h" style="margin:0">Report di oggi</div><button class="ct-btn sec" data-az-rep="1" style="margin-left:auto">🖨 Stampa / scarica report</button></div><div class="ct-rep">' + righeAperti + righe + '</div>';
+  }
+  // un guasto gia' rientrato (quadretto ora Verde) non va piu' nel report di oggi: resta solo nell'archivio
+  function ancoraAperto(e) {
+    var q0 = stato.q.filter(function (y) { return String(y.id) === String(e.quadretto); })[0];
+    return !(q0 && q0.stato === 'Verde' && e.esito !== 'Risolto');
   }
   function nomeQ(id) { var x = stato.q.filter(function (y) { return String(y.id) === String(id); })[0]; return x ? x.nome : ''; }
 
@@ -324,7 +329,7 @@
   function stampaReport() {
     var w = window.open('', '_blank'); if (!w) { alert('Il browser ha bloccato la finestra di stampa: consentila e riprova.'); return; }
     var oggi = giornoDi(new Date().toISOString());
-    var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi; }).sort(function (a, b) { return new Date(a.quando) - new Date(b.quando); });
+    var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi && ancoraAperto(e); }).sort(function (a, b) { return new Date(a.quando) - new Date(b.quando); });
     var g = globale();
     var tq = stato.q.map(function (x) {
       var m = META[x.id] || {};
