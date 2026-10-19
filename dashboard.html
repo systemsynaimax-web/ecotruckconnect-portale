@@ -1122,12 +1122,13 @@ function apriDettaglioAnagrafica(recordId, tipo) {
   const manca = [];
   if (!String(f.telegram_chat_id || '').trim()) manca.push('Telegram NON collegato: non riceve le notifiche');
   else if (f.ha_fatto_start === false) manca.push('Non ha mai premuto Start sul bot Telegram');
+  if (f.authenticator_attivo !== true) manca.push('Authenticator NON attivato (nessun codice a 6 cifre al login)');
   if (f.password_temporanea) manca.push('Password NON cambiata: usa ancora quella temporanea');
   if (tipo !== 'azienda' && Array.isArray(f.autorizzazioni) && f.autorizzazioni.length && !(Array.isArray(f.documenti_autorizzazioni) && f.documenti_autorizzazioni.length)) manca.push('Documenti delle autorizzazioni NON caricati');
   if (f.consenso_condizioni === false || (f.consenso_condizioni == null && f.data_consenso == null)) manca.push('Consenso alle Condizioni non registrato');
   const boxManca = manca.length
     ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);font-size:13px;line-height:1.6;"><b>⚠️ Cosa NON ha ancora fatto</b> (non è un guasto nostro):<br>' + manca.map(m => '• ' + m).join('<br>') + '</div>'
-    : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram collegato, password cambiata, documenti caricati.</div>';
+    : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram collegato, password cambiata, Authenticator attivo, documenti caricati.</div>';
   document.getElementById('modal-title').textContent = nome;
   document.getElementById('modal-body').innerHTML = boxManca + `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
   document.getElementById('modal-bg').classList.add('open');

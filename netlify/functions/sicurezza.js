@@ -28,6 +28,17 @@ const MINUTI_CODICE_EMAIL = 15;
 const MAX_TENTATIVI = 5;
 const MAX_RICHIESTE_GIORNO = 3;
 
+// Segna in Airtable (tramite Make) se l'utente ha attivato l'Authenticator: serve ai gestori per vedere
+// nella scheda del trasportatore/azienda cosa ha fatto. Se non risponde non succede nulla (solo informativo).
+const HOOK_AUTENTICATORE = 'https://hook.eu1.make.com/uctfn5x8jvds7qu4qfwvll02llybvss9';
+async function segnaAuthenticator(email, attivo) {
+  try {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), 3500);
+    await fetch(HOOK_AUTENTICATORE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: String(email || ''), attivo: attivo === true }), signal: c.signal });
+    clearTimeout(t);
+  } catch (e) { /* solo informativo */ }
+}
+
 function risposta(stato, dati) {
   return { statusCode: stato, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dati) };
 }
@@ -184,6 +195,7 @@ exports.handler = async (event, context) => {
 
       if (azione === 'mfa_azzera') {
         await aggiorna(identity, u.id, { app_metadata: { mfa_attivo: false, mfa_segreto: null, mfa_attesa: null, mfa_errori: null, mfa_blocco: null } });
+        await segnaAuthenticator(u.email, false);
         return risposta(200, { ok: true });
       }
 
@@ -200,6 +212,7 @@ exports.handler = async (event, context) => {
     const am = u.app_metadata || {};
 
     if (azione === 'stato') {
+      await segnaAuthenticator(u.email, am.mfa_attivo === true);   // allinea la scheda anche per chi l'aveva gia' attivato
       return risposta(200, { ok: true, email: u.email, mfa_attivo: am.mfa_attivo === true, pw_temporanea: am.pw_temporanea === true });
     }
 
@@ -237,6 +250,7 @@ exports.handler = async (event, context) => {
 
       if (azione === 'mfa_conferma') {
         await aggiorna(identity, u.id, { app_metadata: { mfa_attivo: true, mfa_segreto: am.mfa_attesa, mfa_attesa: null, mfa_errori: 0, mfa_blocco: null } });
+        await segnaAuthenticator(u.email, true);
         return risposta(200, Object.assign({ ok: true }, creaTicket(u.email)));
       }
       if (azione === 'mfa_verifica') {
@@ -245,6 +259,7 @@ exports.handler = async (event, context) => {
       }
       if (azione === 'mfa_disattiva') {
         await aggiorna(identity, u.id, { app_metadata: { mfa_attivo: false, mfa_segreto: null, mfa_attesa: null, mfa_errori: 0, mfa_blocco: null } });
+        await segnaAuthenticator(u.email, false);
         return risposta(200, { ok: true });
       }
     }
