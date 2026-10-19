@@ -61,7 +61,7 @@
   /* ---------- le pagine ---------- */
   var PAG = {
     home:      { i: '🏠', t: 'Dashboard', d: 'La pagina iniziale: scorciatoie e collegamenti rapidi.' },
-    centralina:{ i: '🔔', t: 'Centralina', d: 'Lo stato di tutto EcoTruckConnect: 26 quadretti verdi, gialli o rossi. Se qualcosa si rompe, prima ci provano l’operaio e le riserve; se non basta, lo vedi qui.' },
+    centralina:{ i: '🔔', t: 'Centralina', d: 'Lo stato di tutto EcoTruckConnect: 23 quadretti verdi, gialli o rossi. Se qualcosa si rompe, prima ci provano l’operaio e le riserve; se non basta, lo vedi qui.' },
     calendario:{ i: '📅', t: 'Calendario', d: 'I carichi giorno per giorno: disponibili, in pagamento, presi.' },
     storico:   { i: '📚', t: 'Storico movimenti', d: 'Archivio di tutto: filtra per periodo, stato, trasportatore o azienda. Scarica in CSV.' },
     archT:     { i: '🚚', t: 'Archivio trasportatori', d: 'Ogni trasportatore con tutta la sua storia: viaggi, pagamenti, cambi dati, attività. Cerca e scarica.' },
