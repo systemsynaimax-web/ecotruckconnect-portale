@@ -1056,8 +1056,8 @@ async function caricaAnagraficaCompleta() {
       body: JSON.stringify({ action: 'get_anagrafica_completa' })
     });
     const data = await res.json();
-    tuttiTrasportatoriAnagrafica = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', fields: r.fields || r }));
-    tutteAziendeAnagrafica = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', fields: r.fields || r }));
+    tuttiTrasportatoriAnagrafica = (data.trasportatori || []).map(r => ({ id: r.id, tipo: 'trasportatore', creato: r.createdTime || '', fields: r.fields || r }));
+    tutteAziendeAnagrafica = (data.aziende || []).map(r => ({ id: r.id, tipo: 'azienda', creato: r.createdTime || '', fields: r.fields || r }));
     document.getElementById('st-trasportatori-tot').textContent = tuttiTrasportatoriAnagrafica.length;
     document.getElementById('st-aziende-tot').textContent = tutteAziendeAnagrafica.length;
     renderAnagrafica();
@@ -1098,6 +1098,7 @@ function renderAnagrafica() {
       <div class="feed-info">
         <div class="feed-title">${nome} <span class="tipo-tag ${tagClasse}" style="margin-left:6px;">${tagTesto}</span></div>
         <div class="feed-sub">${f.email || '—'}${mezzi ? ' · ' + mezzi : ''}${f.stato ? ' · ' + f.stato : ''}</div>
+        <div class="feed-sub">📅 Registrato il ${quandoReg(r)} · ${cosaManca(f, r.tipo).length ? '⚠️ ' + cosaManca(f, r.tipo).length + ' cose NON fatte' : '✅ ha fatto tutto'}</div>
       </div>
       <span style="color:var(--muted);font-size:16px;">›</span>
     </div>`;
@@ -1105,6 +1106,20 @@ function renderAnagrafica() {
 }
 
 function filtraAnagrafica() { renderAnagrafica(); }
+
+// Cosa NON ha ancora fatto un utente (non sono guasti della piattaforma: serve per sapere chi ha colpa se qualcosa non arriva)
+function cosaManca(f, tipo) {
+  const manca = [];
+  if (!String(f.telegram_chat_id || '').trim()) manca.push('Telegram NON collegato: non riceve le notifiche');
+  else if (f.ha_fatto_start === false) manca.push('Non ha mai premuto Start sul bot Telegram');
+  if (f.authenticator_attivo !== true) manca.push('Authenticator NON attivato (nessun codice a 6 cifre al login)');
+  if (f.password_temporanea) manca.push('Password NON cambiata: usa ancora quella temporanea');
+  if (tipo !== 'azienda' && Array.isArray(f.autorizzazioni) && f.autorizzazioni.length && !(Array.isArray(f.documenti_autorizzazioni) && f.documenti_autorizzazioni.length)) manca.push('Documenti delle autorizzazioni NON caricati');
+  if (f.consenso_condizioni === false || (f.consenso_condizioni == null && f.data_consenso == null)) manca.push('Consenso alle Condizioni non registrato');
+  return manca;
+}
+function quandoReg(r) { const d = r.creato || (r.fields && r.fields.data_registrazione) || ''; return d ? new Date(d).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+function mostraPw(id) { const e = document.getElementById('pw-' + id); if (e) { e.textContent = e.getAttribute('data-pw') || '— (nessuna salvata)'; } }
 
 function apriDettaglioAnagrafica(recordId, tipo) {
   const lista = tipo === 'azienda' ? tutteAziendeAnagrafica : tuttiTrasportatoriAnagrafica;
@@ -1118,19 +1133,13 @@ function apriDettaglioAnagrafica(recordId, tipo) {
     if (Array.isArray(val)) val = val.length ? val.join(', ') : null;
     return `<tr><td style="color:var(--muted);padding:8px 0;border-top:1px solid var(--border);width:44%;">${label}</td><td style="text-align:right;font-weight:500;padding:8px 0;border-top:1px solid var(--border);">${val || '—'}</td></tr>`;
   }).join('');
-  // Cosa NON ha ancora fatto (non sono guasti della piattaforma: serve per sapere chi ha colpa se qualcosa non arriva)
-  const manca = [];
-  if (!String(f.telegram_chat_id || '').trim()) manca.push('Telegram NON collegato: non riceve le notifiche');
-  else if (f.ha_fatto_start === false) manca.push('Non ha mai premuto Start sul bot Telegram');
-  if (f.authenticator_attivo !== true) manca.push('Authenticator NON attivato (nessun codice a 6 cifre al login)');
-  if (f.password_temporanea) manca.push('Password NON cambiata: usa ancora quella temporanea');
-  if (tipo !== 'azienda' && Array.isArray(f.autorizzazioni) && f.autorizzazioni.length && !(Array.isArray(f.documenti_autorizzazioni) && f.documenti_autorizzazioni.length)) manca.push('Documenti delle autorizzazioni NON caricati');
-  if (f.consenso_condizioni === false || (f.consenso_condizioni == null && f.data_consenso == null)) manca.push('Consenso alle Condizioni non registrato');
+  const manca = cosaManca(f, tipo);
   const boxManca = manca.length
     ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);font-size:13px;line-height:1.6;"><b>⚠️ Cosa NON ha ancora fatto</b> (non è un guasto nostro):<br>' + manca.map(m => '• ' + m).join('<br>') + '</div>'
     : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram collegato, password cambiata, Authenticator attivo, documenti caricati.</div>';
+  const pwBox = '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.7;">📅 Registrato il <b>' + quandoReg(r) + '</b><br>✉️ Email: <b>' + escV(f.email || '—') + '</b><br>🔑 Password salvata: <b id="pw-' + r.id + '" data-pw="' + escV(f.password || '') + '">••••••••</b> <button type="button" class="btn-scarica" style="padding:3px 10px;" onclick="mostraPw(\'' + r.id + '\')">👁 Mostra</button>' + (f.password_temporanea ? '' : '<br><span style="color:var(--muted);font-size:12px;">Se l\'utente l\'ha cambiata da solo, questa non vale più: usa «Password dimenticata» o rigenera.</span>') + '</div>';
   document.getElementById('modal-title').textContent = nome;
-  document.getElementById('modal-body').innerHTML = boxManca + `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
+  document.getElementById('modal-body').innerHTML = pwBox + boxManca + `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
   document.getElementById('modal-bg').classList.add('open');
 }
 
