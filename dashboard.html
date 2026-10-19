@@ -6,6 +6,7 @@
      <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
    <script>window.ECT_SOLO_GESTORI = true;</script>
    <script src="/accesso-sicuro.js"></script>
+<script src="/mail-popup.js"></script>
 <script src="/sentinella.js"></script>
 <title>EcoTruckConnect — Dashboard Gestori (REALE)</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1061,6 +1062,7 @@ async function caricaAnagraficaCompleta() {
     document.getElementById('st-trasportatori-tot').textContent = tuttiTrasportatoriAnagrafica.length;
     document.getElementById('st-aziende-tot').textContent = tutteAziendeAnagrafica.length;
     renderAnagrafica();
+    try { const em = (new URLSearchParams(location.search).get('scheda') || '').toLowerCase(); if (em) { const t = tuttiTrasportatoriAnagrafica.find(x => String(x.fields.email || '').toLowerCase() === em) || tutteAziendeAnagrafica.find(x => String(x.fields.email || '').toLowerCase() === em); if (t) apriDettaglioAnagrafica(t.id, t.tipo); } } catch (e) {}
   } catch (e) {
     console.error('Errore caricamento anagrafica completa:', e);
     document.getElementById('anagrafica-lista').innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare l\'anagrafica — probabile che Make sia spento in questo momento.</div>';
@@ -1139,7 +1141,8 @@ function apriDettaglioAnagrafica(recordId, tipo) {
     : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram collegato, password cambiata, Authenticator attivo, documenti caricati.</div>';
   const pwBox = '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.7;">📅 Registrato il <b>' + quandoReg(r) + '</b><br>✉️ Email: <b>' + escV(f.email || '—') + '</b><br>🔑 Password salvata: <b id="pw-' + r.id + '" data-pw="' + escV(f.password || '') + '">••••••••</b> <button type="button" class="btn-scarica" style="padding:3px 10px;" onclick="mostraPw(\'' + r.id + '\')">👁 Mostra</button>' + (f.password_temporanea ? '' : '<br><span style="color:var(--muted);font-size:12px;">Se l\'utente l\'ha cambiata da solo, questa non vale più: usa «Password dimenticata» o rigenera.</span>') + '</div>';
   document.getElementById('modal-title').textContent = nome;
-  document.getElementById('modal-body').innerHTML = pwBox + boxManca + `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
+  const btnMail = f.email ? '<button type="button" class="btn-scarica" style="margin-bottom:12px;" onclick="apriMailPopup(' + JSON.stringify(f.email).replace(/"/g, '&quot;') + ',' + JSON.stringify(nome).replace(/"/g, '&quot;') + ')">✉️ Scrivi email</button>' : '';
+  document.getElementById('modal-body').innerHTML = btnMail + pwBox + boxManca + `<table style="width:100%;font-size:13px;border-collapse:collapse;">${righe}</table>`;
   document.getElementById('modal-bg').classList.add('open');
 }
 
