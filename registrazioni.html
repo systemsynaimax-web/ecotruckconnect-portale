@@ -74,8 +74,8 @@ h1,h2,h3{font-family:var(--font-h);}
   <div class="page-sub">Chi ha pagato l'iscrizione (150 €) e chi ha pagato per prendere un carico (20 €): dati veri da Shopify, incrociati con Airtable.</div>
 
   <div class="note-box" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.08);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-    <span>✅ Ogni pagamento è incrociato con Airtable (trasportatore o azienda). Le prove interne (email SynAIMAX o pagate a 0 € con codice sconto) sono nascoste, a meno che tu non le mostri.</span>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;"><input type="checkbox" id="mostra-prove" onchange="render()" style="width:18px;height:18px;"> Mostra anche le prove</label>
+    <span>✅ Qui compaiono tutti i trasportatori e tutte le aziende registrati, con le iscrizioni (150 €) e i carichi presi (20 €), data e ora. Le voci pagate con codice sconto mostrano 0,00 €.</span>
+    <input type="checkbox" id="mostra-prove" checked style="display:none">
   </div>
 
   <div class="stats-row">
@@ -116,7 +116,7 @@ h1,h2,h3{font-family:var(--font-h);}
         <option value="">Tutti</option><option value="Trasportatore">Solo trasportatori</option><option value="Azienda">Solo aziende</option>
       </select>
       <select id="reg-cosa" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
-        <option value="">Tutto</option><option value="Iscrizione">Solo iscrizioni (150 €)</option><option value="Carico">Solo carichi (20 €)</option>
+        <option value="">Tutto</option><option value="Iscrizione">Solo iscrizioni 150 €</option><option value="Carico">Solo carichi 20 €</option>
       </select>
       <select id="reg-periodo" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
         <option value="">Sempre</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="30">30 giorni</option>
@@ -262,7 +262,7 @@ function render() {
       <div style="flex:1;min-width:220px;">
         <div class="reg-name">${esc(r.nome)} <span style="color:${tipoColore};font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px;">${esc(r.tipo)}</span>
           <span style="font-size:11px;font-weight:700;margin-left:6px;color:${r.cosa === 'Carico' ? '#a78bfa' : 'var(--green)'};">${r.cosa === 'Carico' ? '🚚 CARICO 20 €' : '🎫 ISCRIZIONE 150 €'}</span>
-          ${r.prova ? '<span style="font-size:10px;font-weight:700;margin-left:6px;color:var(--amber);border:1px solid rgba(245,158,11,0.5);border-radius:6px;padding:1px 6px;">PROVA</span>' : ''}</div>
+          </div>
         <div class="reg-contact">✉️ ${esc(r.email)} &nbsp; 📞 ${esc(r.telefono)} &nbsp; 🧾 ${esc(r.ordine)}</div>
       </div>
       <div class="reg-amount">${r.daAnag ? (r.iscrPagata ? '✅ pagata ' + euroR(r.importo) + (r.conCodice ? ' (codice sconto)' : '') : '⏳ non risulta pagata') : euroR(r.importo)}</div>
