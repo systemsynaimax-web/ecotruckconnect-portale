@@ -185,8 +185,9 @@ async function carica() {
     }
     // anagrafica Airtable per email: nome, telefono, data di registrazione
     const anag = {};
-    (completa.trasportatori.length ? completa.trasportatori : (data.trasportatori || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) anag[e] = { tipo: 'Trasportatore', nome: [f.nome, f.cognome].filter(Boolean).join(' ') || f.ragione_sociale || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
-    (completa.aziende.length ? completa.aziende : (data.aziende || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) anag[e] = { tipo: 'Azienda', nome: f.ragione_sociale || f.nome || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
+    schedeAnag = {};
+    (completa.trasportatori.length ? completa.trasportatori : (data.trasportatori || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) schedeAnag[e] = { tipo: 'Trasportatore', rec: r }; anag[e] = { tipo: 'Trasportatore', nome: [f.nome, f.cognome].filter(Boolean).join(' ') || f.ragione_sociale || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
+    (completa.aziende.length ? completa.aziende : (data.aziende || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) schedeAnag[e] = { tipo: 'Azienda', rec: r }; anag[e] = { tipo: 'Azienda', nome: f.ragione_sociale || f.nome || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
     const pagamenti = tuttiOrdini.filter(o => cosaE(o)).map(o => {
       const email = o.customer?.email || o.email || '';
       const importo = parseFloat(o.totalPriceSet?.shopMoney?.amount || '0');
@@ -269,11 +270,12 @@ function render() {
       <div class="reg-amount">${r.daAnag ? (r.iscrPagata ? '✅ pagata ' + euroR(r.importo) + (r.conCodice ? ' (codice sconto)' : '') : '⏳ non risulta pagata') : euroR(r.importo)}</div>
       <div class="reg-date">${dataOraR(r.data)}</div>
       <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="stampaRiga(${i})">🖨️ Stampa / Scarica</button>
-      ${r.email && r.email.includes('@') ? `<button class="btn" style="padding:6px 12px;font-size:12px;" onclick="mailRiga(${i})">✉️ Mail</button><a class="btn" style="padding:6px 12px;font-size:12px;text-decoration:none;" title="Apri la scheda: cosa ha fatto e cosa no" href="dashboard.html?scheda=${encodeURIComponent(String(r.email).toLowerCase())}">➜ Scheda</a>` : ''}
+      ${r.email && r.email.includes('@') ? `<button class="btn" style="padding:6px 12px;font-size:12px;" onclick="mailRiga(${i})">✉️ Mail</button><button class="btn" style="padding:6px 12px;font-size:12px;" title="Apri la scheda: cosa ha fatto e cosa no" onclick="apriScheda(${i})">➜ Scheda</button>` : ''}
     </div>`;
   }).join('') + pager;
 }
 let paginaCorr = 1;
+let schedeAnag = {};
 function vaiPagina(n) { paginaCorr = n; render(); window.scrollTo({ top: document.getElementById('lista-registrazioni').offsetTop - 80, behavior: 'smooth' }); }
 
 function finestraStampa(titolo, html) {
@@ -288,6 +290,52 @@ function finestraStampa(titolo, html) {
   </style></head><body><div class="barra"><button onclick="window.print()">🖨️ Stampa / 📄 Salva PDF</button></div>
   <h1>${esc(titolo)}</h1><div class="sub">EcoTruckConnect — SynAIMAX S.R.L.S. · stampato il ${new Date().toLocaleString('it-IT')}</div>${html}</body></html>`);
   w.document.close();
+}
+
+/* ===== SCHEDA nel popup (si apre subito, senza uscire dalla pagina) ===== */
+function cosaMancaR(f, tipo) {
+  const m = [];
+  if (!String(f.telegram_chat_id || '').trim()) m.push('Telegram NON collegato: non riceve le notifiche');
+  else if (f.ha_fatto_start === false) m.push('Non ha mai premuto Start sul bot Telegram');
+  if (f.authenticator_attivo !== true) m.push('Authenticator NON attivato');
+  if (f.password_temporanea) m.push('Password NON cambiata: usa ancora quella temporanea');
+  if (tipo !== 'Azienda' && Array.isArray(f.autorizzazioni) && f.autorizzazioni.length && !(Array.isArray(f.documenti_autorizzazioni) && f.documenti_autorizzazioni.length)) m.push('Documenti delle autorizzazioni NON caricati');
+  if (f.consenso_condizioni === false || (f.consenso_condizioni == null && f.data_consenso == null)) m.push('Consenso alle Condizioni non registrato');
+  return m;
+}
+const CAMPI_SCHEDA = [['Nome','nome'],['Cognome','cognome'],['Ragione sociale','ragione_sociale'],['Email','email'],['Telefono','telefono'],['Partita IVA','p_iva'],['Codice fiscale','codice_fiscale'],['Forma giuridica','forma_giuridica'],['PEC','pec'],['Codice SDI','codice_sdi'],['Indirizzo','indirizzo'],['CAP','cap'],['Città','citta'],['Provincia','provincia'],['Mezzi posseduti','tipo_camion'],['Autorizzazioni possedute','autorizzazioni'],['Note','note']];
+let schedaCorr = null;
+function apriScheda(i) {
+  const r = registrazioni[i]; if (!r) return;
+  const e = String(r.email || '').toLowerCase().trim();
+  const a = schedeAnag[e];
+  const f = a ? (a.rec.fields || a.rec) : {};
+  const tipo = a ? a.tipo : r.tipo;
+  const quando = a && (a.rec.createdTime || f.data_registrazione) ? dataOraR(a.rec.createdTime || f.data_registrazione) : '—';
+  const manca = a ? cosaMancaR(f, tipo) : [];
+  const att = pagamentiTutti.filter(x => String(x.email).toLowerCase().trim() === e).sort((x, y) => new Date(x.data) - new Date(y.data));
+  const righe = CAMPI_SCHEDA.map(([l, k]) => { let v = f[k]; if (Array.isArray(v)) v = v.join(', '); return v ? [l, String(v)] : null; }).filter(Boolean);
+  schedaCorr = { nome: r.nome, email: r.email, tipo, quando, manca, att, righe, pw: f.password || '', haAnag: !!a };
+  const td = 'padding:7px 0;border-top:1px solid rgba(255,255,255,0.1);';
+  const html = '<div style="background:#111b2b;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:20px;width:' + (schedaGrande ? '96vw' : '640px') + ';max-width:96vw;max-height:94vh;overflow:auto;color:#fff;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><b style="font-size:18px;">' + esc(r.nome) + ' <span style="font-size:12px;color:var(--blue);text-transform:uppercase;">' + esc(tipo) + '</span></b>' +
+    '<span><button class="btn" style="padding:6px 12px;font-size:12px;" onclick="schedaGrande=!schedaGrande;apriScheda(' + i + ')">' + (schedaGrande ? '⤡ Riduci' : '⤢ Ingrandisci') + '</button> <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="stampaScheda()">🖨️ Stampa / Scarica</button> <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="chiudiScheda();apriMailPopup(schedaCorr.email, schedaCorr.nome)">✉️ Mail</button> <button class="btn" style="padding:6px 12px;font-size:14px;" onclick="chiudiScheda()">✕</button></span></div>' +
+    '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.7;">📅 Registrato il <b>' + esc(quando) + '</b><br>✉️ Email: <b>' + esc(r.email) + '</b><br>🔑 Password salvata: <b id="sch-pw">••••••••</b> <button class="btn" style="padding:3px 10px;font-size:12px;" onclick="document.getElementById(\'sch-pw\').textContent=schedaCorr.pw||\'— (nessuna salvata)\'">👁 Mostra</button></div>' +
+    (a ? (manca.length ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);font-size:13px;line-height:1.6;"><b>⚠️ Cosa NON ha fatto</b><br>' + manca.map(x => '• ' + esc(x)).join('<br>') + '</div>' : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram, Authenticator, password, documenti e consenso.</div>') : '<div style="margin-bottom:12px;font-size:13px;color:var(--muted);">Questa persona non è nell\'anagrafica Airtable (solo ordine Shopify).</div>') +
+    '<div style="margin-bottom:12px;"><b>Cosa ha fatto (data e ora)</b><table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:6px;">' +
+      (att.length ? att.map(x => '<tr><td style="' + td + '">' + esc(dataOraR(x.data)) + '</td><td style="' + td + '">' + (x.cosa === 'Carico' ? '🚚 Carico preso (20 €)' : '🎫 Iscrizione (150 €)') + '</td><td style="' + td + 'text-align:right;">' + esc(x.ordine || '') + ' · ' + esc(euroR(x.importo)) + '</td></tr>').join('') : '<tr><td style="' + td + 'color:var(--muted);">Nessun pagamento.</td></tr>') + '</table></div>' +
+    '<table style="width:100%;font-size:13px;border-collapse:collapse;">' + righe.map(x => '<tr><td style="' + td + 'color:var(--muted);width:40%;">' + esc(x[0]) + '</td><td style="' + td + 'text-align:right;">' + esc(x[1]) + '</td></tr>').join('') + '</table></div>';
+  let bg = document.getElementById('scheda-bg');
+  if (!bg) { bg = document.createElement('div'); bg.id = 'scheda-bg'; bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99998;display:flex;align-items:center;justify-content:center;padding:12px;'; bg.onclick = function (ev) { if (ev.target === bg) chiudiScheda(); }; document.body.appendChild(bg); }
+  bg.innerHTML = html;
+}
+let schedaGrande = false;
+function chiudiScheda() { const b = document.getElementById('scheda-bg'); if (b) b.remove(); }
+function stampaScheda() {
+  const s = schedaCorr; if (!s) return;
+  const rr = [['Nome', s.nome], ['Tipo', s.tipo], ['Registrato il', s.quando], ['Email', s.email], ['Password salvata', s.pw || '—']].concat(s.righe.filter(x => x[0] !== 'Email'));
+  const att = s.att.map(x => '<tr><td>' + esc(dataOraR(x.data)) + '</td><td>' + (x.cosa === 'Carico' ? 'Carico preso (20 €)' : 'Iscrizione (150 €)') + '</td><td>' + esc(x.ordine || '') + ' · ' + esc(euroR(x.importo)) + '</td></tr>').join('') || '<tr><td colspan="3">Nessun pagamento</td></tr>';
+  finestraStampa('Scheda — ' + s.nome, '<table>' + rr.map(x => '<tr><th>' + esc(x[0]) + '</th><td>' + esc(x[1]) + '</td></tr>').join('') + '</table><h2 style="font-size:15px;margin-top:18px;">Cosa NON ha fatto</h2><p>' + (s.manca.length ? s.manca.map(esc).join('<br>') : 'Niente: ha fatto tutto.') + '</p><h2 style="font-size:15px;">Cosa ha fatto</h2><table>' + att + '</table>');
 }
 function mailRiga(i) {
   const r = registrazioni[i]; if (!r) return;
