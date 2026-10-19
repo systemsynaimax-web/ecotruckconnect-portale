@@ -1,6 +1,6 @@
 /* =====================================================================
    EcoTruckConnect — centralina.js (18/10/2026)
-   CENTRALINA della Dashboard Gestori: 23 quadretti (verde / giallo / rosso), report di oggi,
+   CENTRALINA della Dashboard Gestori: 26 quadretti (verde / giallo / rosso), report di oggi,
    riquadro di dettaglio per ogni quadretto, archivio dei guasti, bottone "Aggiorna ora".
    SOLO per i gestori: vive in dashboard.html e dashboard-demo.html, mai nei portali.
    - Dashboard FINTA: la pagina scrive prima  window.CENTRALINA_DEMO = true  -> dati di esempio, nulla di reale.
@@ -19,7 +19,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var PORTALE = 'https://ecotruckconnect-portale.netlify.app/';
 
-  /* ---------- i 23 quadretti: cosa controllano e dove si ripara ---------- */
+  /* ---------- i 26 quadretti: cosa controllano e dove si ripara ---------- */
   var META = {
     1:  { i: '🖥️', cosa: 'La Dashboard Gestori risponde e si apre (pagina dashboard.html).', link: 'dashboard.html', lt: 'Apri la Dashboard' },
     2:  { i: '🚚', cosa: 'Il portale del trasportatore si apre: carichi, presi, commissioni, iscrizione.', link: PORTALE, lt: 'Apri il portale' },
@@ -43,6 +43,9 @@
     20: { i: '📍', cosa: 'Dopo il pagamento il trasportatore vede gli indirizzi di ritiro e consegna.', link: 'dashboard.html', lt: 'Apri i carichi' },
     21: { i: '📲', cosa: 'I trasportatori approvati hanno Telegram collegato (altrimenti non ricevono i carichi).', link: 'https://airtable.com/app0TGG8f4ARpdlbl', lt: 'Apri Airtable' },
     22: { i: '📝', cosa: 'Nessuna registrazione resta in attesa di approvazione da più di 24 ore.', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
+    24: { i: '📑', cosa: 'Ogni carico assegnato ha il suo report nello storico delle attività.', link: 'dashboard.html', lt: 'Apri lo storico' },
+    25: { i: '🏬', cosa: 'Le aziende registrate sono approvate e hanno Telegram collegato.', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
+    26: { i: '🗂️', cosa: 'I trasportatori approvati hanno caricato i documenti delle loro autorizzazioni.', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
     23: { i: '🛑', cosa: 'Make non ha mandato errori, avvisi o scenari disattivati nelle ultime 24 ore.', link: 'https://eu1.make.com/992733/scenarios', lt: 'Apri Make' }
   };
   var COL = {
@@ -211,7 +214,7 @@
   function nomeQ(id) { var x = stato.q.filter(function (y) { return String(y.id) === String(id); })[0]; return x ? x.nome : ''; }
 
   function griglia() {
-    return '<div class="ct-h">I 23 quadretti</div><div class="ct-grid">' + stato.q.map(function (x) {
+    return '<div class="ct-h">I 26 quadretti</div><div class="ct-grid">' + stato.q.map(function (x) {
       var k = COL[x.stato] || COL.Grigio, m = META[x.id] || { i: '▫️' };
       return '<button type="button" class="ct-q" data-q="' + esc(x.id) + '" style="border-color:' + k.b + ';background:' + k.bg + '"><span class="t"><span>' + m.i + ' ' + esc(x.id) + (/^Alta/.test(x.priorita || '') ? ' · ★' : '') + '</span>' + pallino(x.stato) + '</span><b>' + esc(x.nome) + '</b><span class="s" style="color:' + k.c + '">' + k.t + '</span></button>';
     }).join('') + '</div><div class="ct-sm" style="margin-top:8px">★ = riguarda direttamente azienda e trasportatore (carichi, pagamenti). Clicca un quadretto per vedere cosa è successo e dove ripararlo.</div>';
@@ -343,7 +346,7 @@
       return '<tr><td>' + esc(x.id) + '</td><td><b>' + esc(x.nome) + '</b></td><td>' + esc(x.stato) + '</td><td>' + esc(fmt(x.ultimo_controllo)) + '</td><td>' + esc(x.dettaglio || '') + (x.stato === 'Giallo' || x.stato === 'Rosso' ? '<br><small>Dove ripararlo: ' + esc(m.link || '') + '</small>' : '') + '</td></tr>';
     }).join('');
     var te = ev.length ? ev.map(function (e) { return '<tr><td>' + esc(fmt(e.quando, 1)) + '</td><td>' + esc(e.livello) + '</td><td>' + esc(e.titolo) + '</td><td>' + esc(e.chi) + ': ' + esc(e.azione) + '</td><td>' + esc(e.esito) + '</td></tr>'; }).join('') : '<tr><td colspan="5">Oggi nessun guasto registrato.</td></tr>';
-    w.document.write('<html><head><meta charset="utf-8"><title>Report centralina ' + oggi + '</title><style>body{font-family:Arial,sans-serif;padding:26px;color:#111}h1{margin:0 0 4px}h2{margin:22px 0 6px;font-size:15px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top}th{background:#eee}small{color:#555}</style></head><body><h1>EcoTruckConnect — Report centralina</h1><div>' + new Date().toLocaleString('it-IT') + ' · Stato generale: <b>' + esc(g) + '</b> · ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' + (DEMO ? ' · <b>DEMO: dati di esempio</b>' : '') + '</div><h2>I 23 quadretti</h2><table><tr><th>N.</th><th>Quadretto</th><th>Stato</th><th>Ultimo controllo</th><th>Dettaglio</th></tr>' + tq + '</table><h2>Cosa è successo oggi</h2><table><tr><th>Ora</th><th>Livello</th><th>Guasto</th><th>Chi e cosa</th><th>Esito</th></tr>' + te + '</table><script>window.onload=function(){window.print()}<\/script></body></html>');
+    w.document.write('<html><head><meta charset="utf-8"><title>Report centralina ' + oggi + '</title><style>body{font-family:Arial,sans-serif;padding:26px;color:#111}h1{margin:0 0 4px}h2{margin:22px 0 6px;font-size:15px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top}th{background:#eee}small{color:#555}</style></head><body><h1>EcoTruckConnect — Report centralina</h1><div>' + new Date().toLocaleString('it-IT') + ' · Stato generale: <b>' + esc(g) + '</b> · ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' + (DEMO ? ' · <b>DEMO: dati di esempio</b>' : '') + '</div><h2>I 26 quadretti</h2><table><tr><th>N.</th><th>Quadretto</th><th>Stato</th><th>Ultimo controllo</th><th>Dettaglio</th></tr>' + tq + '</table><h2>Cosa è successo oggi</h2><table><tr><th>Ora</th><th>Livello</th><th>Guasto</th><th>Chi e cosa</th><th>Esito</th></tr>' + te + '</table><script>window.onload=function(){window.print()}<\/script></body></html>');
     w.document.close();
   }
   function csv() {

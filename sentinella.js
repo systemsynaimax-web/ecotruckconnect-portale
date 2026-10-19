@@ -51,16 +51,18 @@
     var osservata = ind.indexOf('hook.eu1.make.com') !== -1 || ind.indexOf('/.netlify/functions/') !== -1;
     if (!osservata || ind.indexOf(HOOK) === 0) return nativo(url, opts);
     var azione = azioneDi(opts) || (ind.split('/').pop() || 'richiesta');
-    var nome = NOMI[azione] || ('Azione non riuscita: ' + azione);
+    var nome = NOMI[azione] || (/\/functions\/documenti/.test(ind) ? 'Caricamento o apertura documenti non riuscito' : /\/functions\/destinazione/.test(ind) ? 'Salvataggio destinazione rifiuti non riuscito' : ('Azione non riuscita: ' + azione));
     var p = nativo(url, opts);
     p.then(function (r) {
       try {
         if (r.status >= 500 || r.status === 410 || r.status === 404) { segnala(nome, 'Il servizio ha risposto con errore ' + r.status, ind); return; }
         if (r.status === 401 || r.status === 403 || r.status === 429) return; // accesso scaduto o troppe richieste: non e' un guasto
+        var critica = /\/functions\/(documenti|destinazione)/.test(ind);
+        if (critica && r.status >= 400) { segnala(nome, 'Documenti/destinazione: errore ' + r.status, ind); return; }
         r.clone().text().then(function (t) {
           var d = null; try { d = JSON.parse(t); } catch (e) {}
           if (azione === 'chat_bot') { if (!d || typeof d.reply !== 'string' || !d.reply.trim()) segnala(nome, 'Risposta vuota o non valida del robottino', ind); return; }
-          if (!SCRIVONO.test(azione)) return;
+          if (!SCRIVONO.test(azione) && !critica) return;
           if (!t || !t.trim()) { segnala(nome, 'Risposta vuota dal sistema', ind); return; }
           if (!d) { if (/error|errore|exception|timeout/i.test(t.slice(0, 200))) segnala(nome, t.slice(0, 200), ind); return; }
           if (d.ok === false || d.success === false || d.status === 'error') segnala(nome, d.error || d.errore || d.message || d.motivo || 'Il sistema ha risposto ok=false', ind);
