@@ -37,6 +37,7 @@
       if (a.indexOf('@') < 1) { msg.style.color = '#f87171'; msg.textContent = 'Indirizzo email non valido.'; return; }
       if (!o) { msg.style.color = '#f87171'; msg.textContent = 'Scrivi l\'oggetto.'; return; }
       if (f && f.size > MAX) { msg.style.color = '#f87171'; msg.textContent = 'File troppo grande (max 3 MB).'; return; }
+      if (/demo/i.test(location.pathname)) { msg.style.color = '#fbbf24'; msg.textContent = 'ANTEPRIMA (dati finti): nessuna email viene inviata.'; return; }
       btn.disabled = true; btn.textContent = '⏳ Invio…'; msg.textContent = '';
       try {
         var corpo = { destinatario: a, oggetto: o, testo: t };

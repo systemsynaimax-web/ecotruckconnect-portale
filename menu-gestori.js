@@ -276,6 +276,7 @@
     document.querySelectorAll('#mg-side .mg-v[data-p]').forEach(function (b) { b.classList[b.getAttribute('data-p') === nome ? 'add' : 'remove']('on'); });
     document.body.classList.remove('mg-drawer');
     try { history.replaceState(null, '', location.pathname + location.search + '#' + nome); } catch (e) {}
+    try { localStorage.setItem('ect_ultima_pagina_gest', nome); } catch (e) {}
     window.scrollTo(0, 0);
   }
 
@@ -287,6 +288,7 @@
     else { try { if (localStorage.getItem('ect_menu_gest_aperto') === '0') document.body.classList.add('mg-stretto'); } catch (e) {} }
     misuraTop(); window.addEventListener('resize', misuraTop); window.addEventListener('scroll', misuraTop, { passive: true });
     var h = (location.hash || '').slice(1);
+    if (!h) { try { h = localStorage.getItem('ect_ultima_pagina_gest') || ''; } catch (e) {} }
     vai(PAG[h] && gruppi[h] ? h : 'home');
     window.ectMenuGestori = { vai: vai, pagine: PAG, gruppi: gruppi };
   }
