@@ -101,7 +101,7 @@
         .then(function (r) { return r.text(); })
         .then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { j = null; } return j; });
     };
-    var prima = forza ? chiama({ action: 'centralina_aggiorna', id: '1' }).catch(function () { return null; }) : Promise.resolve();
+    var prima = forza ? Promise.all([chiama({ action: 'centralina_aggiorna', id: '1' }).catch(function () { return null; }), chiama({ action: 'centralina_dati' }).catch(function () { return null; })]) : Promise.resolve();
     return prima.then(function () { return chiama({ action: 'centralina_leggi' }); })
       .then(function (j) {
         if (!j) throw new Error('risposta non valida');
@@ -193,6 +193,20 @@
       '<span style="margin-left:auto" class="ct-row"><button class="ct-btn" id="ct-agg"' + (occupato ? ' disabled' : '') + '>' + (occupato ? 'Controllo in corso…' : '↻ Aggiorna ora') + '</button></span></div>';
   }
 
+  /* dove si trova il danno: link diretto alla scheda (carico / trasportatore / azienda) in Airtable, con il nome */
+  var TAB = { 17: 'tblZ7NoiUBJsi1ZSK', 18: 'tblZ7NoiUBJsi1ZSK', 19: 'tblZ7NoiUBJsi1ZSK', 20: 'tblZ7NoiUBJsi1ZSK', 24: 'tblZ7NoiUBJsi1ZSK', 21: 'tblrn6u8TOshdviwo', 22: 'tblrn6u8TOshdviwo', 26: 'tblrn6u8TOshdviwo', 25: 'tblVSe1R3ayWgNDy9' };
+  var COSA = { 17: 'carico', 18: 'carico', 19: 'carico', 20: 'carico', 24: 'carico', 21: 'trasportatore', 22: 'trasportatore', 26: 'trasportatore', 25: 'azienda' };
+  function dannoDiretto(x) {
+    if (!x || x.stato === 'Verde' || x.stato === 'Grigio') return [];
+    var id = Number(x.id), d = String(x.dettaglio || '');
+    if (id === 23) return [{ href: 'https://mail.google.com/mail/u/0/#search/from%3Amake.com+newer_than%3A1d', label: 'Apri le email di Make' }];
+    if (!TAB[id]) return [];
+    var parti = d.split(' | Chi: '), recs = parti[0].match(/rec[A-Za-z0-9]{14}/g) || [], nomi = (parti[1] || '').split('; ');
+    return recs.map(function (r, i) {
+      return { href: 'https://airtable.com/app0TGG8f4ARpdlbl/' + TAB[id] + '/' + r, label: 'Apri ' + COSA[id] + (nomi[i] ? ': ' + nomi[i] : '') };
+    });
+  }
+  function testoPulito(d) { return String(d || '').replace(/\s*Record:\s*rec[A-Za-z0-9]{14}(,\s*rec[A-Za-z0-9]{14})*/g, '').replace(' | Chi: ', ' — Chi: '); }
   function reportOggi() {
     var oggi = giornoDi(new Date().toISOString());
     var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi && ancoraAperto(e); }).sort(function (a, b) { return new Date(b.quando) - new Date(a.quando); });
@@ -202,7 +216,7 @@
     }).join('') : '<div class="r"><span class="ct-sm">Oggi nessun guasto registrato.</span></div>';
     var aperti = stato.q.filter(function (x) { return x.stato === 'Giallo' || x.stato === 'Rosso'; });
     var righeAperti = aperti.map(function (x) {
-      return '<div class="r"><span class="o">ORA</span><span>' + tag(x.stato) + '</span><span style="flex:1"><b>' + esc(x.id) + ' · ' + esc(x.nome) + '</b><br><span class="ct-sm">' + esc(x.dettaglio || 'Da controllare') + '</span></span><button class="ct-btn ' + (x.stato === 'Rosso' ? 'ros' : 'sec') + '" data-q="' + esc(x.id) + '" style="padding:6px 12px">Vai al danno →</button></div>';
+      return '<div class="r"><span class="o">ORA</span><span>' + tag(x.stato) + '</span><span style="flex:1"><b>' + esc(x.id) + ' · ' + esc(x.nome) + '</b><br><span class="ct-sm">' + esc(testoPulito(x.dettaglio) || 'Da controllare') + '</span></span>' + (function () { var dd = dannoDiretto(x)[0]; return dd ? '<a class="ct-btn ' + (x.stato === 'Rosso' ? 'ros' : '') + '" href="' + esc(dd.href) + '" target="_blank" rel="noopener" style="padding:6px 12px;text-decoration:none;display:inline-block">Vai al danno ↗</a> ' : ''; })() + '<button class="ct-btn sec" data-q="' + esc(x.id) + '" style="padding:6px 12px">' + (dannoDiretto(x).length ? 'Dettagli' : 'Vai al danno →') + '</button></div>';
     }).join('');
     return '<div class="ct-row" style="margin:22px 0 10px"><div class="ct-h" style="margin:0">Report di oggi</div><button class="ct-btn sec" data-az-rep="1" style="margin-left:auto">🖨 Stampa / scarica report</button></div><div class="ct-rep">' + righeAperti + righe + '</div>';
   }
@@ -252,14 +266,14 @@
     }).join('') + '<div class="ct-step ' + (x.stato === 'Rosso' && passo >= 3 ? 'fatto' : '') + '"><b>Serve tu</b>' + (x.stato === 'Rosso' && passo >= 3 ? 'tocca a te' : 'solo se tutto fallisce') + '</div>';
     var datiFlussi = Number(x.id) >= 17;   /* 17-26: controlli sui dati, rifatti da soli ogni 3 ore: nessun ritenta dell'operaio */
     var bott = datiFlussi
-      ? '<div class="ct-box" style="margin:0 0 10px;flex:1 1 100%">Controllato da solo ogni 3 ore sui dati reali di Airtable. ' + (x.stato === 'Verde' ? 'Tutto a posto.' : 'Sistema il problema indicato sopra: al prossimo controllo torna verde da solo.') + '</div>' + (x.stato === 'Verde' ? '' : '<button class="ct-btn ver" data-az="risolto">✔ Segna risolto</button>')
+      ? '<div class="ct-box" style="margin:0 0 10px;flex:1 1 100%">Controllato da solo ogni 3 ore sui dati reali di Airtable. ' + (x.stato === 'Verde' ? 'Tutto a posto.' : 'Sistema il problema con il pulsante verde qui sopra, poi premi «Ricontrolla adesso»: se è a posto, torna verde.') + '</div><button class="ct-btn ver" data-az="ricontrolla">↻ Ricontrolla adesso</button>'
       : x.stato === 'Verde'
       ? '<button class="ct-btn sec" data-az="controlla">↻ Controlla questo quadretto</button>'
       : '<button class="ct-btn" data-az="riprova">↻ Riprova (fa lavorare ' + (passo >= 2 ? 'la Riserva 2' : passo === 1 ? 'la Riserva 1' : 'l’Operaio') + ')</button><button class="ct-btn sec" data-az="riaccendi">⏻ Riaccendi</button><button class="ct-btn ver" data-az="risolto">✔ Segna risolto</button>';
     return '<div class="ct-row" style="margin-bottom:14px"><button class="ct-btn sec" data-back="1">◀ Tutti i quadretti</button><button class="ct-btn sec" data-az="stampa">🖨 Stampa</button></div>' +
       '<div class="ct-box" style="border-color:' + k.b + ';background:' + k.bg + '"><div class="ct-row" style="gap:12px">' + pallino(x.stato, true) + '<div><div style="font-size:20px;font-weight:700">' + m.i + ' ' + esc(x.id) + ' · ' + esc(x.nome) + '</div><div class="ct-sm" style="color:' + k.c + '">' + k.t + ' · ultimo controllo ' + fmt(x.ultimo_controllo) + '</div></div></div></div>' +
-      (x.stato === 'Giallo' || x.stato === 'Rosso' ? '<div class="ct-box"><h3>Cosa è successo</h3><p>' + esc(x.dettaglio || 'Nessun dettaglio registrato.') + '</p></div>' : '<div class="ct-box"><h3>Stato</h3><p>Nessun problema. ' + esc(x.dettaglio || '') + '</p></div>') +
-      '<div class="ct-box"><h3>Dov’è il danno e cosa controlla questo quadretto</h3><p>' + esc(m.cosa) + '</p><p style="margin-top:10px"><a class="ct-btn" style="text-decoration:none;display:inline-block" href="' + esc(m.link) + '" target="_blank" rel="noopener">' + esc(m.lt) + ' ↗</a></p></div>' +
+      (x.stato === 'Giallo' || x.stato === 'Rosso' ? '<div class="ct-box"><h3>Cosa è successo</h3><p>' + esc(testoPulito(x.dettaglio) || 'Nessun dettaglio registrato.') + '</p></div>' : '<div class="ct-box"><h3>Stato</h3><p>Nessun problema. ' + esc(x.dettaglio || '') + '</p></div>') +
+      '<div class="ct-box"><h3>Dov’è il danno e cosa controlla questo quadretto</h3><p>' + esc(m.cosa) + '</p>' + dannoDiretto(x).map(function (dd) { return '<p style="margin-top:10px"><a class="ct-btn ver" style="text-decoration:none;display:inline-block" href="' + esc(dd.href) + '" target="_blank" rel="noopener">👉 ' + esc(dd.label) + ' ↗</a></p>'; }).join('') + '<p style="margin-top:10px"><a class="ct-btn sec" style="text-decoration:none;display:inline-block" href="' + esc(m.link) + '" target="_blank" rel="noopener">' + esc(m.lt) + ' ↗</a></p></div>' +
       '<div class="ct-box"><h3>Chi ha provato a ripararlo</h3><div class="ct-steps">' + steps + '</div><p class="ct-sm" style="margin-top:8px">Tentativi: ' + (x.tentativi || 0) + ' · ultimo intervento: ' + esc(x.ultimo_intervento || 'Nessuno') + '</p></div>' +
       '<div class="ct-box"><h3>Azioni</h3><div class="ct-row">' + bott + '</div><p class="ct-sm" id="ct-msg" style="margin-top:8px"></p></div>' +
       '<div class="ct-box"><h3>Storia di questo quadretto</h3>' + (storia.length ? storia.map(function (e) { return '<p class="ct-sm" style="margin:0 0 4px">' + fmt(e.quando) + ' · ' + tag(e.livello) + ' ' + esc(e.titolo) + ' — ' + esc(e.chi) + ': ' + esc(e.azione) + ' (' + esc(e.esito) + ')</p>'; }).join('') : '<p class="ct-sm">Nessun guasto registrato.</p>') + '</div>';
@@ -308,6 +322,7 @@
   function azione(az, id) {
     var x = stato.q.filter(function (y) { return String(y.id) === String(id); })[0]; if (!x) return;
     if (az === 'stampa') return stampa(x);
+    if (az === 'ricontrolla') { aggiornaOra(); return; }
     if (!DEMO && !stato.collegata) { msg('La centralina non è ancora collegata: questo comando funzionerà dopo il collegamento.'); return; }
     if (DEMO) return azioneDemo(az, x);
     msg('Invio il comando…');
