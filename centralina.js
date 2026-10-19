@@ -250,7 +250,10 @@
       var cls = i < passo ? (risolto && i === passo - 1 ? 'ok' : 'fatto') : '';
       return '<div class="ct-step ' + cls + '"><b>' + p + '</b>' + (i < passo ? (risolto && i === passo - 1 ? 'ha risolto' : 'provato, non basta') : 'non ancora') + '</div>';
     }).join('') + '<div class="ct-step ' + (x.stato === 'Rosso' && passo >= 3 ? 'fatto' : '') + '"><b>Serve tu</b>' + (x.stato === 'Rosso' && passo >= 3 ? 'tocca a te' : 'solo se tutto fallisce') + '</div>';
-    var bott = x.stato === 'Verde'
+    var datiFlussi = Number(x.id) >= 17;   /* 17-26: controlli sui dati, rifatti da soli ogni 3 ore: nessun ritenta dell'operaio */
+    var bott = datiFlussi
+      ? '<div class="ct-box" style="margin:0 0 10px;flex:1 1 100%">Controllato da solo ogni 3 ore sui dati reali di Airtable. ' + (x.stato === 'Verde' ? 'Tutto a posto.' : 'Sistema il problema indicato sopra: al prossimo controllo torna verde da solo.') + '</div>' + (x.stato === 'Verde' ? '' : '<button class="ct-btn ver" data-az="risolto">✔ Segna risolto</button>')
+      : x.stato === 'Verde'
       ? '<button class="ct-btn sec" data-az="controlla">↻ Controlla questo quadretto</button>'
       : '<button class="ct-btn" data-az="riprova">↻ Riprova (fa lavorare ' + (passo >= 2 ? 'la Riserva 2' : passo === 1 ? 'la Riserva 1' : 'l’Operaio') + ')</button><button class="ct-btn sec" data-az="riaccendi">⏻ Riaccendi</button><button class="ct-btn ver" data-az="risolto">✔ Segna risolto</button>';
     return '<div class="ct-row" style="margin-bottom:14px"><button class="ct-btn sec" data-back="1">◀ Tutti i quadretti</button><button class="ct-btn sec" data-az="stampa">🖨 Stampa</button></div>' +
