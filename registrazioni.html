@@ -80,14 +80,14 @@ h1,h2,h3{font-family:var(--font-h);}
 
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">Trasportatori iscritti</div>
+      <div class="stat-label">Trasportatori registrati</div>
       <div class="stat-value" id="st-trasportatori">—</div>
-      <div class="stat-sub">Iscrizioni pagate</div>
+      <div class="stat-sub">di cui iscrizione pagata: <b id="st-trasp-pagate">—</b></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Aziende iscritte</div>
+      <div class="stat-label">Aziende registrate</div>
       <div class="stat-value" id="st-aziende">—</div>
-      <div class="stat-sub">Iscrizioni pagate</div>
+      <div class="stat-sub">di cui iscrizione pagata: <b id="st-az-pagate">—</b></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Carichi pagati</div>
@@ -111,17 +111,18 @@ h1,h2,h3{font-family:var(--font-h);}
       </span>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-      <input id="reg-cerca" oninput="render()" placeholder="🔎 Cerca per nome, email, telefono, ordine…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
-      <select id="reg-tipo" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+      <input id="reg-cerca" oninput="paginaCorr=1;render()" placeholder="🔎 Cerca per nome, email, telefono, ordine…" style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;">
+      <select id="reg-tipo" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
         <option value="">Tutti</option><option value="Trasportatore">Solo trasportatori</option><option value="Azienda">Solo aziende</option>
       </select>
-      <select id="reg-cosa" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
-        <option value="">Iscrizioni e carichi</option><option value="Iscrizione">Solo iscrizioni (150 €)</option><option value="Carico">Solo carichi (20 €)</option>
+      <select id="reg-cosa" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+        <option value="">Tutto</option><option value="Registrazione">Solo registrazioni (chi si è iscritto)</option><option value="Iscrizione">Solo iscrizioni pagate (150 €)</option><option value="Carico">Solo carichi (20 €)</option>
       </select>
-      <select id="reg-periodo" onchange="render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
+      <select id="reg-periodo" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;">
         <option value="">Sempre</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="30">30 giorni</option>
       </select>
     </div>
+    <div style="margin-bottom:12px;color:var(--muted);font-size:13px;">Mostra <select id="reg-pagina-dim" onchange="paginaCorr=1;render()" style="background:#0e1623;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 8px;color:var(--text);font-size:13px;"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> voci per pagina</div>
     <div id="lista-registrazioni"><div class="empty-state">Caricamento…</div></div>
   </div>
 </div>
@@ -165,6 +166,13 @@ async function carica() {
   try {
     const res = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_registrazioni' }) });
     const data = await res.json();
+    // anagrafica completa (nome, telefono, data di registrazione): solo gestori
+    let completa = { trasportatori: [], aziende: [] };
+    try {
+      const r2 = await fetch(PROXY_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_anagrafica_completa' }) });
+      const d2 = await r2.json();
+      if (d2 && (d2.trasportatori || d2.aziende)) completa = { trasportatori: d2.trasportatori || [], aziende: d2.aziende || [] };
+    } catch (e) { /* se manca, resta l'elenco con le sole email */ }
     const tuttiOrdini = estraiOrdini(data);
     const emailTrasportatori = estraiEmailSet(data.trasportatori);
     const emailAziende = estraiEmailSet(data.aziende);
@@ -174,18 +182,30 @@ async function carica() {
       if (emailAziende.has(e)) return 'Azienda';
       return 'Non trovato';
     }
-    pagamentiTutti = tuttiOrdini.filter(o => cosaE(o)).map(o => {
+    // anagrafica Airtable per email: nome, telefono, data di registrazione
+    const anag = {};
+    (completa.trasportatori.length ? completa.trasportatori : (data.trasportatori || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) anag[e] = { tipo: 'Trasportatore', nome: [f.nome, f.cognome].filter(Boolean).join(' ') || f.ragione_sociale || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
+    (completa.aziende.length ? completa.aziende : (data.aziende || [])).forEach(r => { const f = r.fields || r; const e = String(f.email || '').toLowerCase().trim(); if (e) anag[e] = { tipo: 'Azienda', nome: f.ragione_sociale || f.nome || '', tel: f.telefono || '', quando: r.createdTime || f.data_registrazione || '', email: f.email }; });
+    const pagamenti = tuttiOrdini.filter(o => cosaE(o)).map(o => {
       const email = o.customer?.email || o.email || '';
       const importo = parseFloat(o.totalPriceSet?.shopMoney?.amount || '0');
       return {
         cosa: cosaE(o),
-        nome: [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(' ') || 'Nome non disponibile',
-        email: email || '—', telefono: o.customer?.phone || o.phone || '—',
+        nome: [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(' ') || ((anag[String(email).toLowerCase().trim()] || {}).nome) || 'Nome non disponibile (ordine senza dati cliente)',
+        email: email || '—', telefono: o.customer?.phone || o.phone || ((anag[String(email).toLowerCase().trim()] || {}).tel) || '—',
         data: o.createdAt, importo: importo, valuta: o.totalPriceSet?.shopMoney?.currencyCode || 'EUR',
         ordine: o.name || '', prodotto: titoli(o), tipo: tipoDiEmail(email),
         prova: eTest(email) || importo <= 0
       };
     });
+    // chi si e' registrato (Airtable), anche se non ha ancora pagato l'iscrizione
+    const pagatoIscr = new Set(pagamenti.filter(x => x.cosa === 'Iscrizione').map(x => String(x.email).toLowerCase().trim()));
+    const registrati = Object.keys(anag).map(e => {
+      const a = anag[e];
+      return { cosa: 'Registrazione', nome: a.nome || '—', email: a.email || e, telefono: a.tel || '—', data: a.quando, importo: 0, valuta: 'EUR',
+        ordine: '', prodotto: 'Registrazione sul portale', tipo: a.tipo, prova: eTest(e), iscrPagata: pagatoIscr.has(e) };
+    });
+    pagamentiTutti = pagamenti.concat(registrati);
     render();
   } catch (e) {
     console.error('Errore caricamento registrazioni:', e);
@@ -207,9 +227,12 @@ function render() {
   const per = parseInt(document.getElementById('reg-periodo').value || '0', 10);
   const limite = per ? (function () { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - (per - 1)); return d; })() : null;
   const base = pagamentiTutti.filter(r => prove || !r.prova);
+  const reg = base.filter(r => r.cosa === 'Registrazione');
   const iscr = base.filter(r => r.cosa === 'Iscrizione');
-  document.getElementById('st-trasportatori').textContent = iscr.filter(r => r.tipo === 'Trasportatore').length;
-  document.getElementById('st-aziende').textContent = iscr.filter(r => r.tipo === 'Azienda').length;
+  document.getElementById('st-trasportatori').textContent = reg.filter(r => r.tipo === 'Trasportatore').length;
+  document.getElementById('st-aziende').textContent = reg.filter(r => r.tipo === 'Azienda').length;
+  document.getElementById('st-trasp-pagate').textContent = reg.filter(r => r.tipo === 'Trasportatore' && r.iscrPagata).length;
+  document.getElementById('st-az-pagate').textContent = reg.filter(r => r.tipo === 'Azienda' && r.iscrPagata).length;
   document.getElementById('st-carichi').textContent = base.filter(r => r.cosa === 'Carico').length;
   document.getElementById('st-totale').textContent = euroR(base.reduce((s, r) => s + r.importo, 0));
 
@@ -223,21 +246,30 @@ function render() {
     el.innerHTML = '<div class="empty-state">Nessun pagamento trovato' + (prove ? '' : ' (le prove sono nascoste: spunta «Mostra anche le prove»)') + '.</div>';
     return;
   }
-  el.innerHTML = registrazioni.map((r, i) => {
+  const dim = parseInt(document.getElementById('reg-pagina-dim').value || '25', 10);
+  const npag = Math.max(1, Math.ceil(registrazioni.length / dim));
+  if (paginaCorr > npag) paginaCorr = npag;
+  const da = (paginaCorr - 1) * dim;
+  const pager = npag > 1 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px;">' +
+      Array.from({length: npag}, (_, k) => '<button class="btn" style="padding:6px 12px;font-size:12px;' + (k + 1 === paginaCorr ? 'background:var(--green);color:#04210f;' : '') + '" onclick="vaiPagina(' + (k + 1) + ')">' + (k + 1) + '</button>').join('') +
+      '</div><div style="text-align:center;color:var(--muted);font-size:12px;margin-top:6px;">Pagina ' + paginaCorr + ' di ' + npag + ' · ' + registrazioni.length + ' voci</div>' : '';
+  el.innerHTML = registrazioni.slice(da, da + dim).map((rr, j) => { const i = da + j; const r = rr;
     const tipoColore = r.tipo === 'Trasportatore' ? 'var(--blue)' : (r.tipo === 'Azienda' ? 'var(--amber)' : 'var(--muted)');
     return `<div class="reg-row">
       <div style="flex:1;min-width:220px;">
         <div class="reg-name">${esc(r.nome)} <span style="color:${tipoColore};font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px;">${esc(r.tipo)}</span>
-          <span style="font-size:11px;font-weight:700;margin-left:6px;color:${r.cosa === 'Carico' ? '#a78bfa' : 'var(--green)'};">${r.cosa === 'Carico' ? '🚚 CARICO' : '🎫 ISCRIZIONE'}</span>
+          <span style="font-size:11px;font-weight:700;margin-left:6px;color:${r.cosa === 'Carico' ? '#a78bfa' : (r.cosa === 'Registrazione' ? 'var(--blue)' : 'var(--green)')};">${r.cosa === 'Carico' ? '🚚 CARICO' : (r.cosa === 'Registrazione' ? '📝 REGISTRAZIONE' : '🎫 ISCRIZIONE')}</span>
           ${r.prova ? '<span style="font-size:10px;font-weight:700;margin-left:6px;color:var(--amber);border:1px solid rgba(245,158,11,0.5);border-radius:6px;padding:1px 6px;">PROVA</span>' : ''}</div>
         <div class="reg-contact">✉️ ${esc(r.email)} &nbsp; 📞 ${esc(r.telefono)} &nbsp; 🧾 ${esc(r.ordine)}</div>
       </div>
-      <div class="reg-amount">${euroR(r.importo)}</div>
+      <div class="reg-amount">${r.cosa === 'Registrazione' ? (r.iscrPagata ? '✅ iscrizione pagata' : '⏳ iscrizione non pagata') : euroR(r.importo)}</div>
       <div class="reg-date">${dataOraR(r.data)}</div>
       <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="stampaRiga(${i})">🖨️ Stampa</button>
     </div>`;
-  }).join('');
+  }).join('') + pager;
 }
+let paginaCorr = 1;
+function vaiPagina(n) { paginaCorr = n; render(); window.scrollTo({ top: document.getElementById('lista-registrazioni').offsetTop - 80, behavior: 'smooth' }); }
 
 function finestraStampa(titolo, html) {
   const w = window.open('', '_blank');
@@ -254,7 +286,7 @@ function finestraStampa(titolo, html) {
 }
 function stampaRiga(i) {
   const r = registrazioni[i]; if (!r) return;
-  const righe = [['Cosa', r.cosa === 'Carico' ? 'Pagamento per prendere un carico (commissione)' : 'Iscrizione alla piattaforma'],
+  const righe = [['Cosa', r.cosa === 'Carico' ? 'Pagamento per prendere un carico (commissione)' : (r.cosa === 'Registrazione' ? 'Registrazione sul portale' + (r.iscrPagata ? ' (iscrizione pagata)' : ' (iscrizione NON pagata)') : 'Iscrizione alla piattaforma')],
     ['Nome', r.nome], ['Tipo utente', r.tipo], ['Email', r.email], ['Telefono', r.telefono],
     ['Ordine Shopify', r.ordine], ['Prodotto', r.prodotto], ['Importo pagato', euroR(r.importo) + ' ' + r.valuta],
     ['Data e ora', dataOraR(r.data)], ['Nota', r.prova ? 'PROVA INTERNA (codice sconto o email SynAIMAX)' : 'Pagamento reale']];
