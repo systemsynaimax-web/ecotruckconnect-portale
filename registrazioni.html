@@ -265,7 +265,7 @@ function render() {
         <div class="reg-name">${esc(r.nome)} <span style="color:${tipoColore};font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px;">${esc(r.tipo)}</span>
           <span style="font-size:11px;font-weight:700;margin-left:6px;color:${r.cosa === 'Carico' ? '#a78bfa' : 'var(--green)'};">${r.cosa === 'Carico' ? '🚚 CARICO 20 €' : '🎫 ISCRIZIONE 150 €'}</span>
           </div>
-        <div class="reg-contact">✉️ ${esc(r.email)} &nbsp; 📞 ${esc(r.telefono)} &nbsp; 🧾 ${esc(r.ordine)}</div>
+        <div class="reg-contact">${linkMail(r.email, r.nome)} &nbsp; ${linkTel(r.telefono)} &nbsp; 🧾 ${esc(r.ordine)}</div>
       </div>
       <div class="reg-amount">${r.daAnag ? (r.iscrPagata ? '✅ pagata ' + euroR(r.importo) + (r.conCodice ? ' (codice sconto)' : '') : '⏳ non risulta pagata') : euroR(r.importo)}</div>
       <div class="reg-date">${dataOraR(r.data)}</div>
@@ -304,6 +304,10 @@ function cosaMancaR(f, tipo) {
   return m;
 }
 const CAMPI_SCHEDA = [['Nome','nome'],['Cognome','cognome'],['Ragione sociale','ragione_sociale'],['Email','email'],['Telefono','telefono'],['Partita IVA','p_iva'],['Codice fiscale','codice_fiscale'],['Forma giuridica','forma_giuridica'],['PEC','pec'],['Codice SDI','codice_sdi'],['Indirizzo','indirizzo'],['CAP','cap'],['Città','citta'],['Provincia','provincia'],['Mezzi posseduti','tipo_camion'],['Autorizzazioni possedute','autorizzazioni'],['Note','note']];
+function telPulito(t) { return String(t || '').replace(/[^0-9+]/g, ''); }
+function waNum(t) { let n = telPulito(t); if (n.startsWith('00')) n = n.slice(2); else if (n.startsWith('+')) n = n.slice(1); else if (n.length <= 10) n = '39' + n; return n; }
+function linkTel(t) { const n = telPulito(t); if (n.length < 6) return esc(t || '—'); return '<a href="tel:' + n + '" style="color:inherit;text-decoration:underline;" title="Chiama">📞 ' + esc(t) + '</a> <a href="https://wa.me/' + waNum(t) + '" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:none;" title="Scrivi su WhatsApp">💬 WhatsApp</a>'; }
+function linkMail(e, nome) { if (!e || String(e).indexOf('@') < 1) return esc(e || '—'); return '<a href="#" onclick="apriMailPopup(' + "'" + String(e).replace(/'/g, '') + "'" + ',' + "'" + String(nome || '').replace(/'/g, ' ') + "'" + ');return false;" style="color:inherit;text-decoration:underline;" title="Scrivi email">✉️ ' + esc(e) + '</a>'; }
 let schedaCorr = null;
 function apriScheda(i) {
   const r = registrazioni[i]; if (!r) return;
@@ -320,16 +324,17 @@ function apriScheda(i) {
   const html = '<div style="background:#111b2b;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:20px;width:' + (schedaGrande ? '96vw' : '640px') + ';max-width:96vw;max-height:94vh;overflow:auto;color:#fff;">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><b style="font-size:18px;">' + esc(r.nome) + ' <span style="font-size:12px;color:var(--blue);text-transform:uppercase;">' + esc(tipo) + '</span></b>' +
     '<span><button class="btn" style="padding:6px 12px;font-size:12px;" onclick="schedaGrande=!schedaGrande;apriScheda(' + i + ')">' + (schedaGrande ? '⤡ Riduci' : '⤢ Ingrandisci') + '</button> <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="stampaScheda()">🖨️ Stampa / Scarica</button> <button class="btn" style="padding:6px 12px;font-size:12px;" onclick="chiudiScheda();apriMailPopup(schedaCorr.email, schedaCorr.nome)">✉️ Mail</button> <button class="btn" style="padding:6px 12px;font-size:14px;" onclick="chiudiScheda()">✕</button></span></div>' +
-    '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.7;">📅 Registrato il <b>' + esc(quando) + '</b><br>✉️ Email: <b>' + esc(r.email) + '</b><br>🔑 Password salvata: <b id="sch-pw">••••••••</b> <button class="btn" style="padding:3px 10px;font-size:12px;" onclick="document.getElementById(\'sch-pw\').textContent=schedaCorr.pw||\'— (nessuna salvata)\'">👁 Mostra</button></div>' +
+    '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.05);font-size:13px;line-height:1.7;">📅 Registrato il <b>' + esc(quando) + '</b><br><b>' + linkMail(r.email, r.nome) + '</b><br><b>' + linkTel(r.telefono) + '</b><br>🔑 Password salvata: <b id="sch-pw">••••••••</b> <button class="btn" id="sch-pw-b" style="padding:3px 10px;font-size:12px;" onclick="togglePwScheda()">👁 Mostra</button></div>' +
     (a ? (manca.length ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);font-size:13px;line-height:1.6;"><b>⚠️ Cosa NON ha fatto</b><br>' + manca.map(x => '• ' + esc(x)).join('<br>') + '</div>' : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.5);font-size:13px;">✅ Ha fatto tutto: Telegram, Authenticator, password, documenti e consenso.</div>') : '<div style="margin-bottom:12px;font-size:13px;color:var(--muted);">Questa persona non è nell\'anagrafica Airtable (solo ordine Shopify).</div>') +
     '<div style="margin-bottom:12px;"><b>Cosa ha fatto (data e ora)</b><table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:6px;">' +
       (att.length ? att.map(x => '<tr><td style="' + td + '">' + esc(dataOraR(x.data)) + '</td><td style="' + td + '">' + (x.cosa === 'Carico' ? '🚚 Carico preso (20 €)' : '🎫 Iscrizione (150 €)') + '</td><td style="' + td + 'text-align:right;">' + esc(x.ordine || '') + ' · ' + esc(euroR(x.importo)) + '</td></tr>').join('') : '<tr><td style="' + td + 'color:var(--muted);">Nessun pagamento.</td></tr>') + '</table></div>' +
-    '<table style="width:100%;font-size:13px;border-collapse:collapse;">' + righe.map(x => '<tr><td style="' + td + 'color:var(--muted);width:40%;">' + esc(x[0]) + '</td><td style="' + td + 'text-align:right;">' + esc(x[1]) + '</td></tr>').join('') + '</table></div>';
+    '<table style="width:100%;font-size:13px;border-collapse:collapse;">' + righe.map(x => '<tr><td style="' + td + 'color:var(--muted);width:40%;">' + esc(x[0]) + '</td><td style="' + td + 'text-align:right;">' + (x[0] === 'Telefono' ? linkTel(x[1]) : (x[0] === 'Email' ? linkMail(x[1], r.nome) : esc(x[1]))) + '</td></tr>').join('') + '</table></div>';
   let bg = document.getElementById('scheda-bg');
   if (!bg) { bg = document.createElement('div'); bg.id = 'scheda-bg'; bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99998;display:flex;align-items:center;justify-content:center;padding:12px;'; bg.onclick = function (ev) { if (ev.target === bg) chiudiScheda(); }; document.body.appendChild(bg); }
   bg.innerHTML = html;
 }
 let schedaGrande = false;
+function togglePwScheda() { const e = document.getElementById('sch-pw'), b = document.getElementById('sch-pw-b'); if (!e || !schedaCorr) return; const nasc = e.getAttribute('data-vis') !== '1'; e.setAttribute('data-vis', nasc ? '1' : '0'); e.textContent = nasc ? (schedaCorr.pw || '— (nessuna salvata)') : '••••••••'; b.textContent = nasc ? '🙈 Nascondi' : '👁 Mostra'; }
 function chiudiScheda() { const b = document.getElementById('scheda-bg'); if (b) b.remove(); }
 function stampaScheda() {
   const s = schedaCorr; if (!s) return;
