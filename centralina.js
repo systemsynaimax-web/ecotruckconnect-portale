@@ -13,7 +13,7 @@
   'use strict';
   var DEMO = !!window.CENTRALINA_DEMO;
   var CENTRALINA_URL = 'https://hook.eu1.make.com/i2vvp1ly9alev23iubqxnt9txuvn5prp';          /* <- indirizzo del webhook "Centralina Leggi" (si compila quando lo scenario e' pronto) */
-  var ORARI = '08:00 · 15:00 · 20:00';
+  var ORARI = '08:00 (tutti) · portale ogni 5 minuti (UptimeRobot)';
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -247,11 +247,15 @@
       '<div class="ct-box"><h3>Storia di questo quadretto</h3>' + (storia.length ? storia.map(function (e) { return '<p class="ct-sm" style="margin:0 0 4px">' + fmt(e.quando) + ' · ' + tag(e.livello) + ' ' + esc(e.titolo) + ' — ' + esc(e.chi) + ': ' + esc(e.azione) + ' (' + esc(e.esito) + ')</p>'; }).join('') : '<p class="ct-sm">Nessun guasto registrato.</p>') + '</div>';
   }
 
+  function sotto() {
+    return '<div class="ct-row" style="margin-top:18px"><a class="ct-btn sec" href="https://dashboard.uptimerobot.com/monitors" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Apri UptimeRobot (controllo dei siti, ogni 5 minuti)</a></div>';
+  }
+
   function disegna() {
     aggiornaMenu();
     var c = $('mg-centralina'); if (!c) return;
     if (!c.getAttribute('data-ct')) { c.setAttribute('data-ct', '1'); legami(c); }
-    c.innerHTML = vista === 'griglia' ? barra() + reportOggi() + griglia() + calendario() : barra() + dettaglio(vista);
+    c.innerHTML = vista === 'griglia' ? barra() + reportOggi() + griglia() + calendario() + sotto() : barra() + dettaglio(vista);
   }
 
   /* ---------- menu laterale: spia ---------- */
