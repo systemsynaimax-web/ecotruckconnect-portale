@@ -2487,7 +2487,8 @@ function renderCampanellino() {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euro(f.importo_pattuito) : ''}</span>
         ${preso ? `<span style="display:flex;gap:6px;align-items:center;">
-          ${f.assegnato_a_telefono ? `<a class="btn-cap" href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">📞 Chiama</a>` : ''}
+          ${f.assegnato_a_telefono ? `<a class="btn-cap" href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">📞 Chiama</a>
+          <a class="btn-cap" href="https://wa.me/${cpWaNum(f.assegnato_a_telefono)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">💬 WhatsApp</a>` : ''}
           <button class="btn-cap" style="padding:4px 12px;font-size:12px;" onclick="event.stopPropagation();${apri}">Vedi ›</button>
         </span>` : ''}
       </div>
@@ -3721,7 +3722,8 @@ function cpEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').repl
 function cpDataOra(v) { if (!v) return '—'; const d = new Date(v); if (isNaN(d)) return cpEsc(v); return d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
 function cpData(v) { if (!v) return '—'; const d = new Date(v); return isNaN(d) ? cpEsc(v) : d.toLocaleDateString('it-IT'); }
 function cpVal(v) { return (v == null || v === '') ? '<span style="color:var(--muted);">—</span>' : cpEsc(Array.isArray(v) ? v.join(', ') : v); }
-function cpTel(v) { if (!v) return cpVal(v); const n = String(v).replace(/[^\d+]/g, ''); return '<a href="tel:' + cpEsc(n) + '" style="color:var(--blue);text-decoration:none;">📞 ' + cpEsc(v) + '</a>'; }
+function cpWaNum(v) { let n = String(v).replace(/[^\d+]/g, ''); if (n.indexOf('00') === 0) n = n.slice(2); else if (n.charAt(0) === '+') n = n.slice(1); else if (n.length <= 10) n = '39' + n; return n; }
+function cpTel(v) { if (!v) return cpVal(v); const n = String(v).replace(/[^\d+]/g, ''); return '<a href="tel:' + cpEsc(n) + '" style="color:var(--blue);text-decoration:none;">📞 ' + cpEsc(v) + '</a> <a href="https://wa.me/' + cpEsc(cpWaNum(v)) + '" target="_blank" rel="noopener" style="color:#22c55e;text-decoration:none;font-weight:700;">💬 WhatsApp</a>'; }
 function cpMail(v) { if (!v) return cpVal(v); return '<a href="mailto:' + cpEsc(v) + '" style="color:var(--blue);text-decoration:none;">' + cpEsc(v) + '</a>'; }
 function cpMaps(f) {
   const da = f.indirizzo_ritiro || ((f.citta_partenza || '') + ' ' + (f.cap_partenza || ''));
