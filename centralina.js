@@ -1,6 +1,6 @@
 /* =====================================================================
-   EcoTruckConnect — centralina.js (18/10/2026)
-   CENTRALINA della Dashboard Gestori: 23 quadretti (verde / giallo / rosso), report di oggi,
+   EcoTruckConnect — centralina.js (30/10/2026 — aggiornata: quadretti nuovi 27-31, demo completa, titolo con il numero vero)
+   CENTRALINA della Dashboard Gestori: i quadretti (verde / giallo / rosso), report di oggi,
    riquadro di dettaglio per ogni quadretto, archivio dei guasti, bottone "Aggiorna ora".
    SOLO per i gestori: vive in dashboard.html e dashboard-demo.html, mai nei portali.
    - Dashboard FINTA: la pagina scrive prima  window.CENTRALINA_DEMO = true  -> dati di esempio, nulla di reale.
@@ -19,7 +19,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var PORTALE = 'https://ecotruckconnect-portale.netlify.app/';
 
-  /* ---------- i 23 quadretti: cosa controllano e dove si ripara ---------- */
+  /* ---------- i quadretti: cosa controllano e dove si ripara ---------- */
   var META = {
     1:  { i: '🖥️', cosa: 'La Dashboard Gestori risponde e si apre (pagina dashboard.html).', link: 'dashboard.html', lt: 'Apri la Dashboard' },
     2:  { i: '🚚', cosa: 'Il portale del trasportatore si apre: carichi, presi, commissioni, iscrizione.', link: PORTALE, lt: 'Apri il portale' },
@@ -43,7 +43,12 @@
     20: { i: '📍', cosa: 'Dopo il pagamento il trasportatore vede gli indirizzi di ritiro e consegna.', link: 'dashboard.html', lt: 'Apri i carichi' },
     22: { i: '📝', cosa: 'Nessuna registrazione resta in attesa di approvazione da più di 24 ore.', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
     24: { i: '📑', cosa: 'Ogni carico assegnato ha il suo report nello storico delle attività.', link: 'dashboard.html', lt: 'Apri lo storico' },
-    23: { i: '🛑', cosa: 'Make non ha mandato errori, avvisi o scenari disattivati nelle ultime 24 ore.', link: 'https://eu1.make.com/992733/scenarios', lt: 'Apri Make' }
+    23: { i: '🛑', cosa: 'Make non ha mandato errori, avvisi o scenari disattivati nelle ultime 24 ore.', link: 'https://eu1.make.com/992733/scenarios', lt: 'Apri Make' },
+    27: { i: '↩️', cosa: 'Nessun carico annullato resta senza rimborso da più di 12 ore (controllo ogni 3 ore).', link: 'dashboard.html#annullamenti', lt: 'Apri Annullamenti e rimborsi' },
+    28: { i: '🎫', cosa: 'Chi ha pagato l’iscrizione ha l’account attivato: nessun pagamento recente di utenti rimasti non attivi (controllo ogni 3 ore).', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
+    29: { i: '✈️', cosa: 'Ogni utente approvato da più di 24 ore ha collegato Telegram: senza, non riceve i carichi (controllo ogni 3 ore).', link: 'registrazioni.html', lt: 'Apri le registrazioni' },
+    30: { i: '💶', cosa: 'Nessuna rinuncia o annullamento pagato resta non elaborato da più di 24 ore (controllo ogni 3 ore).', link: 'dashboard.html#annullamenti', lt: 'Apri Annullamenti e rimborsi' },
+    31: { i: '✉️', cosa: 'Ogni registrazione degli ultimi 3 giorni ha ricevuto la sua mail di benvenuto (controllo ogni 3 ore).', link: 'registrazioni.html', lt: 'Apri le registrazioni' }
   };
   var COL = {
     Grigio: { c: '#64748b', b: 'rgba(100,116,139,.35)', bg: 'rgba(100,116,139,.10)', t: 'Non ancora controllato' },
@@ -70,6 +75,23 @@
     q[7].stato = 'Giallo'; q[7].dettaglio = 'Airtable: le richieste API del mese sono all’85% del limite. Se arrivano al 100% i portali smettono di leggere i dati.'; q[7].ultimo_intervento = 'Operaio'; q[7].tentativi = 1; q[7]._risolveAl = 0;
     q[13].stato = 'Giallo'; q[13].dettaglio = 'Telegram: il bot ha risposto in 9 secondi (normale: meno di 2).'; q[13]._risolveAl = 0;
     q[10].stato = 'Rosso'; q[10].dettaglio = 'Shopify: il collegamento al pagamento da 20 € non risponde dalle 15:00. I trasportatori non riescono a completare il pagamento di un carico.'; q[10].ultimo_intervento = 'Riserva 1'; q[10].tentativi = 2; q[10]._risolveAl = 2;
+    /* quadretti dei controlli sui dati (17-31): gli stessi della centralina vera, qui tutti verdi con dati di esempio */
+    [
+      ['17', 'Carichi pubblicati e notificati', 'Alta', 'Tutti i carichi pubblicati nelle ultime 48 ore sono stati notificati ai trasportatori.'],
+      ['18', 'Blocchi e pagamenti fermi', 'Alta', 'Nessun blocco scaduto rimasto attaccato (la piattaforma li libera da sola).'],
+      ['19', 'Carichi pagati e assegnati', 'Alta', 'Tutti i carichi pagati risultano assegnati.'],
+      ['20', 'Indirizzi visibili dopo il pagamento', 'Alta', 'Tutti i carichi assegnati hanno gli indirizzi visibili al trasportatore.'],
+      ['22', 'Registrazioni in attesa', 'Alta', 'Nessuna registrazione in attesa da più di 24 ore.'],
+      ['23', 'Errori di Make', 'Alta', 'Nessuna email di errore o avviso da Make nelle ultime 24 ore.'],
+      ['24', 'Report nello storico', 'Alta', 'Ogni carico assegnato ha il suo report nello storico.'],
+      ['27', 'Rimborsi e annullamenti', 'Alta', 'Nessun annullamento in attesa di rimborso.'],
+      ['28', 'Iscrizioni pagate e account attivati', 'Alta', 'Nessun pagamento recente di utenti rimasti non attivi.'],
+      ['29', 'Utenti approvati con Telegram', 'Alta', 'Tutti gli utenti approvati da più di 24 ore hanno Telegram collegato.'],
+      ['30', 'Rinunce e annullamenti pagati non elaborati', 'Alta', 'Nessuna rinuncia o annullamento in attesa da oltre 24 ore.'],
+      ['31', 'Mail di benvenuto inviate', 'Media', 'Ogni registrazione degli ultimi 3 giorni ha la sua mail di benvenuto.']
+    ].forEach(function (r) {
+      q.push({ id: r[0], nome: r[1], stato: 'Verde', ultimo_controllo: ora(35), dettaglio: r[3], ultimo_intervento: 'Nessuno', tentativi: 0, priorita: r[2] === 'Alta' ? 'Alta (azienda/trasportatore)' : 'Media', attivo: true, _risolveAl: 0 });
+    });
     var a = [
       ['Make: scenario spento', '7', 'Rosso', 70, 'Operaio', 'Riacceso lo scenario “Timer Carico”', 'Risolto'],
       ['Netlify: pubblicazione fallita', '10', 'Giallo', 1500, 'Operaio', 'Rilanciata la pubblicazione', 'Risolto'],
@@ -191,8 +213,8 @@
   }
 
   /* dove si trova il danno: link diretto alla scheda (carico / trasportatore / azienda) in Airtable, con il nome */
-  var TAB = { 17: 'tblZ7NoiUBJsi1ZSK', 18: 'tblZ7NoiUBJsi1ZSK', 19: 'tblZ7NoiUBJsi1ZSK', 20: 'tblZ7NoiUBJsi1ZSK', 24: 'tblZ7NoiUBJsi1ZSK', 22: 'tblrn6u8TOshdviwo' };
-  var COSA = { 17: 'carico', 18: 'carico', 19: 'carico', 20: 'carico', 24: 'carico', 22: 'trasportatore' };
+  var TAB = { 17: 'tblZ7NoiUBJsi1ZSK', 18: 'tblZ7NoiUBJsi1ZSK', 19: 'tblZ7NoiUBJsi1ZSK', 20: 'tblZ7NoiUBJsi1ZSK', 24: 'tblZ7NoiUBJsi1ZSK', 22: 'tblrn6u8TOshdviwo', 27: 'tblZ7NoiUBJsi1ZSK', 30: 'tblZ7NoiUBJsi1ZSK', 29: 'tblrn6u8TOshdviwo' };
+  var COSA = { 17: 'carico', 18: 'carico', 19: 'carico', 20: 'carico', 24: 'carico', 22: 'trasportatore', 27: 'carico', 30: 'carico', 29: 'trasportatore' };
   function dannoDiretto(x) {
     if (!x || x.stato === 'Verde' || x.stato === 'Grigio') return [];
     var id = Number(x.id), d = String(x.dettaglio || '');
@@ -225,7 +247,7 @@
   function nomeQ(id) { var x = stato.q.filter(function (y) { return String(y.id) === String(id); })[0]; return x ? x.nome : ''; }
 
   function griglia() {
-    return '<div class="ct-h">I 23 quadretti</div><div class="ct-grid">' + stato.q.map(function (x) {
+    return '<div class="ct-h">' + (stato.q.length ? 'I ' + stato.q.length + ' quadretti' : 'I quadretti') + '</div><div class="ct-grid">' + stato.q.map(function (x) {
       var k = COL[x.stato] || COL.Grigio, m = META[x.id] || { i: '▫️' };
       return '<button type="button" class="ct-q" data-q="' + esc(x.id) + '" style="border-color:' + k.b + ';background:' + k.bg + '"><span class="t"><span>' + m.i + ' ' + esc(x.id) + (/^Alta/.test(x.priorita || '') ? ' · ★' : '') + '</span>' + pallino(x.stato) + '</span><b>' + esc(x.nome) + '</b><span class="s" style="color:' + k.c + '">' + k.t + '</span></button>';
     }).join('') + '</div><div class="ct-sm" style="margin-top:8px">★ = riguarda direttamente azienda e trasportatore (carichi, pagamenti). Clicca un quadretto per vedere cosa è successo e dove ripararlo.</div>';
@@ -261,7 +283,7 @@
       var cls = i < passo ? (risolto && i === passo - 1 ? 'ok' : 'fatto') : '';
       return '<div class="ct-step ' + cls + '"><b>' + p + '</b>' + (i < passo ? (risolto && i === passo - 1 ? 'ha risolto' : 'provato, non basta') : 'non ancora') + '</div>';
     }).join('') + '<div class="ct-step ' + (x.stato === 'Rosso' && passo >= 3 ? 'fatto' : '') + '"><b>Serve tu</b>' + (x.stato === 'Rosso' && passo >= 3 ? 'tocca a te' : 'solo se tutto fallisce') + '</div>';
-    var datiFlussi = Number(x.id) >= 17;   /* 17-26: controlli sui dati, rifatti da soli ogni 3 ore: nessun ritenta dell'operaio */
+    var datiFlussi = Number(x.id) >= 17;   /* 17-31: controlli sui dati, rifatti da soli ogni 3 ore: nessun ritenta dell'operaio */
     var bott = datiFlussi
       ? '<div class="ct-box" style="margin:0 0 10px;flex:1 1 100%">Controllato da solo ogni 3 ore sui dati reali di Airtable. ' + (x.stato === 'Verde' ? 'Tutto a posto.' : 'Sistema il problema con il pulsante verde qui sopra, poi premi «Ricontrolla adesso»: se è a posto, torna verde.') + '</div><button class="ct-btn ver" data-az="ricontrolla">↻ Ricontrolla adesso</button>'
       : x.stato === 'Verde'
@@ -361,7 +383,7 @@
       return '<tr><td>' + esc(x.id) + '</td><td><b>' + esc(x.nome) + '</b></td><td>' + esc(x.stato) + '</td><td>' + esc(fmt(x.ultimo_controllo)) + '</td><td>' + esc(x.dettaglio || '') + (x.stato === 'Giallo' || x.stato === 'Rosso' ? '<br><small>Dove ripararlo: ' + esc(m.link || '') + '</small>' : '') + '</td></tr>';
     }).join('');
     var te = ev.length ? ev.map(function (e) { return '<tr><td>' + esc(fmt(e.quando, 1)) + '</td><td>' + esc(e.livello) + '</td><td>' + esc(e.titolo) + '</td><td>' + esc(e.chi) + ': ' + esc(e.azione) + '</td><td>' + esc(e.esito) + '</td></tr>'; }).join('') : '<tr><td colspan="5">Oggi nessun guasto registrato.</td></tr>';
-    w.document.write('<html><head><meta charset="utf-8"><title>Report centralina ' + oggi + '</title><style>body{font-family:Arial,sans-serif;padding:26px;color:#111}h1{margin:0 0 4px}h2{margin:22px 0 6px;font-size:15px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top}th{background:#eee}small{color:#555}</style></head><body><h1>EcoTruckConnect — Report centralina</h1><div>' + new Date().toLocaleString('it-IT') + ' · Stato generale: <b>' + esc(g) + '</b> · ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' + (DEMO ? ' · <b>DEMO: dati di esempio</b>' : '') + '</div><h2>I 23 quadretti</h2><table><tr><th>N.</th><th>Quadretto</th><th>Stato</th><th>Ultimo controllo</th><th>Dettaglio</th></tr>' + tq + '</table><h2>Cosa è successo oggi</h2><table><tr><th>Ora</th><th>Livello</th><th>Guasto</th><th>Chi e cosa</th><th>Esito</th></tr>' + te + '</table><script>window.onload=function(){window.print()}<\/script></body></html>');
+    w.document.write('<html><head><meta charset="utf-8"><title>Report centralina ' + oggi + '</title><style>body{font-family:Arial,sans-serif;padding:26px;color:#111}h1{margin:0 0 4px}h2{margin:22px 0 6px;font-size:15px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:top}th{background:#eee}small{color:#555}</style></head><body><h1>EcoTruckConnect — Report centralina</h1><div>' + new Date().toLocaleString('it-IT') + ' · Stato generale: <b>' + esc(g) + '</b> · ' + conta('Verde') + ' verdi, ' + conta('Giallo') + ' gialli, ' + conta('Rosso') + ' rossi' + (DEMO ? ' · <b>DEMO: dati di esempio</b>' : '') + '</div><h2>I ' + stato.q.length + ' quadretti</h2><table><tr><th>N.</th><th>Quadretto</th><th>Stato</th><th>Ultimo controllo</th><th>Dettaglio</th></tr>' + tq + '</table><h2>Cosa è successo oggi</h2><table><tr><th>Ora</th><th>Livello</th><th>Guasto</th><th>Chi e cosa</th><th>Esito</th></tr>' + te + '</table><script>window.onload=function(){window.print()}<\/script></body></html>');
     w.document.close();
   }
   function csv() {
