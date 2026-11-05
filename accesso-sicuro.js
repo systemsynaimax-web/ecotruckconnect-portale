@@ -1177,13 +1177,13 @@
     try { var r = await fetch(PROXY_P, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }); return await r.json(); } catch (e) { return null; }
   }
   function ricarica() { try { if (typeof aggiornaDashFatture === 'function') aggiornaDashFatture(); } catch (e) {} try { if (typeof caricaDati === 'function' && currentUser) caricaDati(currentUser.email); } catch (e) {} }
-  function finestraCarico(titolo, html, onOk, testoOk) {
+  function finestraCarico(titolo, html, onOk, testoOk, pericolo) {
     var ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(8,13,22,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
     ov.innerHTML = '<div style="background:#0e1623;border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;color:#f1f5f9;font-family:DM Sans,system-ui,sans-serif;">' +
       '<div style="font-size:17px;font-weight:800;margin-bottom:12px;">' + titolo + '</div>' + html +
       '<div class="ect-m-err" style="display:none;color:#f87171;font-size:13px;margin-top:10px;"></div>' +
-      '<div style="display:flex;gap:8px;margin-top:16px;"><button type="button" class="ect-m-ok" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:9px;padding:11px;font-weight:700;cursor:pointer;">' + (testoOk || 'Salva') + '</button>' +
+      '<div style="display:flex;gap:8px;margin-top:16px;"><button type="button" class="ect-m-ok" style="flex:1;' + (pericolo ? 'background:#c62828;border:2px solid #fca5a5;' : 'background:#2563eb;border:none;') + 'color:#fff;border-radius:9px;padding:11px;font-weight:700;cursor:pointer;">' + (testoOk || 'Salva') + '</button>' +
       '<button type="button" class="ect-m-no" style="flex:1;background:rgba(255,255,255,0.08);color:#fff;border:none;border-radius:9px;padding:11px;cursor:pointer;">Annulla</button></div></div>';
     document.body.appendChild(ov);
     ov.querySelector('.ect-m-no').onclick = function () { ov.remove(); };
@@ -1221,7 +1221,7 @@
       if (r && String(r.ok) === 'true') { ricarica(); alert('✅ Carico annullato.'); return true; }
       if (r && r.errore === 'non_annullabile') return 'Non si può più annullare: un trasportatore lo sta prendendo o l\u2019ha già preso. Usa «Richiedi annullamento».';
       return 'Non riesco ad annullare. Riprova tra poco.';
-    }, 'Sì, annulla il carico');
+    }, 'Sì, annulla il carico', true);
   }
   function apriRichiesta(f) {
     finestraCarico('📩 Richiedi annullamento', '<div style="font-size:13px;line-height:1.6;margin-bottom:8px;">Il carico <b>' + esc((f.citta_partenza || '') + ' → ' + (f.citta_arrivo || '')) + '</b> è già stato preso: la richiesta arriva ai gestori, che ti ricontattano.</div>' +
@@ -1492,7 +1492,7 @@
         if (r && String(r.ok) === 'true') { impostaPendente('annullamento', r.carico_id || f.__id); window.location.href = urlCheckout('annullamento', r.carico_id || f.__id); return true; }
         if (r && r.errore) return 'Non si può annullare: il carico non risulta più preso. Aggiorna la pagina.';
         return 'Non riesco a procedere. Riprova tra poco.';
-      }, 'Vai al pagamento');
+      }, 'Vai al pagamento', true);
   }
   window.ectRinuncia = function (caricoId) {
     finestraCarico('⚠️ Rinuncia al carico',
@@ -1503,7 +1503,7 @@
         if (r && String(r.ok) === 'true') { impostaPendente('rinuncia', r.carico_id || caricoId); window.location.href = urlCheckout('rinuncia', r.carico_id || caricoId); return true; }
         if (r && r.errore) return 'Non si può rinunciare: il carico non risulta più tuo. Aggiorna la pagina.';
         return 'Non riesco a procedere. Riprova tra poco.';
-      }, 'Rinuncio e vado al pagamento');
+      }, 'Rinuncio e vado al pagamento', true);
   };
   window.ectAnnullaPresoId = function (caricoId) { var f = trovaCarico(caricoId); apriAnnullaPreso(f || { __id: caricoId }); };
   setInterval(function () { try { mostraDaPagare(); } catch (e) {} }, 1200);
