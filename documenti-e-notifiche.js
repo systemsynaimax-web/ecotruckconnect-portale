@@ -612,7 +612,12 @@
   function prossimoGiro() {
     clearTimeout(timerCamp);
     if (tipo() !== 'azienda') return;
-    var attesa = qualcunoStaPagando() ? 30 * 1000 : 2 * 60 * 1000;
+    // 5/11/2026: niente giro automatico ogni 2 minuti (costa crediti Make). L'azienda preme «Aggiorna».
+    // Resta solo il controllo ogni 30 secondi MENTRE un trasportatore sta pagando un suo carico.
+    // Per riaccenderlo in futuro: window.ECT_AZIENDA_AGG_MIN = 2 (minuti).
+    var ogniMin = Number(window.ECT_AZIENDA_AGG_MIN) || 0;
+    var attesa = qualcunoStaPagando() ? 30 * 1000 : (ogniMin > 0 ? ogniMin * 60 * 1000 : 0);
+    if (!attesa) return;
     timerCamp = setTimeout(async function () {
       if (!document.hidden) { try { await aggiornaCampanellino(false); } catch (e) {} }
       prossimoGiro();
@@ -626,8 +631,10 @@
       prossimoGiro();
     };
   }
+  window.ectProssimoGiro = prossimoGiro;
   document.addEventListener('visibilitychange', async function () {
     if (document.hidden || tipo() !== 'azienda') return;
+    if (!(Number(window.ECT_AZIENDA_AGG_MIN) > 0)) return;   // aggiornamento automatico spento
     try { await aggiornaCampanellino(false); } catch (e) {}
     prossimoGiro();
   });

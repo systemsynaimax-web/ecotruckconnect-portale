@@ -26,7 +26,7 @@
   window.fetch = function(url, opts){
     var u = String(url || '');
     if (u.indexOf('comuni-ita.nicolorebaioli.dev') !== -1) return fetchOriginale(url, opts); // solo ricerca città da CAP (pubblica, nessun dato nostro)
-    var finto = { ok:true, anteprima:true, trovato:true, stato:'DISPONIBILE', reply:'Questa è un\'anteprima con dati finti: il bot non è collegato.' };
+    var finto = { ok:true, anteprima:true, trovato:true, stato:'DISPONIBILE', reply:'Questa è un\'anteprima con dati finti: l\'assistente virtuale non è collegato.' };
     return Promise.resolve(new Response(JSON.stringify(finto), { status:200, headers:{ 'Content-Type':'application/json' } }));
   };
   var openOriginale = window.open.bind(window);
@@ -555,6 +555,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div><div class="hs-val" id="st-tot">—</div><div class="hs-label" id="st-tot-label">Carichi totali</div></div>
         <div id="hero-stat-completati-wrap" style="display:none;"><div class="hs-val" style="color:var(--green);" id="st-completati">—</div><div class="hs-label">Carichi completati</div></div>
       </div>
+      <div class="agg-riga" style="display:flex;align-items:center;gap:10px;margin:18px 0 0;flex-wrap:wrap;justify-content:center;"><button type="button" class="btn-cap agg-btn" onclick="aggiornaManuale(this)" style="padding:8px 18px;font-size:14px;">🔄 Aggiorna</button><span class="agg-ora" style="font-size:12px;color:var(--muted);"></span></div>
     </div>
   </section>
   <div class="main">
@@ -586,6 +587,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <button class="btn-esci" onclick="chiudiDashSezione()" style="font-size:12px;">✕ Chiudi</button>
       </div>
       <div id="dash-sezione-overview" style="display:none;margin-top:18px;">
+        <div class="agg-riga" style="display:flex;align-items:center;gap:10px;margin:0 0 14px;flex-wrap:wrap;"><button type="button" class="btn-cap agg-btn" onclick="aggiornaManuale(this)" style="padding:6px 14px;font-size:13px;">🔄 Aggiorna</button><span class="agg-ora" style="font-size:12px;color:var(--muted);"></span></div>
         <div class="cards" style="margin-bottom:28px;">
           <div class="card" style="cursor:default;"><div class="card-icon">📅</div><h3>Carichi disponibili oggi</h3><div class="card-num" id="dash-stat-disp">—</div></div>
           <div class="card" style="cursor:default;"><div class="card-icon">📋</div><h3>Carichi totali</h3><div class="card-num" id="dash-stat-tot">—</div></div>
@@ -656,6 +658,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
             </div>
             <button class="btn-cap" id="btn-scarica-fatture-pdf" onclick="scaricaFatturePDF()" style="display:none;">📄 Scarica PDF</button>
             <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaFattureCSV()" style="display:none;">⬇️ Scarica CSV</button>
+            <button class="btn-cap" onclick="aggClick(this, aggiornaPerTipo)">🔄 Aggiorna</button>
             <button class="btn-cap" onclick="stampaConTimbro()">🖨️ Stampa</button>
           </span>
         </h4>
@@ -680,7 +683,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         </div>
         <div style="margin-bottom:18px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;">
           <div style="color:#fff;font-size:13px;font-weight:600;margin-bottom:8px;">📲 Notifiche Telegram</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Per riceverle devi collegare il bot (un click, una volta sola).</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Per riceverle devi collegare Telegram (un click, una volta sola).</div>
           <a href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank" class="btn-cap" style="display:inline-flex;text-decoration:none;">🔗 Collega Telegram</a>
         </div>
         <h4 style="color:#fff;font-family:var(--font-h);font-size:14px;margin-bottom:10px;">Tipi di notifica</h4>
@@ -981,7 +984,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
       </div>
       <div id="report-trasportatore-wrap" style="display:none;">
         <div class="sec-head" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
-          <span>💶 Report Pagamenti per Trasportatore</span>
+          <span>💶 Report Pagamenti per Trasportatore <button class="btn-cap" style="font-size:12px;margin-left:8px;" onclick="aggClick(this, aggiornaAziendaTutto)">🔄 Aggiorna</button></span>
           <div style="position:relative;">
             <button class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();toggleFiltroReportTrasp()">📅 <span id="filtro-report-trasp-label">Tutti</span> ▾</button>
             <div id="filtro-report-trasp-panel" style="display:none;position:absolute;top:110%;right:0;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:6px;z-index:250;min-width:130px;box-shadow:0 16px 40px rgba(0,0,0,0.4);">
@@ -1030,7 +1033,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
           <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
           <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Dove trovo il riepilogo dei miei movimenti? Come cambio i miei dati?</p>
-          <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa il bot 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, disponibile 24/7.</p>
+          <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa l'assistente virtuale 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, sempre disponibile.</p>
         </div>
         <div>
           <div class="scrivici-box">
@@ -2516,7 +2519,7 @@ async function marcaNotificheComeLette() {
 
 function avviaPollingCampanellino() {
   if (campanellinoInterval) clearInterval(campanellinoInterval);
-  campanellinoInterval = setInterval(() => aggiornaCampanellino(false), 10 * 60 * 1000);
+  // 5/11/2026: spento. L'azienda aggiorna con i pulsanti «Aggiorna» (ogni giro costa crediti Make).
 }
 
 /* ==================================================
@@ -3627,7 +3630,7 @@ function parseImportoPattuito(v) {
 }
 
 // ===== DOMANDE FREQUENTI (27/9): diverse per trasportatore e azienda =====
-const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Vai in «Dashboard» → «Notifiche» → «Collega Telegram». Si apre il bot: premi «Avvia». Da quel momento ti arrivano in privato i carichi compatibili con i tuoi mezzi."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Dashboard» → «Riepilogo movimenti» trovi tutte le commissioni pagate. In «I miei report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Quanto costa pubblicare un trasporto?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come pubblico un trasporto?", "Nel riquadro «Pubblica un trasporto» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica». Puoi anche cliccare un giorno del calendario: la data si inserisce da sola."], ["Come pubblico un trasporto di rifiuti?", "Nel modulo spunta «Si tratta di rifiuti» e scrivi il codice CER, che è obbligatorio. Se la merce è pericolosa spunta anche «La merce è pericolosa». Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva la mia pubblicazione?", "Solo ai trasportatori approvati dalla piattaforma che hanno il mezzo e l'autorizzazione che hai richiesto. La ricevono anche in privato su Telegram."], ["Come so che il mio trasporto è stato preso?", "Quando un trasportatore lo prende e paga, la campanella in alto ti avvisa con il suo nome e il telefono, e la pubblicazione diventa rossa («presa») nel calendario e nello storico."], ["Posso modificare o annullare una pubblicazione?", "Sì: finché nessun trasportatore l'ha presa, usa «Modifica» o «Annulla» nello storico delle pubblicazioni. Se è già stata presa, usa «Richiedi annullamento»: lo valutiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente 🤖 in basso a destra."]]};
+const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Nel menu a sinistra clicca «Telegram» e poi «Apri Telegram e collega». Si apre Telegram: premi «Avvia». Si fa una volta sola. Da quel momento ti arrivano in privato sul telefono i carichi compatibili con i tuoi mezzi."], ["Non vedo carichi nuovi: cosa faccio?", "Premi il pulsante «🔄 Aggiorna» nella pagina «Carichi» o nel «Calendario»: dura un secondo e vedi subito i carichi nuovi. La pagina si aggiorna da sola una volta al giorno; con «Aggiorna» lo fai tu quando vuoi. Se ancora non ne vedi, controlla che mezzi e autorizzazioni siano salvati: vedi solo i carichi adatti a te."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Dashboard» → «Riepilogo movimenti» trovi tutte le commissioni pagate. In «I miei report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente virtuale 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva. Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Cos'è Google Authenticator? Devo attivarlo?", "È una protezione in più, consigliata ma non obbligatoria. Clicca «Attiva ora» nella striscia gialla oppure vai in «Dashboard» → «Sicurezza». Scarica l'app gratuita Google Authenticator, collega EcoTruckConnect (dal computer inquadri il quadratino, dal telefono tocchi il pulsante) e scrivi il codice di 6 numeri. Da quel momento, a ogni accesso, serve anche il codice dell'app. Se cambi o perdi il telefono, scrivici."], ["Quanto costa pubblicare un trasporto?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come faccio a vedere se il mio trasporto è stato preso?", "Premi il pulsante «🔄 Aggiorna» (nella Dashboard, nel «Calendario», in «Trasporti presi» o in «Da pagare»): la campanella e lo storico si aggiornano subito. La pagina non si aggiorna da sola."], ["Come pubblico un trasporto?", "Nel riquadro «Pubblica un trasporto» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica». Puoi anche cliccare un giorno del calendario: la data si inserisce da sola."], ["Come pubblico un trasporto di rifiuti?", "Nel modulo spunta «Si tratta di rifiuti» e scrivi il codice CER, che è obbligatorio. Se la merce è pericolosa spunta anche «La merce è pericolosa». Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva la mia pubblicazione?", "Solo ai trasportatori approvati dalla piattaforma che hanno il mezzo e l'autorizzazione che hai richiesto. La ricevono anche in privato su Telegram."], ["Come so che il mio trasporto è stato preso?", "Quando un trasportatore lo prende e paga, la campanella in alto ti avvisa con il suo nome e il telefono, e la pubblicazione diventa rossa («presa») nel calendario e nello storico."], ["Posso modificare o annullare una pubblicazione?", "Sì: finché nessun trasportatore l'ha presa, usa «Modifica» o «Annulla» nello storico delle pubblicazioni. Se è già stata presa, usa «Richiedi annullamento»: lo valutiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Dashboard» → «Modifica i miei dati» per i dati, e in «Dashboard» → «Sicurezza» → «Cambia password» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente virtuale 🤖 in basso a destra."]]};
 function mostraFAQ() {
   const box = document.getElementById('faq-box'), lista = document.getElementById('faq-lista');
   if (!box || !lista || !FAQ_PORTALE[tipoUtente]) return false;
@@ -4284,7 +4287,7 @@ async function aggiornaCarichiTrasportatore() {
                      Per tornare al piano A: ECT_AGGIORNA_ORARI = [] e ECT_AGGIORNA_OGNI_MIN = 0.
    L'aggiornamento automatico parte solo se la pagina è aperta e visibile.
    ================================================== */
-window.ECT_AGGIORNA_ORARI = window.ECT_AGGIORNA_ORARI || [];     // PIANO A = lista vuota
+window.ECT_AGGIORNA_ORARI = window.ECT_AGGIORNA_ORARI || ['08:00']; // PROVVISORIO (5/11): 1 volta al giorno alle 08:00 + pulsante «Aggiorna». Piano A puro = []
 window.ECT_AGGIORNA_OGNI_MIN = window.ECT_AGGIORNA_OGNI_MIN || 0; // 0 = spento
 let aggTimer = null;
 let aggInSospeso = false;
@@ -4321,9 +4324,22 @@ async function aggClick(btn, fn) {
   return ok;
 }
 
+async function aggiornaAziendaTutto() {
+  await aggiornaCampanellino(true);              // ricarica i carichi pubblicati + statistiche
+  try { renderReportTrasportatori(); } catch (e) {}
+  try { if (typeof window.ectProssimoGiro === 'function') window.ectProssimoGiro(); } catch (e) {}
+  return true;
+}
+
+function aggiornaPerTipo() {
+  if (tipoUtente === 'trasportatore') return aggiornaCarichiTrasportatore();
+  if (tipoUtente === 'azienda') return aggiornaAziendaTutto();
+  return aggiornaCampanellino(true);
+}
+
 async function aggiornaManuale(btn) {
   // il trasportatore va diretto alla lettura dei carichi (aggiornaCampanellino è «avvolta» da accesso-sicuro.js e non restituisce l'esito)
-  const ok = await aggClick(btn, () => (tipoUtente === 'trasportatore' ? aggiornaCarichiTrasportatore() : aggiornaCampanellino(true)));
+  const ok = await aggClick(btn, aggiornaPerTipo);
   if (ok === false) {
     document.querySelectorAll('.agg-ora').forEach(el => { el.textContent = 'Non riesco ad aggiornare adesso, riprova tra poco.'; });
   } else { segnaOraAggiornamento(); }
@@ -4803,6 +4819,37 @@ function toggleBot() {
   document.getElementById('bot-panel').classList.toggle('open', botOpen);
 }
 
+/* 5/11/2026 — ogni domanda all'assistente AI costa crediti Make. Prima cerco la risposta tra le
+   «Domande frequenti» (gratis e immediata); solo se non c'è, chiamo l'assistente AI, al massimo
+   BOT_MAX_AL_GIORNO volte al giorno per utente. Per cambiare il limite: window.ECT_BOT_MAX_AL_GIORNO. */
+const BOT_MAX_AL_GIORNO_DEFAULT = 8;
+function botParole(t) {
+  const stop = ['come','cosa','dove','quando','perche','posso','devo','sono','sulla','nella','delle','degli','della','dello','questo','questa','quale','quali','fare','faccio','vedo','anche','molto','tutto','tutti','quanto','sempre'];
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(w => w.length > 3 && stop.indexOf(w) === -1);
+}
+function botRispostaLocale(msg) {
+  try {
+    const lista = FAQ_PORTALE[tipoUtente]; if (!lista) return null;
+    const pw = botParole(msg); if (pw.length < 2) return null;
+    let best = null, bestScore = 0;
+    lista.forEach(qa => {
+      const dom = botParole(qa[0]); if (!dom.length) return;
+      const comuni = pw.filter(w => dom.some(d => d === w || (d.length > 5 && w.length > 5 && (d.indexOf(w.slice(0, 5)) === 0)))).length;
+      const score = comuni / Math.max(dom.length, pw.length);
+      if (comuni >= 2 && score > bestScore) { bestScore = score; best = qa; }
+    });
+    return bestScore >= 0.6 ? best[1] : null;
+  } catch (e) { return null; }
+}
+function botDomandeOggi(incrementa) {
+  try {
+    const k = 'ect_bot_' + new Date().toISOString().slice(0, 10);
+    let n = parseInt(localStorage.getItem(k) || '0', 10) || 0;
+    if (incrementa) { n++; localStorage.setItem(k, String(n)); }
+    return n;
+  } catch (e) { return 0; }
+}
+
 async function sendBot() {
   const inp = document.getElementById('bot-inp');
   const msg = inp.value.trim();
@@ -4810,6 +4857,14 @@ async function sendBot() {
   inp.value = '';
   addMsg(msg, 'user');
   botHistory.push({ role: 'user', content: msg });
+  const locale = botRispostaLocale(msg);
+  if (locale) { botHistory.push({ role: 'assistant', content: locale }); addMsg(locale, 'bot'); return; }
+  const maxOggi = window.ECT_BOT_MAX_AL_GIORNO || BOT_MAX_AL_GIORNO_DEFAULT;
+  if (!modalitaAnteprimaAttiva && botDomandeOggi(false) >= maxOggi) {
+    const r = 'Per oggi ho raggiunto il numero di risposte che posso darti. Guarda le «Domande frequenti» nella pagina «Aiuto» oppure scrivici dal modulo «Scrivici»: ti rispondiamo entro 24 ore.';
+    botHistory.push({ role: 'assistant', content: r }); addMsg(r, 'bot'); return;
+  }
+  if (!modalitaAnteprimaAttiva) botDomandeOggi(true);
   const typing = addMsg('Sto scrivendo...', 'bot typing');
   const chiamaProxy = () => fetch(PROXY_URL, {
     method: 'POST',

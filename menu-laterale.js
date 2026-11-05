@@ -61,7 +61,7 @@
     report:   { c: 'dash', dl: 1, dash: 'report', t: 'I miei report', d: 'I tuoi numeri riassunti: carichi, periodi e totali.' },
     notifiche:{ c: 'dash', dash: 'notifiche', t: 'Notifiche e suoni', d: 'Scegli cosa ricevere, in quali orari e con quale tono. Qui colleghi anche Telegram.' },
     faq:      { c: 'normale', blocchi: ['faq-box'], t: 'Domande frequenti', d: 'Le risposte alle domande più comuni. Clicca una domanda per aprirla.' },
-    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa il bot 🤖 in basso a destra per una risposta subito.' },
+    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa l\'assistente virtuale 🤖 in basso a destra per una risposta subito.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
     /* solo azienda */
     pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Più sotto trovi impianto di destinazione e intermediario (facoltativo): li puoi inserire qui oppure dopo, da Storico pubblicazioni e Trasporti presi.' },
@@ -234,7 +234,7 @@
       var tg = document.createElement('div'); tg.id = 'ms-tg'; tg.className = 'ins-box';
       tg.innerHTML = '<div class="ins-title">📲 Collega Telegram</div>' +
         '<div class="ins-sub">Con Telegram ricevi in privato, sul telefono, i nuovi carichi e gli aggiornamenti. Nessuno vede nessun altro.</div>' +
-        '<div class="ms-tgbox"><div><ol><li>Premi il pulsante qui sotto (o inquadra il codice con il telefono).</li><li>Si apre Telegram: premi <b>Avvia</b> (o <b>Start</b>).</li><li>Fatto: il bot ti scrive che il collegamento è attivo.</li></ol>' +
+        '<div class="ms-tgbox"><div><ol><li>Premi il pulsante qui sotto (o inquadra il codice con il telefono).</li><li>Si apre Telegram: premi <b>Avvia</b> (o <b>Start</b>).</li><li>Fatto: Telegram ti scrive che il collegamento è attivo.</li></ol>' +
         '<a href="https://t.me/SynAIMAX_EcoTruck_bot" target="_blank" rel="noopener" class="btn-cap" style="display:inline-flex;text-decoration:none;">🔗 Apri Telegram e collega</a></div></div>';
       var sd = $('sezione-dashboard'); sd.parentNode.insertBefore(tg, sd);
     }
