@@ -61,7 +61,7 @@
     report:   { c: 'dash', dl: 1, dash: 'report', t: 'I miei report', d: 'I tuoi numeri riassunti: carichi, periodi e totali.' },
     notifiche:{ c: 'dash', dash: 'notifiche', t: 'Notifiche e suoni', d: 'Scegli cosa ricevere, in quali orari e con quale tono. Qui colleghi anche Telegram.' },
     faq:      { c: 'normale', blocchi: ['faq-box'], t: 'Domande frequenti', d: 'Le risposte alle domande più comuni. Clicca una domanda per aprirla.' },
-    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24 ore. Oppure usa l\'assistente virtuale 🤖 in basso a destra per una risposta subito.' },
+    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24-48 ore. Oppure usa l\'assistente virtuale 🤖 in basso a destra per una risposta subito.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
     /* solo azienda */
     pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Più sotto trovi impianto di destinazione e intermediario (facoltativo): li puoi inserire qui oppure dopo, da Storico pubblicazioni e Trasporti presi.' },
@@ -82,6 +82,63 @@
   function testo(nome) {
     var p = PAG[nome], o = (tipo() === 'azienda' && PAZ[nome]) || {};
     return { t: o.t || p.t, d: o.d || p.d };
+  }
+
+  /* ---------- la tendina «Spiegazione della pagina» ----------
+     Per ogni pagina: titoli e punti. SPIEGA_AZ sostituisce il testo quando chi guarda e' un'azienda. */
+  function L(a) { return '<ul>' + a.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'; }
+  function H(t) { return '<h4>' + t + '</h4>'; }
+  var AGG = 'Il pulsante <b>«Aggiorna»</b> ricarica i dati e scrive accanto <b>data e ora</b> dell’ultimo aggiornamento. I dati non si aggiornano da soli di continuo: se vuoi la situazione di adesso, premi Aggiorna.';
+  var SPIEGA = {
+    dati: H('A cosa serve') + '<p>Qui trovi i tuoi dati di anagrafica: nome, indirizzo, telefono, partita IVA. Servono alle aziende e alla società per sapere con chi hanno a che fare.</p>' + H('Come si usa') + L(['Scrivi <b>solo</b> i campi che vuoi cambiare, gli altri restano come sono.', 'Premi il pulsante di salvataggio in fondo: il cambiamento resta registrato nello «storico movimenti» con data e ora.', 'In fondo puoi caricare i tuoi <b>file facoltativi</b> (per esempio documenti utili).']),
+    mezzi: H('A cosa serve') + '<p>È la prima cosa da fare. Qui indichi <b>i mezzi che possiedi</b> e le <b>autorizzazioni che hai</b>. Quando un’azienda pubblica un carico, indica il mezzo e le autorizzazioni che servono: tu vedi <b>solo i carichi che puoi davvero fare</b>, così non perdi tempo.</p>' + H('Come si usa') + L(['Spunta i mezzi che hai.', 'Spunta le autorizzazioni che possiedi (per esempio quelle per le merci pericolose o per i rifiuti) e, dove richiesto, carica il documento.', 'Compilando con precisione ricevi più carichi adatti a te. Se in seguito cambia qualcosa, torna qui e aggiorna.']) + H('Attenzione') + '<p>Dichiara solo ciò che hai davvero: le autorizzazioni vengono controllate dalla società.</p>',
+    tg: H('A cosa serve') + '<p>Collega il tuo Telegram al portale: i <b>nuovi carichi</b> e gli avvisi importanti ti arrivano sul telefono, <b>in privato</b>, solo a te.</p>' + H('Come si usa') + L(['Apri Telegram dal telefono con il pulsante o inquadrando il codice QR.', 'Premi <b>Avvia</b> nella chat che si apre.', 'Fatto una volta, resta collegato. Se cambi telefono o numero, ripeti il collegamento.']),
+    carichi: H('A cosa serve') + '<p>Sono i carichi <b>liberi</b> pubblicati dalle aziende, adatti ai tuoi mezzi e alle tue autorizzazioni, nella tua zona.</p>' + H('Come si usa') + L(['Premi <b>«Vedi dettagli»</b> per leggere tutto prima di decidere.', 'Quando scegli di prenderlo, il carico viene <b>riservato a te</b> e passa allo stato «in pagamento».', 'Hai un tempo limitato (pochi minuti) per pagare la commissione. Se non paghi in tempo, il carico torna disponibile per tutti.', 'A pagamento risultato il carico è tuo: lo trovi in «Presi» con tutti i dati e i contatti.']) + '<p>' + AGG + '</p>',
+    presi: H('A cosa serve') + '<p>I carichi che hai preso, con la scheda completa: azienda, indirizzi, orari e documenti ricevuti (che puoi scaricare).</p>' + H('Se non puoi più farlo') + L(['Su ogni carico c’è il pulsante <b>«Rinuncia al carico»</b>.', 'Rinunciando perdi la commissione già pagata e paghi la quota di rinuncia. Il carico torna disponibile.', 'I dettagli sono nella pagina «Rinunce e annullamenti».']) + '<p>' + AGG + '</p>',
+    cal: H('A cosa serve') + '<p>Mostra i carichi giorno per giorno.</p>' + H('I colori') + L(['<b>Blu</b>: disponibile.', '<b>Arancione</b>: in pagamento.', '<b>Rosso</b>: preso.']) + '<p>Clicca un giorno per vedere i carichi di quel giorno. ' + AGG + '</p>',
+    inc: H('A cosa serve') + '<p>Quanto devi ancora <b>incassare</b> dalle aziende, diviso per azienda e per giorno.</p>' + L(['Puoi scaricare il riepilogo in PDF o in CSV.', 'Serve a te per controllare e per preparare la fattura all’azienda.']) + '<p>' + AGG + '</p>',
+    fatture: H('A cosa serve') + '<p>Una riga per ogni carico preso, con data, ora e commissione pagata alla società.</p>' + '<p><b>È un riepilogo di controllo</b>: non sostituisce la fattura fiscale.</p>',
+    rimb: H('Quando rinunci tu (trasportatore)') + L(['Perdi la commissione già pagata e paghi la quota di rinuncia alla società.', 'Il pagamento si fa dal pulsante «Rinuncia al carico»: si apre subito la pagina di pagamento.', 'Appena il pagamento risulta, il carico torna disponibile per tutti.', 'Finché non paghi compare una schermata rossa e non puoi usare il resto del portale.']) + H('Quando l’azienda annulla un carico che avevi preso') + L(['<b>Il rimborso della tua commissione lo fa la società</b>: non devi chiedere nulla.', 'Ricevi una email di avviso. I tempi di accredito sulla tua carta dipendono dalla banca.']) + H('Per l’azienda') + '<p>Le questioni economiche tra azienda e trasportatore si risolvono tra loro; la società gestisce solo le quote della piattaforma.</p>',
+    isc: H('A cosa serve') + '<p>La quota annuale è <b>separata</b> dalle commissioni dei carichi.</p>' + L(['Qui vedi quando inizia e quando scade.', 'Ricordati di rinnovarla prima della scadenza.']),
+    storico: H('A cosa serve') + '<p>Tutti i carichi dall’inizio, con stato e commissione.</p>' + L(['Filtra per periodo (per esempio «Ultima giornata»).', 'Puoi scaricare l’elenco.', 'Serve per ricostruire cosa è successo e quando.']) + '<p>' + AGG + '</p>',
+    movimenti: H('A cosa serve') + '<p>Tutto quello che hai fatto sulla piattaforma, <b>con data e ora</b>: cambi dati, documenti, password, carichi presi, rinunce.</p>' + '<p>Se c’è un dubbio su “chi ha fatto cosa e quando”, la risposta è qui. È un registro di sola lettura: non si modifica.</p>' + '<p>' + AGG + '</p>',
+    report: H('A cosa serve') + '<p>I tuoi numeri riassunti per periodo: carichi e totali.</p>' + L(['Scegli il periodo.', 'Puoi scaricare il report.']) + '<p>' + AGG + '</p>',
+    notifiche: H('A cosa serve') + '<p>Scegli cosa ricevere, in quali orari e con quale tono. Qui si può collegare anche Telegram.</p>',
+    faq: H('A cosa serve') + '<p>Le risposte alle domande più comuni. Clicca una domanda per aprirla.</p>' + '<p>Se non trovi la risposta, chiedi all’<b>assistente virtuale</b> 🤖 in basso a destra: risponde subito (ha un numero limitato di domande al giorno).</p>',
+    scrivici: H('A cosa serve') + '<p>Per parlare con una persona del team EcoTruckConnect.</p>' + L(['Compila il modulo oppure scrivi a <b>info@synaimaxpro.com</b>.', 'Ti rispondiamo a breve, entro 24-48 ore.', 'Per una risposta immediata usa l’<b>assistente virtuale</b> 🤖: se le domande del giorno sono finite, scrivici qui.']),
+    sicurezza: H('A cosa serve') + '<p>Password e accesso al tuo account.</p>' + L(['<b>Rigenera la password</b> se pensi che altri la conoscano.', '<b>Google Authenticator</b>: aggiunge un codice di 6 cifre, che cambia ogni 30 secondi, da inserire dopo la password. Si attiva inquadrando il QR (o scrivendo la chiave di configurazione) con l’app sul telefono. La chiave è segreta: non va data a nessuno.', 'Puoi chiedere la <b>cancellazione dell’account</b>.'])
+  };
+  var SPIEGA_AZ = {
+    pubblica: H('A cosa serve') + '<p>Qui pubblichi un carico da far trasportare. <b>Pubblicare è gratis.</b></p>' + H('Come si compila') + L(['Carico, mezzo che serve e autorizzazioni che deve avere il trasportatore.', 'Ritiro e consegna con indirizzi e date.', 'Importo pattuito col trasportatore.', '<b>«La merce è pericolosa»</b>: segnala le merci che richiedono autorizzazioni specifiche (ADR).', '<b>«Si tratta di rifiuti»</b>: attiva la sezione dedicata (codice CER e impianto di destinazione). Se non sono rifiuti la sezione resta spenta: è normale.', 'L’impianto di destinazione e l’intermediario sono facoltativi: li puoi inserire qui o dopo.']) + H('Dopo la pubblicazione') + '<p>Il carico lo vedono solo i trasportatori che hanno il mezzo e le autorizzazioni giuste, e ricevono l’avviso in privato.</p>',
+    azcal: H('A cosa serve') + '<p>Le tue pubblicazioni giorno per giorno.</p>' + L(['Clicca un giorno per vedere o inserire un carico.', 'I colori indicano lo stato: disponibile, in pagamento, preso.']) + '<p>' + AGG + '</p>',
+    presi: H('A cosa serve') + '<p>Chi ha preso i tuoi carichi: scheda del trasportatore, indirizzi e documenti che hai allegato.</p>' + H('Se devi annullare') + L(['Su ogni carico già preso c’è il pulsante <b>«Annulla carico»</b>.', 'Si paga la quota di annullamento alla società; il carico diventa ANNULLATO.', '<b>Il trasportatore viene rimborsato dalla società</b> di quanto aveva versato: ricevi la conferma e lui un avviso.', 'Un carico non ancora preso si elimina gratis dallo storico delle pubblicazioni.']) + '<p>' + AGG + '</p>',
+    azpagare: H('A cosa serve') + '<p>Quanto devi ai trasportatori, diviso per trasportatore e per giorno.</p>' + L(['Scarica il riepilogo per la fattura o in CSV.', 'I pagamenti tra azienda e trasportatore avvengono direttamente tra voi: la piattaforma tiene solo il conto.']) + '<p>' + AGG + '</p>',
+    azreptr: H('A cosa serve') + '<p>Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.</p>' + '<p>' + AGG + '</p>',
+    azstorico: H('A cosa serve') + '<p>Tutto quello che hai pubblicato, con stato e dettagli.</p>' + L(['Filtra per periodo.', 'Scarica l’elenco.', 'I carichi annullati restano qui, segnati come ANNULLATO.']) + '<p>' + AGG + '</p>',
+    dati: H('A cosa serve') + '<p>I dati della tua azienda: ragione sociale, P.IVA, PEC, sede, telefono.</p>' + L(['Scrivi solo i campi che vuoi cambiare.', 'Ogni modifica resta nello «storico movimenti» con data e ora.', 'In fondo puoi caricare i tuoi file facoltativi.']),
+    fatture: H('A cosa serve') + '<p>Ogni tua pubblicazione con data, stato e trasportatore.</p>' + '<p><b>È un riepilogo di controllo</b>: non sostituisce la fattura fiscale.</p>',
+    report: H('A cosa serve') + '<p>I tuoi numeri riassunti: pubblicazioni, trasporti presi e totali da pagare.</p>' + '<p>' + AGG + '</p>',
+    notifiche: H('A cosa serve') + '<p>Scegli cosa ricevere (campanella ed email), in quali orari e con quale tono.</p>' + '<p>La campanella 🔔 non si aggiorna da sola di continuo: premi Aggiorna per vedere le novità; durante un pagamento in corso si controlla da solo.</p>',
+    isc: H('A cosa serve') + '<p>La quota annuale è separata dagli altri movimenti.</p>' + L(['Qui vedi quando inizia e quando scade.', 'Ricordati di rinnovarla prima della scadenza.']),
+    rimb: H('Quando annulli tu (azienda)') + L(['Un carico <b>non ancora preso</b> si elimina gratis dallo storico delle pubblicazioni.', 'Un carico <b>già preso</b> si annulla con «Annulla carico» in «Trasporti presi»: si paga la quota di annullamento alla società.', 'Appena il pagamento risulta, il carico diventa ANNULLATO.', '<b>Il trasportatore viene rimborsato dalla società</b>: non devi occupartene.', 'Finché non paghi compare una schermata rossa e non puoi usare il resto del portale.']) + H('Quando rinuncia il trasportatore') + '<p>Il carico torna disponibile per tutti e lo vedi di nuovo come libero.</p>'
+  };
+  function spiegaHtml(nome) {
+    var az = tipo() === 'azienda';
+    var h = (az && SPIEGA_AZ[nome]) || SPIEGA[nome] || (az && SPIEGA_AZ[nome]);
+    return h || '';
+  }
+  function riempiSpiega(nome) {
+    var box = $('ms-spiega'), b = $('ms-sp'); if (!box || !b) return;
+    var h = spiegaHtml(nome);
+    box.classList.remove('ms-aperta'); b.setAttribute('aria-expanded', 'false'); b.textContent = 'ℹ️ Spiegazione della pagina ▾';
+    box.innerHTML = h;
+    b.style.display = h ? '' : 'none';
+  }
+  function apriChiudiSpiega() {
+    var box = $('ms-spiega'), b = $('ms-sp'); if (!box || !b) return;
+    var ap = box.classList.toggle('ms-aperta');
+    b.setAttribute('aria-expanded', ap ? 'true' : 'false');
+    b.textContent = ap ? 'ℹ️ Spiegazione della pagina ▴' : 'ℹ️ Spiegazione della pagina ▾';
   }
 
   /* ---------- il menu ---------- */
@@ -176,6 +233,16 @@
       '#ms-intro h2{font-family:var(--font-h);font-size:22px;color:#fff;margin:0 0 4px;}',
       '#ms-intro p{font-size:13.5px;line-height:1.55;color:rgba(241,245,249,.65);max-width:760px;margin:0;}',
       '#ms-intro .ms-st{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--font-b);}',
+      '#ms-intro .ms-dx{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;}',
+      '#ms-intro .ms-sp{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.45);}',
+      '#ms-spiega{flex-basis:100%;width:100%;display:none;margin-top:4px;padding:14px 16px;border-radius:12px;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.25);font-size:13.5px;line-height:1.65;color:rgba(241,245,249,.88);}',
+      '#ms-spiega.ms-aperta{display:block;}',
+      '#ms-spiega h4{font-size:13px;margin:10px 0 4px;color:#fff;}',
+      '#ms-spiega h4:first-child{margin-top:0;}',
+      '#ms-spiega ul{margin:4px 0 6px 18px;padding:0;}',
+      '#ms-spiega li{margin:3px 0;}',
+      '#ms-spiega p{margin:4px 0;max-width:none;font-size:13.5px;color:rgba(241,245,249,.88);}',
+      '@media print{#ms-spiega,#ms-intro .ms-sp{display:none!important;}}',
       /* pagina Telegram */
       'body[data-ms-part="mezzi"] #docs-aut{display:none!important;}',
       'body[data-ms-azpart]:not([data-ms-azpart="aut"]):not([data-ms-azpart="tutto"]) #docs-az-modulo{display:none!important;}',
@@ -217,7 +284,7 @@
     // titolo pagina
     if (!$('ms-intro')) {
       var intro = document.createElement('div'); intro.id = 'ms-intro';
-      intro.innerHTML = '<div><h2 id="ms-t"></h2><p id="ms-d"></p></div><button type="button" class="ms-st" id="ms-dl" onclick="ectMenu.scarica()">⬇️ Scarica questa pagina</button>';
+      intro.innerHTML = '<div><h2 id="ms-t"></h2><p id="ms-d"></p></div><div class="ms-dx"><button type="button" class="ms-st ms-sp" id="ms-sp" aria-expanded="false" onclick="ectMenu.spiega()">ℹ️ Spiegazione della pagina ▾</button><button type="button" class="ms-st" id="ms-dl" onclick="ectMenu.scarica()">⬇️ Scarica questa pagina</button></div><div id="ms-spiega"></div>';
       main.insertBefore(intro, main.firstChild);
     }
     // azioni rapide della Dashboard
@@ -272,7 +339,9 @@
       }
     });
     h += '</nav>';
+    var vecchioElenco = $('ms-voci'), posSide = side.scrollTop, posVoci = vecchioElenco ? vecchioElenco.scrollTop : 0;   // 5/11: il menu resta dov'era
     side.innerHTML = h;
+    try { side.scrollTop = posSide; var nuovoElenco = $('ms-voci'); if (nuovoElenco) nuovoElenco.scrollTop = posVoci; } catch (e) {}
     $('ms-tog').onclick = function () { if (overlay()) chiudiDrawer(); else { aperto = !aperto; memoria('ect_menu_aperto', aperto ? '1' : '0'); applicaClassi(); } };
     side.querySelectorAll('.ms-v').forEach(function (b) {
       b.onclick = function () {
@@ -320,6 +389,7 @@
   function vai(nome, opzioni) {
     var p = PAG[nome]; if (!p) return;
     opzioni = opzioni || {};
+    var paginaPrima = cur;
     inGo = true;
     cur = nome;
     try {
@@ -373,6 +443,7 @@
       }
       // contenitori che il vecchio codice ha lasciato "aperti" e che qui non servono restano spenti da ms-off
       var tx = testo(nome), ti = $('ms-t'), de = $('ms-d'); if (ti) ti.textContent = tx.t; if (de) de.textContent = tx.d;
+      try { riempiSpiega(nome); } catch (e) { console.error('menu-laterale spiega:', e); }
       try { mostraBarre(nome); } catch (e) { console.error('menu-laterale barre:', e); }
       var mi = $('ms-intro'); if (mi) mi.classList[p.c === 'home' ? 'add' : 'remove']('ms-off');
       var dl = $('ms-dl'); if (dl) dl.style.display = p.dl ? '' : 'none';
@@ -384,7 +455,7 @@
     voci.forEach(function (v) { if (v.s && v.s.some(function (x) { return x[0] === nome; })) voceAperta = v.id; });
     costruisciMenu();
     if (overlay()) { drawer = false; applicaClassi(); }
-    if (!opzioni.senzaScroll) { try { window.scrollTo(0, 0); } catch (e) { window.scroll(0, 0); } }
+    if (!opzioni.senzaScroll && paginaPrima !== nome) { try { window.scrollTo(0, 0); } catch (e) { window.scroll(0, 0); } }   // 5/11: stessa pagina = resti dove sei
   }
   function hideBlocchiVecchi() {
     var sd = $('sezione-dashboard'); if (sd) sd.style.display = 'none';
@@ -503,7 +574,20 @@
       }).join('') : '<div style="margin-top:8px;font-size:13px;color:rgba(241,245,249,.6);">Nessun carico annullato.</div>');
       h += '<div>';
     }
-    h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a system.synaimax@gmail.com.</div>';
+    // 5/11/2026: i pulsanti veri stanno anche qui (prima c'era solo la spiegazione)
+    var presi = []; try { presi = (typeof window.ectCarichiPresi === 'function') ? window.ectCarichiPresi() : []; } catch (e) {}
+    var azioni = '</div><div style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><b>' + (az ? 'I trasporti presi che puoi annullare' : 'I carichi che hai preso e a cui puoi rinunciare') + '</b>' +
+      '<button type="button" class="btn-cap" style="font-size:12px;" onclick="aggClick(this, function(){ return aggiornaPresiTutto().then(function(){ window.__ectAggRimb = aggDataOra(); window.ectMenu.rimb(); return true; }); })">🔄 Aggiorna</button><span style="font-size:11px;color:rgba(241,245,249,.6);">' + (window.__ectAggRimb || '') + '</span></div>';
+    if (!presi.length) azioni += '<div style="margin-top:8px;font-size:13px;color:rgba(241,245,249,.6);">' + (az ? 'Nessun trasporto preso da annullare.' : 'Non hai carichi presi: quando ne prendi uno lo trovi qui e in «Presi».') + '</div>';
+    else azioni += presi.map(function (c) {
+      var f = c.f || {};
+      return '<div style="margin-top:8px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">' +
+        '<span><b>' + escR(f.citta_partenza || '—') + ' → ' + escR(f.citta_arrivo || '—') + '</b> · ' + escR(f.numero_ordine || '') + '</span>' +
+        (az ? '<button type="button" class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">❌ Annulla carico (20 €)</button>'
+            : '<button type="button" class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">⚠️ Rinuncia al carico (10 €)</button>') + '</div>';
+    }).join('');
+    h += azioni;
+    h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a info@synaimaxpro.com.</div>';
     box.innerHTML = h;
   }
 
@@ -588,7 +672,7 @@
     Object.keys(LISTE).forEach(function (k) {
       var cont = $(LISTE[k].id); if (!cont || cont.__msOss) return;
       cont.__msOss = true;
-      new MutationObserver(function () { clearTimeout(timerL[k]); timerL[k] = setTimeout(function () { applicaLista(k); }, 60); }).observe(cont, { childList: true });
+      new MutationObserver(function () { applicaLista(k); clearTimeout(timerL[k]); timerL[k] = setTimeout(function () { applicaLista(k); }, 60); }).observe(cont, { childList: true });   // 5/11: applica subito (niente lampo), poi ricontrolla
       applicaLista(k);
     });
   }
@@ -774,5 +858,5 @@
     var nodi = ids.map($).filter(Boolean);
     if (typeof window.ectScarica === 'function') window.ectScarica(testo(cur).t, nodi);
   }
-  window.ectMenu = { vai: vai, pagine: PAG, menu: MENU, scarica: scaricaPagina };
+  window.ectMenu = { vai: vai, pagine: PAG, menu: MENU, scarica: scaricaPagina, rimb: disegnaRimborsi, spiega: apriChiudiSpiega };
 })();
