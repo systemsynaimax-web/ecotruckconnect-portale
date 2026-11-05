@@ -4075,8 +4075,8 @@ function renderCarichiPresi() {
         '<div style="display:flex;align-items:center;gap:10px;"><span class="badge-stato ' + (stato === 'PRESO' ? 's-ok' : 's-wait') + '">' + cpEsc(stato) + '</span><b style="color:var(--green);">' + (f.importo_pattuito ? euro(f.importo_pattuito) : '') + '</b><span id="cp-freccia-' + i + '" style="color:var(--muted);">▾</span></div>' +
       '</div>' +
       (stato !== 'PRESO' ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">' +
-        (tipoUtente === 'trasportatore' ? '<button class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">⚠️ Rinuncia al carico (10 €)</button>' : '') +
-        (tipoUtente === 'azienda' ? '<button class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">❌ Annulla carico (20 €)</button>' : '') +
+        (tipoUtente === 'trasportatore' ? '<button class="btn-cap" style="font-size:12px;background:#b91c1c;border:1px solid #b91c1c;color:#fff;font-weight:700;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">Rinuncia al carico (10 €)</button>' : '') +
+        (tipoUtente === 'azienda' ? '<button class="btn-cap" style="font-size:12px;background:#b91c1c;border:1px solid #b91c1c;color:#fff;font-weight:700;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">Annulla carico (20 €)</button>' : '') +
       '</div>') +
       '<div id="cp-det-' + i + '" style="display:none;">' + cpScheda(f) +
         (stato !== 'PRESO' ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +

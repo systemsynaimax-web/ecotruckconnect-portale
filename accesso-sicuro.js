@@ -1248,7 +1248,7 @@
       cella.innerHTML = ''; cella.style.whiteSpace = 'normal';
       var fila = document.createElement('div'); fila.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;';
       cella.appendChild(fila);
-      var TONI = { blu: 'background:#2563eb;color:#fff;border:1px solid #2563eb;', rosso: 'background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.5);',
+      var TONI = { blu: 'background:#2563eb;color:#fff;border:1px solid #2563eb;', rosso: 'background:#b91c1c;color:#fff;font-weight:700;border:1px solid #b91c1c;',
         ambra: 'background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.5);', spento: 'background:rgba(255,255,255,0.06);color:rgba(241,245,249,0.5);border:1px solid rgba(255,255,255,0.12);cursor:not-allowed;' };
       function btn(testo, tono, fn) {
         var b = document.createElement('button'); b.type = 'button'; b.textContent = testo;
@@ -1262,11 +1262,11 @@
       if (_rif && st.indexOf('ANNULLATO') !== 0 && typeof window.ectDestApriModale === 'function') btn('♻️ Impianto e intermediario', 'blu', function () { window.ectDestApriModale(no); });
       if (st === 'DISPONIBILE') {
         btn('✏️ Modifica', 'blu', function () { if (finto && typeof anteprimaModificaCarico === 'function') anteprimaModificaCarico(id); else apriModifica(f); });
-        btn('❌ Annulla', 'rosso', function () { if (finto && typeof anteprimaEliminaCarico === 'function') anteprimaEliminaCarico(id); else apriAnnulla(f); });
+        btn('Annulla', 'rosso', function () { if (finto && typeof anteprimaEliminaCarico === 'function') anteprimaEliminaCarico(id); else apriAnnulla(f); });
       } else if (st.indexOf('PAGAMENTO') >= 0) {
         btn('🔒 Bloccato', 'spento', function () { alert('⏳ Un trasportatore sta pagando proprio ora questo carico: Modifica e Annulla sono bloccati per 5 minuti.'); });
       } else if (st === 'PRESO') {
-        btn('❌ Annulla carico (20 €)', 'rosso', function () { apriAnnullaPreso(f); });
+        btn('Annulla carico (20 €)', 'rosso', function () { apriAnnullaPreso(f); });
       } else if (st === 'ANNULLAMENTO RICHIESTO') btn('💳 Completa il pagamento', 'ambra', function () { window.ectPagaPendente && window.ectPagaPendente(); });
       else if (st === 'ANNULLATO') etichetta('Annullato', 'rgba(241,245,249,0.5)');
     });

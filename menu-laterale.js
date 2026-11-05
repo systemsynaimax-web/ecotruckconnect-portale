@@ -84,6 +84,7 @@
     return { t: o.t || p.t, d: o.d || p.d };
   }
 
+  var SENZA_SCARICA_SUO = { isc: 1, report: 1, azreptr: 1 };
   /* ---------- la tendina «Spiegazione della pagina» ----------
      Per ogni pagina: titoli e punti. SPIEGA_AZ sostituisce il testo quando chi guarda e' un'azienda. */
   function L(a) { return '<ul>' + a.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'; }
@@ -446,7 +447,7 @@
       try { riempiSpiega(nome); } catch (e) { console.error('menu-laterale spiega:', e); }
       try { mostraBarre(nome); } catch (e) { console.error('menu-laterale barre:', e); }
       var mi = $('ms-intro'); if (mi) mi.classList[p.c === 'home' ? 'add' : 'remove']('ms-off');
-      var dl = $('ms-dl'); if (dl) dl.style.display = p.dl ? '' : 'none';
+      var dl = $('ms-dl'); if (dl) dl.style.display = (p.dl && SENZA_SCARICA_SUO[nome]) ? '' : 'none';   // il pulsante in alto resta solo dove la pagina non ha un suo «Scarica» più sotto
       var mr = $('ms-rapide'); if (mr) mr.classList[p.c === 'home' ? 'remove' : 'add']('ms-off');
     } finally { inGo = false; }
     // il gruppo della voce resta aperto
@@ -583,8 +584,8 @@
       var f = c.f || {};
       return '<div style="margin-top:8px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<span><b>' + escR(f.citta_partenza || '—') + ' → ' + escR(f.citta_arrivo || '—') + '</b> · ' + escR(f.numero_ordine || '') + '</span>' +
-        (az ? '<button type="button" class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">❌ Annulla carico (20 €)</button>'
-            : '<button type="button" class="btn-cap" style="font-size:12px;border-color:rgba(239,68,68,0.6);color:#f87171;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">⚠️ Rinuncia al carico (10 €)</button>') + '</div>';
+        (az ? '<button type="button" class="btn-cap" style="font-size:12px;background:#b91c1c;border:1px solid #b91c1c;color:#fff;font-weight:700;" onclick="window.ectAnnullaPresoId && window.ectAnnullaPresoId(\'' + c.id + '\')">Annulla carico (20 €)</button>'
+            : '<button type="button" class="btn-cap" style="font-size:12px;background:#b91c1c;border:1px solid #b91c1c;color:#fff;font-weight:700;" onclick="window.ectRinuncia && window.ectRinuncia(\'' + c.id + '\')">Rinuncia al carico (10 €)</button>') + '</div>';
     }).join('');
     h += azioni;
     h += '</div><div style="margin-top:14px;font-size:12.5px;color:rgba(241,245,249,.6);">Domande? Scrivici dalla pagina «Scrivici» o a info@synaimaxpro.com.</div>';
