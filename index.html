@@ -506,7 +506,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div class="notif-bell-panel" id="notif-bell-panel">
           <div class="notif-bell-head">
             <span id="notif-bell-titolo" style="font-weight:700;font-size:13px;color:#fff;">Aggiornamenti carichi</span>
-            <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();aggiornaCampanellino(true)">🔄 Aggiorna ora</button>
+            <button class="btn-cap" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();aggiornaManuale(this)">🔄 Aggiorna ora</button>
           </div>
           <div id="notif-bell-lista"><div class="notif-bell-empty">Caricamento...</div></div>
         </div>
@@ -713,7 +713,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <select id="sm-periodo" onchange="renderStoricoMovimenti()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;">
             <option value="0">📅 Da sempre</option><option value="7">Ultimi 7 giorni</option><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 3 mesi</option>
           </select>
-          <button class="btn-cap" onclick="caricaStoricoMovimenti()">🔄 Aggiorna</button>
+          <button class="btn-cap" onclick="aggClick(this, caricaStoricoMovimenti)">🔄 Aggiorna</button>
           <button class="btn-cap" onclick="stampaStoricoMovimenti()">🖨️ Stampa</button>
           <button class="btn-cap" onclick="csvStoricoMovimenti()">⬇️ CSV</button>
         </div>
@@ -937,7 +937,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <select class="btn-cap" style="font-size:12px;" onchange="cpCambiaPeriodo(this.value)"><option value="">📅 Tutti</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="15">15 giorni</option><option value="30">30 giorni</option></select>
             <select class="btn-cap" id="cp-controparte" style="font-size:12px;max-width:220px;" onchange="cpCambiaControparte(this.value)"><option value="">Tutti</option></select>
-            <button class="btn-cap" style="font-size:12px;" onclick="renderCarichiPresi()">🔄 Aggiorna</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="aggClick(this, renderCarichiPresi)">🔄 Aggiorna</button>
             <button class="btn-cap" style="font-size:12px;" onclick="cpStampa()">🖨️ Stampa</button>
             <button class="btn-cap" style="font-size:12px;" onclick="cpScaricaCSV()">⬇️ CSV</button>
           </span>
@@ -3865,12 +3865,12 @@ function rsSomma(l) {
 }
 function rsScegli(nome) { rsScelto = nome || ''; renderResoconto(); const w = document.getElementById('rs-wrap'); if (w) w.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function rsAggiorna(btn) {
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno...'; }
-  const fine = () => { renderResoconto(); if (btn) { btn.disabled = false; btn.textContent = '🔄 Aggiorna'; } };
-  try {
-    if (!modalitaAnteprimaAttiva && currentUser && currentUser.email) { Promise.resolve(caricaDati(currentUser.email)).finally(fine); return; }
-  } catch (e) {}
-  fine();
+  return aggClick(btn, async () => {
+    try {
+      if (!modalitaAnteprimaAttiva && currentUser && currentUser.email) await caricaDati(currentUser.email);
+    } catch (e) {}
+    renderResoconto();
+  });
 }
 function renderResoconto() {
   const wrap = document.getElementById('rs-wrap');
@@ -4252,7 +4252,7 @@ function apriCaricoDaCampanella(id) {
 }
 async function aggiornaCarichiTrasportatore() {
   if (tipoUtente !== 'trasportatore') return false;
-  if (modalitaAnteprimaAttiva) { renderCampanellinoTrasportatore(); return true; }
+  if (modalitaAnteprimaAttiva) { renderCampanellinoTrasportatore(); segnaOraAggiornamento(); return true; }
   try {
     const r1 = await fetch('https://hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm');
     if (!r1.ok) return false;
@@ -4295,18 +4295,38 @@ function segnaOraAggiornamento() {
   document.querySelectorAll('.agg-ora').forEach(el => { el.textContent = 'Aggiornato alle ' + hh; });
 }
 
-async function aggiornaManuale(btn) {
-  if (btn) { btn.disabled = true; btn.dataset.testo = btn.textContent; btn.textContent = '⏳ Aggiorno...'; }
-  let ok = true;
+/* Feedback visibile su TUTTI i pulsanti «Aggiorna»: gira per almeno 0,8 secondi («⏳ Aggiorno...»),
+   poi diventa verde «✅ Aggiornato» per un attimo e torna com'era. Se fallisce: «⚠️ Riprova». */
+(function () {
   try {
-    // il trasportatore va diretto alla lettura dei carichi (aggiornaCampanellino è «avvolta» da accesso-sicuro.js e non restituisce l'esito)
-    if (tipoUtente === 'trasportatore') ok = await aggiornaCarichiTrasportatore();
-    else ok = await aggiornaCampanellino(true);
-  } catch (e) { ok = false; }
-  if (btn) { btn.disabled = false; btn.textContent = btn.dataset.testo || '🔄 Aggiorna'; }
+    const st = document.createElement('style');
+    st.textContent = '@keyframes ectGiraAgg{to{transform:rotate(360deg)}}.agg-gira{display:inline-block;animation:ectGiraAgg .7s linear infinite}';
+    document.head.appendChild(st);
+  } catch (e) {}
+})();
+async function aggClick(btn, fn) {
+  if (btn && btn.dataset.aggBusy === '1') return true;
+  const testo = btn ? (btn.dataset.testo || btn.textContent) : '';
+  if (btn) { btn.dataset.aggBusy = '1'; btn.dataset.testo = testo; btn.disabled = true; btn.innerHTML = '<span class="agg-gira">🔄</span> Aggiorno...'; }
+  const t0 = Date.now();
+  let ok = true;
+  try { const r = await fn(); if (r === false) ok = false; } catch (e) { ok = false; }
+  const resto = 800 - (Date.now() - t0);
+  if (resto > 0) await new Promise(r => setTimeout(r, resto));
+  if (btn) {
+    btn.textContent = ok ? '✅ Aggiornato' : '⚠️ Riprova';
+    btn.style.background = ok ? '#16a34a' : '#b45309'; btn.style.color = '#fff';
+    setTimeout(() => { btn.textContent = testo; btn.style.background = ''; btn.style.color = ''; btn.disabled = false; btn.dataset.aggBusy = '0'; }, 1300);
+  }
+  return ok;
+}
+
+async function aggiornaManuale(btn) {
+  // il trasportatore va diretto alla lettura dei carichi (aggiornaCampanellino è «avvolta» da accesso-sicuro.js e non restituisce l'esito)
+  const ok = await aggClick(btn, () => (tipoUtente === 'trasportatore' ? aggiornaCarichiTrasportatore() : aggiornaCampanellino(true)));
   if (ok === false) {
     document.querySelectorAll('.agg-ora').forEach(el => { el.textContent = 'Non riesco ad aggiornare adesso, riprova tra poco.'; });
-  } else if (tipoUtente !== 'trasportatore') { segnaOraAggiornamento(); }
+  } else { segnaOraAggiornamento(); }
 }
 
 function aggEseguiAutomatico() {
