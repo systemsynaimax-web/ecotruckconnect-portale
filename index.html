@@ -875,12 +875,14 @@ select option:checked{background:#1d4ed8;color:#fff;}
     <div id="contenuto-normale-portale">
       <div id="carichi-disponibili-wrap">
         <div class="sec-head" id="calendario-section" style="margin-bottom:18px;">📅 Carichi Disponibili</div>
+        <div class="agg-riga" style="display:flex;align-items:center;gap:10px;margin:-6px 0 14px;flex-wrap:wrap;"><button type="button" class="btn-cap agg-btn" onclick="aggiornaManuale(this)" style="padding:6px 14px;font-size:13px;">🔄 Aggiorna</button><span class="agg-ora" style="font-size:12px;color:var(--muted);"></span></div>
         <div id="carichi-stat-riga" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
         <div id="sortbar-carichi" style="display:none;"></div>
         <div id="carichi-lista"><div class="carico-empty">Caricamento carichi in corso...</div></div>
       </div>
       <div id="calendario-carichi-wrap">
         <div class="sec-head" style="margin-bottom:18px;">🗓️ Calendario Carichi</div>
+        <div class="agg-riga" style="display:flex;align-items:center;gap:10px;margin:-6px 0 14px;flex-wrap:wrap;"><button type="button" class="btn-cap agg-btn" onclick="aggiornaManuale(this)" style="padding:6px 14px;font-size:13px;">🔄 Aggiorna</button><span class="agg-ora" style="font-size:12px;color:var(--muted);"></span></div>
         <div class="cal-box">
           <div class="cal-legend">
             <span><span class="cal-dot-inline" style="background:#3b82f6;"></span>Disponibile</span>
@@ -2429,7 +2431,7 @@ function toggleCampanellino() {
 }
 
 async function aggiornaCampanellino(manuale) {
-  if (tipoUtente === 'trasportatore') { await aggiornaCarichiTrasportatore(); return; }
+  if (tipoUtente === 'trasportatore') { return await aggiornaCarichiTrasportatore(); }
   if (tipoUtente !== 'azienda') return;
   if (!modalitaAnteprimaAttiva) await aggiornaDashFatture();
   else renderCampanellino();
@@ -3383,6 +3385,7 @@ async function caricaDati(email) {
     aggiorna('c-disp', nDisp);
     if (!erroreCarichi) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
+    if (!erroreCarichi) segnaOraAggiornamento();
     if (tipoUtente === 'trasportatore') renderCampanellinoTrasportatore();
     if (tipoUtente === 'azienda') {
       await aggiornaDashFatture();
@@ -4248,11 +4251,11 @@ function apriCaricoDaCampanella(id) {
   if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 async function aggiornaCarichiTrasportatore() {
-  if (tipoUtente !== 'trasportatore') return;
-  if (modalitaAnteprimaAttiva) { renderCampanellinoTrasportatore(); return; }
+  if (tipoUtente !== 'trasportatore') return false;
+  if (modalitaAnteprimaAttiva) { renderCampanellinoTrasportatore(); return true; }
   try {
     const r1 = await fetch('https://hook.eu1.make.com/bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm');
-    if (!r1.ok) return;
+    if (!r1.ok) return false;
     const d1 = await r1.json();
     const raw = d1.carichi ? (Array.isArray(d1.carichi) ? d1.carichi : [d1.carichi]) : [];
     ultimiCarichi = carichiCompatibiliPerTrasportatore(
@@ -4263,14 +4266,86 @@ async function aggiornaCarichiTrasportatore() {
     if (!dettaglioCaricoAperto) renderCarichi(ultimiCarichi);
     renderCalendarioMensile();
     renderCampanellinoTrasportatore();
-  } catch (e) { console.error('Aggiornamento carichi (non bloccante):', e); }
+    segnaOraAggiornamento();
+    return true;
+  } catch (e) { console.error('Aggiornamento carichi (non bloccante):', e); return false; }
 }
+/* ==================================================
+   AGGIORNAMENTO CARICHI — PIANO A / PIANO B  (5/11/2026)
+   Ogni aggiornamento costa crediti Make (6 a ogni lettura dei carichi), quindi
+   l'aggiornamento automatico è spento finché non ci sono carichi veri.
+   PIANO A (adesso): nessun aggiornamento automatico. Il trasportatore preme «Aggiorna»
+                     (pagina Carichi, Calendario, campanella). Un aggiornamento parte
+                     anche ogni volta che apre il portale.
+   PIANO B (quando arrivano i carichi): scrivi gli orari qui sotto. Esempi:
+                     ECT_AGGIORNA_ORARI = ['08:00','15:00','20:00'];   3 volte al giorno
+                     ECT_AGGIORNA_ORARI = ['08:00','12:00','15:00','18:00','20:00'];
+                     oppure ECT_AGGIORNA_OGNI_MIN = 30;   ogni 30 minuti
+                     Per tornare al piano A: ECT_AGGIORNA_ORARI = [] e ECT_AGGIORNA_OGNI_MIN = 0.
+   L'aggiornamento automatico parte solo se la pagina è aperta e visibile.
+   ================================================== */
+window.ECT_AGGIORNA_ORARI = window.ECT_AGGIORNA_ORARI || [];     // PIANO A = lista vuota
+window.ECT_AGGIORNA_OGNI_MIN = window.ECT_AGGIORNA_OGNI_MIN || 0; // 0 = spento
+let aggTimer = null;
+let aggInSospeso = false;
+
+function segnaOraAggiornamento() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  document.querySelectorAll('.agg-ora').forEach(el => { el.textContent = 'Aggiornato alle ' + hh; });
+}
+
+async function aggiornaManuale(btn) {
+  if (btn) { btn.disabled = true; btn.dataset.testo = btn.textContent; btn.textContent = '⏳ Aggiorno...'; }
+  let ok = true;
+  try {
+    // il trasportatore va diretto alla lettura dei carichi (aggiornaCampanellino è «avvolta» da accesso-sicuro.js e non restituisce l'esito)
+    if (tipoUtente === 'trasportatore') ok = await aggiornaCarichiTrasportatore();
+    else ok = await aggiornaCampanellino(true);
+  } catch (e) { ok = false; }
+  if (btn) { btn.disabled = false; btn.textContent = btn.dataset.testo || '🔄 Aggiorna'; }
+  if (ok === false) {
+    document.querySelectorAll('.agg-ora').forEach(el => { el.textContent = 'Non riesco ad aggiornare adesso, riprova tra poco.'; });
+  } else if (tipoUtente !== 'trasportatore') { segnaOraAggiornamento(); }
+}
+
+function aggEseguiAutomatico() {
+  if (document.hidden) { aggInSospeso = true; return; }   // pagina non visibile: aggiorno quando torna visibile
+  aggInSospeso = false;
+  aggiornaCarichiTrasportatore();
+}
+
+function aggProssimoOrario() {
+  const orari = (window.ECT_AGGIORNA_ORARI || []).map(o => String(o).match(/^(\d{1,2}):(\d{2})$/)).filter(Boolean)
+    .map(m => ({ h: +m[1], m: +m[2] })).filter(o => o.h < 24 && o.m < 60);
+  if (!orari.length) return null;
+  const ora = new Date();
+  let migliore = null;
+  orari.forEach(o => {
+    const d = new Date(ora.getFullYear(), ora.getMonth(), ora.getDate(), o.h, o.m, 0, 0);
+    if (d <= ora) d.setDate(d.getDate() + 1);
+    if (!migliore || d < migliore) migliore = d;
+  });
+  return migliore;
+}
+
+function pianificaAggiornamentoCarichi() {
+  if (aggTimer) { clearTimeout(aggTimer); clearInterval(aggTimer); aggTimer = null; }
+  if (modalitaAnteprimaAttiva) return;
+  const ogniMin = Number(window.ECT_AGGIORNA_OGNI_MIN) || 0;
+  if (ogniMin > 0) { aggTimer = setInterval(aggEseguiAutomatico, Math.max(5, ogniMin) * 60 * 1000); return; }
+  const prossimo = aggProssimoOrario();
+  if (!prossimo) return;                                    // PIANO A: niente automatico
+  aggTimer = setTimeout(() => { aggEseguiAutomatico(); pianificaAggiornamentoCarichi(); }, prossimo - new Date());
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && aggInSospeso) aggEseguiAutomatico(); });
+
 function avviaCampanellaTrasportatore() {
   const wrap = document.getElementById('notif-bell-wrap');
   if (wrap) wrap.style.display = 'block';
   renderCampanellinoTrasportatore();
   if (campTraspInterval) clearInterval(campTraspInterval);
-  if (!modalitaAnteprimaAttiva) campTraspInterval = setInterval(aggiornaCarichiTrasportatore, 5 * 60 * 1000);
+  pianificaAggiornamentoCarichi();   // 5/11: al posto dell'aggiornamento fisso ogni 5 minuti
 }
 
 function apriSchedaCaricoPreso(id) {

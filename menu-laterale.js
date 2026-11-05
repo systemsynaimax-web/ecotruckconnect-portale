@@ -88,14 +88,15 @@
   var MENU = {
     trasportatore: [
       { id: 'home', t: 'Dashboard', i: '🏠', c: '148,163,184', e: 'La tua pagina iniziale' },
-      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'Mezzi, autorizzazioni, dati, Telegram', s: [['mezzi', 'Mezzi e autorizzazioni'], ['dati', 'I miei dati'], ['tg', 'Telegram']] },
+      { id: 'tg', t: 'Telegram', i: '📲', c: '56,189,248', e: 'Ricevi i carichi sul telefono', p: 'tg' },
+      { id: 'profilo', t: 'Profilo', i: '👤', c: '251,146,60', e: 'Mezzi, autorizzazioni, dati', s: [['mezzi', 'Mezzi e autorizzazioni'], ['dati', 'I miei dati']] },
       { id: 'carichi', t: 'Carichi', i: '🚛', c: '59,130,246', e: 'I carichi liberi da prendere', p: 'carichi' },
       { id: 'presi', t: 'Presi', i: '✅', c: '74,222,128', e: 'I carichi che hai già preso', p: 'presi' },
       { id: 'cal', t: 'Calendario', i: '📅', c: '244,114,182', e: 'I carichi giorno per giorno', p: 'cal' },
       { id: 'pag', t: 'Pagamenti', i: '💶', c: '251,191,36', e: 'Quanto incassare e commissioni', s: [['inc', 'Da incassare'], ['fatture', 'Commissioni da €20'], ['rimb', 'Rinunce e annullamenti'], ['isc', 'Iscrizione €150']] },
       { id: 'arch', t: 'Archivio storico', i: '🗂️', c: '168,85,247', e: 'Tutto quello che è già successo', s: [['storico', 'Storico carichi'], ['movimenti', 'Il mio storico movimenti']] },
       { id: 'rep', t: 'Report', i: '📈', c: '45,212,191', e: 'I tuoi numeri riassunti', p: 'report' },
-      { id: 'not', t: 'Avvisi e suoni', i: '📣', c: '250,204,21', e: 'Cosa ricevere e come', p: 'notifiche' },
+      /* 5/11/2026: «Avvisi e suoni» tolto dal menu del trasportatore (Telegram e campanella bastano). La pagina 'notifiche' esiste ancora, non è stata cancellata. */
       { id: 'aiuto', t: 'Aiuto', i: '❓', c: '125,211,252', e: 'Domande e assistenza', s: [['faq', 'Domande frequenti'], ['scrivici', 'Scrivici']] },
       { id: 'sic', t: 'Sicurezza', i: '🔒', c: '248,113,113', e: 'Password e accesso', p: 'sicurezza' }
     ],
