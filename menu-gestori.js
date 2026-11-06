@@ -71,13 +71,13 @@
     analitica: { i: '📈', t: 'Analitica', d: 'Numeri in tempo reale, andamenti e grafici (carichi, incassi, iscrizioni, sicurezza).' },
     strumenti: { i: '🛠️', t: 'Strumenti', d: 'Tutti gli strumenti in una pagina: collegamenti ai servizi, verifiche ufficiali, fatturazione, condizioni d’uso e privacy.' },
     annullamenti: { i: '↩️', t: 'Annullamenti e rimborsi', d: 'Rinunce dei trasportatori e annullamenti delle aziende: chi deve ancora pagare e quali rimborsi da 20 € fare ai trasportatori.' },
-    essenziali:{ i: '⚠️', t: 'Decisioni importanti', d: 'Le cose essenziali da decidere con Gerlando prima del lancio: rinunce, annullamenti, ritiro dei carichi, penali.' },
+    essenziali:{ i: '⚠️', t: 'Decisioni importanti', d: 'Le cose da decidere con Gerlando: rinunce, annullamenti, ritiro dei carichi, penali e idee future (premium).' },
     proposte:  { i: '💡', t: 'Da decidere', d: 'Tutela assicurativa, idee future e proposte: nulla di tutto questo è attivo, serve la decisione di Gerlando.' },
     finti:     { i: '🧪', t: 'Dati finti', d: 'Le versioni di prova con dati di esempio: dashboard azienda, dashboard trasportatore e dashboard gestori. Si può cliccare tutto senza rischi.' },
     altro:     { i: '📄', t: 'Altro', d: '' }
   };
   var REGOLE = [
-    [/Rinuncia e ritiro/i, 'essenziali'],
+    [/Rinuncia e ritiro|Idee future/i, 'essenziali'],
     [/Portali personali|Vedi come funziona/i, 'finti'],
     [/Numeri in tempo reale/i, 'analitica'],
     [/Collegamenti rapidi/i, 'home'],
@@ -88,7 +88,7 @@
     [/Registro Attivit/i, 'registro'],
     [/Anagrafica/i, 'anagrafica'],
     [/Annullamenti/i, 'annullamenti'],
-    [/Tutela assicurativa|Idee future|Vetrina/i, 'proposte'],
+    [/Tutela assicurativa|Vetrina/i, 'altro'],
     [/Strumenti|Verifiche ufficiali|Fatturazione|Condizioni d.uso/i, 'strumenti']
   ];
   /* il menu: [pagina | {href} , sottotitolo] */
@@ -106,8 +106,7 @@
     { p: 'analitica', e: 'Numeri, andamenti, grafici' },
     { p: 'strumenti', e: 'Tutti gli strumenti' },
     { p: 'annullamenti', e: 'Rinunce, annullamenti, rimborsi' },
-    { p: 'essenziali', e: 'Rinunce, penali, ritiro: da decidere' },
-    { p: 'proposte', e: 'Assicurazione, idee, proposte' },
+    { p: 'essenziali', e: 'Rinunce, penali, idee future: da decidere' },
     { p: 'finti', e: 'Dashboard di prova' }
   ];
 
