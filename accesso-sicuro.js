@@ -1454,6 +1454,22 @@
       btn.textContent = 'Il pagamento non risulta ancora'; setTimeout(function () { btn.disabled = false; btn.textContent = t0; }, 2500);
     } catch (e) { btn.disabled = false; btn.textContent = t0; }
   }
+  var dpControlli = 0, dpUltimo = 0;
+  async function ricontrollaSilenzioso() {
+    if (inAnteprima() || !pendente() || dpControlli >= 4) return;
+    var ora = Date.now(); if (ora - dpUltimo < 15000) return;
+    dpUltimo = ora; dpControlli++;
+    try {
+      var r = await fetch(PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_utente', email: emailUtente() }) });
+      var d = await r.json();
+      var rec = ((d.trasportatore || [])[0]) || ((d.azienda || [])[0]);
+      if (rec && rec.fields) {
+        var f = campiUtente(); if (f) { f.da_pagare = rec.fields.da_pagare; f.da_pagare_tipo = rec.fields.da_pagare_tipo; f.da_pagare_id_carico = rec.fields.da_pagare_id_carico; }
+        if (!pendente()) { window.location.reload(); }
+      }
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () { try { if (document.visibilityState === 'visible' && document.getElementById('ect-da-pagare')) ricontrollaSilenzioso(); } catch (e) {} });
   function mostraDaPagare() {
     var p = pendente(); var ex = document.getElementById('ect-da-pagare');
     if (!p) { if (ex) ex.remove(); return; }
@@ -1475,6 +1491,7 @@
     document.body.appendChild(ov);
     ov.querySelector('.ect-dp-paga').onclick = function () { window.ectPagaPendente(); };
     ov.querySelector('.ect-dp-ok').onclick = function () { ricontrollaPagamento(this); };
+    setTimeout(function () { try { ricontrollaSilenzioso(); } catch (e) {} }, 8000);
   }
   function inAnteprima() { try { if (window.__ANTEPRIMA_SCUDO) return true; } catch (e) {} try { return !!modalitaAnteprimaAttiva; } catch (e) { return false; } }
   function impostaPendente(tipo, caricoId) {
