@@ -1477,20 +1477,17 @@
     var az = p.tipo === 'annullamento';
     var titolo = az ? 'Salda il tuo conto con l’annullamento per andare avanti' : 'Salda il tuo conto con la rinuncia per andare avanti';
     var testo = az
-      ? 'Hai chiesto di annullare un carico che era già stato preso da un trasportatore. L’annullamento prevede ' + IMPORTO.annullamento + ' € a favore della società. Per continuare a usare EcoTruckConnect e pubblicare altri carichi devi prima saldare questa quota.'
-      : 'Hai rinunciato a un carico che avevi preso. La rinuncia prevede ' + IMPORTO.rinuncia + ' € a favore della società. Per continuare a usare EcoTruckConnect e prendere altri carichi devi prima saldare questa quota.';
+      ? 'Hai chiesto di annullare un carico che era già stato preso da un trasportatore. L’annullamento prevede ' + IMPORTO.annullamento + ' € di penale. Per continuare a usare EcoTruckConnect e pubblicare altri carichi devi prima saldare questa quota.'
+      : 'Hai rinunciato a un carico che avevi preso. La rinuncia prevede ' + IMPORTO.rinuncia + ' € di penale. Per continuare a usare EcoTruckConnect e prendere altri carichi devi prima saldare questa quota.';
     var ov = document.createElement('div'); ov.id = 'ect-da-pagare';
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#1a0a0c;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto;';
     ov.innerHTML = '<div style="width:100%;max-width:480px;background:#2a1013;border:2px solid #ef4444;border-radius:16px;padding:26px;color:#fde8e8;font-family:DM Sans,system-ui,sans-serif;text-align:center;">' +
       '<div style="font-size:42px;margin-bottom:8px;">🔴</div><div style="font-size:20px;font-weight:800;margin-bottom:12px;">' + titolo + '</div>' +
-      '<div style="font-size:14.5px;line-height:1.6;margin-bottom:8px;">' + testo + '</div>' +
-      '<div style="font-size:13px;line-height:1.5;opacity:0.8;margin-bottom:18px;">Finché il pagamento non risulta, il resto del portale resta in pausa. Se esci e rientri trovi questa stessa schermata.</div>' +
-      '<button type="button" class="ect-dp-paga" style="display:block;width:100%;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;">Salda ' + IMPORTO[p.tipo] + ' € e continua</button>' +
-      '<button type="button" class="ect-dp-ok" style="display:block;width:100%;background:rgba(255,255,255,0.08);color:#fde8e8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;">Ho già pagato: ricontrolla</button>' +
+      '<div style="font-size:14.5px;line-height:1.6;margin-bottom:20px;">' + testo + '</div>' +
+      '<button type="button" class="ect-dp-paga" style="display:block;width:100%;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:0;">Salda ' + IMPORTO[p.tipo] + ' € e continua</button>' +
       '<div style="font-size:13px;opacity:0.85;margin-top:16px;line-height:1.5;">Hai bisogno di chiarimenti? Scrivi al team di EcoTruckConnect a <b>info@synaimaxpro.com</b>: ti rispondiamo entro 48 ore.</div></div>';
     document.body.appendChild(ov);
     ov.querySelector('.ect-dp-paga').onclick = function () { window.ectPagaPendente(); };
-    ov.querySelector('.ect-dp-ok').onclick = function () { ricontrollaPagamento(this); };
     setTimeout(function () { try { ricontrollaSilenzioso(); } catch (e) {} }, 8000);
   }
   function inAnteprima() { try { if (window.__ANTEPRIMA_SCUDO) return true; } catch (e) {} try { return !!modalitaAnteprimaAttiva; } catch (e) { return false; } }
