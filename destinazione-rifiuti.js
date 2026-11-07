@@ -432,7 +432,7 @@
     w.setAttribute('data-dest-pub', '1');
     w.setAttribute('style', STILE_BOX + 'font-size:13px;line-height:1.5;transition:opacity .15s;');
     w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span></div>' +
-      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Si attiva quando spunti «Si tratta di rifiuti» qui sopra.</div>' +
+      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Si attiva quando scegli «Rifiuti pericolosi» o «Rifiuti non pericolosi» come tipo di merce.</div>' +
       '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Se li conosci già, puoi indicarli adesso: il trasportatore li vedrà solo dopo aver preso il carico (cioè dopo aver pagato i €20). ' +
       'Se non li hai ancora, lasciali vuoti: potrai inserirli o modificarli dopo dallo <b>Storico pubblicazioni</b> (pulsante ♻️) e da <b>Trasporti presi</b>.</div>' +
       pubSezione('impianto', '🏭 Impianto di destinazione') + pubSezione('intermediario', '🔁 Intermediario') + datalists() +
@@ -450,7 +450,19 @@
     w.style.opacity = on ? '1' : '0.5';
     var campi = w.querySelectorAll('input,button'); campi.forEach(function (e) { e.disabled = !on; });
     var h = w.querySelector('[data-pub-hint]'); if (h) h.style.display = on ? 'none' : 'block';
+    pubSuggAzienda();
   };
+  /* suggerimenti dai dati d'iscrizione dell'azienda (ragione sociale e sede): compaiono mentre scrivi, non vengono scritti da soli */
+  var suggAzFatto = false;
+  function pubSuggAzienda() {
+    if (suggAzFatto) return;
+    var p; try { p = (typeof profiloAzienda !== 'undefined') ? profiloAzienda : null; } catch (e) { p = null; }
+    if (!p || !p.nome) return;
+    var sede = [p.via, [p.cap, p.citta].filter(Boolean).join(' '), p.provincia ? '(' + p.provincia + ')' : ''].filter(Boolean).join(', ').replace(', (', ' (');
+    var add = function (id, v) { var dl = document.getElementById(id); if (!dl || !v) return; var o = document.createElement('option'); o.value = v; o.label = 'la tua azienda'; dl.appendChild(o); };
+    add('ect-dl-ragione_sociale', p.nome); if (p.via) add('ect-dl-indirizzo', sede);
+    suggAzFatto = true;
+  }
   window.ectDestPubFile = async function (parte, inp) {
     var file = inp && inp.files && inp.files[0]; if (!file) return;
     inp.value = '';

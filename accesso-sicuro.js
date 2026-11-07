@@ -657,7 +657,7 @@
       if (!inCap || !inCitta || inCap.__ectCap) return;
       inCap.__ectCap = true;
       var nota = document.createElement('div');
-      nota.style.cssText = 'font-size:12px;color:#86efac;margin-top:5px;min-height:16px;';
+      nota.className = 'ect-nota-verde'; nota.style.cssText = 'font-size:12px;color:#86efac;margin-top:5px;';
       inCap.insertAdjacentElement('afterend', nota);
       var autoMessa = '';
       function scegli(nome) { inCitta.value = nome; autoMessa = nome; inCitta.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -1422,9 +1422,38 @@
     try { if (window.__ectAziendaFields && window.__ectAziendaFields.email) return window.__ectAziendaFields.email; } catch (e) {}
     return '';
   }
+  /* Il checkout Shopify arriva GIA' COMPILATO con i dati che abbiamo dell'utente (email, nome, azienda, telefono, indirizzo):
+     meno passaggi possibili. Quello che Shopify o la banca chiedono di scrivere a mano (carta, conferma) non si puo' precompilare. */
+  function datiCheckout() {
+    var f = campiUtente() || {}, azi = false;
+    try { azi = tipoUtente === 'azienda'; } catch (e) {}
+    var nome = String((azi ? f.referente_nome : f.nome) || '').trim();
+    var cognome = String((azi ? f.referente_cognome : f.cognome) || '').trim();
+    var rs = String(f.ragione_sociale || (azi ? (f.nome_azienda || '') : '') || '').trim();
+    if (azi && !nome && rs) nome = rs;
+    var tel = String(f.telefono || '').replace(/[^\d+]/g, '');
+    if (tel && tel.charAt(0) !== '+') tel = '+39' + tel.replace(/^0039/, '');
+    return { nome: nome, cognome: cognome, azienda: rs, telefono: tel, via: String(f.via || f.indirizzo || '').trim(), cap: String(f.cap || '').trim(), citta: String(f.citta || '').trim(), provincia: String(f.provincia || '').trim().toUpperCase(), piva: String(f.partita_iva || f.p_iva || '').trim() };
+  }
   function urlCheckout(tipo, caricoId) {
-    return 'https://shop.synaimaxpro.com/cart/' + VARIANTE[tipo] + ':1?checkout%5Bemail%5D=' + encodeURIComponent(emailUtente()) +
-      '&attributes%5Bazione%5D=' + encodeURIComponent(tipo) + '&attributes%5Bcarico_id%5D=' + encodeURIComponent(caricoId || '');
+    var d = datiCheckout(), q = [];
+    var add = function (k, v) { if (v !== undefined && v !== null && String(v) !== '') q.push(k + '=' + encodeURIComponent(v)); };
+    add('checkout[email]', emailUtente());
+    add('checkout[shipping_address][first_name]', d.nome);
+    add('checkout[shipping_address][last_name]', d.cognome);
+    add('checkout[shipping_address][company]', d.azienda);
+    add('checkout[shipping_address][address1]', d.via);
+    add('checkout[shipping_address][city]', d.citta);
+    add('checkout[shipping_address][zip]', d.cap);
+    add('checkout[shipping_address][province]', d.provincia);
+    add('checkout[shipping_address][country]', 'IT');
+    add('checkout[shipping_address][phone]', d.telefono);
+    add('attributes[azione]', tipo);
+    add('attributes[carico_id]', caricoId || '');
+    add('attributes[utente_email]', emailUtente());
+    add('attributes[partita_iva]', d.piva);
+    add('note', (tipo === 'rinuncia' ? 'Rinuncia al carico ' : 'Annullamento del carico ') + (caricoId || '') + ' — ' + (d.azienda || ((d.nome + ' ' + d.cognome).trim())) + ' — ' + emailUtente());
+    return 'https://shop.synaimaxpro.com/cart/' + VARIANTE[tipo] + ':1?' + q.join('&');
   }
   function campiUtente() {
     var t = ''; try { t = tipoUtente; } catch (e) {}
