@@ -111,7 +111,8 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height
 .nav-right{display:flex;align-items:center;gap:14px;}
 .badge-ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px;}
 .nav-name{color:var(--muted);font-size:13px;}
-.nav-av{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:13px;}
+.nav-av{position:relative;width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:13px;}
+.nav-av[data-foto]::after{content:'📷';position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#12161f;border:1px solid rgba(255,255,255,0.3);font-size:9px;line-height:1;display:flex;align-items:center;justify-content:center;color:#fff;}
 .btn-esci{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:background 0.2s;font-family:var(--font-b);}
 .btn-esci:hover{background:rgba(239,68,68,0.16);}
 .hero{position:relative;padding:72px 48px 56px;overflow:hidden;}
@@ -5408,6 +5409,78 @@ function chiudiModaleCalendario() {
   window.autocompilaCittaCarico = function (lato) { try { if (daCap(lato)) return; } catch (e) {} if (vecchia) return vecchia.apply(this, arguments); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aggancia); else aggancia();
   setTimeout(aggancia, 1500);
+})();
+</script>
+<script>
+/* LOGO / FOTO PERSONALE nel cerchio in alto (accanto alla campanella) — aziende e trasportatori.
+   La foto resta SOLO nel browser di chi la carica (localStorage): non viene mai inviata a Make, Airtable o altri server, e non la vede nessun altro. */
+(function () {
+  var LATO = 128, MAX_BYTE = 5 * 1024 * 1024;
+  function chiave() { var e = ''; try { e = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || ''; } catch (x) {} return 'ect_foto_' + (e || 'anteprima').toLowerCase(); }
+  function leggi() { try { return localStorage.getItem(chiave()) || ''; } catch (e) { return ''; } }
+  function salva(v) { try { if (v) localStorage.setItem(chiave(), v); else localStorage.removeItem(chiave()); return true; } catch (e) { return false; } }
+  function applica() {
+    var av = document.getElementById('nav-av'); if (!av) return;
+    var f = leggi();
+    if (f) { av.style.backgroundImage = 'url("' + f + '")'; av.style.backgroundSize = 'cover'; av.style.backgroundPosition = 'center'; av.style.color = 'transparent'; av.style.fontSize = '0'; av.classList.add('ha-foto'); }
+    else { av.style.backgroundImage = ''; av.style.color = ''; av.style.fontSize = ''; av.classList.remove('ha-foto'); }
+  }
+  function chiudi() { var m = document.getElementById('ect-foto-menu'); if (m) m.remove(); }
+  function messaggio(m, ok) { var n = document.getElementById('ect-foto-msg'); if (n) { n.textContent = m; n.style.color = ok ? '#4ade80' : '#f87171'; } }
+  function ridimensiona(file, fine) {
+    var rd = new FileReader();
+    rd.onerror = function () { fine(''); };
+    rd.onload = function () {
+      var img = new Image();
+      img.onerror = function () { fine(''); };
+      img.onload = function () {
+        var c = document.createElement('canvas'); c.width = LATO; c.height = LATO;
+        var x = c.getContext('2d'), l = Math.min(img.width, img.height);
+        x.fillStyle = '#ffffff'; x.fillRect(0, 0, LATO, LATO);
+        x.drawImage(img, (img.width - l) / 2, (img.height - l) / 2, l, l, 0, 0, LATO, LATO);
+        fine(c.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = String(rd.result);
+    };
+    rd.readAsDataURL(file);
+  }
+  function apriMenu(ev) {
+    ev.stopPropagation();
+    if (document.getElementById('ect-foto-menu')) { chiudi(); return; }
+    var av = document.getElementById('nav-av'), r = av.getBoundingClientRect();
+    var m = document.createElement('div'); m.id = 'ect-foto-menu';
+    m.style.cssText = 'position:fixed;z-index:6000;top:' + (r.bottom + 8) + 'px;right:' + Math.max(8, window.innerWidth - r.right - 4) + 'px;width:170px;background:#12161f;border:1px solid rgba(59,130,246,0.5);border-radius:12px;padding:10px;box-shadow:0 14px 36px rgba(0,0,0,.5);color:#f1f5f9;font-size:13px;line-height:1.5;';
+    m.innerHTML = '<input type="file" id="ect-foto-file" accept="image/jpeg,image/png" style="display:none;">' +
+      '<div style="display:flex;flex-direction:column;gap:8px;"><button type="button" class="btn-cap" id="ect-foto-carica" style="font-size:13px;text-align:left;">📷 ' + (leggi() ? 'Cambia foto' : 'Carica foto') + '</button>' +
+      (leggi() ? '<button type="button" id="ect-foto-togli" style="background:none;border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;text-align:left;">Rimuovi foto</button>' : '') + '</div>' +
+      '<div id="ect-foto-msg" style="font-size:12px;margin-top:6px;"></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function (e) { e.stopPropagation(); });
+    var inp = document.getElementById('ect-foto-file');
+    document.getElementById('ect-foto-carica').onclick = function () { inp.click(); };
+    var t = document.getElementById('ect-foto-togli');
+    if (t) t.onclick = function () { salva(''); applica(); chiudi(); };
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0]; if (!f) return;
+      if (f.type !== 'image/jpeg' && f.type !== 'image/png') { messaggio('Sono ammessi solo JPG e PNG.', false); inp.value = ''; return; }
+      if (f.size > MAX_BYTE) { messaggio('La foto è troppo grande (massimo 5 MB).', false); inp.value = ''; return; }
+      messaggio('Carico…', true);
+      ridimensiona(f, function (dataUrl) {
+        if (!dataUrl) { messaggio('Non riesco a leggere questa immagine. Prova con un\'altra.', false); return; }
+        if (!salva(dataUrl)) { messaggio('Non riesco a salvarla su questo dispositivo.', false); return; }
+        applica(); chiudi();
+      });
+    };
+  }
+  function avvia() {
+    var av = document.getElementById('nav-av'); if (!av || av.getAttribute('data-foto')) return;
+    av.setAttribute('data-foto', '1'); av.style.cursor = 'pointer'; av.title = 'Cambia foto';
+    av.addEventListener('click', apriMenu);
+    document.addEventListener('click', chiudi);
+    applica();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
+  setInterval(function () { avvia(); applica(); }, 2000);   /* l'email dell'utente arriva dopo il login: riallinea la foto giusta */
 })();
 </script>
 <script src="/menu-laterale.js"></script>
