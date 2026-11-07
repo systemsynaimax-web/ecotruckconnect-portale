@@ -829,15 +829,15 @@
       return ectUnici(lista);
     } };
     var vecchioSpec = ECT_SUGG['ins-specifica'] && ECT_SUGG['ins-specifica'].fonte;
-    var vecchioSpecScelto = ECT_SUGG['ins-specifica'] && ECT_SUGG['ins-specifica'].scelto;
-    ECT_SUGG['ins-specifica'] = { min: 1, parole: true, scelto: vecchioSpecScelto, fonte: function () {
+    var vecchioSpecCfg = ECT_SUGG['ins-specifica'] || {};
+    ECT_SUGG['ins-specifica'] = Object.assign({}, vecchioSpecCfg, { min: 1, fonte: function () {
       var base = []; try { base = vecchioSpec ? vecchioSpec() : []; } catch (e) {}
       /* gli esempi generici compaiono solo se la categoria di merce non ha già i suoi suggerimenti */
       var m = ''; try { m = document.getElementById('ins-merce').value; } catch (e) {}
       var conCategoria = false; try { conCategoria = !!(CER_PER_MERCE[m] || SPECIFICA_PER_MERCE[m]); } catch (e) {}
       if (conCategoria) return base;
       return base.concat(['Pallet 120x80', 'Colli su pallet', 'Merce sfusa', 'Big bag', 'Rotoli', 'Cassette', 'Materiale in cassone', 'Container'].map(function (t) { return { testo: t, nota: 'esempio' }; }));
-    } };
+    } });
     ECT_SUGG['ins-note'] = { min: 3, fonte: function () {
       return ['Ritiro solo la mattina', 'Ritiro solo il pomeriggio', 'Serve sponda idraulica', 'Merce da non capovolgere', 'Peso approssimativo: '].map(function (t) { return { testo: t, nota: 'esempio' }; });
     } };

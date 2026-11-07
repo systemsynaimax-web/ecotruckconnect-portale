@@ -1244,9 +1244,21 @@ const SPECIFICA_PER_MERCE = {
   'Merci generiche / pallettizzate': ['Bancali','Big bag','Cartoni','Casse','Colli su pallet','Container','Merce sfusa','Pallet 120x80','Scatole'],
   'Abbigliamento e tessile': ['Abiti','Borse','Calzature','Cappotti','Giacche','Magliette','Pantaloni','Stoffe','Tessuti']
 };
+function ectSpecificheRicordate(m) {
+  try { return JSON.parse(localStorage.getItem('ect_specifiche_usate') || '[]').filter(x => x.m === m).map(x => ({ testo: x.t, nota: 'aggiunta da te' })); } catch (e) { return []; }
+}
+function ectRicordaSpecifica(t) {
+  const m = (document.getElementById('ins-merce') || {}).value || '';
+  try { const v = JSON.parse(localStorage.getItem('ect_specifiche_usate') || '[]'); if (!v.some(x => x.m === m && x.t.toLowerCase() === t.toLowerCase())) v.push({ m: m, t: t }); localStorage.setItem('ect_specifiche_usate', JSON.stringify(v.slice(-100))); } catch (e) {}
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const e = document.getElementById('ins-specifica'); if (!e) return;
+  const f = () => { const v = e.value.trim().toLowerCase(), m = document.getElementById('ins-merce').value, c = (CER_PER_MERCE[m] || { codici: [] }).codici.find(x => x[1].toLowerCase() === v); if (c) cerScelto(c[0]); };
+  e.addEventListener('change', f); e.addEventListener('blur', f);
+});
 function ectSuggSpecifica() {
   const merce = (document.getElementById('ins-merce') || {}).value || '';
-  const miei = ectUnici(ectMieiCarichi().map(c => ({ testo: c.fields.specifica, nota: 'già usato' })));
+  const miei = ectUnici(ectMieiCarichi().map(c => ({ testo: c.fields.specifica, nota: 'già usato' })).concat(ectSpecificheRicordate(merce)));
   let cat = [];
   if (CER_PER_MERCE[merce]) cat = CER_PER_MERCE[merce].codici.map(c => ({ testo: c[1], nota: '', cer: c[0] }));
   else cat = (SPECIFICA_PER_MERCE[merce] || []).map(t => ({ testo: t, nota: '' }));
@@ -3372,6 +3384,7 @@ async function pubblicaCarico() {
       ok.style.display = 'block';
       try { if (rifiuto && window.ectDestDopoPubblica) window.ectDestDopoPubblica(numeroOrdineNuovo); } catch (e) { console.error('impianto/intermediario:', e); }
       ectRicordaCitta(cittaPart, cittaArr);
+      if (specifica) ectRicordaSpecifica(specifica);
       registraAttivita('Nuovo Carico', 'Carico pubblicato', `${cittaPart} → ${cittaArr} (${merce}) pubblicato da ${profiloAzienda.nome || 'azienda'}.`);
       document.getElementById('ins-cap-part').value = '';
       document.getElementById('ins-cap-arr').value  = '';
@@ -4634,14 +4647,14 @@ function ectSede() {
   return p.via ? [{ testo: t, nota: 'la tua sede' }] : [];
 }
 const ECT_SUGG = {
-  'ins-citta-part': { min: 1, fonte: () => ectCittaSuggerite('part'), finale: ectOrdineAlfabetico, scelto: s => ectCapDaCitta('part', s) },
-  'ins-citta-arr': { min: 1, fonte: () => ectCittaSuggerite('arr'), finale: ectOrdineAlfabetico, scelto: s => ectCapDaCitta('arr', s) },
+  'ins-citta-part': { min: 1, esatto: true, parole: true, fonte: () => ectCittaSuggerite('part'), finale: ectOrdineAlfabetico, scelto: s => ectCapDaCitta('part', s) },
+  'ins-citta-arr': { min: 1, esatto: true, parole: true, fonte: () => ectCittaSuggerite('arr'), finale: ectOrdineAlfabetico, scelto: s => ectCapDaCitta('arr', s) },
   'dd-citta': { min: 2, fonte: () => ectComuni() },
   'ins-indirizzo-ritiro': { min: 3, fonte: () => ectUnici(ectSede().concat(ectMieiCarichi().flatMap(c => [c.fields.indirizzo_ritiro, c.fields.indirizzo_consegna]).filter(Boolean).map(t => ({ testo: t, nota: 'già usato' })))) },
   'ins-indirizzo-consegna': { min: 3, fonte: () => ectUnici(ectMieiCarichi().flatMap(c => [c.fields.indirizzo_consegna, c.fields.indirizzo_ritiro]).filter(Boolean).map(t => ({ testo: t, nota: 'già usato' })).concat(ectSede())) },
   'ins-destinatario-nome': { min: 3, fonte: () => ectUnici(ectMieiCarichi().filter(c => c.fields.destinatario_nome).map(c => ({ testo: c.fields.destinatario_nome, nota: c.fields.destinatario_telefono || '', tel: c.fields.destinatario_telefono || '' }))),
     scelto: s => { const t = document.getElementById('ins-destinatario-telefono'); if (t && s.tel) t.value = s.tel; } },
-  'ins-specifica': { min: 1, parole: true, fonte: () => ectSuggSpecifica(), scelto: s => { if (s.cer) cerScelto(s.cer); } },
+  'ins-specifica': { min: 1, parole: true, esatto: true, aggiungi: true, ricorda: t => ectRicordaSpecifica(t), fonte: () => ectSuggSpecifica(), scelto: s => { if (s.cer) cerScelto(s.cer); } },
   'ins-termini-pagamento': { min: 3, fonte: () => ectUnici(ectMieiCarichi().map(c => ({ testo: c.fields.termini_pagamento, nota: 'già usato' })).concat([{ testo: 'Bonifico a 30gg dalla consegna', nota: '' }, { testo: 'Bonifico a 60gg dalla consegna', nota: '' }, { testo: 'Bonifico alla consegna', nota: '' }])) }
 };
 function ectChiudiSugg() { const b = document.getElementById('ect-sugg-box'); if (b) b.remove(); }
@@ -4654,8 +4667,13 @@ function ectMostraSugg(input) {
   try { lista = cfg.fonte() || []; } catch (e) { lista = []; }
   const inizio = lista.filter(x => String(x.testo || '').toLowerCase().startsWith(q));
   const dentro = lista.filter(x => !String(x.testo || '').toLowerCase().startsWith(q) && (cfg.parole ? (' ' + String(x.testo || '').toLowerCase()).includes(' ' + q) : String(x.testo || '').toLowerCase().includes(q)));
-  let scelti = inizio.concat(dentro).filter(x => String(x.testo).toLowerCase() !== q).slice(0, 8);
+  const mini = x => String(x.testo || '').toLowerCase();
+  let scelti = inizio.concat(dentro).filter(x => cfg.esatto || mini(x) !== q);
+  if (cfg.esatto) scelti = scelti.filter(x => mini(x) === q).concat(scelti.filter(x => mini(x) !== q));   /* se ho scritto il nome intero, resta in elenco (es. Gela) */
+  scelti = scelti.slice(0, 8);
   if (cfg.finale) scelti = cfg.finale(scelti);
+  /* «Aggiungi»: quello che scrivi non è in elenco? Lo puoi aggiungere tu (viene ricordato per le volte dopo) */
+  if (cfg.aggiungi && q.length >= 2 && !lista.some(x => mini(x) === q)) scelti.push({ testo: input.value.trim(), nota: '', libero: true });
   if (!scelti.length) return;
   const r = input.getBoundingClientRect();
   const box = document.createElement('div');
@@ -4664,12 +4682,13 @@ function ectMostraSugg(input) {
   scelti.forEach(s => {
     const it = document.createElement('div');
     it.style.cssText = 'padding:10px 13px;cursor:pointer;font-size:14px;color:#f1f5f9;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,0.05);';
-    it.innerHTML = '<span>' + cpEsc(s.testo) + '</span><span style="color:rgba(241,245,249,.45);font-size:12px;white-space:nowrap;">' + cpEsc(s.nota || '') + '</span>';
+    it.innerHTML = s.libero ? '<span style="color:#4ade80;">➕ Aggiungi «' + cpEsc(s.testo) + '»</span><span></span>' : '<span>' + cpEsc(s.testo) + '</span><span style="color:rgba(241,245,249,.45);font-size:12px;white-space:nowrap;">' + cpEsc(s.nota || '') + '</span>';
     it.onmouseenter = () => { it.style.background = 'rgba(59,130,246,0.15)'; };
     it.onmouseleave = () => { it.style.background = ''; };
     it.onmousedown = ev => {
       ev.preventDefault();
       input.value = s.testo;
+      if (s.libero && cfg.ricorda) cfg.ricorda(s.testo);
       if (cfg.scelto) cfg.scelto(s);
       input.dispatchEvent(new Event('change', { bubbles: true }));
       ectChiudiSugg();
