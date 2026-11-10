@@ -2,7 +2,7 @@
    EcoTruckConnect — destinazione-rifiuti.js (8/10/2026)
    Si carica in fondo a index.html (portale) e a dashboard.html, DOPO gli altri script.
 
-   IMPIANTO DI DESTINAZIONE E INTERMEDIARIO dei carichi di RIFIUTI (richiesta di Gerlando)
+   PRODUTTORE, IMPIANTO DI DESTINAZIONE E INTERMEDIARIO dei carichi di RIFIUTI (richiesta di Gerlando; produttore aggiunto il 10/11/2026)
    - Facoltativo. 10/10: l'azienda puo' inserirli GIA' ALLA PUBBLICAZIONE e anche dopo; il trasportatore li vede solo dopo aver preso il carico (PRESO).
    - AZIENDA: scrive i dati (modificabili quando vuole) e allega i file
      (Vedi / Scarica / Rimuovi: rimuove solo lei, i file non si modificano: si rimuovono e si ricaricano).
@@ -18,8 +18,39 @@
   var FUNZIONE = '/.netlify/functions/destinazione';
   var MAX_BYTE = 4 * 1024 * 1024;
   var TIPI_OK = { 'application/pdf': 1, 'image/jpeg': 1, 'image/png': 1 };
+  /* data bianca (e icona calendario bianca) sul fondo scuro */
+  (function () {
+    try {
+      if (document.getElementById('ect-dest-stile-data')) return;
+      var st = document.createElement('style'); st.id = 'ect-dest-stile-data';
+      st.textContent = 'input[type="date"][data-campo]{color-scheme:dark;color:#fff !important;-webkit-text-fill-color:#fff;}' +
+        'input[type="date"][data-campo]::-webkit-calendar-picker-indicator{filter:none;opacity:1;cursor:pointer;}' +
+        'input[type="date"][data-campo]::-webkit-datetime-edit,input[type="date"][data-campo]::-webkit-datetime-edit-fields-wrapper,input[type="date"][data-campo]::-webkit-datetime-edit-text{color:#fff;}';
+      document.head.appendChild(st);
+    } catch (e) {}
+  })();
   var DISCLAIMER_AZ = 'Informazioni fornite dall\'azienda. La verifica resta a carico del trasportatore.';
   var DISCLAIMER_TR = 'Informazioni fornite dall\'azienda. La verifica resta a carico tuo.';
+
+  /* 10/11: tre blocchi, sempre in quest'ordine: produttore, impianto di destinazione, intermediario. Tutti facoltativi. */
+  var PARTI = ['produttore', 'impianto', 'intermediario'];
+  var CAMPI_PARTE = {
+    produttore: ['ragione_sociale', 'codice_fiscale', 'indirizzo', 'n_autorizzazione'],
+    impianto: ['ragione_sociale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio', 'scadenza'],
+    intermediario: ['ragione_sociale', 'n_autorizzazione', 'ente_rilascio', 'scadenza']
+  };
+  var CAMPI_TUTTI = ['ragione_sociale', 'codice_fiscale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio', 'scadenza'];
+  var NOME_PARTE = { produttore: 'Produttore', impianto: 'Impianto di destinazione', intermediario: 'Intermediario' };
+  var ETICHETTA_FORM = { ragione_sociale: 'Ragione sociale', codice_fiscale: 'Codice fiscale', indirizzo: 'Indirizzo', n_autorizzazione: 'Numero di autorizzazione / iscrizione', ente_rilascio: 'Ente che l\'ha rilasciata', scadenza: 'Scadenza' };
+  var ETICHETTA_LETT = { ragione_sociale: 'Ragione sociale', codice_fiscale: 'Codice fiscale', indirizzo: 'Indirizzo', n_autorizzazione: 'N. autorizzazione', ente_rilascio: 'Ente' };
+  function etichettaForm(parte, c) {
+    if (parte === 'produttore' && c === 'indirizzo') return 'Indirizzo (dove si ritira)';
+    if (parte === 'produttore' && c === 'n_autorizzazione') return 'Numero di autorizzazione / iscrizione';
+    return ETICHETTA_FORM[c];
+  }
+  function parteVuota() { return { produttore: {}, impianto: {}, intermediario: {} }; }
+  function haDatiParte(d) { return !!d && CAMPI_TUTTI.some(function (c) { return d[c]; }); }
+  function titoloParte(parte, conFacoltativo) { return '♻️ ' + NOME_PARTE[parte] + (conFacoltativo ? ' <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span>' : ''); }
 
   var sim = {};   // simulazione in anteprima / demo (solo in memoria)
   var cache = {}; // ultimo pacchetto letto per ogni carico
@@ -55,7 +86,7 @@
 
   /* ---------------- chiamata al server (con simulazione in anteprima) ---------------- */
   function simGet(ord) {
-    if (!sim[ord]) sim[ord] = { dati: { impianto: { ragione_sociale: '', indirizzo: '', n_autorizzazione: '', ente_rilascio: '', scadenza: '' }, intermediario: { ragione_sociale: '', n_autorizzazione: '', ente_rilascio: '', scadenza: '' } }, file: [], aggiornato_il: '' };
+    if (!sim[ord]) sim[ord] = { dati: { produttore: { ragione_sociale: '', codice_fiscale: '', indirizzo: '', n_autorizzazione: '' }, impianto: { ragione_sociale: '', indirizzo: '', n_autorizzazione: '', ente_rilascio: '', scadenza: '' }, intermediario: { ragione_sociale: '', n_autorizzazione: '', ente_rilascio: '', scadenza: '' } }, file: [], aggiornato_il: '' };
     return sim[ord];
   }
   function simPacchetto(ord, ruolo) { var s = simGet(ord); return { ok: true, applicabile: true, ruolo: ruolo, numero_ordine: ord, dati: JSON.parse(JSON.stringify(s.dati)), file: s.file.slice(), aggiornato_il: s.aggiornato_il }; }
@@ -66,7 +97,7 @@
       var ruolo = ruoloPagina();
       var s = simGet(ord);
       await new Promise(function (r) { setTimeout(r, 250); });
-      if (azione === 'dest_salva') { s.dati = JSON.parse(JSON.stringify({ impianto: extra.impianto || {}, intermediario: extra.intermediario || {} })); s.aggiornato_il = new Date().toISOString(); }
+      if (azione === 'dest_salva') { s.dati = JSON.parse(JSON.stringify({ produttore: extra.produttore || {}, impianto: extra.impianto || {}, intermediario: extra.intermediario || {} })); s.aggiornato_il = new Date().toISOString(); }
       if (azione === 'dest_file_carica') { s.file.push({ id: 'sim' + Date.now(), parte: extra.parte, nome: extra.nome_file, tipo: extra.tipo }); s.aggiornato_il = new Date().toISOString(); }
       if (azione === 'dest_file_rimuovi') { s.file = s.file.filter(function (x) { return x.id !== extra.id; }); s.aggiornato_il = new Date().toISOString(); }
       if (azione === 'dest_file_apri') return { ok: false, errore: 'anteprima' };
@@ -89,7 +120,7 @@
 
   function campo(parte, nome, etichetta, valore, tipo) {
     return '<label style="' + STILE_LAB + '">' + etichetta + '</label>' +
-      '<input type="' + (tipo || 'text') + '"' + ((tipo || 'text') === 'text' ? ' list="ect-dl-' + nome + '" autocomplete="off"' : '') + ' data-parte="' + parte + '" data-campo="' + nome + '" value="' + esc(valore) + '" style="' + STILE_IN + '" maxlength="' + (nome === 'indirizzo' ? 250 : 200) + '">';
+      '<input type="' + (tipo || 'text') + '"' + ((tipo || 'text') === 'text' ? ' list="ect-dl-' + nome + '" autocomplete="off"' : '') + ' data-parte="' + parte + '" data-campo="' + nome + '" value="' + esc(valore) + '" style="' + STILE_IN + '" maxlength="' + (nome === 'indirizzo' ? 250 : nome === 'codice_fiscale' ? 20 : 200) + '">';
   }
   /* ---------------- suggerimenti mentre si scrive ---------------- */
   var ENTI = ['Albo Nazionale Gestori Ambientali', 'Albo Gestori Ambientali - Sezione regionale', 'Regione', 'Provincia', 'Libero Consorzio Comunale', 'Città Metropolitana', 'Comune', 'SUAP', 'ARPA', 'Ministero dell\'Ambiente e della Sicurezza Energetica', 'Camera di Commercio'];
@@ -98,9 +129,9 @@
   function suggRicorda(dati) {
     try {
       var s = suggLeggi();
-      ['impianto', 'intermediario'].forEach(function (parte) {
+      PARTI.forEach(function (parte) {
         var d = (dati && dati[parte]) || {};
-        ['ragione_sociale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio'].forEach(function (c) {
+        ['ragione_sociale', 'codice_fiscale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio'].forEach(function (c) {
           var v = String(d[c] || '').trim(); if (!v) return;
           var l = (s[c] || []).filter(function (x) { return x.toLowerCase() !== v.toLowerCase(); });
           l.unshift(v); s[c] = l.slice(0, 40);
@@ -109,12 +140,14 @@
       localStorage.setItem(CHIAVE_SUGG, JSON.stringify(s));
     } catch (e) {}
   }
-  function optionsDi(lista) { return lista.map(function (v) { return '<option value="' + esc(v) + '"></option>'; }).join(''); }
+  function ordina(lista) { var visti = {}; return lista.filter(function (v) { var k = String(v).toLowerCase(); if (!v || visti[k]) return false; visti[k] = 1; return true; }).sort(function (a, b) { return String(a).localeCompare(String(b), 'it', { sensitivity: 'base' }); }); }
+  function optionsDi(lista) { return ordina(lista).map(function (v) { return '<option value="' + esc(v) + '"></option>'; }).join(''); }
   function datalists() {
     var s = suggLeggi();
     var enti = (s.ente_rilascio || []).concat(ENTI.filter(function (e) { return (s.ente_rilascio || []).map(function (x) { return x.toLowerCase(); }).indexOf(e.toLowerCase()) === -1; }));
     return '<datalist id="ect-dl-ragione_sociale">' + optionsDi(s.ragione_sociale || []) + '</datalist>' +
       '<datalist id="ect-dl-indirizzo">' + optionsDi(s.indirizzo || []) + '</datalist>' +
+      '<datalist id="ect-dl-codice_fiscale">' + optionsDi(s.codice_fiscale || []) + '</datalist>' +
       '<datalist id="ect-dl-n_autorizzazione">' + optionsDi(s.n_autorizzazione || []) + '</datalist>' +
       '<datalist id="ect-dl-ente_rilascio">' + optionsDi(enti) + '</datalist>';
   }
@@ -133,15 +166,15 @@
         '</span></div>';
     }).join('');
   }
+  function campiModifica(parte, d) {
+    d = d || {};
+    return CAMPI_PARTE[parte].map(function (c) { return campo(parte, c, etichettaForm(parte, c), d[c], c === 'scadenza' ? 'date' : undefined); }).join('');
+  }
   function sezioneModifica(ord, p, parte, titolo) {
     var d = p.dati[parte] || {};
     var o = esc(ord).replace(/'/g, '&#39;');
     return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);"><div style="font-weight:700;color:#fff;">' + titolo + '</div>' +
-      campo(parte, 'ragione_sociale', 'Ragione sociale', d.ragione_sociale) +
-      (parte === 'impianto' ? campo(parte, 'indirizzo', 'Indirizzo', d.indirizzo) : '') +
-      campo(parte, 'n_autorizzazione', 'Numero di autorizzazione / iscrizione', d.n_autorizzazione) +
-      campo(parte, 'ente_rilascio', 'Ente che l\'ha rilasciata', d.ente_rilascio) +
-      campo(parte, 'scadenza', 'Scadenza', d.scadenza, 'date') +
+      campiModifica(parte, d) +
       '<div style="margin-top:10px;font-size:12px;font-weight:600;">Allegati (PDF, JPG o PNG, max 4 MB)</div>' + righeFile(ord, p, parte, 'azienda') +
       '<div style="margin-top:6px;"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;" data-file-parte="' + parte + '" onchange="ectDestCarica(\'' + o + '\',\'' + parte + '\',this)">' +
       '<button type="button" style="' + STILE_BT + '" onclick="event.stopPropagation();this.previousElementSibling.click()">📤 Carica file</button></div></div>';
@@ -149,19 +182,18 @@
   function rigaLettura(k, v, extra) { return v ? '<div style="margin:2px 0;"><span style="color:var(--muted, rgba(241,245,249,0.5));">' + k + ':</span> ' + esc(v) + (extra || '') + '</div>' : ''; }
   function sezioneLettura(ord, p, parte, titolo, ruolo) {
     var d = p.dati[parte] || {};
-    var haDati = d.ragione_sociale || d.indirizzo || d.n_autorizzazione || d.ente_rilascio || d.scadenza;
+    var haDati = haDatiParte(d);
     var haFile = (p.file || []).some(function (x) { return x.parte === parte; });
     var scad = d.scadenza ? dataBreve(d.scadenza) + (scaduta(d.scadenza) ? ' <b style="color:#f87171;">(scaduta)</b>' : '') : '';
     return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);"><div style="font-weight:700;color:#fff;margin-bottom:4px;">' + titolo + '</div>' +
       (haDati || haFile ? (
-        rigaLettura('Ragione sociale', d.ragione_sociale) + (parte === 'impianto' ? rigaLettura('Indirizzo', d.indirizzo) : '') +
-        rigaLettura('N. autorizzazione', d.n_autorizzazione) + rigaLettura('Ente', d.ente_rilascio) +
+        CAMPI_PARTE[parte].filter(function (c) { return c !== 'scadenza'; }).map(function (c) { return rigaLettura(ETICHETTA_LETT[c], d[c]); }).join('') +
         (scad ? '<div style="margin:2px 0;"><span style="color:var(--muted, rgba(241,245,249,0.5));">Scadenza:</span> ' + scad + '</div>' : '') +
         (haFile ? righeFile(ord, p, parte, ruolo) : '')
       ) : '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Nessun dato inserito dall\'azienda.</div>') + '</div>';
   }
   function titoloBox(ruolo) {
-    return '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario' + (ruolo === 'azienda' ? ' <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span>' : '') + '</div>';
+    return '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Produttore, impianto di destinazione e intermediari' + (ruolo === 'azienda' ? ' <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span>' : '') + '</div>';
   }
   function disegna(box, p) {
     var ord = box.getAttribute('data-ord');
@@ -171,23 +203,24 @@
     var html = titoloBox(ruolo);
     if (ruolo === 'azienda') {
       var o = esc(ord).replace(/'/g, '&#39;');
-      var haQualcosa = ['impianto', 'intermediario'].some(function (k) { var d = p.dati[k] || {}; return d.ragione_sociale || d.indirizzo || d.n_autorizzazione || d.ente_rilascio || d.scadenza; }) || (p.file || []).length > 0;
+      var haQualcosa = PARTI.some(function (k) { return haDatiParte(p.dati[k]); }) || (p.file || []).length > 0;
       var inModifica = modo[ord] === 'mod' || !haQualcosa;
       if (inModifica) {
-        html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Qui puoi indicare l\'impianto di destinazione e l\'eventuale intermediario. Il trasportatore li vede dopo aver preso il carico, per controllare le autorizzazioni e compilare il formulario.</div>' +
-          sezioneModifica(ord, p, 'impianto', '🏭 Impianto di destinazione') +
-          sezioneModifica(ord, p, 'intermediario', '🔁 Intermediario (facoltativo)') + datalists() +
+        html += '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;line-height:1.5;">Qui puoi indicare il produttore, l\'impianto di destinazione e l\'eventuale intermediario. Il trasportatore li vede dopo aver preso il carico, per controllare le autorizzazioni e compilare il formulario.</div>' +
+          sezioneModifica(ord, p, 'produttore', titoloParte('produttore', true)) +
+          sezioneModifica(ord, p, 'impianto', titoloParte('impianto', true)) +
+          sezioneModifica(ord, p, 'intermediario', titoloParte('intermediario', true)) + datalists() +
           '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestSalva(\'' + o + '\')">💾 Salva</button>' +
           (haQualcosa ? '<button type="button" style="' + STILE_BT + '" onclick="event.stopPropagation();ectDestAnnulla(\'' + o + '\')">Annulla</button>' : '') +
           '<span data-stato style="font-size:12px;"></span></div>' +
           agg + '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
       } else {
-        html += sezioneLettura(ord, p, 'impianto', '🏭 Impianto di destinazione', 'azienda') + sezioneLettura(ord, p, 'intermediario', '🔁 Intermediario', 'azienda') +
+        html += sezioneLettura(ord, p, 'produttore', titoloParte('produttore'), 'azienda') + sezioneLettura(ord, p, 'impianto', titoloParte('impianto'), 'azienda') + sezioneLettura(ord, p, 'intermediario', titoloParte('intermediario'), 'azienda') +
           '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-cap" style="font-size:12px;" onclick="event.stopPropagation();ectDestModifica(\'' + o + '\')">✏️ Modifica</button><span data-stato style="font-size:12px;"></span></div>' +
           agg + '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
       }
     } else {
-      html += sezioneLettura(ord, p, 'impianto', '🏭 Impianto di destinazione', ruolo) + sezioneLettura(ord, p, 'intermediario', '🔁 Intermediario', ruolo) + agg +
+      html += sezioneLettura(ord, p, 'produttore', titoloParte('produttore'), ruolo) + sezioneLettura(ord, p, 'impianto', titoloParte('impianto'), ruolo) + sezioneLettura(ord, p, 'intermediario', titoloParte('intermediario'), ruolo) + agg +
         '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:8px;">ℹ️ ' + (ruolo === 'trasportatore' ? DISCLAIMER_TR : DISCLAIMER_AZ) + (ruolo === 'trasportatore' ? ' Utile per controllare l\'autorizzazione dell\'impianto e per compilare il formulario.' : '') + '</div>';
     }
     box.innerHTML = html;
@@ -243,7 +276,7 @@
 
   /* ---------------- azioni dell'azienda ---------------- */
   function leggiForm(ord) {
-    var box = trovaBox(ord)[0]; var out = { impianto: {}, intermediario: {} };
+    var box = trovaBox(ord)[0]; var out = parteVuota();
     if (!box) return out;
     box.querySelectorAll('input[data-campo]').forEach(function (i) { out[i.getAttribute('data-parte')][i.getAttribute('data-campo')] = i.value.trim(); });
     return out;
@@ -260,7 +293,7 @@
     var t0 = Date.now();
     avviso(ord, '⏳ Salvataggio in corso…', '#fbbf24');
     try {
-      var r = await chiama('dest_salva', { numero_ordine: ord, impianto: dati.impianto, intermediario: dati.intermediario });
+      var r = await chiama('dest_salva', { numero_ordine: ord, produttore: dati.produttore, impianto: dati.impianto, intermediario: dati.intermediario });
       await attesaMinima(t0, 1500);
       if (r && r.ok && r.applicabile) {
         var ripristina = bloccaPosizione(ord);
@@ -268,9 +301,10 @@
         suggRicorda(r.dati);
         ridisegnaTutti(ord, r);
         ripristina();
-        avviso(ord, '✅ Dati salvati.', '#4ade80', 6000);
+        if (r.produttore_non_salvato) avviso(ord, '⚠️ Impianto e intermediario sono salvati, ma il Produttore no (errore del sistema). Riprova più tardi o avvisaci.', '#fbbf24', 12000);
+        else avviso(ord, '✅ Dati salvati.', '#4ade80', 6000);
         var cambiato = !(prima && stessi(prima, r.dati));
-        if (cambiato) logga('Impianto e intermediario rifiuti: dati salvati', 'Carico ' + ord + ' · impianto «' + (r.dati.impianto.ragione_sociale || '—') + '» · intermediario «' + (r.dati.intermediario.ragione_sociale || '—') + '»');
+        if (cambiato) logga('Produttore, impianto di destinazione e intermediari rifiuti: dati salvati', 'Carico ' + ord + ' · produttore «' + ((r.dati.produttore || {}).ragione_sociale || '—') + '» · impianto «' + (r.dati.impianto.ragione_sociale || '—') + '» · intermediario «' + (r.dati.intermediario.ragione_sociale || '—') + '»');
       } else if (r && r.errore === 'data_non_valida') avviso(ord, '⚠️ Controlla la data di scadenza.', '#f87171', 8000);
       else avviso(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171', 8000);
     } catch (e) { avviso(ord, '⚠️ Non sono riuscito a salvare. Riprova.', '#f87171', 8000); }
@@ -300,7 +334,7 @@
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
         ripristina();
         avviso(ord, '✅ Caricamento inviato: ' + file.name, '#4ade80', 6000);
-        logga('Impianto e intermediario rifiuti: file caricato', 'Carico ' + ord + ' · ' + (parte === 'impianto' ? 'impianto' : 'intermediario') + ' · ' + file.name);
+        logga('Produttore, impianto di destinazione e intermediari rifiuti: file caricato', 'Carico ' + ord + ' · ' + parte + ' · ' + file.name);
       } else if (r && r.errore === 'troppi_file') avviso(ord, '⚠️ Massimo 3 file per voce: rimuovine uno prima.', '#f87171', 8000);
       else if (r && r.errore === 'file_troppo_grande') avviso(ord, '⚠️ Il file è troppo grande (massimo 4 MB).', '#f87171', 8000);
       else avviso(ord, '⚠️ Non sono riuscito a caricare il file. Riprova.', '#f87171', 8000);
@@ -323,7 +357,7 @@
         trovaBox(ord).forEach(function (b) { b.querySelectorAll('input[data-campo]').forEach(function (i) { var v = dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')]; if (v != null && v !== '') i.value = v; }); });
         ripristina();
         avviso(ord, '✅ File rimosso.', '#4ade80', 6000);
-        logga('Impianto e intermediario rifiuti: file rimosso', 'Carico ' + ord + ' · ' + (r.rimosso || (f && f.nome) || 'file'));
+        logga('Produttore, impianto di destinazione e intermediari rifiuti: file rimosso', 'Carico ' + ord + ' · ' + (r.rimosso || (f && f.nome) || 'file'));
       } else avviso(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171', 8000);
     } catch (e) { avviso(ord, '⚠️ Non sono riuscito a rimuovere il file. Riprova.', '#f87171', 8000); }
   };
@@ -403,10 +437,10 @@
      - Si possono inserire / modificare anche dopo: dallo Storico pubblicazioni (pulsante ♻️) e da Trasporti presi.
      - Il trasportatore li vede solo dopo aver preso il carico (lo decide il server).
      ===================================================================== */
-  var pubFile = { impianto: [], intermediario: [] };
+  var pubFile = { produttore: [], impianto: [], intermediario: [] };
   var PUB_MAX_FILE = 3;
   function pubRidisegnaFile(parte) {
-    ['impianto', 'intermediario'].forEach(function (p) {
+    PARTI.forEach(function (p) {
       if (parte && p !== parte) return;
       var el = document.querySelector('#ins-rif-nota [data-pf="' + p + '"]'); if (!el) return;
       el.innerHTML = pubFile[p].length ? pubFile[p].map(function (f, i) {
@@ -417,11 +451,7 @@
   }
   function pubSezione(parte, titolo) {
     return '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);"><div style="font-weight:700;color:#fff;">' + titolo + '</div>' +
-      campo(parte, 'ragione_sociale', 'Ragione sociale', '') +
-      (parte === 'impianto' ? campo(parte, 'indirizzo', 'Indirizzo', '') : '') +
-      campo(parte, 'n_autorizzazione', 'Numero di autorizzazione / iscrizione', '') +
-      campo(parte, 'ente_rilascio', 'Ente che l\'ha rilasciata', '') +
-      campo(parte, 'scadenza', 'Scadenza', '', 'date') +
+      campiModifica(parte, {}) +
       '<div style="margin-top:10px;font-size:12px;font-weight:600;">Allegati (PDF, JPG o PNG, max 4 MB, fino a ' + PUB_MAX_FILE + ')</div><div data-pf="' + parte + '"></div>' +
       '<div style="margin-top:6px;"><input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none;" onchange="ectDestPubFile(\'' + parte + '\',this)">' +
       '<button type="button" style="' + STILE_BT + '" onclick="this.previousElementSibling.click()">📤 Carica file</button></div></div>';
@@ -431,12 +461,11 @@
     if (!w || w.getAttribute('data-dest-pub')) return;
     w.setAttribute('data-dest-pub', '1');
     w.setAttribute('style', STILE_BOX + 'font-size:13px;line-height:1.5;transition:opacity .15s;');
-    w.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:4px;">♻️ Impianto di destinazione e intermediario <span style="font-weight:400;color:var(--muted, rgba(241,245,249,0.5));">(facoltativo)</span></div>' +
-      '<div data-pub-hint style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-size:12px;">Si attiva quando scegli «Rifiuti pericolosi» o «Rifiuti non pericolosi» come tipo di merce.</div>' +
-      '<div style="color:var(--muted, rgba(241,245,249,0.5));font-size:12px;">Se li conosci già, puoi indicarli adesso: il trasportatore li vedrà solo dopo aver preso il carico (cioè dopo aver pagato i €20). ' +
-      'Se non li hai ancora, lasciali vuoti: potrai inserirli o modificarli dopo dallo <b>Storico pubblicazioni</b> (pulsante ♻️) e da <b>Trasporti presi</b>.</div>' +
-      pubSezione('impianto', '🏭 Impianto di destinazione') + pubSezione('intermediario', '🔁 Intermediario') + datalists() +
-      '<div style="font-size:11px;color:var(--muted, rgba(241,245,249,0.5));margin-top:10px;">ℹ️ ' + DISCLAIMER_AZ + '</div>';
+    w.innerHTML = '<div style="font-weight:700;color:#fff;font-size:15px;">Vuoi inserire i dati?</div>' +
+      '<ul style="margin:6px 0 0 18px;padding:0;color:var(--muted, rgba(241,245,249,0.8));"><li>Produttore</li><li>Impianto di destinazione</li><li>Eventuali intermediari</li></ul>' +
+      '<div style="text-align:center;margin:12px 0;"><button type="button" data-pub-apri class="btn-cap" onclick="ectDestPubApri()" style="padding:10px 22px;">Clicca qui</button></div>' +
+      '<div data-pub-dettagli style="display:none;">' +
+      pubSezione('produttore', titoloParte('produttore', true)) + pubSezione('impianto', titoloParte('impianto', true)) + pubSezione('intermediario', titoloParte('intermediario', true)) + '<div style="text-align:center;margin:14px 0 4px;"><button type="button" data-pub-chiudi class="btn-cap" onclick="ectDestPubApri(false)" style="padding:10px 22px;">▲ Chiudi</button></div></div>' + datalists();
     pubRidisegnaFile();
     var chk = document.getElementById('ins-rifiuto');
     if (chk) chk.addEventListener('change', window.ectDestPubStato);
@@ -447,9 +476,9 @@
   window.ectDestPubStato = function () {
     var w = document.getElementById('ins-rif-nota'), c = document.getElementById('ins-rifiuto'); if (!w || !c) return;
     var on = !!c.checked;
-    w.style.opacity = on ? '1' : '0.5';
+    w.style.display = on ? '' : 'none'; if (!on) window.ectDestPubApri(false);
     var campi = w.querySelectorAll('input,button'); campi.forEach(function (e) { e.disabled = !on; });
-    var h = w.querySelector('[data-pub-hint]'); if (h) h.style.display = on ? 'none' : 'block';
+    
     pubSuggAzienda();
   };
   /* suggerimenti dai dati d'iscrizione dell'azienda (ragione sociale e sede): compaiono mentre scrivi, non vengono scritti da soli */
@@ -459,7 +488,7 @@
     var p; try { p = (typeof profiloAzienda !== 'undefined') ? profiloAzienda : null; } catch (e) { p = null; }
     if (!p || !p.nome) return;
     var sede = [p.via, [p.cap, p.citta].filter(Boolean).join(' '), p.provincia ? '(' + p.provincia + ')' : ''].filter(Boolean).join(', ').replace(', (', ' (');
-    var add = function (id, v) { var dl = document.getElementById(id); if (!dl || !v) return; var o = document.createElement('option'); o.value = v; o.label = 'la tua azienda'; dl.appendChild(o); };
+    var add = function (id, v) { var dl = document.getElementById(id); if (!dl || !v) return; var o = document.createElement('option'); o.value = v; o.label = 'la tua azienda'; dl.appendChild(o); var l = Array.prototype.slice.call(dl.children).sort(function (a, b) { return a.value.localeCompare(b.value, 'it', { sensitivity: 'base' }); }); l.forEach(function (x) { dl.appendChild(x); }); };
     add('ect-dl-ragione_sociale', p.nome); if (p.via) add('ect-dl-indirizzo', sede);
     suggAzFatto = true;
   }
@@ -480,33 +509,40 @@
   function pause(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
 
   /* chiamata da pubblicaCarico() (index.html) subito dopo la pubblicazione riuscita */
+  window.ectDestPubApri = function (apri) {
+    var w = document.getElementById('ins-rif-nota'); if (!w) return;
+    var d = w.querySelector('[data-pub-dettagli]'), b = w.querySelector('[data-pub-apri]'); if (!d || !b) return;
+    var mostra = (typeof apri === 'boolean') ? apri : d.style.display === 'none';
+    d.style.display = mostra ? '' : 'none';
+    b.textContent = mostra ? '▲ Chiudi' : 'Clicca qui';
+  };
   window.ectDestDopoPubblica = function (ord) {
     var w = document.getElementById('ins-rif-nota'); if (!w || !ord) return;
-    var dati = { impianto: {}, intermediario: {} }, ha = false;
+    var dati = parteVuota(), ha = false;
     w.querySelectorAll('input[data-campo]').forEach(function (i) { var v = i.value.trim(); dati[i.getAttribute('data-parte')][i.getAttribute('data-campo')] = v; if (v) ha = true; i.value = ''; });
-    var file = { impianto: pubFile.impianto.slice(), intermediario: pubFile.intermediario.slice() };
-    var nf = file.impianto.length + file.intermediario.length;
-    pubFile = { impianto: [], intermediario: [] }; pubRidisegnaFile(); setTimeout(window.ectDestPubStato, 50);
+    var file = { produttore: pubFile.produttore.slice(), impianto: pubFile.impianto.slice(), intermediario: pubFile.intermediario.slice() };
+    var nf = file.produttore.length + file.impianto.length + file.intermediario.length;
+    pubFile = { produttore: [], impianto: [], intermediario: [] }; pubRidisegnaFile(); window.ectDestPubApri(false); setTimeout(window.ectDestPubStato, 50);
     if (!ha && !nf) return;
     pubInvia(ord, dati, file, ha, nf);
   };
   async function pubInvia(ord, dati, file, ha, nf) {
-    var es = window.ectEsito ? window.ectEsito('Salvo impianto e intermediario del carico…') : null;
+    var es = window.ectEsito ? window.ectEsito('Salvo produttore, impianto di destinazione e intermediari del carico…') : null;
     var fine = function (m, ok) { return es ? es.fine(m, ok) : Promise.resolve(); };
-    var DOVE = 'Il carico è pubblicato, ma impianto e intermediario non sono stati salvati: aprili da Storico pubblicazioni → ♻️ e riprova.';
-    var ok = false, dataErrata = false;
+    var DOVE = 'Il carico è pubblicato, ma produttore, impianto di destinazione e intermediari non sono stati salvati: aprili da Storico pubblicazioni → ♻️ e riprova.';
+    var ok = false, dataErrata = false, prodKo = false;
     try {
       // il carico arriva su Airtable da Make: se non c'e' ancora riprovo ogni 3 secondi (fino a ~1 minuto)
       for (var t = 0; t < 20 && !ok; t++) {
-        var r = await chiama(ha ? 'dest_salva' : 'dest_leggi', Object.assign({ numero_ordine: ord }, ha ? { impianto: dati.impianto, intermediario: dati.intermediario } : {}));
-        if (r && r.ok && r.applicabile) { ok = true; break; }
+        var r = await chiama(ha ? 'dest_salva' : 'dest_leggi', Object.assign({ numero_ordine: ord }, ha ? { produttore: dati.produttore, impianto: dati.impianto, intermediario: dati.intermediario } : {}));
+        if (r && r.ok && r.applicabile) { ok = true; if (r.produttore_non_salvato) prodKo = true; break; }
         if (r && r.errore === 'data_non_valida') { dataErrata = true; break; }
         await pause(3000);
       }
       if (dataErrata) { await fine('Carico pubblicato. La data di scadenza non è valida: correggila da Storico pubblicazioni → ♻️.', false); return; }
       if (!ok) { await fine(DOVE, false); return; }
       var falliti = 0;
-      for (var parte of ['impianto', 'intermediario']) {
+      for (var parte of PARTI) {
         for (var k = 0; k < file[parte].length; k++) {
           try {
             var b64 = await base64(file[parte][k].file);
@@ -516,9 +552,10 @@
         }
       }
       if (ha) suggRicorda(dati);
-      logga('Impianto e intermediario rifiuti: inseriti alla pubblicazione', 'Carico ' + ord);
+      logga('Produttore, impianto di destinazione e intermediari rifiuti: inseriti alla pubblicazione', 'Carico ' + ord);
       if (falliti) await fine('Dati salvati, ma ' + falliti + ' file non caricati: riprova da Storico pubblicazioni → ♻️.', false);
-      else await fine('Impianto e intermediario salvati' + (nf ? ' (' + nf + ' file)' : '') + '.', true);
+      else if (prodKo) await fine('Impianto e intermediario salvati, ma il Produttore no (errore del sistema): riprova da Storico pubblicazioni → ♻️.', false);
+      else await fine('Produttore, impianto di destinazione e intermediari salvati' + (nf ? ' (' + nf + ' file)' : '') + '.', true);
     } catch (e) { await fine(DOVE, false); }
   }
 
