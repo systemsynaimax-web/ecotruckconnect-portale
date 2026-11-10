@@ -1,6 +1,6 @@
 // FUNZIONE SERVERLESS NETLIFY — destinazione.js (8/10/2026)
 //
-// IMPIANTO DI DESTINAZIONE E INTERMEDIARI dei carichi di RIFIUTI (richiesta di Gerlando).
+// PRODUTTORE, IMPIANTO DI DESTINAZIONE E INTERMEDIARIO dei carichi di RIFIUTI (richiesta di Gerlando; produttore aggiunto il 10/11/2026).
 // Facoltativo. L'azienda che ha ordinato il carico, alla pubblicazione E DOPO che il trasportatore lo ha
 // accettato (stato PRESO), puo' scrivere i dati dell'impianto di destinazione e di un
 // eventuale intermediario e allegare i file delle autorizzazioni.
@@ -12,17 +12,21 @@
 // Tutti i controlli stanno QUI, sul server: nascondere un tasto nel portale non basta.
 //
 //   { azione: "dest_leggi",        numero_ordine }                          azienda / trasportatore / gestore
-//   { azione: "dest_salva",        numero_ordine, impianto{}, intermediario{} }   SOLO azienda proprietaria
+//   { azione: "dest_salva",        numero_ordine, produttore{}, impianto{}, intermediario{} }   SOLO azienda proprietaria
 //   { azione: "dest_file_carica",  numero_ordine, parte, nome_file, tipo, file }  SOLO azienda proprietaria
 //   { azione: "dest_file_rimuovi", numero_ordine, id }                            SOLO azienda proprietaria
 //   { azione: "dest_file_apri",    numero_ordine, id }                      azienda / trasportatore / gestore
 //        -> { ok, nome, tipo, file(base64) }  (il file passa dal server, l'indirizzo Airtable non esce mai)
 //
-// Campi usati sulla tabella Carichi (per NOME): impianto_ragione_sociale, impianto_indirizzo,
+// Campi usati sulla tabella Carichi (per NOME): produttore_ragione_sociale, produttore_codice_fiscale,
+// produttore_indirizzo, produttore_n_autorizzazione (4 campi NUOVI, testo su una riga),
+// impianto_ragione_sociale, impianto_indirizzo,
 // impianto_n_autorizzazione, impianto_ente_rilascio, impianto_scadenza,
 // intermediario_ragione_sociale, intermediario_n_autorizzazione, intermediario_ente_rilascio,
 // intermediario_scadenza, destinazione_file_dati (ALLEGATO), destinazione_aggiornato_il (data e ora).
-// I file hanno il nome che inizia con la parte: "[impianto] nome.pdf" / "[intermediario] nome.pdf".
+// I file hanno il nome che inizia con la parte: "[produttore] nome.pdf" / "[impianto] nome.pdf" / "[intermediario] nome.pdf".
+// Se in Airtable i 4 campi del produttore non esistono ancora, impianto e intermediario si salvano lo stesso
+// e la risposta porta produttore_non_salvato: true (il portale lo dice all'utente).
 // Serve la variabile d'ambiente AIRTABLE_TOKEN (la stessa di documenti.js).
 
 const BASE = 'app0TGG8f4ARpdlbl';
@@ -33,8 +37,12 @@ const CAMPO_AGG = 'destinazione_aggiornato_il';
 const MAX_BYTE = 4 * 1024 * 1024;
 const MAX_FILE_PER_PARTE = 3;
 const TIPI = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' };
-const PARTI = ['impianto', 'intermediario'];
-const CAMPI_TESTO = ['ragione_sociale', 'n_autorizzazione', 'ente_rilascio'];
+const PARTI = ['produttore', 'impianto', 'intermediario'];
+const CAMPI_PARTE = {
+  produttore: ['ragione_sociale', 'codice_fiscale', 'indirizzo', 'n_autorizzazione'],
+  impianto: ['ragione_sociale', 'indirizzo', 'n_autorizzazione', 'ente_rilascio', 'scadenza'],
+  intermediario: ['ragione_sociale', 'n_autorizzazione', 'ente_rilascio', 'scadenza']
+};
 
 const TOKEN = process.env.AIRTABLE_TOKEN || process.env.AIRTABLETOKEN || '';
 
@@ -86,10 +94,10 @@ function datiDelCarico(f) {
   const out = {};
   PARTI.forEach(p => {
     out[p] = {};
-    CAMPI_TESTO.forEach(c => { out[p][c] = String(f[p + '_' + c] || ''); });
-    out[p].scadenza = String(f[p + '_scadenza'] || '').slice(0, 10);
+    CAMPI_PARTE[p].forEach(c => {
+      out[p][c] = c === 'scadenza' ? String(f[p + '_scadenza'] || '').slice(0, 10) : String(f[p + '_' + c] || '');
+    });
   });
-  out.impianto.indirizzo = String(f.impianto_indirizzo || '');
   return out;
 }
 
@@ -150,18 +158,36 @@ exports.handler = async (event, context) => {
 
     if (azione === 'dest_salva') {
       const campi = {};
-      const imp = corpo.impianto || {}, inter = corpo.intermediario || {};
-      const per = { impianto: imp, intermediario: inter };
+      const per = { produttore: corpo.produttore || {}, impianto: corpo.impianto || {}, intermediario: corpo.intermediario || {} };
       for (const p of PARTI) {
-        CAMPI_TESTO.forEach(c => { campi[p + '_' + c] = pulisci(per[p][c], 200); });
-        const sc = dataValida(per[p].scadenza);
-        if (sc === undefined) return risposta(200, { ok: false, errore: 'data_non_valida', parte: p });
-        campi[p + '_scadenza'] = sc; // null svuota la data
+        // un portale non ancora aggiornato non manda il produttore: in quel caso non lo tocco (non cancello i suoi dati)
+        if (p === 'produttore' && !corpo.produttore) continue;
+        for (const c of CAMPI_PARTE[p]) {
+          if (c === 'scadenza') {
+            const sc = dataValida(per[p].scadenza);
+            if (sc === undefined) return risposta(200, { ok: false, errore: 'data_non_valida', parte: p });
+            campi[p + '_scadenza'] = sc; // null svuota la data
+          } else if (c === 'codice_fiscale') {
+            campi[p + '_' + c] = pulisci(per[p][c], 20).toUpperCase();
+          } else {
+            campi[p + '_' + c] = pulisci(per[p][c], c === 'indirizzo' ? 250 : 200);
+          }
+        }
       }
-      campi.impianto_indirizzo = pulisci(imp.indirizzo, 250);
       campi[CAMPO_AGG] = new Date().toISOString();
-      const nuovo = await airtable(T_CARICHI + '/' + rec.id, { method: 'PATCH', body: JSON.stringify({ fields: campi, typecast: true }) });
-      return risposta(200, pacchetto(nuovo, ruolo));
+      let nuovo, produttoreNonSalvato = false;
+      try {
+        nuovo = await airtable(T_CARICHI + '/' + rec.id, { method: 'PATCH', body: JSON.stringify({ fields: campi, typecast: true }) });
+      } catch (e) {
+        // i campi del produttore non esistono ancora in Airtable: salvo comunque il resto
+        if (/UNKNOWN_FIELD_NAME|UNKNOWN_FIELD/.test(String(e && e.message)) && Object.keys(campi).some(k => k.indexOf('produttore_') === 0)) {
+          const senza = {};
+          Object.keys(campi).forEach(k => { if (k.indexOf('produttore_') !== 0) senza[k] = campi[k]; });
+          nuovo = await airtable(T_CARICHI + '/' + rec.id, { method: 'PATCH', body: JSON.stringify({ fields: senza, typecast: true }) });
+          produttoreNonSalvato = true;
+        } else throw e;
+      }
+      return risposta(200, Object.assign(pacchetto(nuovo, ruolo), produttoreNonSalvato ? { produttore_non_salvato: true } : {}));
     }
 
     if (azione === 'dest_file_carica') {
