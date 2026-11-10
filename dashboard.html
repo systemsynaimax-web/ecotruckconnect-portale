@@ -1574,7 +1574,7 @@ function apriDettaglioCarico(id) {
       ['Indirizzo di ritiro', f.indirizzo_ritiro], ['Indirizzo di consegna', f.indirizzo_consegna],
       ['A chi consegnare', f.destinatario_nome], ['Cellulare di chi riceve', f.destinatario_telefono]]) +
     '<div class="dett-sez">Prezzo e pagamenti</div>' + righeD([
-      ['Importo pattuito (trasporto)', f.importo_pattuito ? euro(f.importo_pattuito) : ''], ['Termini di pagamento', f.termini_pagamento],
+      ['Importo offerto per il trasporto (trasporto)', f.importo_pattuito ? euro(f.importo_pattuito) + ' (oltre IVA nei termini di legge)' : ''], ['Termini di pagamento', f.termini_pagamento],
       ['Commissione piattaforma', String(f.stato||'').toUpperCase() === 'PRESO' ? euro(20) + ' — pagata dal trasportatore' : 'non ancora dovuta']]) +
     '<div class="dett-sez">Azienda</div>' + righeD([
       ['Azienda', f.nome_azienda], ['Referente', f.azienda_referente], ['Email', f.email_azienda], ['Telefono', f.telefono_azienda],

@@ -229,7 +229,7 @@
         var v = u.viaggi.filter(function (x) { return nelPeriodo(x.quando, gg); });
         return (v.map(function (x) {
           return li('<b>' + esc(x.da) + ' → ' + esc(x.a) + '</b> · ' + esc(x.numero) + '<br>Azienda: ' + esc(x.controparte) + ' · Merce: ' + esc(x.merce) +
-            '<br><span style="color:var(--muted);">Ritiro: ' + esc(x.ritiro) + ' · Consegna: ' + esc(x.consegna) + '</span><br>Importo pattuito (tra le parti): ' + esc(x.importo) + ' € · ' +
+            '<br><span style="color:var(--muted);">Ritiro: ' + esc(x.ritiro) + ' · Consegna: ' + esc(x.consegna) + '</span><br>Importo offerto per il trasporto (tra le parti): ' + esc(x.importo) + ' € · ' +
             (x.pagato ? '<span style="color:#4ade80;">trasporto pagato dall\'azienda</span>' : '<span style="color:#fbbf24;">trasporto da pagare</span>'), 'preso il ' + dataOra(x.quando));
         }).join('') || vuoto('Nessun viaggio nel periodo scelto.')) + (u.viaggiTot > u.viaggi.length ? '<div class="arc-vuoto">Nella demo sono mostrati gli ultimi ' + u.viaggi.length + ' viaggi su ' + u.viaggiTot + '.</div>' : '');
       } });

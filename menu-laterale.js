@@ -62,12 +62,12 @@
     notifiche:{ c: 'dash', dash: 'notifiche', t: 'Notifiche e suoni', d: 'Scegli cosa ricevere, in quali orari e con quale tono. Qui colleghi anche Telegram.' },
     faq:      { c: 'normale', blocchi: ['faq-box'], t: 'Domande frequenti', d: 'Le risposte alle domande più comuni. Clicca una domanda per aprirla.' },
     scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24-48 ore. Oppure usa l\'assistente virtuale 🤖 in basso a destra per una risposta subito.' },
-    sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi rigenerare la password, attivare Google Authenticator o chiedere la cancellazione dell’account.' },
+    sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi cambiare la password o chiedere la cancellazione dell’account.' },
     /* solo azienda */
     pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Più sotto trovi produttore, impianto di destinazione e intermediari (facoltativo): li puoi inserire qui oppure dopo, da Storico pubblicazioni e Trasporti presi.' },
     azcal:    { c: 'dash', dash: 'overview', t: 'Calendario', d: 'Le tue pubblicazioni giorno per giorno. Clicca un giorno per vedere o inserire un carico.' },
     azpagare: { c: 'normale', dl: 1, blocchi: ['rs-wrap'], t: 'Da pagare', d: 'Quanto devi ai trasportatori, diviso per trasportatore e per giorno. Scarica per la fattura o il CSV.' },
-    azreptr:  { c: 'normale', dl: 1, blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.' },
+    azreptr:  { c: 'normale', dl: 1, blocchi: ['report-trasportatore-wrap'], t: 'Report per trasportatore', d: 'Un riquadro per ogni trasportatore, con i trasporti presi e l’importo offerto per il trasporto.' },
     azstorico:{ c: 'normale', dl: 1, blocchi: ['storico-sec-head', 'ms-storico-box'], t: 'Storico pubblicazioni', d: 'Tutto quello che hai pubblicato, con stato e dettagli. Filtra per periodo e scarica.' }
   };
 
@@ -108,14 +108,14 @@
     notifiche: H('A cosa serve') + '<p>Scegli cosa ricevere, in quali orari e con quale tono. Qui si può collegare anche Telegram.</p>',
     faq: H('A cosa serve') + '<p>Le risposte alle domande più comuni. Clicca una domanda per aprirla.</p>' + '<p>Se non trovi la risposta, chiedi all’<b>assistente virtuale</b> 🤖 in basso a destra: risponde subito (ha un numero limitato di domande al giorno).</p>',
     scrivici: H('A cosa serve') + '<p>Per parlare con una persona del team EcoTruckConnect.</p>' + L(['Compila il modulo oppure scrivi a <b>info@synaimaxpro.com</b>.', 'Ti rispondiamo a breve, entro 24-48 ore.', 'Per una risposta immediata usa l’<b>assistente virtuale</b> 🤖: se le domande del giorno sono finite, scrivici qui.']),
-    sicurezza: H('A cosa serve') + '<p>Password e accesso al tuo account.</p>' + L(['<b>Rigenera la password</b> se pensi che altri la conoscano.', '<b>Google Authenticator</b>: aggiunge un codice di 6 cifre, che cambia ogni 30 secondi, da inserire dopo la password. Si attiva inquadrando il QR (o scrivendo la chiave di configurazione) con l’app sul telefono. La chiave è segreta: non va data a nessuno.', 'Puoi chiedere la <b>cancellazione dell’account</b>.'])
+    sicurezza: H('A cosa serve') + '<p>Password e accesso al tuo account.</p>' + L(['<b>Rigenera la password</b> se pensi che altri la conoscano.', '<b>Password forte</b>: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %).', 'Puoi chiedere la <b>cancellazione dell’account</b>.'])
   };
   var SPIEGA_AZ = {
-    pubblica: H('A cosa serve') + '<p>Qui pubblichi un carico da far trasportare. <b>Pubblicare è gratis.</b></p>' + H('Come si compila') + L(['Carico, mezzo che serve e autorizzazioni che deve avere il trasportatore.', 'Ritiro e consegna con indirizzi e date.', 'Importo pattuito col trasportatore.', '<b>Città</b>: scrivi le prime lettere e scegli dai suggerimenti, in ordine alfabetico (in cima le città che hai già usato, poi quelle della tua zona); il <b>CAP</b> si compila da solo.', '<b>Tipo merce</b>: scegli la categoria e scrivi i dettagli in «Specifica» (per esempio «banane» sotto «Alimentari»).', '<b>Rifiuti</b>: scegli «Rifiuti pericolosi» o «Rifiuti non pericolosi»: sotto compare la casella <b>«Codice CER»</b>: spuntala e il codice compare da solo (cambia quando scegli cosa trasporti in «Specifica»; puoi riscriverlo). Si attivano anche le sezioni di produttore, impianto di destinazione e intermediari. Per le altre merci la sezione resta spenta: è normale.', 'Produttore, impianto di destinazione e intermediari sono facoltativi: li puoi inserire qui o dopo.']) + H('Dopo la pubblicazione') + '<p>Il carico lo vedono solo i trasportatori che hanno il mezzo e le autorizzazioni giuste, e ricevono l’avviso in privato.</p>',
+    pubblica: H('A cosa serve') + '<p>Qui pubblichi un carico da far trasportare. <b>Pubblicare è gratis.</b></p>' + H('Come si compila') + L(['Carico, mezzo che serve e autorizzazioni che deve avere il trasportatore.', 'Ritiro e consegna con indirizzi e date.', 'Importo offerto per il trasporto col trasportatore.', '<b>Città</b>: scrivi le prime lettere e scegli dai suggerimenti, in ordine alfabetico (in cima le città che hai già usato, poi quelle della tua zona); il <b>CAP</b> si compila da solo.', '<b>Tipo merce</b>: scegli la categoria e scrivi i dettagli in «Specifica» (per esempio «banane» sotto «Alimentari»).', '<b>Rifiuti</b>: scegli «Rifiuti pericolosi» o «Rifiuti non pericolosi»: sotto compare la casella <b>«Codice CER»</b>: spuntala e il codice compare da solo (cambia quando scegli cosa trasporti in «Specifica»; puoi riscriverlo). Si attivano anche le sezioni di produttore, impianto di destinazione e intermediari. Per le altre merci la sezione resta spenta: è normale.', 'Produttore, impianto di destinazione e intermediari sono facoltativi: li puoi inserire qui o dopo.']) + H('Dopo la pubblicazione') + '<p>Il carico lo vedono solo i trasportatori che hanno il mezzo e le autorizzazioni giuste, e ricevono l’avviso in privato.</p>',
     azcal: H('A cosa serve') + '<p>Le tue pubblicazioni giorno per giorno.</p>' + L(['Clicca un giorno per vedere o inserire un carico.', 'I colori indicano lo stato: disponibile, in pagamento, preso.']) + '<p>' + AGG + '</p>',
     presi: H('A cosa serve') + '<p>Chi ha preso i tuoi carichi: scheda del trasportatore, indirizzi e documenti che hai allegato.</p>' + H('Se devi annullare') + L(['Su ogni carico già preso c’è il pulsante <b>«Annulla carico»</b>.', 'Si paga una <b>penale di 20 €</b> alla società; il carico diventa ANNULLATO.', '<b>Il trasportatore viene rimborsato dalla società</b> di quanto aveva versato: ricevi la conferma e lui un avviso.', 'Un carico non ancora preso si elimina gratis dallo storico delle pubblicazioni.']) + COND + '<p>' + AGG + '</p>',
     azpagare: H('A cosa serve') + '<p>Quanto devi ai trasportatori, diviso per trasportatore e per giorno.</p>' + L(['Scarica il riepilogo per la fattura o in CSV.', 'I pagamenti tra azienda e trasportatore avvengono direttamente tra voi: la piattaforma tiene solo il conto.']) + '<p>' + AGG + '</p>',
-    azreptr: H('A cosa serve') + '<p>Un riquadro per ogni trasportatore, con i trasporti presi e l’importo pattuito.</p>' + '<p>' + AGG + '</p>',
+    azreptr: H('A cosa serve') + '<p>Un riquadro per ogni trasportatore, con i trasporti presi e l’importo offerto per il trasporto.</p>' + '<p>' + AGG + '</p>',
     azstorico: H('A cosa serve') + '<p>Tutto quello che hai pubblicato, con stato e dettagli.</p>' + L(['Filtra per periodo.', 'Scarica l’elenco.', 'I carichi annullati restano qui, segnati come ANNULLATO.']) + '<p>' + AGG + '</p>',
     dati: H('A cosa serve') + '<p>I dati della tua azienda: ragione sociale, P.IVA, PEC, sede, telefono.</p>' + L(['Scrivi solo i campi che vuoi cambiare.', 'Ogni modifica resta nello «storico movimenti» con data e ora.', 'In fondo puoi caricare i tuoi file facoltativi.']),
     fatture: H('A cosa serve') + '<p>Ogni tua pubblicazione con data, stato e trasportatore.</p>' + '<p><b>È un riepilogo di controllo</b>: non sostituisce la fattura fiscale.</p>',
@@ -295,7 +295,7 @@
       var az0 = tipo() === 'azienda';
       var R = az0 ? [['pubblica', '📦', 'Pubblica un trasporto'], ['presi', '✅', 'Trasporti presi'], ['azpagare', '💶', 'Da pagare']] : [['carichi', '🚛', 'Carichi disponibili'], ['presi', '✅', 'Carichi presi'], ['cal', '📅', 'Calendario']];
       rp.innerHTML = '<div class="ms-rt">Cosa vuoi fare adesso?</div><div class="ms-rb">' + R.map(function (r) { return '<button type="button" data-p="' + r[0] + '"><span>' + r[1] + '</span>' + r[2] + '</button>'; }).join('') + '</div>';
-      rp.onclick = function (e) { var b = e.target.closest('button[data-p]'); if (b) vai(b.getAttribute('data-p')); };
+      rp.onclick = function (e) { var b = e.target.closest('button[data-p]'); if (b) vai(b.getAttribute('data-p'), { dalMenu: true }); };
       main.insertBefore(rp, main.firstChild);
     }
     // pagina Telegram (solo trasportatore); messa PRIMA di sezione-dashboard cosi' il QR di accesso-sicuro.js la trova per prima
@@ -353,14 +353,14 @@
           if (voceAperta === id) voceAperta = null; else { voceAperta = id; }
           // sulla prima apertura entra subito nella prima sotto-voce
           // su computer entra subito nella prima sotto-voce; su tablet/telefono apre solo l'elenco, cosi' scegli tu
-          if (!overlay() && voceAperta === id && !v.s.some(function (x) { return x[0] === cur; })) { vai(v.s[0][0]); return; }
+          if (!overlay() && voceAperta === id && !v.s.some(function (x) { return x[0] === cur; })) { vai(v.s[0][0], { dalMenu: true }); return; }
           costruisciMenu(); return;
         }
         voceAperta = null;
-        vai(v.p || 'home');
+        vai(v.p || 'home', { dalMenu: true });
       };
     });
-    side.querySelectorAll('.ms-s').forEach(function (b) { b.onclick = function () { vai(b.getAttribute('data-p')); }; });
+    side.querySelectorAll('.ms-s').forEach(function (b) { b.onclick = function () { vai(b.getAttribute('data-p'), { dalMenu: true }); }; });
     aggiornaToggle();
     return true;
   }
@@ -457,7 +457,11 @@
     voci.forEach(function (v) { if (v.s && v.s.some(function (x) { return x[0] === nome; })) voceAperta = v.id; });
     costruisciMenu();
     if (overlay()) { drawer = false; applicaClassi(); }
-    if (!opzioni.senzaScroll && paginaPrima !== nome) { try { window.scrollTo(0, 0); } catch (e) { window.scroll(0, 0); } }   // 5/11: stessa pagina = resti dove sei
+    if (!opzioni.senzaScroll && (opzioni.dalMenu || paginaPrima !== nome)) { inizioPagina(); setTimeout(inizioPagina, 120); }   // 10/11: dal menu si va sempre in cima, anche se la pagina e' la stessa
+  }
+  function inizioPagina() {
+    try { window.scrollTo(0, 0); } catch (e) { try { window.scroll(0, 0); } catch (e2) {} }
+    try { document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch (e) {}
   }
   function hideBlocchiVecchi() {
     var sd = $('sezione-dashboard'); if (sd) sd.style.display = 'none';
@@ -712,7 +716,7 @@
         if (inGo || !pronto) return apriDashOrig.apply(this, arguments);
         var az = tipo() === 'azienda';
         var mappa = { overview: az ? 'azcal' : 'home', dati: 'dati', fatture: 'fatture', report: 'report', notifiche: 'notifiche', storico: 'movimenti', sicurezza: 'sicurezza' };
-        var pg = mappa[n]; if (pg) { vai(pg); return; }
+        var pg = mappa[n]; if (pg) { vai(pg, { dalMenu: true }); return; }
         return apriDashOrig.apply(this, arguments);
       };
       w.__ms = true; window.apriDashSezione = w;
@@ -726,7 +730,7 @@
     // 3) riquadro "I miei mezzi / Le mie autorizzazioni" della home -> pagine dedicate
     if (typeof window.apriProfiloTrasportatore === 'function' && !window.apriProfiloTrasportatore.__ms) {
       var pOrig = window.apriProfiloTrasportatore;
-      var pw = function () { if (inGo || !pronto) return pOrig.apply(this, arguments); vai('mezzi'); };
+      var pw = function () { if (inGo || !pronto) return pOrig.apply(this, arguments); vai('mezzi', { dalMenu: true }); };
       pw.__ms = true; window.apriProfiloTrasportatore = pw;
       apriProfiloOrig = pOrig;
     }
