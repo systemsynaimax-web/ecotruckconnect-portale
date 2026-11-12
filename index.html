@@ -400,6 +400,54 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
 /* 3/10: le voci dei menu a tendina (es. periodo dello storico) erano bianche su bianco */
 select option{background:#0e1623;color:#f1f5f9;}
 select option:checked{background:#1d4ed8;color:#fff;}
+
+/* ===== INGRESSO ANIMATO LOGIN (12/11) — solo grafica, nessuna modifica a campi/funzioni ===== */
+#login-page .login-wrap{position:relative;display:block;min-height:100vh;overflow:hidden;background:#050b18;}
+#login-page .login-wrap::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 28% 75%,rgba(37,99,235,.5),transparent 55%),radial-gradient(ellipse at 40% 20%,#0d2a63,transparent 60%);}
+#login-page .login-wrap::after{content:"";position:absolute;left:-40%;right:-40%;bottom:-8%;height:55%;z-index:0;pointer-events:none;background:linear-gradient(rgba(59,130,246,.5) 1px,transparent 1px) 0 0/100% 44px,linear-gradient(90deg,rgba(59,130,246,.5) 1px,transparent 1px) 0 0/66px 100%;transform:perspective(480px) rotateX(62deg);-webkit-mask:linear-gradient(transparent,#000 45%);mask:linear-gradient(transparent,#000 45%);}
+#login-page .login-visual{position:absolute;inset:0;z-index:1;background:none;overflow:hidden;min-height:0;pointer-events:none;}
+#login-page .login-visual::before{content:"";position:absolute;top:0;bottom:0;left:10%;width:92%;background:url('login-camion.jpg') 50% 55%/cover no-repeat;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%);mask-image:linear-gradient(90deg,transparent,#000 14%);opacity:0;transform:scale(1.14);filter:blur(14px) brightness(1.6);animation:ecPh 1.1s cubic-bezier(.2,.8,.2,1) 2.1s forwards;z-index:0;}
+#login-page .login-visual::after{content:"";position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 70% 55%,rgba(147,197,253,.85),rgba(59,130,246,.35) 45%,transparent 75%);opacity:0;animation:ecFl .8s ease-out 2.05s 1;}
+@keyframes ecPh{60%{filter:blur(2px) brightness(1.15)}to{opacity:1;transform:scale(1);filter:none}}
+@keyframes ecFl{20%{opacity:1}to{opacity:0}}
+#login-page .login-visual-content{position:absolute;inset:0;padding:0;z-index:3;display:block;}
+#login-page .lv-title,#login-page .lv-sub{display:none;}
+#login-page .lv-badge{position:absolute;left:7vw;bottom:7%;margin:0;font-size:11px;letter-spacing:3px;color:#7fb2ff;background:none;border:1px solid rgba(96,165,250,.4);padding:7px 16px;border-radius:20px;opacity:0;animation:ecUp .6s ease-out 2.8s forwards;}
+#login-page .lv-badge::before{display:none;}
+#login-page .login-form-side{position:relative;z-index:5;background:transparent;border:0;display:flex;align-items:center;justify-content:flex-start;min-height:100vh;width:calc(7vw + 470px);padding:40px 40px 40px 7vw;}
+#login-page .lf-box{max-width:430px;}
+#login-page .lf-logo{font-size:32px;letter-spacing:-.5px;opacity:0;transform:translateY(-14px);animation:ecUp .5s ease-out .2s forwards;}
+#login-page .lf-tagline{color:#9fb0c8;font-size:14px;margin-bottom:26px;opacity:0;animation:ecUp .5s ease-out .35s forwards;}
+@keyframes ecUp{to{opacity:1;transform:none}}
+#login-page .ec-row{position:relative;margin-top:16px;overflow:hidden;border-radius:12px;opacity:0;transform:translateX(-120%);}
+#login-page .ec-row .lf-label{padding-left:6px;font-size:11px;letter-spacing:1.6px;color:#9fb0c8;}
+#login-page .ec-row::after{content:"";position:absolute;top:0;bottom:0;width:45%;left:-60%;pointer-events:none;background:linear-gradient(105deg,transparent,rgba(147,197,253,.75),transparent);animation:ecSw .5s ease-out forwards;}
+#login-page .ec-r1{animation:ecIn .45s cubic-bezier(.2,.9,.2,1) .6s forwards;}#login-page .ec-r1::after{animation-delay:.8s;}
+#login-page .ec-r2{animation:ecIn .45s cubic-bezier(.2,.9,.2,1) .85s forwards;}#login-page .ec-r2::after{animation-delay:1.05s;}
+#login-page .ec-r3{transform:translateX(120%);animation:ecIn .45s cubic-bezier(.2,.9,.2,1) 1.1s forwards;}#login-page .ec-r3::after{animation-delay:1.3s;}
+@keyframes ecIn{to{opacity:1;transform:none}}
+@keyframes ecSw{to{left:130%}}
+#login-page .ec-row .lf-input{height:50px;margin-bottom:0;background:rgba(255,255,255,.07);border:1px solid rgba(96,165,250,.35);box-shadow:0 0 24px rgba(59,130,246,.18),inset 0 1px 0 rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+#login-page .ec-row .lf-input:focus{border-color:#60a5fa;}
+#login-page .ec-r3 .btn-accedi{height:52px;margin:0;background:linear-gradient(90deg,#2563eb,#3b82f6);box-shadow:0 8px 34px rgba(59,130,246,.6);}
+#login-page .lf-box > div[style*="text-align:right"]{opacity:0;animation:ecUp .5s ease-out 1.5s forwards;}
+#login-page .lf-box > .lf-privacy{opacity:0;animation:ecUp .5s ease-out 1.8s forwards;}
+@media screen and (max-width:900px){
+  #login-page .login-form-side{width:100%;padding:28px 18px 40px;align-items:flex-start;min-height:auto;}
+  #login-page .login-wrap{min-height:100vh;}
+  #login-page .lf-box{max-width:none;}
+  #login-page .lf-logo{font-size:28px;}
+  #login-page .login-visual::before{top:auto;height:50%;left:0;width:100%;background-position:50% 50%;-webkit-mask-image:linear-gradient(180deg,transparent,#000 45%);mask-image:linear-gradient(180deg,transparent,#000 45%);}
+  #login-page .lv-badge{left:50%;transform:translateX(-50%);bottom:18px;white-space:nowrap;font-size:10px;letter-spacing:2px;animation-name:ecUpC;}
+  @keyframes ecUpC{from{opacity:0}to{opacity:1}}
+}
+@media (prefers-reduced-motion:reduce){
+  #login-page *,#login-page *::before,#login-page *::after{animation:none !important;}
+  #login-page .ec-row,#login-page .lf-logo,#login-page .lf-tagline,#login-page .lv-badge,#login-page .lf-box > div[style*="text-align:right"],#login-page .lf-box > .lf-privacy{opacity:1;transform:none;}
+  #login-page .lv-badge{transform:none;}
+  #login-page .login-visual::before{opacity:1;transform:none;filter:none;}
+}
+/* ===== FINE INGRESSO ANIMATO ===== */
 </style>
 </head>
 <body>
@@ -423,14 +471,20 @@ select option:checked{background:#1d4ed8;color:#fff;}
         <div class="lf-logo">Eco<span>Truck</span>Connect</div>
         <div class="lf-tagline">Accedi al tuo spazio personale</div>
         <div id="login-hint-cambia-pw" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;font-size:12px;line-height:1.5;padding:10px 12px;border-radius:8px;margin-bottom:16px;">🔒 Accedi con la <b>password temporanea</b> che hai ricevuto via email: appena entri potrai sceglierne una tua.</div>
+        <div class="ec-row ec-r1">
         <label class="lf-label">EMAIL</label>
         <input type="email" id="li-email" class="lf-input" placeholder="la-tua@email.com">
+        </div>
+        <div class="ec-row ec-r2">
         <label class="lf-label">PASSWORD</label>
         <div class="pw-wrap">
           <input type="password" id="li-pw" class="lf-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
           <span class="pw-eye" onclick="togglePw()">👁</span>
         </div>
+        </div>
+        <div class="ec-row ec-r3">
         <button class="btn-accedi" onclick="doLogin()">Accedi &rarr;</button>
+        </div>
         <div id="li-err" class="lf-error"></div>
         <div style="text-align:right;margin:14px 0 0;">
           <a href="#" onclick="toggleForgotPw(event)" style="color:var(--blue);font-size:12px;text-decoration:none;">Password dimenticata?</a>
