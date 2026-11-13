@@ -61,7 +61,7 @@
     report:   { c: 'dash', dl: 1, dash: 'report', t: 'I miei report', d: 'I tuoi numeri riassunti: carichi, periodi e totali.' },
     notifiche:{ c: 'dash', dash: 'notifiche', t: 'Notifiche e suoni', d: 'Scegli cosa ricevere, in quali orari e con quale tono. Qui colleghi anche Telegram.' },
     faq:      { c: 'normale', blocchi: ['faq-box'], t: 'Domande frequenti', d: 'Le risposte alle domande più comuni. Clicca una domanda per aprirla.' },
-    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24-48 ore. Oppure usa l\'assistente virtuale 🤖 in basso a destra per una risposta subito.' },
+    scrivici: { c: 'normale', blocchi: ['ms-assist'], t: 'Scrivici', d: 'Hai bisogno di una persona? Scrivi qui, ti rispondiamo entro 24-48 ore.' },
     sicurezza:{ c: 'dash', dash: 'sicurezza', t: 'Sicurezza', d: 'Password e accesso: puoi cambiare la password o chiedere la cancellazione dell’account.' },
     /* solo azienda */
     pubblica: { c: 'azienda', part: 'tutto', t: 'Pubblica un trasporto', d: 'Tutto in un’unica pagina: carico, mezzo che serve, autorizzazioni che deve avere il trasportatore, ritiro e consegna, importo. Pubblicare è gratis. Più sotto trovi produttore, impianto di destinazione e intermediari (facoltativo): li puoi inserire qui oppure dopo, da Storico pubblicazioni e Trasporti presi.' },
@@ -106,8 +106,8 @@
     movimenti: H('A cosa serve') + '<p>Tutto quello che hai fatto sulla piattaforma, <b>con data e ora</b>: cambi dati, documenti, password, carichi presi, rinunce.</p>' + '<p>Se c’è un dubbio su “chi ha fatto cosa e quando”, la risposta è qui. È un registro di sola lettura: non si modifica.</p>' + '<p>' + AGG + '</p>',
     report: H('A cosa serve') + '<p>I tuoi numeri riassunti per periodo: carichi e totali.</p>' + L(['Scegli il periodo.', 'Puoi scaricare il report.']) + '<p>' + AGG + '</p>',
     notifiche: H('A cosa serve') + '<p>Scegli cosa ricevere, in quali orari e con quale tono. Qui si può collegare anche Telegram.</p>',
-    faq: H('A cosa serve') + '<p>Le risposte alle domande più comuni. Clicca una domanda per aprirla.</p>' + '<p>Se non trovi la risposta, chiedi all’<b>assistente virtuale</b> 🤖 in basso a destra: risponde subito (ha un numero limitato di domande al giorno).</p>',
-    scrivici: H('A cosa serve') + '<p>Per parlare con una persona del team EcoTruckConnect.</p>' + L(['Compila il modulo oppure scrivi a <b>info@synaimaxpro.com</b>.', 'Ti rispondiamo a breve, entro 24-48 ore.', 'Per una risposta immediata usa l’<b>assistente virtuale</b> 🤖: se le domande del giorno sono finite, scrivici qui.']),
+    faq: H('A cosa serve') + '<p>Le risposte alle domande più comuni. Clicca una domanda per aprirla.</p>' + '<p>Se non trovi la risposta, usa la pagina «Scrivici»: ti risponde una persona del team.</p>',
+    scrivici: H('A cosa serve') + '<p>Per parlare con una persona del team EcoTruckConnect.</p>' + L(['Compila il modulo oppure scrivi a <b>info@synaimaxpro.com</b>.', 'Ti rispondiamo a breve, entro 24-48 ore.']),
     sicurezza: H('A cosa serve') + '<p>Password e accesso al tuo account.</p>' + L(['<b>Rigenera la password</b> se pensi che altri la conoscano.', '<b>Password forte</b>: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %).', 'Puoi chiedere la <b>cancellazione dell’account</b>.'])
   };
   var SPIEGA_AZ = {

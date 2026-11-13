@@ -26,7 +26,7 @@
   window.fetch = function(url, opts){
     var u = String(url || '');
     if (u.indexOf('comuni-ita.nicolorebaioli.dev') !== -1) return fetchOriginale(url, opts); // solo ricerca città da CAP (pubblica, nessun dato nostro)
-    var finto = { ok:true, anteprima:true, trovato:true, stato:'DISPONIBILE', reply:'Questa è un\'anteprima con dati finti: l\'assistente virtuale non è collegato.' };
+    var finto = { ok:true, anteprima:true, trovato:true, stato:'DISPONIBILE', reply:'Questa è un\'anteprima con dati finti.' };
     return Promise.resolve(new Response(JSON.stringify(finto), { status:200, headers:{ 'Content-Type':'application/json' } }));
   };
   var openOriginale = window.open.bind(window);
@@ -238,30 +238,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
 .sort-carichi-btn.attivo{background:var(--blue);border-color:var(--blue);color:#fff;}
 .carico-dettaglio-overlay{min-height:320px;background:rgba(0,0,0,0.55);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:20px;}
 .carico-dettaglio-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:380px;width:100%;}
-#bot-btn{position:fixed;bottom:28px;right:28px;z-index:500;width:54px;height:54px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--blue),#6366f1);cursor:pointer;font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(59,130,246,0.45);transition:transform 0.2s,box-shadow 0.2s;}
-#bot-btn.visible{display:flex;}
-#bot-btn:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(59,130,246,0.55);}
-#bot-panel{position:fixed;bottom:94px;right:28px;z-index:500;width:358px;height:480px;background:var(--surface);border:1px solid var(--border);border-radius:18px;display:none;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden;}
-#bot-panel.open{display:flex;}
-.bot-head{background:var(--surface2);padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
-.bot-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;}
-.bot-info-name{font-family:var(--font-h);font-size:13px;font-weight:700;}
-.bot-info-status{font-size:11px;color:var(--green);}
-.bot-info-ai{font-size:10px;color:var(--muted);margin-top:2px;}
-.bot-x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;}
-.bot-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
-.bot-msgs::-webkit-scrollbar{width:4px;}
-.bot-msgs::-webkit-scrollbar-track{background:transparent;}
-.bot-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
-.bm{max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.55;}
-.bm.bot{background:var(--surface2);align-self:flex-start;border-bottom-left-radius:3px;}
-.bm.user{background:var(--blue);align-self:flex-end;border-bottom-right-radius:3px;}
-.bm.typing{color:var(--muted);font-style:italic;font-size:12px;}
-.bot-bar{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;}
-.bot-inp{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;}
-.bot-inp:focus{border-color:var(--blue);}
-.bot-send{background:var(--blue);border:none;border-radius:8px;width:36px;cursor:pointer;color:#fff;font-size:15px;transition:background 0.2s;}
-.bot-send:hover{background:var(--blue2);}
 .cal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:32px;}
 .cal-legend{padding:18px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
 .cal-legend span{font-size:12px;color:var(--muted);}
@@ -331,8 +307,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   .navbar{padding:0 20px;height:auto;min-height:60px;flex-wrap:wrap;row-gap:8px;padding-top:8px;padding-bottom:8px;}
   .nav-right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;}
   #dash-nav-panel{right:0;left:auto;min-width:220px;max-width:calc(100vw - 40px);}
-  #bot-panel{width:calc(100vw - 32px);right:16px;left:16px;height:70vh;max-height:520px;}
-  #bot-btn{right:16px;bottom:16px;}
   .dd-panel-camion, [id^="dd-panel-"]{max-width:100%;}
   .notif-bell-panel{position:fixed;top:64px;left:10px;right:10px;width:auto;max-width:none;max-height:75vh;}
   .notif-bell-btn{width:42px;height:42px;font-size:20px;}
@@ -373,12 +347,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
   .carico-data{order:3;text-align:left;margin-top:4px;}
   .btn-prendi{order:4;margin-top:6px;}
   .scrivici-box{padding:18px;}
-  #bot-panel{width:calc(100vw - 20px);right:10px;left:10px;bottom:80px;height:65vh;}
-  #bot-btn{width:48px;height:48px;font-size:19px;right:12px;bottom:12px;}
   .cal-modal{padding:18px;max-width:calc(100vw - 32px);}
 }
 @media print{
-  .navbar,.hero,#bot-btn,#bot-panel,.ins-box,.cap-bar,#carichi-disponibili-wrap,.cal-box,.cards,.assist-grid,button,#dash-nav-wrap,.btn-cap{display:none !important;}
+  .navbar,.hero,.ins-box,.cap-bar,#carichi-disponibili-wrap,.cal-box,.cards,.assist-grid,button,#dash-nav-wrap,.btn-cap{display:none !important;}
   #timbro-stampa{
     display:block !important;font-size:11px;color:#666;margin-bottom:16px;
     border-bottom:1px solid #ccc;padding-bottom:8px;
@@ -1083,7 +1055,6 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <h2>Hai bisogno di aiuto?<br>Siamo qui per te.</h2>
           <p>Scrivici quando vuoi: un membro del nostro team ti risponde entro 24-48 ore, e capisce il tuo lavoro e i tuoi problemi.</p>
           <p>Puoi farci qualsiasi domanda. Come funziona il calendario? Dove trovo il riepilogo dei miei movimenti? Come cambio i miei dati?</p>
-          <p style="margin-top:12px;font-size:13px;color:var(--blue);">Oppure usa l'assistente virtuale 🤖 in basso a destra per una risposta immediata — è un assistente basato su intelligenza artificiale, sempre disponibile.</p>
         </div>
         <div>
           <div class="scrivici-box">
@@ -1101,25 +1072,6 @@ select option:checked{background:#1d4ed8;color:#fff;}
         </div>
       </div>
     </div>
-  </div>
-</div>
-<button id="bot-btn" onclick="toggleBot()" title="Assistente EcoTruckConnect">🤖</button>
-<div id="bot-panel">
-  <div class="bot-head">
-    <div class="bot-av">🤖</div>
-    <div>
-      <div class="bot-info-name">Assistente EcoTruckConnect</div>
-      <div class="bot-info-status">● Online — rispondo subito</div>
-      <div class="bot-info-ai">🤖 Assistente basato su intelligenza artificiale — non è una persona reale</div>
-    </div>
-    <button class="bot-x" onclick="toggleBot()">✕</button>
-  </div>
-  <div class="bot-msgs" id="bot-msgs">
-    <div class="bm bot">Ciao! Sono l'assistente virtuale di EcoTruckConnect, basato su intelligenza artificiale. Posso aiutarti con qualsiasi domanda sul portale, i carichi, il calendario e come funziona il sistema. Cosa ti serve?</div>
-  </div>
-  <div class="bot-bar">
-    <input class="bot-inp" id="bot-inp" placeholder="Scrivi la tua domanda..." onkeydown="if(event.key==='Enter')sendBot()">
-    <button class="bot-send" onclick="sendBot()">➤</button>
   </div>
 </div>
 <script>
@@ -2207,8 +2159,6 @@ async function salvaProfiloTrasportatore() {
   }
 }
 
-let botOpen = false;
-let botHistory = [];
 let __recoveryToken = null;
 let __recoveryType  = null;
 
@@ -2235,7 +2185,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    document.getElementById('bot-btn').classList.add('visible');
     document.getElementById('nav-name').textContent = previewParam === 'azienda' ? 'Azienda Anteprima' : 'Trasportatore Anteprima';
     document.getElementById('nav-av').textContent = previewParam === 'azienda' ? 'A' : 'T';
     tipoUtente = previewParam;
@@ -2359,14 +2308,12 @@ function mostraLogin() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('login-page').style.display = 'block';
   document.getElementById('app').style.display = 'none';
-  document.getElementById('bot-btn').classList.remove('visible');
 }
 
 function avviaApp() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('bot-btn').classList.add('visible');
   const email = currentUser.email;
   const nome  = currentUser.user_metadata?.full_name || email.split('@')[0];
   document.getElementById('nav-name').textContent = nome;
@@ -3783,7 +3730,7 @@ function parseImportoPattuito(v) {
 }
 
 // ===== DOMANDE FREQUENTI (27/9): diverse per trasportatore e azienda =====
-const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva (deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %)). Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Che password devo scegliere?", "Scegli una password lunga e tua: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %). Esempio: Camion#Verde47. Non usarla su altri siti e non darla a nessuno."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Nel menu a sinistra clicca «Telegram» e poi «Apri Telegram e collega». Si apre Telegram: premi «Avvia». Si fa una volta sola. Da quel momento ti arrivano in privato sul telefono i carichi compatibili con i tuoi mezzi."], ["Non vedo carichi nuovi: cosa faccio?", "Premi il pulsante «🔄 Aggiorna» nella pagina «Carichi» o nel «Calendario»: dura un secondo e vedi subito i carichi nuovi. La pagina si aggiorna da sola una volta al giorno; con «Aggiorna» lo fai tu quando vuoi. Se ancora non ne vedi, controlla che mezzi e autorizzazioni siano salvati: vedi solo i carichi adatti a te."], ["Come rinuncio a un carico che ho preso?", "Vai in «Presi», apri il carico e premi «Rinuncia al carico», oppure in «Pagamenti» → «Rinunce e annullamenti» dove trovi l'elenco dei carichi presi con lo stesso pulsante. Si apre la pagina di pagamento sicura: appena il pagamento risulta, il carico torna disponibile per gli altri. Gli importi li vedi nella pagina «Rinunce e annullamenti»."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Pagamenti» → «Commissioni da €20» trovi tutte le commissioni pagate. In «Report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Profilo» → «I miei dati» per i dati, e in «Sicurezza» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24-48 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente virtuale 🤖 in basso a destra."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva (deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %)). Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Che password devo scegliere?", "Scegli una password lunga e tua: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %). Esempio: Camion#Verde47. Non usarla su altri siti e non darla a nessuno."], ["Quanto costa pubblicare un trasporto?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come faccio a vedere se il mio trasporto è stato preso?", "Premi il pulsante «🔄 Aggiorna» (nella Dashboard, nel «Calendario», in «Trasporti presi» o in «Da pagare»): la campanella e lo storico si aggiornano subito. La pagina non si aggiorna da sola."], ["Come annullo un trasporto che è già stato preso?", "Se nessuno l'ha ancora preso, lo annulli gratis dallo «Storico pubblicazioni». Se è già stato preso vai in «Trasporti presi» (o in «Pagamenti» → «Rinunce e annullamenti») e premi «Annulla carico»: si apre la pagina di pagamento sicura e, appena risulta, il carico è annullato e il trasportatore viene rimborsato. Gli importi li vedi nella pagina «Rinunce e annullamenti»."], ["Come pubblico un trasporto?", "Nel riquadro «Pubblica un trasporto» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica». Puoi anche cliccare un giorno del calendario: la data si inserisce da sola."], ["Come pubblico un trasporto di rifiuti?", "Nel modulo scegli come tipo di merce «Rifiuti pericolosi» oppure «Rifiuti non pericolosi»: sotto compare il codice CER (obbligatorio): si compila quando scegli cosa trasporti in «Specifica», e lo puoi riscrivere. Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva la mia pubblicazione?", "Solo ai trasportatori approvati dalla piattaforma che hanno il mezzo e l'autorizzazione che hai richiesto. La ricevono anche in privato su Telegram."], ["Come so che il mio trasporto è stato preso?", "Quando un trasportatore lo prende e paga, la campanella in alto ti avvisa con il suo nome e il telefono, e la pubblicazione diventa rossa («presa») nel calendario e nello storico."], ["Posso modificare o annullare una pubblicazione?", "Sì: finché nessun trasportatore l'ha presa, usa «Modifica» o «Annulla» nello storico delle pubblicazioni. Se è già stata presa, usa «Richiedi annullamento»: lo valutiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Profilo» per i dati dell’azienda, e in «Sicurezza» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24-48 ore, oppure all'email info@synaimaxpro.com. Per una risposta subito prova l'assistente virtuale 🤖 in basso a destra."]]};
+const FAQ_PORTALE = {"trasportatore": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva (deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %)). Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Che password devo scegliere?", "Scegli una password lunga e tua: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %). Esempio: Camion#Verde47. Non usarla su altri siti e non darla a nessuno."], ["Come inserisco i miei mezzi e le mie autorizzazioni?", "Nei riquadri «I miei mezzi» e «Le mie autorizzazioni» seleziona tutti i mezzi che hai e le autorizzazioni che possiedi, poi salva. Ti mostriamo e ti mandiamo solo i carichi adatti al tuo profilo: più è completo, più carichi giusti ricevi."], ["Come ricevo i carichi su Telegram?", "Nel menu a sinistra clicca «Telegram» e poi «Apri Telegram e collega». Si apre Telegram: premi «Avvia». Si fa una volta sola. Da quel momento ti arrivano in privato sul telefono i carichi compatibili con i tuoi mezzi."], ["Non vedo carichi nuovi: cosa faccio?", "Premi il pulsante «🔄 Aggiorna» nella pagina «Carichi» o nel «Calendario»: dura un secondo e vedi subito i carichi nuovi. La pagina si aggiorna da sola una volta al giorno; con «Aggiorna» lo fai tu quando vuoi. Se ancora non ne vedi, controlla che mezzi e autorizzazioni siano salvati: vedi solo i carichi adatti a te."], ["Come rinuncio a un carico che ho preso?", "Vai in «Presi», apri il carico e premi «Rinuncia al carico», oppure in «Pagamenti» → «Rinunce e annullamenti» dove trovi l'elenco dei carichi presi con lo stesso pulsante. Si apre la pagina di pagamento sicura: appena il pagamento risulta, il carico torna disponibile per gli altri. Gli importi li vedi nella pagina «Rinunce e annullamenti»."], ["Come prendo un carico?", "Nella lista «Carichi Disponibili» o nel «Calendario Carichi» scegli un carico blu, clicca «Prendi», conferma e paga la piccola commissione entro 5 minuti. Colori: blu disponibile, arancione qualcuno sta pagando, rosso già preso."], ["Cosa succede se non pago entro 5 minuti?", "Il carico torna disponibile per gli altri trasportatori. Puoi riprovare se è ancora blu."], ["Quanto costa?", "C'è una quota di iscrizione annuale, che paghi dopo la verifica dei tuoi dati. Per ogni carico che prendi paghi una piccola commissione. Nessun altro costo. Gli importi aggiornati li vedi nella cassa al momento del pagamento. Prima della scadenza annuale ti arriva un promemoria per email."], ["Dove vedo i carichi presi e i pagamenti?", "In «Pagamenti» → «Commissioni da €20» trovi tutte le commissioni pagate. In «Report» vedi i numeri e il grafico mese per mese. Il riepilogo non è una fattura fiscale."], ["Il prezzo del trasporto chi lo paga?", "Il prezzo del trasporto lo concordi direttamente con l'azienda e te lo paga l'azienda. SynAIMAX mette in contatto le parti e incassa solo la piccola commissione sul carico."], ["Come cambio i miei dati o la password?", "Vai in «Profilo» → «I miei dati» per i dati, e in «Sicurezza» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24-48 ore, oppure all'email info@synaimaxpro.com."]], "azienda": [["Come entro la prima volta?", "Usa l'email e la password temporanea che ti abbiamo mandato. Appena entri si apre la finestra «Scegli la tua password»: scrivila due volte e salva (deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %)). Se hai fretta premi «Più tardi», ma la striscia rossa in alto te lo ricorderà."], ["Ho dimenticato la password: cosa faccio?", "Nella pagina di accesso clicca «Password dimenticata» e scrivi la tua email. Ti arriva un codice di 6 numeri, valido 15 minuti: scrivilo insieme alla nuova password. Puoi chiedere al massimo 3 codici al giorno."], ["Che password devo scegliere?", "Scegli una password lunga e tua: deve avere almeno 10 caratteri, una lettera maiuscola, almeno 2 numeri e un carattere speciale (per esempio ! ? # @ $ %). Esempio: Camion#Verde47. Non usarla su altri siti e non darla a nessuno."], ["Quanto costa pubblicare un trasporto?", "Pubblicare è gratuito. Paghi solo la quota di iscrizione annuale, dopo la verifica dei tuoi dati: l'importo aggiornato lo vedi nella cassa al momento del pagamento. Prima della scadenza ti arriva un promemoria per email."], ["Come faccio a vedere se il mio trasporto è stato preso?", "Premi il pulsante «🔄 Aggiorna» (nella Dashboard, nel «Calendario», in «Trasporti presi» o in «Da pagare»): la campanella e lo storico si aggiornano subito. La pagina non si aggiorna da sola."], ["Come annullo un trasporto che è già stato preso?", "Se nessuno l'ha ancora preso, lo annulli gratis dallo «Storico pubblicazioni». Se è già stato preso vai in «Trasporti presi» (o in «Pagamenti» → «Rinunce e annullamenti») e premi «Annulla carico»: si apre la pagina di pagamento sicura e, appena risulta, il carico è annullato e il trasportatore viene rimborsato. Gli importi li vedi nella pagina «Rinunce e annullamenti»."], ["Come pubblico un trasporto?", "Nel riquadro «Pubblica un trasporto» inserisci CAP e città di partenza e arrivo, data, tipo di merce, specifica e note, poi il tipo di mezzo e l'autorizzazione richiesti. Clicca «Pubblica». Puoi anche cliccare un giorno del calendario: la data si inserisce da sola."], ["Come pubblico un trasporto di rifiuti?", "Nel modulo scegli come tipo di merce «Rifiuti pericolosi» oppure «Rifiuti non pericolosi»: sotto compare il codice CER (obbligatorio): si compila quando scegli cosa trasporti in «Specifica», e lo puoi riscrivere. Scegli l'autorizzazione richiesta, per esempio «Albo Gestori Ambientali (Rifiuti)»."], ["A chi arriva la mia pubblicazione?", "Solo ai trasportatori approvati dalla piattaforma che hanno il mezzo e l'autorizzazione che hai richiesto. La ricevono anche in privato su Telegram."], ["Come so che il mio trasporto è stato preso?", "Quando un trasportatore lo prende e paga, la campanella in alto ti avvisa con il suo nome e il telefono, e la pubblicazione diventa rossa («presa») nel calendario e nello storico."], ["Posso modificare o annullare una pubblicazione?", "Sì: finché nessun trasportatore l'ha presa, usa «Modifica» o «Annulla» nello storico delle pubblicazioni. Se è già stata presa, usa «Richiedi annullamento»: lo valutiamo noi."], ["Il trasporto come si paga?", "Il prezzo del trasporto lo concordi direttamente con il trasportatore e lo paghi a lui. SynAIMAX mette in contatto le parti e non è parte del contratto di trasporto."], ["Come cambio i miei dati o la password?", "Vai in «Profilo» per i dati dell’azienda, e in «Sicurezza» per la password."], ["Ho un problema: chi contatto?", "Scrivi dal modulo «Scrivici» qui sotto, ti rispondiamo entro 24-48 ore, oppure all'email info@synaimaxpro.com."]]};
 function mostraFAQ() {
   const box = document.getElementById('faq-box'), lista = document.getElementById('faq-lista');
   if (!box || !lista || !FAQ_PORTALE[tipoUtente]) return false;
@@ -5086,99 +5033,6 @@ async function inviaForm(e) {
     e.target.reset();
     setTimeout(() => { document.getElementById('sc-ok').style.display = 'none'; }, 6000);
   } catch(err) { alert('Errore nell\'invio. Riprova.'); }
-}
-
-function toggleBot() {
-  botOpen = !botOpen;
-  document.getElementById('bot-panel').classList.toggle('open', botOpen);
-}
-
-/* 5/11/2026 — ogni domanda all'assistente AI costa crediti Make. Prima cerco la risposta tra le
-   «Domande frequenti» (gratis e immediata); solo se non c'è, chiamo l'assistente AI, al massimo
-   BOT_MAX_AL_GIORNO volte al giorno per utente. Per cambiare il limite: window.ECT_BOT_MAX_AL_GIORNO. */
-const BOT_MAX_AL_GIORNO_DEFAULT = 8;
-function botParole(t) {
-  const stop = ['come','cosa','dove','quando','perche','posso','devo','sono','sulla','nella','delle','degli','della','dello','questo','questa','quale','quali','fare','faccio','vedo','anche','molto','tutto','tutti','quanto','sempre'];
-  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(w => w.length > 3 && stop.indexOf(w) === -1);
-}
-function botRispostaLocale(msg) {
-  try {
-    const lista = FAQ_PORTALE[tipoUtente]; if (!lista) return null;
-    const pw = botParole(msg); if (pw.length < 2) return null;
-    let best = null, bestScore = 0;
-    lista.forEach(qa => {
-      const dom = botParole(qa[0]); if (!dom.length) return;
-      const comuni = pw.filter(w => dom.some(d => d === w || (d.length > 5 && w.length > 5 && (d.indexOf(w.slice(0, 5)) === 0)))).length;
-      const score = comuni / Math.max(dom.length, pw.length);
-      if (comuni >= 2 && score > bestScore) { bestScore = score; best = qa; }
-    });
-    return bestScore >= 0.6 ? best[1] : null;
-  } catch (e) { return null; }
-}
-function botDomandeOggi(incrementa) {
-  try {
-    const k = 'ect_bot_' + new Date().toISOString().slice(0, 10);
-    let n = parseInt(localStorage.getItem(k) || '0', 10) || 0;
-    if (incrementa) { n++; localStorage.setItem(k, String(n)); }
-    return n;
-  } catch (e) { return 0; }
-}
-
-async function sendBot() {
-  const inp = document.getElementById('bot-inp');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  inp.value = '';
-  addMsg(msg, 'user');
-  botHistory.push({ role: 'user', content: msg });
-  const locale = botRispostaLocale(msg);
-  if (locale) { botHistory.push({ role: 'assistant', content: locale }); addMsg(locale, 'bot'); return; }
-  const maxOggi = window.ECT_BOT_MAX_AL_GIORNO || BOT_MAX_AL_GIORNO_DEFAULT;
-  if (!modalitaAnteprimaAttiva && botDomandeOggi(false) >= maxOggi) {
-    const r = 'Per oggi ho raggiunto il numero di risposte che posso darti. Puoi guardare le «Domande frequenti» nella pagina «Aiuto» oppure scrivere al team di EcoTruckConnect dal modulo «Scrivici» o a info@synaimaxpro.com: ti risponde entro 24-48 ore.';
-    botHistory.push({ role: 'assistant', content: r }); addMsg(r, 'bot'); return;
-  }
-  if (!modalitaAnteprimaAttiva) botDomandeOggi(true);
-  const typing = addMsg('Sto scrivendo...', 'bot typing');
-  const chiamaProxy = () => fetch(PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'chat_bot',
-      // 1/10: tolgo i caratteri che rompono il JSON su Make (virgolette doppie, barre rovesciate, a capo)
-      message: msg.replace(/[\u201C\u201D"]/g, "'").replace(/\\/g, '/').replace(/[\u0000-\u001F\u007F]+/g, ' ')
-    })
-  });
-  try {
-    let res;
-    try {
-      res = await chiamaProxy();
-    } catch (primoTentativoErr) {
-      res = await chiamaProxy();
-    }
-    if (!res.ok) {
-      const testoGrezzo = await res.text();
-      throw new Error('HTTP ' + res.status + ' — ' + testoGrezzo.slice(0, 200));
-    }
-    const data = await res.json();
-    const reply = data.reply || 'Mi dispiace, non ho capito. Riprova.';
-    typing.remove();
-    botHistory.push({ role: 'assistant', content: reply });
-    addMsg(reply, 'bot');
-  } catch(err) {
-    typing.remove();
-    addMsg('Mi dispiace, c\'è stato un problema di connessione. Riprova tra un momento.', 'bot');
-  }
-}
-
-function addMsg(text, cls) {
-  const d = document.createElement('div');
-  d.className = `bm ${cls}`;
-  d.textContent = text;
-  const box = document.getElementById('bot-msgs');
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
-  return d;
 }
 
 let meseCalendario = new Date();

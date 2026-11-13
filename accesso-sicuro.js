@@ -44,11 +44,8 @@
    1) Aggiunge il "pass" di chi ha fatto l'accesso a ogni richiesta verso
       Make. Make risponde solo a chi ha fatto l'accesso, e a ognuno solo
       con i suoi dati.
-   2) Google Authenticator (consigliato): chi lo attiva,
-      a ogni accesso deve scrivere anche il codice dell'app.
+   2) (Google Authenticator: tolto il 14/11/2026, il codice e' messo da parte su Drive.)
    3) Striscia ROSSA = password temporanea da cambiare.
-      Striscia GIALLA = ricorda di attivare Google Authenticator (con ✕,
-      ricompare al prossimo accesso).
    4) "Password dimenticata" con codice via email: la password NON cambia
       finche' il proprietario non scrive il codice ricevuto.
    5) Pagine dei gestori (dashboard, report, registrazioni): entrano solo
@@ -59,7 +56,7 @@
   var PROXY = 'https://hook.eu1.make.com/n78xlbwx6483qv9v0eamw5th3sq20qak';
   /* 27/9: queste 7 letture nel Proxy principale rispondevano sempre vuote.
      Ora le fa lo scenario "Proxy Liste" (stessi controlli di sicurezza: accesso,
-     Google Authenticator, gestori). Il file le manda li' automaticamente. */
+     gestori). Il file le manda li' automaticamente. */
   var PROXY_LISTE = 'https://hook.eu1.make.com/nqp4yjmtegxakql7a24sqvpit0vjcpjw';
   var AZIONI_LISTE = ['get_carichi_pubblicati_azienda', 'get_candidature_trasportatore', 'conta_trasportatori_compatibili',
                       'get_dashboard_data', 'get_candidature', 'get_scadenze', 'get_registrazioni',
@@ -75,9 +72,6 @@
   ];
   var AZIONI_PUBBLICHE = ['reset_richiedi', 'reset_conferma'];
   var FUNZIONE = '/.netlify/functions/sicurezza';
-  var LINK_ANDROID = 'https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2';
-  var LINK_IPHONE = 'https://apps.apple.com/app/google-authenticator/id388497605';
-  var LIB_QR = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
   var GESTORI = !!window.ECT_SOLO_GESTORI;
   var fetchOriginale = window.fetch.bind(window);
 
@@ -124,24 +118,16 @@
   }
   window.ectTokenAccesso = tokenAccesso;
 
-  /* ================= TICKET DEL CODICE DELL'APP ================= */
-  function leggiTicket() { try { return JSON.parse(localStorage.getItem('ect_mfa_ticket') || 'null'); } catch (e) { return null; } }
-  function salvaTicket(t) { try { localStorage.setItem('ect_mfa_ticket', JSON.stringify({ dati: t.ticket_dati, firma: t.ticket_firma, scade: t.scade })); } catch (e) {} }
-  function ticketValido(email) {
-    var t = leggiTicket(); if (!t || !t.dati) return false;
-    var parti = String(t.dati).split('|');
-    return parti[0] === String(email || '').toLowerCase() && Number(parti[1]) > Date.now() / 1000 + 60;
-  }
+  /* (Authenticator tolto il 14/11/2026: nessun codice dell'app, nessun ticket) */
   function pulisciSessione() {
-    try { localStorage.removeItem('ect_mfa_ticket'); } catch (e) {}
-    try { sessionStorage.removeItem('ect_giallo_chiuso'); sessionStorage.removeItem('ect_popup_mfa_visto'); sessionStorage.removeItem('ect_popup_pw_visto'); } catch (e) {}
+    try { localStorage.removeItem('ect_mfa_ticket'); } catch (e) {} /* pulizia di vecchi dati */
+    try { sessionStorage.removeItem('ect_popup_pw_visto'); } catch (e) {}
   }
 
   /* ================= CHIAMATA ALLA FUNZIONE DI SICUREZZA ================= */
   async function sicurezza(azione, extra) {
     if (window.__ANTEPRIMA_SCUDO) {
-      if (azione === 'stato') return { ok: true, email: 'anteprima@ecotruckconnect.it', mfa_attivo: false, pw_temporanea: true };
-      if (azione === 'mfa_inizia') return { ok: true, segreto: 'ANTEPRIMAANTEPRIMAAB', otpauth: 'otpauth://totp/EcoTruckConnect:anteprima?secret=ANTEPRIMAANTEPRIMAAB&issuer=EcoTruckConnect' };
+      if (azione === 'stato') return { ok: true, email: 'anteprima@ecotruckconnect.it', pw_temporanea: true };
       return { ok: false, errore: 'anteprima' };
     }
     var tok = await tokenAccesso();
@@ -165,40 +151,6 @@
     return statoPromessa;
   }
 
-  var cancelloInCorso = null;
-  async function garantisciCodice() {
-    if (window.__ANTEPRIMA_SCUDO) return;
-    var u = utenteCorrente(); if (!u) { await identitaPronta; u = utenteCorrente(); }
-    if (!u) return;
-    var st = await leggiStato();
-    if (!st || !st.mfa_attivo) return;
-    if (ticketValido(u.email)) return;
-    if (!cancelloInCorso) cancelloInCorso = schermataCodice().then(function () { cancelloInCorso = null; });
-    await cancelloInCorso;
-  }
-
-  /* ================= ASSISTENTE VIRTUALE: informazioni aggiornate (27/9) =================
-     Il Proxy ha un testo base. Qui aggiungiamo, a ogni domanda, le informazioni vere
-     del portale (diverse per trasportatore e azienda) e puliamo la domanda da
-     virgolette e a capo, che prima rompevano il messaggio. */
-  var BOT_REGOLE = "ISTRUZIONI PRIORITARIE, valgono piu di qualsiasi regola precedente: non chiedere mai se l utente e un azienda o un trasportatore; usa il RUOLO DELL UTENTE indicato qui sotto, e se e gestore o non indicato rispondi per entrambi in modo breve. Se la domanda e una sola parola come trasportatore o azienda, e la risposta alla tua domanda precedente: continua la conversazione senza ripartire da capo. Non parlare di soldi, non dire mai cifre.";
-  var BOT_COMUNE = "Sei l'assistente virtuale del Portale Personale di EcoTruckConnect, un sistema basato su intelligenza artificiale (non una persona reale). Se qualcuno ti chiede se sei un'IA, un bot o un umano, confermalo sempre apertamente e con naturalezza. COME LEGGERE IL MESSAGGIO: il messaggio puo contenere RUOLO DELL UTENTE (trasportatore, azienda oppure gestore), poi CONVERSAZIONE FINORA (gli ultimi scambi) e infine DOMANDA DELL UTENTE. Rispondi sempre alla DOMANDA tenendo conto della conversazione: se l utente scrive una sola parola come trasportatore o azienda, e la risposta alla tua domanda precedente, quindi continua da dove eravate. Non ripartire mai con un saluto se la conversazione e gia iniziata. REGOLE DI COMPORTAMENTO: - Rispondi in italiano, semplice e diretto, massimo 6 frasi, solo testo semplice senza asterischi, senza grassetto e senza elenchi puntati. Indica il percorso esatto nel portale con i nomi dei pulsanti tra « ». - Non chiedere mai quale tipo di utente e. Se il ruolo e noto rispondi per quello. Se il ruolo e gestore o non e indicato, rispondi sia per il trasportatore sia per l azienda, in modo breve. Quando parli con un azienda non usare la parola carichi: usa pubblicazioni o trasporti. - Non parlare di soldi: non dire mai cifre, importi, prezzi, percentuali o tariffe, nemmeno se li conosci. Se chiedono quanto costa o quanto si paga rispondi che gli importi aggiornati si vedono nella pagina di pagamento al momento di pagare, nella pagina «Rinunce e annullamenti» dentro «Pagamenti», oppure scrivendo a info@synaimaxpro.com. Puoi spiegare come funziona una procedura, senza dire quanto costa. - Usa solo le informazioni qui sotto. Se una cosa non e descritta qui, non inventare: di che al momento non risulta e invita a usare «Scrivici» nel portale o a scrivere a info@synaimaxpro.com (il team di EcoTruckConnect risponde in 24-48 ore). - Non chiedere mai password, codici o dati di pagamento. Non dare consigli legali, fiscali o contabili: per quelli serve il proprio consulente. - Mantieni sempre un tono gentile e positivo, anche se l utente e arrabbiato o scrive male. COS E EcoTruckConnect: una piattaforma privata che mette in contatto le AZIENDE che hanno trasporti da fare con i TRASPORTATORI verificati. Le aziende pubblicano i trasporti, i trasportatori li prendono. Il portale e privato: nessuno vede i dati degli altri; i dati dell altra parte si vedono solo dopo che il carico e stato preso e pagato. SynAIMAX mette in contatto le parti ma non e parte del contratto di trasporto: prezzo del trasporto, pagamento del trasporto e fattura del trasporto sono un accordo diretto tra azienda e trasportatore. COME SI ENTRA: ci si registra dal sito, i dati vengono controllati e approvati dalla gestione. Dopo l approvazione arriva una email con il link per pagare l iscrizione annuale su pagina sicura Shopify. Dopo il pagamento arrivano due email di conferma e si puo entrare nel portale. Finche l iscrizione non e approvata e pagata non si entra. ACCESSO E PASSWORD: si entra con email e password. Il primo accesso usa una password temporanea ricevuta per email: compare una striscia rossa e si apre la finestra «Scegli la tua password»; si puo premere «Piu tardi». Per cambiarla quando vuoi: menu «Sicurezza» e poi «Cambia password» oppure rigenera. Password dimenticata: nella pagina di accesso clicca «Password dimenticata», scrivi la tua email, ricevi un codice di 6 numeri valido 15 minuti, poi scrivi codice e nuova password. Si possono chiedere al massimo 3 codici al giorno. Se la email non arriva controlla spam e posta indesiderata, poi riprova o scrivi al supporto. GOOGLE AUTHENTICATOR (consigliato, non obbligatorio): striscia gialla «Attiva ora» oppure menu «Sicurezza». Si scarica l app gratuita Google Authenticator; dal computer si inquadra il quadratino QR con il telefono, dal telefono si tocca il pulsante per aggiungere EcoTruckConnect; poi si scrive il codice di 6 numeri e si preme «Attiva». Da quel momento a ogni accesso serve anche il codice dell app. Se cambi o perdi il telefono scrivi al supporto. MENU DEL PORTALE (a sinistra). Per il trasportatore: Dashboard, Telegram, Profilo, Carichi, Presi, Calendario, Pagamenti, Archivio storico, Report, Aiuto, Sicurezza. Per l azienda: Dashboard, Profilo, Pubblica, Trasporti presi, Calendario, Pagamenti, Archivio storico, Report, Avvisi e suoni, Aiuto, Sicurezza. AGGIORNARE LE PAGINE: il portale NON si aggiorna continuamente da solo, per evitare di rallentare; i carichi si aggiornano automaticamente una volta al giorno (alle 8 del mattino) e in piu ogni volta che si apre il portale. Per vedere subito i dati nuovi, il trasportatore preme il pulsante «Aggiorna» in «Carichi» o in «Calendario» (dura un secondo e compare Aggiornato alle e l ora); l azienda preme «Aggiorna» nella Dashboard, nel «Calendario», in «Trasporti presi», in «Da pagare» o nei report oppure «Aggiorna ora» nella campanella in alto. Se un trasportatore o un azienda dice che non vede cose nuove, digli prima di tutto di premere «Aggiorna». Non usare mai la parola bot con gli utenti: di assistente virtuale. Su telefono il menu si apre dal pulsante in alto.";
-  var BOT_TRASPORTATORE = "PER IL TRASPORTATORE: - Primo passo, «Profilo» poi «Mezzi e autorizzazioni»: indica tutti i mezzi che hai e le autorizzazioni che possiedi (Conto Terzi, Albo Gestori Ambientali con le sue categorie, ADR merci pericolose con le sue classi, Animali Vivi, Alimentare ATP). Se il tuo mezzo non c e scegli Altro e descrivilo. Poi premi salva. Si puo modificare quando vuoi. Perche serve: l azienda indica mezzo e autorizzazioni richieste, e tu vedi e ricevi solo i carichi compatibili con il tuo profilo, cosi non perdi tempo. Per ogni autorizzazione puoi anche caricare il documento (facoltativo). - «Profilo» poi «I miei dati»: modifichi i dati anagrafici (nome, indirizzo, telefono, P.IVA); scrivi solo quello che vuoi cambiare. - «Telegram» (seconda voce del menu, subito sotto Dashboard): premi «Apri Telegram e collega», si apre Telegram, premi Avvia (o Start). Si fa una sola volta. Da quel momento ricevi in privato sul telefono i carichi compatibili. Se non arrivano messaggi controlla di aver premuto Avvia. - «Carichi»: la lista dei carichi liberi e compatibili. Premi «Vedi dettagli» per vedere tutti i dati prima di decidere. - Prendere un carico: scegli il carico blu, premi il pulsante per prenderlo e conferma. Il sistema controlla che sia ancora libero e ti porta alla pagina di pagamento sicura Shopify. Hai 5 minuti per pagare: se non paghi in tempo il carico torna disponibile per tutti. Dopo il pagamento il carico e tuo e vedi i dati completi dell azienda per organizzarti. - «Calendario»: i carichi giorno per giorno. Blu = disponibile, arancione = qualcuno sta pagando in questo momento, rosso = gia preso. Clicca un giorno per vedere i carichi di quella data. Quando un carico torna libero diventa di nuovo blu. - «Presi»: i carichi che hai preso, con scheda completa (azienda, indirizzi, orari, documenti ricevuti dall azienda che puoi scaricare). - Rinunciare a un carico preso: vai in «Presi», apri il carico e premi «Rinuncia al carico». Si apre la pagina di pagamento della procedura di rinuncia; appena il pagamento risulta il carico torna disponibile per gli altri trasportatori. La quota gia versata per prendere il carico non viene restituita. Se non completi il pagamento compare una schermata rossa e il resto del portale resta in pausa finche non risulta; se esci e rientri la ritrovi uguale. Dettagli in «Pagamenti» poi «Rinunce e annullamenti». - Per rinunciare a un carico preso si puo anche andare in «Pagamenti» poi «Rinunce e annullamenti»: sotto compare l elenco dei carichi presi con il pulsante «Rinuncia al carico». - Se e l azienda ad annullare un carico che avevi preso: la societa ti rimborsa quanto versato e ricevi una email di avviso. - «Pagamenti» poi «Da incassare»: l elenco di quanto ti devono ancora le aziende per i trasporti fatti, diviso per azienda e per giorno. Puoi scaricare PDF e CSV. Stampa serve per preparare la fattura e «Segna incassato» quando ricevi il pagamento dall azienda. - «Pagamenti» poi commissioni: una riga per ogni carico preso con data e ora. E un riepilogo, non sostituisce la fattura fiscale. - «Pagamenti» poi «Iscrizione annuale»: data di inizio e di scadenza. Prima della scadenza arriva un promemoria per email con il link di pagamento. - «Archivio storico»: «Storico carichi» (tutti i carichi dall inizio, con stato, filtri per periodo e download) e «Il mio storico movimenti» (tutto quello che hai fatto sulla piattaforma con data e ora: cambi dati, documenti, password, carichi). Si puo stampare e scaricare in CSV. - «Report»: i tuoi numeri riassunti, con un grafico mese per mese. - Nel menu del trasportatore non c e la voce «Avvisi e suoni»: i carichi arrivano su Telegram, collegato dalla voce «Telegram».";
-  var BOT_AZIENDA = "PER L AZIENDA: - Pubblicare un trasporto (gratis): menu «Pubblica» (pagina «Pubblica un trasporto»). Compili tutto in un unica pagina: partenza e arrivo con CAP, citta e indirizzi, data, tipo di merce, specifica e note, mezzo richiesto, autorizzazioni che deve avere il trasportatore, orari di ritiro e consegna, importo offerto per il trasporto tra le parti, termini di pagamento e destinatario. Se e un rifiuto serve il codice CER e va indicato se e pericoloso. Piu in basso ci sono produttore, impianto di destinazione e intermediari (facoltativi): li puoi inserire subito o dopo da «Storico pubblicazioni» e «Trasporti presi». Poi premi «Pubblica Carico». Puoi anche cliccare un giorno del «Calendario» per precompilare la data. - Chi vede la pubblicazione: solo i trasportatori con mezzi e autorizzazioni compatibili, che ricevono anche la notifica Telegram. Quando un trasportatore la prende e paga, diventa rossa. - Colori: blu = disponibile, arancione = un trasportatore sta pagando, rosso = preso. - Modificare: finche nessun trasportatore l ha preso usa il pulsante «Modifica» sulla pubblicazione. - Annullare: se nessuno l ha ancora preso annulli gratis dallo «Storico pubblicazioni» e resta nello storico come ANNULLATO. Se e gia stato preso premi «Annulla carico» su «Trasporti presi»: si apre la pagina di pagamento della procedura di annullamento; appena il pagamento risulta il carico e annullato e il trasportatore viene rimborsato dalla societa. Se non completi il pagamento compare una schermata rossa e il resto del portale resta in pausa finche non risulta. Dettagli in «Pagamenti» poi «Rinunce e annullamenti». - «Trasporti presi»: chi ha preso i tuoi carichi, scheda completa del trasportatore (dati, mezzo), indirizzi e documenti che hai allegato. - «Pagamenti» poi «Da pagare»: quanto devi ai trasportatori per i trasporti fatti, per trasportatore e per giorno; scarichi la fattura o il CSV e usi «Segna pagato». «Report per trasportatore»: un riquadro per ogni trasportatore con trasporti presi e importo offerto per il trasporto. - «Archivio storico»: «Storico pubblicazioni» (tutto cio che hai pubblicato, con stato e dettagli, filtri e download), «Riepilogo movimenti» (ogni pubblicazione con data, stato e trasportatore; non sostituisce la fattura fiscale) e «Il mio storico movimenti». - «Profilo»: dati aziendali (ragione sociale, P.IVA, codice fiscale, indirizzo, PEC, codice SDI, telefono) e file facoltativi. Scrivi solo quello che vuoi cambiare. - «Avvisi e suoni»: notifiche con campanella ed email, orari e tono. «Report»: pubblicazioni, trasporti presi e totali.";
-  var BOT_FINE = "SICUREZZA E ACCOUNT: menu «Sicurezza»: cambia password (almeno 10 caratteri, una maiuscola, 2 numeri e un carattere speciale), «Elimina il mio account» (chiede conferma; la cancellazione e definitiva). Il portale e protetto: nessun altro vede i tuoi dati. AIUTO: menu «Aiuto» poi «Domande frequenti» (clicca una domanda per aprirla) e «Scrivici»: modulo con risposta entro 24-48 ore. Email di supporto: info@synaimaxpro.com (risposta del team in 24-48 ore). Questo assistente risponde subito, a qualsiasi ora. DOMANDE TIPICHE E COME RISPONDERE: - Perche non vedo carichi nuovi? Premi «Aggiorna» in «Carichi» o in «Calendario». Inoltre vedi solo quelli compatibili con i tuoi mezzi e le tue autorizzazioni: controlla «Mezzi e autorizzazioni» e che siano salvati; oppure al momento non ce ne sono di liberi. - Perche un carico e arancione? Un altro trasportatore sta pagando in questo momento: se non paga entro 5 minuti torna blu. - Ho pagato ma non vedo il carico: attendi qualche istante e ricarica la pagina; il carico compare in «Presi». Se dopo qualche minuto non c e scrivi al supporto con i dati del carico. - Non mi arrivano le notifiche Telegram: collega Telegram dalla voce «Telegram» del menu e premi Avvia. - Come cambio telefono, indirizzo o P.IVA? «Profilo» poi «I miei dati». - Dove trovo le fatture? Il portale da riepiloghi, non fatture fiscali; i documenti fiscali del trasporto si emettono tra azienda e trasportatore, usa «Da incassare» o «Da pagare» e Stampa. - Posso vedere i dati degli altri trasportatori o aziende? No: il portale e privato; i dati dell altra parte si vedono solo dopo che il carico e preso e pagato. - Come scarico i miei dati? Negli elenchi trovi i pulsanti PDF, CSV e Stampa. - Il portale e sicuro? Si: accesso con password, Google Authenticator facoltativo, pagamenti su pagina sicura Shopify, privacy policy e condizioni d uso nel fondo pagina. - Come funziona la privacy? Trovi Privacy Policy, Cookie Policy, Termini e Condizioni e Condizioni d uso nei link in fondo alla pagina. - Domande fuori argomento o su funzioni non descritte: rispondi che al momento non risulta e indica «Scrivici». Rispondi sempre in italiano, semplice e diretto, massimo 6 frasi.";
-  function pulisciTesto(t) { return String(t || '').replace(/["\\]/g, "'").replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
-  function cronologiaBot() {
-    var h = []; try { h = (typeof botHistory !== 'undefined' && botHistory) ? botHistory.slice(0, -1).slice(-6) : []; } catch (e) {}
-    if (!h.length) return '';
-    return ' CONVERSAZIONE FINORA: ' + h.map(function (m) { return (m.role === 'user' ? 'Utente: ' : 'Assistente: ') + pulisciTesto(m.content).slice(0, 260); }).join(' | ');
-  }
-  function componiDomandaBot(domanda) {
-    var tipo = ''; try { tipo = (typeof tipoUtente !== 'undefined' && tipoUtente) ? tipoUtente : ''; } catch (e) {}
-    var ruolo = tipo === 'azienda' ? BOT_AZIENDA : (tipo === 'trasportatore' ? BOT_TRASPORTATORE : (BOT_TRASPORTATORE + ' ' + BOT_AZIENDA));
-    var nomeRuolo = tipo === 'azienda' ? 'azienda' : (tipo === 'trasportatore' ? 'trasportatore' : 'gestore (rispondi sia per trasportatori sia per aziende)');
-    return pulisciTesto('INFORMAZIONI AGGIORNATE DEL PORTALE: ' + BOT_REGOLE + ' ' + BOT_COMUNE + ' ' + ruolo + ' ' + BOT_FINE + ' RUOLO DELL UTENTE: ' + nomeRuolo + '.' + cronologiaBot() + ' DOMANDA DELL UTENTE: ' + pulisciTesto(domanda).slice(0, 800));
-  }
-
   /* ================= PASS AUTOMATICO SU OGNI RICHIESTA ================= */
   window.fetch = async function (url, opts) {
     try {
@@ -208,33 +160,18 @@
         opts = Object.assign({}, opts || {});
         var corpo = {};
         if (typeof opts.body === 'string' && opts.body) { try { corpo = JSON.parse(opts.body); } catch (e) { corpo = {}; } }
-        if (corpo.action === 'chat_bot' && typeof corpo.message === 'string') corpo.message = componiDomandaBot(corpo.message);
         if (AZIONI_LISTE.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_LISTE;
         if (AZIONI_PAGAMENTO.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_AZIONI;
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
-          await garantisciCodice();
           var tok = await tokenAccesso();
           if (tok) corpo.token = tok;
-          var t = leggiTicket();
-          if (t && t.dati) { corpo.ticket_dati = t.dati; corpo.ticket_firma = t.firma; }
         }
         opts.method = 'POST';
         opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
         opts.body = JSON.stringify(corpo);
       }
     } catch (e) { /* in caso di problemi la richiesta parte comunque */ }
-    var eraBot = false; try { eraBot = !!(opts && typeof opts.body === 'string' && opts.body.indexOf('"action":"chat_bot"') !== -1); } catch (e) {}
-    var risposta = await fetchOriginale(url, opts);
-    if (!eraBot) return risposta;
-    // risposta dell'assistente: tolgo asterischi e simboli di formattazione
-    try {
-      var dati = await risposta.clone().json();
-      if (dati && typeof dati.reply === 'string') {
-        dati.reply = dati.reply.replace(/\*\*|__/g, '').replace(/^\s*[#>]+\s*/gm, '').replace(/^\s*[-*•]\s+/gm, '• ');
-        return new Response(JSON.stringify(dati), { status: risposta.status, headers: { 'Content-Type': 'application/json' } });
-      }
-    } catch (e) {}
-    return risposta;
+    return fetchOriginale(url, opts);
   };
 
   /* ================= GRAFICA COMUNE ================= */
@@ -255,16 +192,10 @@
     '.ect-ov a.bottone{display:block;text-align:center;background:#fff;color:#0e1623;border-radius:10px;padding:12px;font-weight:700;text-decoration:none;margin:8px 0;}' +
     '.ect-ov .passo{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;margin:12px 0;font-size:14px;line-height:1.55;}' +
     '.ect-ov .passo b{color:#fff;}' +
-    '.ect-ov .qr{background:#fff;padding:8px;border-radius:8px;display:inline-block;margin:6px 6px 0 0;}' +
-    '.ect-ov .qrs{display:flex;gap:10px;flex-wrap:wrap;}' +
-    '.ect-ov .qrs div.et{font-size:12px;color:rgba(241,245,249,0.7);text-align:center;margin-top:4px;}' +
     '.ect-ov .chiave{font-family:monospace;font-size:13px;word-break:break-all;background:rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;margin-top:6px;user-select:all;}' +
     '.ect-ov .err{color:#f87171;font-size:13px;margin-top:10px;display:none;text-align:center;}' +
     '.ect-ov .ok{color:#4ade80;font-size:14px;margin-top:10px;display:none;text-align:center;line-height:1.5;}' +
     '.ect-ov .piccolo{font-size:12px;color:rgba(241,245,249,0.5);margin-top:14px;text-align:center;line-height:1.5;}' +
-    '#ect-striscia-mfa{background:#f59e0b;color:#1c1917;padding:10px 44px 10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:60;font-family:"DM Sans",system-ui,sans-serif;}' +
-    '#ect-striscia-mfa button.att{margin-left:10px;background:#1c1917;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
-    '#ect-striscia-mfa .x{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;font-weight:700;}' +
     '#ect-striscia-rossa{background:#dc2626;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;line-height:1.5;position:relative;z-index:61;font-family:"DM Sans",system-ui,sans-serif;}' +
     '#ect-striscia-rossa button{margin-left:10px;background:#fff;color:#b91c1c;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;}' +
     '#ect-striscia-rossa button.dopo{margin-left:6px;background:transparent;color:#fff;border:1px solid #fff;font-weight:600;}' +
@@ -303,25 +234,6 @@
   }
   function chiudi(id) { var el = document.getElementById(id); if (el) el.remove(); }
   function mostraErr(el, testo) { el.textContent = testo; el.style.display = 'block'; }
-  function dispositivo() {
-    var ua = navigator.userAgent || '';
-    if (/android/i.test(ua)) return 'android';
-    if (/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'iphone';
-    return 'computer';
-  }
-  function caricaQr() {
-    return new Promise(function (ok, no) {
-      if (window.QRCode) return ok();
-      var s = document.createElement('script'); s.src = LIB_QR; s.onload = ok; s.onerror = no; document.head.appendChild(s);
-    });
-  }
-  function disegnaQr(idEl, testo) {
-    return caricaQr().then(function () {
-      var el = document.getElementById(idEl); if (!el) return;
-      el.innerHTML = '';
-      new QRCode(el, { text: testo, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
-    }).catch(function () {});
-  }
   function esciSubito() {
     pulisciSessione();
     var u = utenteCorrente();
@@ -332,126 +244,6 @@
   }
   window.ectEsci = esciSubito;
 
-  /* ================= SCHERMATA "SCRIVI IL CODICE DELL'APP" ================= */
-  function schermataCodice() {
-    return new Promise(function (fatto) {
-      finestra('ect-codice',
-        '<h2>🛡️ Codice di Google Authenticator</h2>' +
-        '<div class="sub">Apri <b>Google Authenticator</b> sul telefono e scrivi il codice di 6 numeri che vedi accanto a <b>EcoTruckConnect</b>.</div>' +
-        '<div class="campo"><input class="codice" id="ect-cod-in" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></div>' +
-        '<button id="ect-cod-ok">Conferma →</button>' +
-        '<div class="err" id="ect-cod-err"></div>' +
-        '<button class="sec" id="ect-cod-esci">⏻ Esci</button>' +
-        '<div class="piccolo">Il codice cambia ogni 30 secondi: se non funziona, aspetta quello nuovo.<br>Hai perso o cambiato telefono? Scrivi a info@synaimaxpro.com</div>');
-      var inp = document.getElementById('ect-cod-in'), err = document.getElementById('ect-cod-err'), b = document.getElementById('ect-cod-ok');
-      document.getElementById('ect-cod-esci').onclick = esciSubito;
-      async function conferma() {
-        err.style.display = 'none';
-        var c = inp.value.replace(/\D/g, '');
-        if (c.length !== 6) { mostraErr(err, 'Scrivi i 6 numeri che vedi nell\'app.'); return; }
-        b.disabled = true; b.textContent = 'Verifica...';
-        var r = await sicurezza('mfa_verifica', { codice: c }).catch(function () { return null; });
-        b.disabled = false; b.textContent = 'Conferma →';
-        if (r && r.ok) { salvaTicket(r); chiudi('ect-codice'); fatto(); return; }
-        inp.value = '';
-        if (r && r.errore === 'bloccato') mostraErr(err, 'Troppi codici sbagliati. Per sicurezza riprova tra ' + r.minuti + ' minuti.');
-        else if (r && r.errore === 'codice_errato') mostraErr(err, 'Codice sbagliato. Tentativi rimasti: ' + r.tentativi_rimasti + '.');
-        else mostraErr(err, 'Non riesco a verificare il codice. Controlla la connessione e riprova.');
-      }
-      b.onclick = conferma;
-      inp.oninput = function () { if (inp.value.replace(/\D/g, '').length === 6) conferma(); };
-      setTimeout(function () { inp.focus(); }, 60);
-    });
-  }
-
-  /* ================= ATTIVAZIONE GOOGLE AUTHENTICATOR ================= */
-  function apriAttivazione() {
-    var disp = dispositivo();
-    var passo1;
-    if (disp === 'android') passo1 = '<a class="bottone" href="' + LINK_ANDROID + '" target="_blank" rel="noopener">📱 Scarica Google Authenticator (Android)</a>';
-    else if (disp === 'iphone') passo1 = '<a class="bottone" href="' + LINK_IPHONE + '" target="_blank" rel="noopener">🍎 Scarica Google Authenticator (iPhone)</a>';
-    else passo1 = 'Prendi il telefono e inquadra con la fotocamera il quadratino giusto:' +
-      '<div class="qrs"><div><div class="qr" id="ect-qr-and"></div><div class="et">Android</div></div><div><div class="qr" id="ect-qr-ios"></div><div class="et">iPhone</div></div></div>';
-    finestra('ect-attiva',
-      '<h2>🛡️ Attiva Google Authenticator (consigliato)</h2>' +
-      '<div class="sub">Per proteggere i tuoi dati. Segui questi passaggi.</div>' +
-      '<div class="passo"><b>1. Scarica l\'app gratuita Google Authenticator</b> (produttore: Google LLC)<br>' + passo1 + '</div>' +
-      '<div class="passo" id="ect-passo2"><b>2. Collega EcoTruckConnect all\'app</b><br><span style="color:rgba(241,245,249,0.6)">Preparazione...</span></div>' +
-      '<div class="passo"><b>3. Scrivi il codice di 6 numeri che vedi nell\'app</b>' +
-      '<div class="campo" style="margin-top:8px"><input class="codice" id="ect-att-in" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></div></div>' +
-      '<button id="ect-att-ok">✅ Attiva</button>' +
-      '<div class="err" id="ect-att-err"></div>' +
-      '<div class="ok" id="ect-att-fatto">✅ Google Authenticator attivo.<br>Da ora, per entrare servirà anche il codice dell\'app.</div>' +
-      '<button class="sec" id="ect-att-chiudi">Più tardi</button>');
-    if (disp === 'computer') { disegnaQr('ect-qr-and', LINK_ANDROID); disegnaQr('ect-qr-ios', LINK_IPHONE); }
-    document.getElementById('ect-att-chiudi').onclick = function () { chiudi('ect-attiva'); };
-    // clic sullo sfondo scuro, fuori dal riquadro = chiude
-    var sfondo = document.getElementById('ect-attiva');
-    if (sfondo) sfondo.onclick = function (ev) { if (ev.target === sfondo) chiudi('ect-attiva'); };
-    sicurezza('mfa_inizia').then(function (r) {
-      var p2 = document.getElementById('ect-passo2'); if (!p2) return;
-      if (!r || !r.ok) {
-        if (r && r.errore === 'gia_attivo') { p2.innerHTML = '<b>La protezione è già attiva.</b>'; return; }
-        p2.innerHTML = '<b>2. Collega EcoTruckConnect all\'app</b><br>Non riesco a preparare il collegamento. Chiudi e riprova tra poco.'; return;
-      }
-      var chiaveLeggibile = r.segreto.replace(/(.{4})/g, '$1 ').trim();
-      if (disp === 'computer') {
-        p2.innerHTML = '<b>2. Collega EcoTruckConnect all\'app</b><br>Apri Google Authenticator, tocca il <b>+</b>, poi <b>«Scansiona un codice QR»</b> e inquadra questo:' +
-          '<div class="qr" id="ect-qr-mfa" style="margin-top:8px"></div>' +
-          '<div style="margin-top:8px;font-size:12px;color:rgba(241,245,249,0.6)">Non riesci a inquadrarlo? Tocca «Inserisci una chiave di configurazione» e scrivi:</div><div class="chiave">' + chiaveLeggibile + '</div>';
-        disegnaQr('ect-qr-mfa', r.otpauth);
-      } else {
-        p2.innerHTML = '<b>2. Collega EcoTruckConnect all\'app</b><br>Dopo averla installata, torna qui e tocca:' +
-          '<a class="bottone" href="' + r.otpauth + '">➕ Aggiungi EcoTruckConnect all\'app</a>' +
-          '<div style="font-size:12px;color:rgba(241,245,249,0.6)">Non si apre? Nell\'app tocca <b>+</b>, poi «Inserisci una chiave di configurazione» e scrivi:</div><div class="chiave">' + chiaveLeggibile + '</div>';
-      }
-    });
-    var inp = document.getElementById('ect-att-in'), err = document.getElementById('ect-att-err'), b = document.getElementById('ect-att-ok');
-    b.onclick = async function () {
-      err.style.display = 'none';
-      var c = inp.value.replace(/\D/g, '');
-      if (c.length !== 6) { mostraErr(err, 'Scrivi i 6 numeri che vedi nell\'app.'); return; }
-      b.disabled = true; b.textContent = 'Verifica...';
-      var r = await sicurezza('mfa_conferma', { codice: c }).catch(function () { return null; });
-      b.disabled = false; b.textContent = '✅ Attiva';
-      if (r && r.ok) {
-        salvaTicket(r);
-        document.getElementById('ect-att-fatto').style.display = 'block';
-        b.style.display = 'none';
-        document.getElementById('ect-att-chiudi').textContent = 'Chiudi';
-        if (statoCorrente) statoCorrente.mfa_attivo = true;
-        aggiornaInterfaccia();
-        return;
-      }
-      inp.value = '';
-      if (r && r.errore === 'bloccato') mostraErr(err, 'Troppi codici sbagliati. Riprova tra ' + r.minuti + ' minuti.');
-      else if (r && r.errore === 'codice_errato') mostraErr(err, 'Codice sbagliato. Controlla di leggere quello accanto a EcoTruckConnect. Tentativi rimasti: ' + r.tentativi_rimasti + '.');
-      else if (r && r.errore === 'ricomincia') mostraErr(err, 'Il collegamento è scaduto: chiudi e riapri questa finestra.');
-      else if (r && r.errore === 'anteprima') mostraErr(err, '🎭 Anteprima: qui l\'utente vero attiva Google Authenticator.');
-      else mostraErr(err, 'Non riesco a verificare il codice. Riprova.');
-    };
-  }
-  window.ectApriAttivazione = apriAttivazione;
-
-  function apriDisattivazione() {
-    finestra('ect-disattiva',
-      '<h2>Disattiva Google Authenticator</h2>' +
-      '<div class="sub">Per sicurezza, scrivi il codice che vedi adesso nell\'app. Dopo, per entrare basterà la password.</div>' +
-      '<div class="campo"><input class="codice" id="ect-dis-in" inputmode="numeric" maxlength="6" placeholder="000000"></div>' +
-      '<button id="ect-dis-ok">Disattiva</button><div class="err" id="ect-dis-err"></div>' +
-      '<button class="sec" id="ect-dis-chiudi">Annulla</button>');
-    document.getElementById('ect-dis-chiudi').onclick = function () { chiudi('ect-disattiva'); };
-    document.getElementById('ect-dis-ok').onclick = async function () {
-      var err = document.getElementById('ect-dis-err'); err.style.display = 'none';
-      var c = document.getElementById('ect-dis-in').value.replace(/\D/g, '');
-      if (c.length !== 6) { mostraErr(err, 'Scrivi i 6 numeri dell\'app.'); return; }
-      var r = await sicurezza('mfa_disattiva', { codice: c }).catch(function () { return null; });
-      if (r && r.ok) { chiudi('ect-disattiva'); if (statoCorrente) statoCorrente.mfa_attivo = false; try { sessionStorage.removeItem('ect_giallo_chiuso'); } catch (e) {} aggiornaInterfaccia(); return; }
-      if (r && r.errore === 'bloccato') mostraErr(err, 'Troppi codici sbagliati. Riprova tra ' + r.minuti + ' minuti.');
-      else mostraErr(err, 'Codice sbagliato, riprova.');
-    };
-  }
-
   /* ================= STRISCE E RIQUADRI ================= */
   function contenitoreStrisce() {
     if (GESTORI) return document.body;
@@ -461,26 +253,6 @@
     stile();
     var st = statoCorrente; if (!st) return;
     var cont = contenitoreStrisce(); if (!cont) return;
-
-    // striscia gialla: Google Authenticator (consigliato)
-    var gialla = document.getElementById('ect-striscia-mfa');
-    var chiusa = false; try { chiusa = sessionStorage.getItem('ect_giallo_chiuso') === '1'; } catch (e) {}
-    if (GESTORI && !st.mfa_attivo && !chiusa) {
-      if (!gialla) {
-        gialla = document.createElement('div'); gialla.id = 'ect-striscia-mfa';
-        gialla.innerHTML = '🛡️ Attiva Google Authenticator per proteggere i tuoi dati (consigliato).' +
-          '<button class="att" type="button">Attiva ora</button><span class="x" title="Chiudi">✕</span>';
-        gialla.querySelector('.att').onclick = apriAttivazione;
-        gialla.querySelector('.x').onclick = function () { try { sessionStorage.setItem('ect_giallo_chiuso', '1'); } catch (e) {} gialla.remove(); };
-        var rossaPortale = document.getElementById('banner-pw-temp');
-        var rossaGestori = document.getElementById('ect-striscia-rossa');
-        var dopo = rossaGestori || rossaPortale;
-        if (dopo && dopo.parentNode === cont) dopo.insertAdjacentElement('afterend', gialla);
-        else cont.insertBefore(gialla, cont.firstChild);
-        var barra = document.getElementById('ect-pill');
-        if (barra && barra.parentNode === cont) gialla.insertAdjacentElement('afterend', barra);
-      }
-    } else if (gialla) gialla.remove();
 
     // striscia rossa per i gestori (nel portale c'e' gia' quella della pagina, colorata di rosso)
     if (GESTORI) {
@@ -495,33 +267,6 @@
         }
       } else if (rossa) rossa.remove();
     }
-
-    // riquadro nella sezione Sicurezza del portale
-    var sez = document.getElementById('dash-sezione-sicurezza');
-    if (sez) {
-      var blocco = document.getElementById('ect-blocco-sicurezza');
-      if (!GESTORI && !st.mfa_attivo) { if (blocco) blocco.remove(); blocco = null; }
-      else if (!blocco) {
-        blocco = document.createElement('div'); blocco.id = 'ect-blocco-sicurezza';
-        var h = sez.querySelector('h4');
-        if (h) h.insertAdjacentElement('afterend', blocco); else sez.insertBefore(blocco, sez.firstChild);
-      }
-      if (!blocco) { /* utente normale senza Authenticator: niente riquadro */ }
-      else if (st.mfa_attivo) {
-        blocco.innerHTML = '<div style="color:#4ade80;font-size:13px;font-weight:600;margin-bottom:8px;">✅ Google Authenticator attivo</div>' +
-          '<div style="color:var(--muted,#94a3b8);font-size:12px;margin-bottom:10px;">Per entrare serve anche il codice dell\'app.</div>' +
-          '<button class="btn-cap" type="button" id="ect-btn-disattiva" style="background:rgba(255,255,255,0.08);">Disattiva</button>';
-        document.getElementById('ect-btn-disattiva').onclick = apriDisattivazione;
-      } else {
-        blocco.innerHTML = '<div style="color:#fff;font-size:13px;font-weight:600;margin-bottom:6px;">🛡️ Google Authenticator (consigliato)</div>' +
-          '<div style="color:var(--muted,#94a3b8);font-size:12px;line-height:1.6;margin-bottom:10px;">Per proteggere i tuoi dati. Una volta attivato, per entrare servirà anche il codice dell\'app.</div>' +
-          '<button class="btn-cap" type="button" id="ect-btn-attiva">🛡️ Attiva ora</button>';
-        document.getElementById('ect-btn-attiva').onclick = apriAttivazione;
-      }
-    }
-
-    // Google Authenticator: NESSUNA finestra automatica. Si apre solo cliccando
-    // "Attiva ora" (striscia gialla o sezione Sicurezza).
 
     // Password temporanea: la finestra "Scegli la tua password" si apre da sola,
     // una volta per accesso (con il pulsante "Più tardi")
@@ -944,8 +689,8 @@
     var p = document.createElement('div'); p.id = 'ect-pill';
     p.innerHTML = '🔒 ' + email + ' · <span class="esci" id="ect-pill-esci">⏻ Esci</span>';
     // barretta in alto (sotto le strisce): non copre mai niente della pagina
-    var gialla = document.getElementById('ect-striscia-mfa'), rossa = document.getElementById('ect-striscia-rossa');
-    var dopo = gialla || rossa;
+    var rossa = document.getElementById('ect-striscia-rossa');
+    var dopo = rossa;
     if (dopo) dopo.insertAdjacentElement('afterend', p); else document.body.insertBefore(p, document.body.firstChild);
     document.getElementById('ect-pill-esci').onclick = esciSubito;
   }

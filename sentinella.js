@@ -1,13 +1,13 @@
-/* SENTINELLA PORTALE — segnala alla Centralina ogni azione fallita (trasportatore, azienda, registrazione, robottino, pagamenti, documenti).
+/* SENTINELLA PORTALE — segnala alla Centralina ogni azione fallita (trasportatore, azienda, registrazione, pagamenti, documenti).
    Non modifica mai le richieste: guarda soltanto l'esito e, se qualcosa non va, avvisa i gestori. */
 (function () {
   if (window.__SENTINELLA) return; window.__SENTINELLA = true;
   var HOOK = 'https://hook.eu1.make.com/sshvn9i99hbjelp5euxa9s2mxxjtjep1';
   var nativo = window.fetch.bind(window);
   var INVIATE = 0, MAX = 6, FINESTRA = 5 * 60 * 1000;
-  var SCRIVONO = /^(crea_|aggiorna_|blocca_|segna_|salva_|approva_|rifiuta|registra|rigenera|risolvi_|marca_|annulla|rinuncia|paga|chat_bot|trasportatore_approvato|azienda_approvata|password_scelta)/;
+  var SCRIVONO = /^(crea_|aggiorna_|blocca_|segna_|salva_|approva_|rifiuta|registra|rigenera|risolvi_|marca_|annulla|rinuncia|paga|trasportatore_approvato|azienda_approvata|password_scelta)/;
   var NOMI = {
-    chat_bot: 'Il robottino non ha risposto', crea_carico: 'Pubblicazione carico non riuscita', aggiorna_carico: 'Modifica carico non riuscita',
+    crea_carico: 'Pubblicazione carico non riuscita', aggiorna_carico: 'Modifica carico non riuscita',
     blocca_carico: 'Presa del carico non riuscita', check_carico: 'Verifica carico non riuscita', segna_pagamento: 'Registrazione pagamento non riuscita',
     get_utente: 'Caricamento profilo utente non riuscito', get_dashboard_data: 'Caricamento dashboard non riuscito', get_registrazioni: 'Caricamento registrazioni non riuscito',
     approva_trasportatore: 'Approvazione trasportatore non riuscita', approva_azienda: 'Approvazione azienda non riuscita', get_registro_attivita: 'Storico attivita non caricato',
@@ -17,7 +17,6 @@
   function email() { try { if (typeof emailUtente === 'function') return String(emailUtente() || ''); } catch (e) {} try { var u = window.netlifyIdentity && window.netlifyIdentity.currentUser(); return u && u.email ? u.email : ''; } catch (e) { return ''; } }
   function quadretto(azione, url) {
     var p = location.pathname + ' ' + azione + ' ' + url, r = ruolo();
-    if (/chat_bot/.test(azione)) return '15';
     if (/dashboard|registrazioni|centralina/.test(location.pathname) || r === 'gestore') return '1';
     if (/azienda/.test(r)) return '3';
     return '2';
@@ -61,7 +60,6 @@
         if (critica && r.status >= 400) { segnala(nome, 'Documenti/destinazione: errore ' + r.status, ind); return; }
         r.clone().text().then(function (t) {
           var d = null; try { d = JSON.parse(t); } catch (e) {}
-          if (azione === 'chat_bot') { if (!d || typeof d.reply !== 'string' || !d.reply.trim()) segnala(nome, 'Risposta vuota o non valida del robottino', ind); return; }
           if (!SCRIVONO.test(azione) && !critica) return;
           if (!t || !t.trim()) { segnala(nome, 'Risposta vuota dal sistema', ind); return; }
           if (!d) { if (/error|errore|exception|timeout/i.test(t.slice(0, 200))) segnala(nome, t.slice(0, 200), ind); return; }

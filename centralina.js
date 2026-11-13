@@ -35,7 +35,6 @@
     12: { i: '📜', cosa: 'Privacy, cookie e condizioni (Iubenda) sono raggiungibili dai portali.', link: 'https://www.iubenda.com/it/dashboard', lt: 'Apri Iubenda' },
     13: { i: '📁', cosa: 'Google Drive è raggiungibile (cartelle e documenti di lavoro).', link: 'https://drive.google.com/', lt: 'Apri Google Drive' },
     14: { i: '✈️', cosa: 'Il bot Telegram risponde (notifiche ai trasportatori).', link: 'https://t.me/SynAIMAX_EcoTruck_bot', lt: 'Apri il bot' },
-    15: { i: '🤖', cosa: 'Il robottino (Claude) risponde alle domande nel portale.', link: 'https://console.anthropic.com/', lt: 'Apri la console Claude' },
     16: { i: '🧾', cosa: 'Gli abbonamenti dei servizi sono attivi e non in scadenza.', link: 'dashboard.html#strumenti', lt: 'Apri Strumenti' },
     17: { i: '📣', cosa: 'Ogni carico pubblicato è stato notificato ai trasportatori su Telegram (controllo ogni 3 ore). Se no: l’operaio non può rimandarlo da solo, serve il gestore.', link: 'dashboard.html', lt: 'Apri i carichi' },
     18: { i: '⏳', cosa: 'Nessun carico resta bloccato oltre la scadenza o in pagamento da troppo tempo.', link: 'dashboard.html', lt: 'Apri i carichi' },
@@ -67,7 +66,7 @@
   /* ---------- dati ---------- */
   function ora(minFa) { return new Date(Date.now() - minFa * 60000).toISOString(); }
   function datiFinti() {
-    var nomi = ['Dashboard reale', 'Portale trasportatore', 'Portale azienda', 'Vetrina', 'Dashboard demo', 'Anteprima portali', 'Make (scenari)', 'Airtable', 'GitHub', 'Netlify', 'Shopify (pagamenti)', 'Iubenda', 'Google Drive', 'Telegram', 'Claude AI (robottino)', 'Abbonamenti'];
+    var nomi = ['Dashboard reale', 'Portale trasportatore', 'Portale azienda', 'Vetrina', 'Dashboard demo', 'Anteprima portali', 'Make (scenari)', 'Airtable', 'GitHub', 'Netlify', 'Shopify (pagamenti)', 'Iubenda', 'Google Drive', 'Telegram', '(libero)', 'Abbonamenti'];
     var alte = { 1: 1, 2: 1, 3: 1, 7: 1, 8: 1, 11: 1 };
     var q = nomi.map(function (n, k) {
       return { id: String(k + 1), nome: n, stato: 'Verde', ultimo_controllo: ora(35), dettaglio: '', ultimo_intervento: 'Nessuno', tentativi: 0, priorita: alte[k + 1] ? 'Alta (azienda/trasportatore)' : 'Media', attivo: true, _risolveAl: 0 };
@@ -99,10 +98,10 @@
       ['Portale azienda non si apriva', '3', 'Rosso', 4400, 'Riserva 1', 'L’operaio non è riuscito; la riserva ha rilanciato l’ultima pubblicazione', 'Risolto'],
       ['Shopify: pagamento non raggiungibile', '11', 'Rosso', 5800, 'Riserva 2', 'Operaio e Riserva 1 non sono riusciti; Riserva 2 ha rifatto il collegamento', 'Risolto'],
       ['Telegram: bot lento', '14', 'Giallo', 8600, 'Operaio', 'Nuovo tentativo, risponde', 'Risolto'],
-      ['Robottino senza risposta', '15', 'Rosso', 11000, 'Gestore', 'Chiave del robottino scaduta: serviva l’intervento del gestore', 'Serve tu'],
       ['Make: esecuzione fallita', '7', 'Giallo', 14500, 'Operaio', 'Rilanciata l’esecuzione fallita', 'Risolto'],
       ['Vetrina: pagina lenta', '4', 'Giallo', 18000, 'Operaio', 'Nuovo controllo, tutto regolare', 'Risolto']
     ].map(function (r) { return { titolo: r[0], quadretto: r[1], livello: r[2], quando: ora(r[3]), chi: r[4], azione: r[5], esito: r[6], segnato_risolto: r[6] === 'Risolto' }; });
+    q = q.filter(function (x) { return x.id !== '15'; });   /* 14/11: quadretto 15 (robottino) tolto */
     return { q: q, arch: a };
   }
 
@@ -128,10 +127,11 @@
         var piatto = function (r) { var f = (r && r.fields) || {}; f._rec = r && r.id; return f; };
         stato.q = (j.centr || []).map(piatto).map(function (f) {
           return { id: String(f.id_quadretto), nome: f.nome || ('Quadretto ' + f.id_quadretto), stato: f.stato || 'Grigio', ultimo_controllo: f.ultimo_controllo || '', dettaglio: f.dettaglio || '', ultimo_intervento: f.ultimo_intervento || 'Nessuno', tentativi: Number(f.tentativi) || 0, priorita: f.priorita || '', attivo: !!f.attivo };
-        }).sort(function (a, b) { return Number(a.id) - Number(b.id); });
+        }).filter(function (x) { return x.id !== '15'; }).sort(function (a, b) { return Number(a.id) - Number(b.id); });
         stato.arch = (j.arch || []).map(piatto).map(function (f) {
           return { titolo: f.titolo || '', quadretto: String(f.quadretto || ''), livello: f.livello || 'Giallo', quando: f.quando || '', chi: f.chi || '', azione: f.azione || '', esito: f.esito || '', segnato_risolto: !!f.segnato_risolto };
         });
+        stato.arch = stato.arch.filter(function (x) { return x.quadretto !== '15'; });
         stato.collegata = true; stato.errore = ''; stato.agg = new Date().toISOString();
       })
       .catch(function (e) { stato.errore = String(e && e.message || e); stato.collegata = false; })

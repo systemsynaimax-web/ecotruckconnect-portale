@@ -1,5 +1,5 @@
 /* Popup "Scrivi email" per i gestori: scrive a un trasportatore/azienda, con allegato (max 3 MB).
-   Parte solo con login gestore + Google Authenticator (verificato su Make). Copia nascosta a system.synaimax@gmail.com. */
+   Parte solo con login gestore. Copia nascosta a system.synaimax@gmail.com. */
 (function () {
   var HOOK = 'https://hook.eu1.make.com/aam5pr2wknuyb66mvbisryk5bxgthlkd';
   var MAX = 3 * 1024 * 1024;
@@ -43,14 +43,13 @@
         var corpo = { destinatario: a, oggetto: o, testo: t };
         if (f) { corpo.allegato_nome = f.name; corpo.allegato_base64 = await leggiFile(f); }
         try { if (window.ectTokenAccesso) { var tk = await window.ectTokenAccesso(); if (tk) corpo.token = tk; } } catch (e) {}
-        try { var tt = JSON.parse(localStorage.getItem('ect_mfa_ticket') || 'null'); if (tt && tt.dati) { corpo.ticket_dati = tt.dati; corpo.ticket_firma = tt.firma; } } catch (e) {}
         var r = await fetch(HOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
         var d = {}; try { d = await r.json(); } catch (e) {}
         if (r.ok && d.esito === 'inviata') {
           msg.style.color = '#4ade80'; msg.textContent = '✅ Email inviata a ' + a + (f ? ' con l\'allegato ' + f.name : '') + '.';
           btn.textContent = 'Inviata'; setTimeout(chiudi, 2500);
         } else {
-          msg.style.color = '#f87171'; msg.textContent = r.status === 401 ? '⛔ Non autorizzato: rifai il login con Google Authenticator.' : '⚠️ Email NON inviata (errore ' + r.status + '). Riprova.';
+          msg.style.color = '#f87171'; msg.textContent = r.status === 401 ? '⛔ Non autorizzato: rifai il login.' : '⚠️ Email NON inviata (errore ' + r.status + '). Riprova.';
           btn.disabled = false; btn.textContent = '✉️ Riprova';
         }
       } catch (e) {
