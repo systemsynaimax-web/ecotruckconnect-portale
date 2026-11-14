@@ -27,3 +27,11 @@ Ordini di Gerlando. Valgono per tutti i progetti, EcoTruckConnect compreso.
 ## 5. Dove vanno scritte
 - Questo file va inserito nelle istruzioni del progetto EcoTruckConnect.
 - Da ora lavoriamo su un solo progetto: EcoTruckConnect.
+
+## 6. Smistamento EcoTruckConnect su info@synaimaxpro.com (14 novembre 2026)
+Struttura etichette Gmail: info@synaimaxpro.com/EcoTruckConnect/{Aziende, Trasportatori, Portale e Make, Strumenti/<strumento>}.
+Sottoetichette Strumenti: Make, Iubenda, Claude, Shopify, Airtable, Telegram, WhatsApp, Gamma, ElevenLabs, Netlify, GitHub (e altri abbonamenti EcoTruckConnect quando compaiono).
+- Ogni mail Make (errori, avvisi, pagamenti) va in Strumenti/Make, oltre a PROBLEMA DA RISOLVERE / PROBLEMA RISOLTO (le etichette di stato non si tolgono).
+- Mail di aziende -> Aziende; di trasportatori -> Trasportatori; portale/scenari -> Portale e Make; ogni strumento -> la sua sottoetichetta.
+- Al controllo delle 7:45 (sentinella) le mail EcoTruckConnect arrivate su info@ vengono spostate da sole in queste etichette.
+- Altre regole fissate oggi: solo due etichette di stato (DA RISOLVERE rossa, RISOLTO verde); mail gestite sempre LETTE; pagamenti falliti e fatture: si chiede a Gerlando (le fatture non si cestinano); le cose risolte restano in RISOLTO, non si cestinano; registrazioni piattaforme -> "Registrazioni piattaforme"; prove -> "EcoTruckConnect (prove)"; ogni aggiornamento finito va nel registro Drive e in Google Calendar.
