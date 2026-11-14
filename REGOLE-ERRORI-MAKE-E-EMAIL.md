@@ -35,3 +35,11 @@ Sottoetichette Strumenti: Make, Iubenda, Claude, Shopify, Airtable, Telegram, Wh
 - Mail di aziende -> Aziende; di trasportatori -> Trasportatori; portale/scenari -> Portale e Make; ogni strumento -> la sua sottoetichetta.
 - Al controllo delle 7:45 (sentinella) le mail EcoTruckConnect arrivate su info@ vengono spostate da sole in queste etichette.
 - Altre regole fissate oggi: solo due etichette di stato (DA RISOLVERE rossa, RISOLTO verde); mail gestite sempre LETTE; pagamenti falliti e fatture: si chiede a Gerlando (le fatture non si cestinano); le cose risolte restano in RISOLTO, non si cestinano; registrazioni piattaforme -> "Registrazioni piattaforme"; prove -> "EcoTruckConnect (prove)"; ogni aggiornamento finito va nel registro Drive e in Google Calendar.
+
+## 7. Cartella Strumenti/Make: cosa ci sta e cosa no (14 novembre 2026)
+- In Strumenti/Make restano SOLO gli avvisi veri di Make: errori, avvisi, scenari fermati, crediti auto-acquistati.
+- Le FATTURE Celonis/Make vanno SOLO nell'etichetta del mese (Fatture NOVEMBRE, OTTOBRE...) e in Archivio fatture quando il mese è archiviato. Mai in Strumenti/Make.
+- I PAGAMENTI NON RIUSCITI vanno in "Archivio fatture/Pagamento non partito" + PROBLEMA DA RISOLVERE o RISOLTO. Non in Strumenti/Make.
+- Le NEWSLETTER/promo di Make (info@make.com) si cestinano.
+- Gli avvisi di scenari EcoTruckConnect/Centralina vanno anche in Portale e Make. Se lo scenario è spento di proposito, l'avviso va in PROBLEMA RISOLTO con la spiegazione.
+- Ogni mattina: controllo stato reale dello scenario su Make prima di decidere RISOLTO o DA RISOLVERE. Mai lasciare mail in grassetto (non lette).
