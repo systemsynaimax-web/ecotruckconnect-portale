@@ -848,6 +848,7 @@ let tuttiCarichi = [];
 let meseVisualizzato = new Date();
 
 async function caricaDashboard() {
+  const _altre = Promise.all([caricaNotificheRegistrazioni(), caricaAnagraficaCompleta()]);
   try {
     const res = await fetch(PROXY_WEBHOOK, {
       method: 'POST',
@@ -867,7 +868,7 @@ async function caricaDashboard() {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     const boxErr = document.getElementById('st-lista') || document.getElementById('feed-list'); if (boxErr) boxErr.innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
   }
-  await Promise.all([caricaNotificheRegistrazioni(), caricaAnagraficaCompleta()]);
+  await _altre;
 }
 
 let registrazioniReali = [];
