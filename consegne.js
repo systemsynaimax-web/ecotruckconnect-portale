@@ -250,7 +250,7 @@
   } else {
     var origD = window.caricaDashboard;
     if (typeof origD === 'function') {
-      window.caricaDashboard = async function () { var r = await origD.apply(this, arguments); try { disegnaGestori(); } catch (e) { console.error('consegne:', e); } return r; };
+      window.caricaDashboard = async function () { var r = await origD.apply(this, arguments); try { if (window.__ectManuale) await leggiConsegne(); disegnaGestori(); } catch (e) { console.error('consegne:', e); } return r; };
     }
     var ultimaLettura = 0;
     async function leggiConsegne() {
@@ -271,9 +271,9 @@
         });
       } catch (e) {}
     }
+    /* Solo manuale: la lettura da Make parte SOLO da caricaDashboard (apertura pagina / "Aggiorna ora"). Nessun timer. */
     var firma = '';
     setInterval(function () {
-      if (Date.now() - ultimaLettura > 30000) leggiConsegne();
       try {
         if (typeof tuttiCarichi === 'undefined' || !document.getElementById('storico-sezione')) return;
         var f = tuttiCarichi.map(function (c) { return c.id + '|' + c.fields.stato + '|' + (c.fields.data_consegnato || '') + '|' + (c.fields.data_verificato || ''); }).join(';');
