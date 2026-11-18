@@ -19,6 +19,7 @@
   /* ---------- stile ---------- */
   var css = '' +
     '@keyframes ecLamp{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(239,68,68,.75)}50%{opacity:.35;box-shadow:0 0 0 7px rgba(239,68,68,0)}}' +
+    '.ec-ban{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:0 0 12px;padding:12px 14px;border:1px solid rgba(239,68,68,.5);background:rgba(239,68,68,.1);border-radius:12px;font-size:14px;font-weight:600;text-align:left}.ec-ban button{background:#ef4444;color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}' +
     '.ec-blk{margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:6px}' +
     '.ec-r{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:8px 0}' +
     '.ec-r+.ec-r{border-top:1px solid rgba(255,255,255,.06)}' +
@@ -179,6 +180,32 @@
     } catch (e) {}
     return n;
   }
+  /* avviso fuori dall'elenco (l'elenco nasconde le righe fuori filtro): "Hai N da confermare non visibili" */
+  function avviso() {
+    if (GESTORI) return;
+    var body = document.getElementById('cp-body'); if (!body) return;
+    var old = document.getElementById('ec-ban-presi');
+    var n = 0;
+    try {
+      var lista = cpLista().lista, az = ruoloMio() === 'azienda';
+      body.querySelectorAll('.cp-card').forEach(function (card, i) {
+        var c = lista[i]; if (!c || !card.classList.contains('ms-off')) return;
+        var f = c.fields; if (String(f.stato || '').toUpperCase() !== 'PRESO') return;
+        if (az ? !f.data_verificato : !f.data_consegnato) n++;
+      });
+    } catch (e) {}
+    if (!n) { if (old) old.remove(); return; }
+    var az2 = ruoloMio() === 'azienda';
+    var txt = '\ud83d\udea6 Hai ' + n + (az2 ? (n === 1 ? ' trasporto da verificare' : ' trasporti da verificare') : (n === 1 ? ' consegna da confermare' : ' consegne da confermare')) + ' non visibil' + (n === 1 ? 'e' : 'i') + ' con questo filtro';
+    if (!old) {
+      old = document.createElement('div'); old.id = 'ec-ban-presi'; old.className = 'ec-ban';
+      old.innerHTML = '<span></span><button type="button">Mostra tutti</button>';
+      old.querySelector('button').onclick = function () { var ch = document.querySelector('#ms-pg-presi [data-m="tutto"]'); if (ch) ch.click(); setTimeout(avviso, 100); };
+      var bar = document.getElementById('ms-pg-presi');
+      (bar || body).parentNode.insertBefore(old, bar || body);
+    }
+    old.firstChild.textContent = txt;
+  }
   function aggiornaPallino() {
     if (GESTORI) return;
     var voce = document.querySelector('#ms-voci button[data-v="presi"]'); if (!voce) return;
@@ -219,7 +246,7 @@
     if (typeof orig === 'function') {
       window.renderCarichiPresi = function () { var r = orig.apply(this, arguments); try { inietta(); } catch (e) { console.error('consegne:', e); } aggiornaPallino(); return r; };
     }
-    setInterval(aggiornaPallino, 1500);
+    setInterval(function () { aggiornaPallino(); avviso(); }, 1500);
   } else {
     var origD = window.caricaDashboard;
     if (typeof origD === 'function') {
