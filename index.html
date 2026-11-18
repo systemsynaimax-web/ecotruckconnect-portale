@@ -278,10 +278,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:
 .notif-bell-btn{position:relative;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
 .notif-bell-btn:hover{background:rgba(255,255,255,0.12);}
 .notif-bell-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
-.notif-bell-panel{display:none;position:absolute;top:120%;right:0;width:360px;max-height:440px;overflow-y:auto;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px;z-index:400;box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+.notif-bell-panel{display:none;position:absolute;top:120%;right:0;width:360px;max-height:440px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;background:#12161f;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px;z-index:400;box-shadow:0 20px 50px rgba(0,0,0,0.5);}
 .notif-bell-panel.open{display:block;}
 .notif-bell-head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 10px;border-bottom:1px solid var(--border);margin-bottom:8px;gap:8px;}
-.notif-bell-item{padding:10px;border-radius:8px;font-size:12px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.05);}
+.notif-bell-item{padding:10px;border-radius:8px;font-size:12px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.05);overflow-wrap:anywhere;text-align:left;}
+.notif-bell-item .nb-azioni{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+.notif-bell-item .nb-btn{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .notif-bell-item:last-child{border-bottom:none;}
 .notif-bell-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
 .notif-cliccabile{cursor:pointer;transition:background 0.15s;}
@@ -2595,9 +2597,9 @@ function renderCampanellino() {
       <div style="color:var(--muted);margin-bottom:6px;">${km ? '🛣️ ' + km + ' · ' : ''}📅 ${dataCarico} · ${escAttr(merceTesto(f))}</div>
       ${requisitiHTML(f, 11)}
       <div style="margin-bottom:8px;font-size:12px;">${riga}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div class="nb-azioni">
         <span style="font-weight:800;color:var(--green);font-size:14px;">${f.importo_pattuito ? euroIva(f.importo_pattuito) : ''}</span>
-        ${preso ? `<span style="display:flex;gap:6px;align-items:center;">
+        ${preso ? `<span class="nb-btn">
           ${f.assegnato_a_telefono ? `<a class="btn-cap" href="tel:${String(f.assegnato_a_telefono).replace(/[^\d+]/g,'')}" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">📞 Chiama</a>
           <a class="btn-cap" href="https://wa.me/${cpWaNum(f.assegnato_a_telefono)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:11px;text-decoration:none;">💬 WhatsApp</a>` : ''}
           <button class="btn-cap" style="padding:4px 12px;font-size:12px;" onclick="event.stopPropagation();${apri}">Vedi ›</button>
