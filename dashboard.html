@@ -867,8 +867,7 @@ async function caricaDashboard() {
     console.error('Errore caricamento dashboard (normale se Make è spento):', e);
     const boxErr = document.getElementById('st-lista') || document.getElementById('feed-list'); if (boxErr) boxErr.innerHTML = '<div class="feed-empty">⚠️ Non riesco a caricare i dati — probabile che Make sia spento in questo momento. Si aggiorna da solo appena riparte.</div>';
   }
-  await caricaNotificheRegistrazioni();
-  await caricaAnagraficaCompleta();
+  await Promise.all([caricaNotificheRegistrazioni(), caricaAnagraficaCompleta()]);
 }
 
 let registrazioniReali = [];

@@ -250,18 +250,22 @@
   } else {
     var origD = window.caricaDashboard;
     if (typeof origD === 'function') {
-      window.caricaDashboard = async function () { var r = await origD.apply(this, arguments); try { if (window.__ectManuale) await leggiConsegne(); disegnaGestori(); } catch (e) { console.error('consegne:', e); } return r; };
+      window.caricaDashboard = async function () { var pc = window.__ectManuale ? scaricaConsegne() : null; var r = await origD.apply(this, arguments); try { if (pc) applicaConsegne(await pc); disegnaGestori(); } catch (e) { console.error('consegne:', e); } return r; };
     }
     var ultimaLettura = 0;
-    async function leggiConsegne() {
+    async function scaricaConsegne() {
       try {
-        if (typeof tuttiCarichi === 'undefined' || !tuttiCarichi.some(function (c) { return /^rec[A-Za-z0-9]{14}$/.test(c.id); })) return;
         ultimaLettura = Date.now();
         var tok = (typeof window.ectTokenAccesso === 'function') ? await window.ectTokenAccesso() : null;
-        if (!tok) return;
+        if (!tok) return null;
         var r = await fetch(HOOK_CONSEGNE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_consegne_gestori', token: tok }) });
         var d = await r.json().catch(function () { return null; });
-        if (!d || !Array.isArray(d.consegne)) return;
+        return (d && Array.isArray(d.consegne)) ? d : null;
+      } catch (e) { return null; }
+    }
+    function applicaConsegne(d) {
+      try {
+        if (!d || typeof tuttiCarichi === 'undefined') return;
         var m = {}; d.consegne.forEach(function (x) { m[x.id] = x; });
         tuttiCarichi.forEach(function (c) {
           var x = m[c.id]; if (!x) return;
