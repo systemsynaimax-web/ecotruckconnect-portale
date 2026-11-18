@@ -498,7 +498,7 @@
   function agganciaCaricamento() {
     var orig = window.caricaAnagraficaCompleta;
     if (typeof orig === 'function' && !orig.__arc) {
-      var nuova = async function () { var r = await orig.apply(this, arguments); try { await aggiorna(); } catch (e) { console.error('Archivio:', e); } return r; };
+      var nuova = async function () { ORA = new Date(); var pr = caricaRegistro(); var r = await orig.apply(this, arguments); try { await pr; costruisci(); PRONTO = true; renderTutto(); } catch (e) { console.error('Archivio:', e); } return r; };
       nuova.__arc = true; window.caricaAnagraficaCompleta = nuova;
     }
     if (prendiUtenti('t').length || prendiUtenti('a').length) aggiorna();
