@@ -704,6 +704,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
       <div id="dash-sezione-report" style="display:none;margin-top:18px;">
         <h4 style="color:#fff;font-family:var(--font-h);margin-bottom:14px;">📈 I miei report</h4>
         <div class="cards" id="report-cards" style="margin-bottom:10px;"></div>
+        <div class="agg-riga" style="display:flex;align-items:center;gap:10px;margin:6px 0 0;flex-wrap:wrap;"><button type="button" class="btn-cap agg-btn" onclick="aggiornaManuale(this)" style="padding:6px 14px;font-size:13px;">🔄 Aggiorna</button><span class="agg-ora" id="report-ora" style="font-size:12px;color:var(--muted);"></span></div>
         <div style="color:var(--muted);font-size:12px;margin-top:6px;">Calcolato sui dati già caricati in questa sessione. Dettaglio tratte/tempi/distanze: 🔜 in arrivo.</div>
       </div>
       <div id="dash-sezione-notifiche" style="display:none;margin-top:18px;">
@@ -2001,12 +2002,16 @@ function aggiornaDashReport() {
     const totale = tutti.length;
     const presi = tutti.filter(c => (c.fields.stato || '').toUpperCase() === 'PRESO').length;
     const disponibili = tutti.filter(c => (c.fields.stato || '').toUpperCase() === 'DISPONIBILE').length;
+    const annullati = tutti.filter(c => { const s = (c.fields.stato || '').toUpperCase(); return s === 'ANNULLATO' || s === 'RIMBORSATO'; }).length;
     const percPresi = totale ? Math.round((presi / totale) * 100) : 0;
     el.innerHTML = `
-      <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Pubblicazioni totali</h3><div class="card-num">${totale}</div></div>
+      <div class="card" style="cursor:default;"><div class="card-icon">📦</div><h3>Pubblicazioni totali</h3><div class="card-num">${totale}</div><div class="card-sub">comprese le annullate</div></div>
       <div class="card" style="cursor:default;"><div class="card-icon">✅</div><h3>Carichi presi</h3><div class="card-num green">${presi}</div><div class="card-sub">${percPresi}% del totale</div></div>
       <div class="card" style="cursor:default;"><div class="card-icon">⏳</div><h3>Ancora disponibili</h3><div class="card-num">${disponibili}</div></div>
+      <div class="card" style="cursor:default;"><div class="card-icon">✖️</div><h3>Annullati</h3><div class="card-num">${annullati}</div></div>
     `;
+    const nota = document.getElementById('report-ora');
+    if (nota) nota.textContent = aggDataOra();
     return;
   }
 
@@ -2041,12 +2046,17 @@ async function aggiornaDashFatture() {
         body: JSON.stringify({ action: 'get_carichi_pubblicati_azienda', email: currentUser.email })
       });
       const data = await res.json();
+      if (!res.ok || !data || data.ok === false || data.errore) throw new Error('lettura_non_riuscita');
       carichiPubblicatiAzienda = (data.carichi || []).map(r => ({ id: r.id, fields: r.fields || r }));
     } catch (e) {
-      carichiPubblicatiAzienda = [];
+      // 19/11: se la lettura non riesce tengo i dati che ho gia' (prima li svuotavo e le pagine restavano vuote)
+      renderTabelleFatture();
+      return false;
     }
   }
   renderTabelleFatture();
+  try { aggiornaDashReport(); } catch (e) {}
+  return true;
 }
 
 async function rigeneraPassword() {
@@ -2544,9 +2554,11 @@ function toggleCampanellino() {
 async function aggiornaCampanellino(manuale) {
   if (tipoUtente === 'trasportatore') { return await aggiornaCarichiTrasportatore(); }
   if (tipoUtente !== 'azienda') return;
-  if (!modalitaAnteprimaAttiva) await aggiornaDashFatture();
+  let esito = true;
+  if (!modalitaAnteprimaAttiva) esito = await aggiornaDashFatture();
   else renderCampanellino();
   if (manuale) aggiornaStatsAzienda();
+  return esito;
 }
 
 function renderCampanellino() {
@@ -4460,10 +4472,10 @@ async function aggClick(btn, fn) {
 }
 
 async function aggiornaAziendaTutto() {
-  await aggiornaCampanellino(true);              // ricarica i carichi pubblicati + statistiche
+  const esito = await aggiornaCampanellino(true);   // ricarica i carichi pubblicati + statistiche
   try { renderReportTrasportatori(); } catch (e) {}
   try { if (typeof window.ectProssimoGiro === 'function') window.ectProssimoGiro(); } catch (e) {}
-  return true;
+  return esito !== false;
 }
 
 function aggiornaPerTipo() {

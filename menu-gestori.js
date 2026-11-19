@@ -291,7 +291,9 @@
     misuraTop(); window.addEventListener('resize', misuraTop); window.addEventListener('scroll', misuraTop, { passive: true });
     var h = (location.hash || '').slice(1);
     if (!h) { try { h = localStorage.getItem('ect_ultima_pagina_gest') || ''; } catch (e) {} }
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
     vai(PAG[h] && gruppi[h] ? h : 'home');
+    [60, 400, 1200].forEach(function (ms) { setTimeout(function () { if (window.scrollY > 0 && !document.activeElement.matches('input,textarea,select')) window.scrollTo(0, 0); }, ms); });
     window.ectMenuGestori = { vai: vai, pagine: PAG, gruppi: gruppi };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();

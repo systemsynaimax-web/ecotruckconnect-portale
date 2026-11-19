@@ -1237,8 +1237,10 @@
         var btn = document.querySelector('button[onclick*="aggiornaCampanellino(true)"]');
         var t0 = btn ? btn.innerHTML : '';
         if (manuale && btn) { btn.disabled = true; btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno…'; }
-        try { await orig.apply(this, arguments); } catch (e) {}
-        if (manuale && btn) { await attendi(350); btn.innerHTML = '✅ Aggiornato'; setTimeout(function () { btn.disabled = false; btn.innerHTML = t0 || '🔄 Aggiorna ora'; }, 1200); }
+        var esito;
+        try { esito = await orig.apply(this, arguments); } catch (e) { esito = false; }
+        if (manuale && btn) { await attendi(350); btn.innerHTML = (esito === false) ? '⚠️ Riprova' : '✅ Aggiornato'; setTimeout(function () { btn.disabled = false; btn.innerHTML = t0 || '🔄 Aggiorna ora'; }, 1200); }
+        return esito;
       };
     }
   }
