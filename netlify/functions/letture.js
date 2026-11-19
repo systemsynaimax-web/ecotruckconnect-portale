@@ -125,6 +125,12 @@ exports.handler = async (event, context) => {
       return risposta(200, { ok: true, dati: { carichi: carichi } });
     }
 
+    // ---------- controllo accesso gestori (era "whoami" su Make, 4 crediti a ogni apertura di pagina) ----------
+    if (azione === 'whoami') {
+      const am = chi.app_metadata || {};
+      return risposta(200, { ok: true, dati: { email: email, gestore: gestore, mfa_attivo: am.mfa_attivo === true } });
+    }
+
     // ---------- chi e' l'utente (trasportatore o azienda) ----------
     if (azione === 'get_utente') {
       const fe = "LOWER(TRIM({email}))=\"" + testoFormula(email) + "\"";

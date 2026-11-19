@@ -159,7 +159,7 @@
      la richiesta prosegue come prima verso Make (ritorno automatico). */
   var LETTURE_FN = ['get_utente', 'get_carichi_pubblicati_azienda', 'get_candidature_trasportatore',
                     'conta_trasportatori_compatibili', 'get_dashboard_data', 'get_scadenze',
-                    'get_utenti_da_verificare', 'get_anagrafica_completa', 'get_registro_attivita'];
+                    'get_utenti_da_verificare', 'get_anagrafica_completa', 'get_registro_attivita', 'whoami'];
   var HOOK_CARICHI_DISPONIBILI = 'bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm';
   var FUNZIONE_LETTURE = '/.netlify/functions/letture';
   async function leggiDaNetlify(azione, forza) {
