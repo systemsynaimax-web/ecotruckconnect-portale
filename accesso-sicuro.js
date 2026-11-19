@@ -152,6 +152,35 @@
   }
 
   /* ================= PASS AUTOMATICO SU OGNI RICHIESTA ================= */
+  /* 19/11/2026 — LETTURE SENZA MAKE (zero crediti).
+     Le letture del portale (carichi disponibili, chi sono, carichi dell'azienda, carichi presi,
+     contatore, dati dashboard) le fa la funzione Netlify "letture" direttamente su Airtable.
+     Risponde con la stessa forma di dati di Make. Se la funzione non risponde o da' errore,
+     la richiesta prosegue come prima verso Make (ritorno automatico). */
+  var LETTURE_FN = ['get_utente', 'get_carichi_pubblicati_azienda', 'get_candidature_trasportatore',
+                    'conta_trasportatori_compatibili', 'get_dashboard_data', 'get_scadenze'];
+  var HOOK_CARICHI_DISPONIBILI = 'bbs0sa06xwkhxh5vd3ghyp7ss4rkjepm';
+  var FUNZIONE_LETTURE = '/.netlify/functions/letture';
+  async function leggiDaNetlify(azione, forza) {
+    try {
+      var tok = await tokenAccesso();
+      if (!tok) return null;
+      var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var timer = ac ? setTimeout(function () { try { ac.abort(); } catch (e) {} }, 12000) : null;
+      var r = await fetchOriginale(FUNZIONE_LETTURE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+        body: JSON.stringify({ azione: azione, forza: forza === true }),
+        signal: ac ? ac.signal : undefined
+      });
+      if (timer) clearTimeout(timer);
+      if (!r.ok) return null;
+      var d = await r.json();
+      if (!d || d.ok !== true || !d.dati) return null;
+      return new Response(JSON.stringify(d.dati), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    } catch (e) { return null; }
+  }
+
   window.fetch = async function (url, opts) {
     try {
       var indirizzo = typeof url === 'string' ? url : ((url && url.url) || '');
@@ -160,6 +189,14 @@
         opts = Object.assign({}, opts || {});
         var corpo = {};
         if (typeof opts.body === 'string' && opts.body) { try { corpo = JSON.parse(opts.body); } catch (e) { corpo = {}; } }
+        /* lettura via funzione Netlify (0 crediti Make) */
+        var azioneLettura = '';
+        if (indirizzo.indexOf(HOOK_CARICHI_DISPONIBILI) !== -1) azioneLettura = 'carichi_disponibili';
+        else if (indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1 && LETTURE_FN.indexOf(corpo.action) !== -1) azioneLettura = corpo.action;
+        if (azioneLettura) {
+          var viaNetlify = await leggiDaNetlify(azioneLettura, corpo.forza === true);
+          if (viaNetlify) return viaNetlify;
+        }
         if (AZIONI_LISTE.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_LISTE;
         if (AZIONI_PAGAMENTO.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_AZIONI;
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
