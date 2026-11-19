@@ -16,6 +16,9 @@
 //   SOLO GESTORI:
 //   { azione: "get_dashboard_data" }               -> { ok, dati: { carichi: [...] } }   (fino a 1000 carichi)
 //   { azione: "get_scadenze" }                     -> { ok, dati: { scadenze: [...] } }
+//   { azione: "get_utenti_da_verificare" }         -> { ok, dati: { trasportatori: [...], aziende: [...] } }
+//   { azione: "get_anagrafica_completa" }          -> { ok, dati: { trasportatori: [...], aziende: [...] } }
+//   { azione: "get_registro_attivita" }            -> { ok, dati: { attivita: [...] } }
 //
 // L'utente e' SEMPRE quello del token (l'email mandata dal browser non conta).
 // Se questa funzione non risponde, il portale torna da solo alle letture via Make.
@@ -26,6 +29,7 @@ const T_CARICHI = 'tblZ7NoiUBJsi1ZSK';
 const T_TRASP = 'tblrn6u8TOshdviwo';
 const T_AZ = 'tblVSe1R3ayWgNDy9';
 const T_SCAD = 'tblzYbLC0ky9YkXNk';
+const T_REGISTRO = 'tbleTTKVwdEEEOkaC';
 const VISTA_DISPONIBILI = 'viwhtwFMNgPjGxlwN';
 const VISTA_STORICO = 'viwK5MGtGp80hrCP0';
 const EMAIL_GESTORI = ['system.synaimax@gmail.com'];
@@ -150,6 +154,33 @@ exports.handler = async (event, context) => {
       const rec = await conMemoria('compatibili', DURATA_MS.disponibili, forza, () =>
         airtable(T_TRASP, { formula: '{stato}="Approvato"', maxRecords: 100, campi: ['tipo_camion', 'autorizzazioni'] }));
       return risposta(200, { ok: true, dati: { trasportatori: rec } });
+    }
+
+    // ---------- SOLO GESTORI: elenchi della dashboard (stessa forma dello scenario Make) ----------
+    if (azione === 'get_utenti_da_verificare' || azione === 'get_anagrafica_completa' || azione === 'get_registro_attivita') {
+      if (!gestore) return risposta(403, { ok: false, errore: 'solo_gestori' });
+      if (azione === 'get_utenti_da_verificare') {
+        const d = await conMemoria('da_verificare', DURATA_MS.dashboard, forza, async () => {
+          const [tr, az] = await Promise.all([
+            airtable(T_TRASP, { formula: '{stato}="Da Verificare"', maxRecords: 50 }),
+            airtable(T_AZ, { formula: '{stato}="Da Verificare"', maxRecords: 50 })
+          ]);
+          return { trasportatori: tr, aziende: az };
+        });
+        return risposta(200, { ok: true, dati: d });
+      }
+      if (azione === 'get_anagrafica_completa') {
+        const d = await conMemoria('anagrafica', DURATA_MS.dashboard, forza, async () => {
+          const [tr, az] = await Promise.all([
+            airtable(T_TRASP, { maxRecords: 500 }),
+            airtable(T_AZ, { maxRecords: 500 })
+          ]);
+          return { trasportatori: tr, aziende: az };
+        });
+        return risposta(200, { ok: true, dati: d });
+      }
+      const att = await conMemoria('registro', DURATA_MS.dashboard, forza, () => airtable(T_REGISTRO, { maxRecords: 200 }));
+      return risposta(200, { ok: true, dati: { attivita: att } });
     }
 
     // ---------- SOLO GESTORI ----------
