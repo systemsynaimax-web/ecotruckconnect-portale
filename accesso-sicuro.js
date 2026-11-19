@@ -116,6 +116,40 @@
     try { if (u.token && u.token.access_token) return u.token.access_token; } catch (e) {}
     return null;
   }
+  /* token di riserva: un'altra scheda aperta puo' aver gia' rinnovato la sessione (salvata nel browser) */
+  function tokenDaMemoria() {
+    try {
+      var g = JSON.parse(localStorage.getItem('gotrue.user') || 'null');
+      var t = g && g.token && g.token.access_token;
+      if (!t) return null;
+      var exp = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp;
+      return (exp * 1000 > Date.now() + 15000) ? t : null;
+    } catch (e) { return null; }
+  }
+  async function tokenValido() {
+    var t = await tokenAccesso();
+    if (t) return t;
+    t = tokenDaMemoria();
+    if (t) return t;
+    try { if (window.netlifyIdentity && netlifyIdentity.refresh) { t = await netlifyIdentity.refresh(); if (t) return t; } } catch (e) {}
+    return tokenDaMemoria();
+  }
+  /* sessione scaduta: avviso chiaro invece di pagine vuote e richieste a Make che consumano crediti */
+  function avvisoSessioneScaduta() {
+    try {
+      if (document.getElementById('ect-sessione-scaduta')) return;
+      var d = document.createElement('div');
+      d.id = 'ect-sessione-scaduta';
+      d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483600;background:#b45309;color:#fff;padding:12px 16px;font:600 14px system-ui,sans-serif;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center;';
+      d.innerHTML = '<span>🔒 Sessione scaduta: i dati non si aggiornano finché non rientri.</span>';
+      var b = document.createElement('button');
+      b.textContent = 'Rientra';
+      b.style.cssText = 'background:#fff;color:#92400e;border:none;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;width:auto;margin:0;';
+      b.onclick = function () { try { if (window.netlifyIdentity) netlifyIdentity.logout(); } catch (e) {} setTimeout(function () { location.reload(); }, 400); };
+      d.appendChild(b);
+      (document.body || document.documentElement).appendChild(d);
+    } catch (e) {}
+  }
   window.ectTokenAccesso = tokenAccesso;
 
   /* (Authenticator tolto il 14/11/2026: nessun codice dell'app, nessun ticket) */
@@ -164,8 +198,8 @@
   var FUNZIONE_LETTURE = '/.netlify/functions/letture';
   async function leggiDaNetlify(azione, forza) {
     try {
-      var tok = await tokenAccesso();
-      if (!tok) return null;
+      var tok = await tokenValido();
+      if (!tok) return 'NO_SESSIONE';
       var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var timer = ac ? setTimeout(function () { try { ac.abort(); } catch (e) {} }, 12000) : null;
       var r = await fetchOriginale(FUNZIONE_LETTURE, {
@@ -175,6 +209,7 @@
         signal: ac ? ac.signal : undefined
       });
       if (timer) clearTimeout(timer);
+      if (r.status === 401) return 'NO_SESSIONE';
       if (!r.ok) return null;
       var d = await r.json();
       if (!d || d.ok !== true || !d.dati) return null;
@@ -196,13 +231,21 @@
         else if (indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1 && LETTURE_FN.indexOf(corpo.action) !== -1) azioneLettura = corpo.action;
         if (azioneLettura) {
           var viaNetlify = await leggiDaNetlify(azioneLettura, corpo.forza === true);
+          if (viaNetlify === 'NO_SESSIONE') {
+            avvisoSessioneScaduta();
+            return new Response(JSON.stringify({ ok: false, errore: 'sessione_scaduta' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          }
           if (viaNetlify) return viaNetlify;
         }
         if (AZIONI_LISTE.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_LISTE;
         if (AZIONI_PAGAMENTO.indexOf(corpo.action) !== -1 && indirizzo.indexOf('n78xlbwx6483qv9v0eamw5th3sq20qak') !== -1) url = PROXY_AZIONI;
         if (AZIONI_PUBBLICHE.indexOf(corpo.action) === -1) {
-          var tok = await tokenAccesso();
+          var tok = await tokenValido();
           if (tok) corpo.token = tok;
+          else {
+            avvisoSessioneScaduta();
+            return new Response(JSON.stringify({ ok: false, errore: 'sessione_scaduta' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          }
         }
         opts.method = 'POST';
         opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
