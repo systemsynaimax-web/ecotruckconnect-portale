@@ -422,7 +422,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
       <div id="st-scelto"></div>
       <span style="flex:1;"></span>
-      <button class="st-btn" onclick="aggiornaOra()">🔄 Aggiorna</button>
+      <button class="st-btn" onclick="aggiornaOra(this)">🔄 Aggiorna</button>
       <button class="st-btn" onclick="stStampa()">🖨️ Stampa</button>
       <button class="st-btn" onclick="stCSV()">⬇️ CSV</button>
     </div>
@@ -2090,15 +2090,18 @@ async function caricaTutto() {
 
 caricaTutto();
 
-async function aggiornaOra() {
+/* 19/11/2026: "Aggiorna" funziona da QUALSIASI pulsante (in alto e nello Storico movimenti).
+   Prima cercava solo il pulsante con id "btn-aggiorna-ora": gli altri pulsanti andavano in errore e non facevano niente. */
+async function aggiornaOra(pulsante) {
   if (caricamentoInCorso) return;
-  const btn = document.getElementById('btn-aggiorna-ora');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno...';
+  const tutti = [];
+  [pulsante, document.getElementById('btn-aggiorna-ora')].forEach(b => { if (b && tutti.indexOf(b) === -1) tutti.push(b); });
+  const originali = tutti.map(b => b.innerHTML);
+  tutti.forEach(b => { b.disabled = true; b.innerHTML = '<span class="ect-gira">🔄</span> Aggiorno...'; });
   window.__ectManuale = true;
   try { await caricaTutto(); } finally { window.__ectManuale = false; }
-  btn.textContent = '✅ Aggiornato';
-  setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Aggiorna ora'; }, 1500);
+  tutti.forEach(b => { b.textContent = '✅ Aggiornato'; });
+  setTimeout(() => { tutti.forEach((b, i) => { b.disabled = false; b.innerHTML = originali[i]; }); }, 1500);
 }
 </script>
 <script src="/archivio-storico-reale.js"></script>
