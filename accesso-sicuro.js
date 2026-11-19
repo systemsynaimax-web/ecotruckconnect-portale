@@ -150,6 +150,28 @@
       (document.body || document.documentElement).appendChild(d);
     } catch (e) {}
   }
+  /* rinnovo silenzioso: l'accesso dura circa 1 ora, il portale lo rinnova da solo prima che scada
+     (ogni 5 minuti se la pagina e' visibile, e subito quando si torna sulla scheda dopo una pausa) */
+  var rinnovoInCorso = null;
+  function scadenzaToken(t) {
+    try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; }
+  }
+  function rinnovaSeServe() {
+    if (rinnovoInCorso) return rinnovoInCorso;
+    rinnovoInCorso = (async function () {
+      try {
+        var u = utenteCorrente(); if (!u || !window.netlifyIdentity || !netlifyIdentity.refresh) return;
+        var t = (u.token && u.token.access_token) || null;
+        var exp = t ? scadenzaToken(t) : 0;
+        if (exp - Date.now() < 10 * 60 * 1000) { try { await netlifyIdentity.refresh(); } catch (e) {} }
+      } finally { setTimeout(function () { rinnovoInCorso = null; }, 3000); }
+    })();
+    return rinnovoInCorso;
+  }
+  try {
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) rinnovaSeServe(); });
+    setInterval(function () { if (!document.hidden) rinnovaSeServe(); }, 5 * 60 * 1000);
+  } catch (e) {}
   window.ectTokenAccesso = tokenAccesso;
 
   /* (Authenticator tolto il 14/11/2026: nessun codice dell'app, nessun ticket) */
