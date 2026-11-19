@@ -4443,7 +4443,11 @@ async function aggClick(btn, fn) {
   if (btn) { btn.dataset.aggBusy = '1'; btn.dataset.testo = testo; btn.disabled = true; btn.innerHTML = '<span class="agg-gira">🔄</span> Aggiorno...'; }
   const t0 = Date.now();
   let ok = true;
-  try { const r = await fn(); if (r === false) ok = false; } catch (e) { ok = false; }
+  // 19/11: se ha appena aggiornato (meno di 20 secondi fa) non rileggo di nuovo: i dati sono gia' freschi (protegge Airtable)
+  const recente = window.__ectUltimoAgg && (Date.now() - window.__ectUltimoAgg) < 20000;
+  if (!recente) {
+    try { const r = await fn(); if (r === false) ok = false; else window.__ectUltimoAgg = Date.now(); } catch (e) { ok = false; }
+  }
   const resto = 800 - (Date.now() - t0);
   if (resto > 0) await new Promise(r => setTimeout(r, resto));
   if (btn) {
