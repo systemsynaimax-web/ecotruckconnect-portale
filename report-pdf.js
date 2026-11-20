@@ -199,17 +199,16 @@
 
     /* ---------- riquadro finale col totale ---------- */
     if (righe.length) {
-      if (y > H - 38) { doc.addPage(); y = 26; }
-      doc.setFillColor(...NAVY); doc.roundedRect(M, y, W - 2 * M, 17, 2.5, 2.5, 'F');
+      if (y > H - 37) { doc.addPage(); y = 26; }
+      doc.setFillColor(...NAVY); doc.roundedRect(M, y, W - 2 * M, 15, 2.5, 2.5, 'F');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(190, 200, 215);
       const chi = singolo ? pulisci((o.loro && o.loro.nome) || '') : '';
-      doc.text(az ? (singolo ? 'Ancora da pagare a ' + chi : 'Ancora da pagare in totale') : (singolo ? 'Ancora da incassare da ' + chi : 'Ancora da incassare in totale'), M + 6, y + 10.5);
+      doc.text(az ? (singolo ? 'Ancora da pagare a ' + chi : 'Ancora da pagare in totale') : (singolo ? 'Ancora da incassare da ' + chi : 'Ancora da incassare in totale'), M + 6, y + 9.4);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(255, 255, 255);
-      doc.text(eur(resta), W - M - 6, y + 11.2, { align: 'right' });
-      y += 22;
+      doc.text(eur(resta), W - M - 6, y + 10, { align: 'right' });
+      y += 20;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-      const nota = doc.splitTextToSize('Riepilogo dei ' + parola(2) + ' presi tramite EcoTruckConnect. Gli importi sono quelli concordati con l\'azienda al momento della pubblicazione, oltre IVA nei termini di legge. Non è una fattura fiscale: serve per controllare e preparare i pagamenti.', W - 2 * M);
-      doc.text(nota, M, y);
+      doc.text('Importi concordati con l\'azienda alla pubblicazione, oltre IVA nei termini di legge. Non è una fattura fiscale.', M, y);
     }
 
     /* ---------- intestazione corta e piè di pagina su ogni pagina ---------- */
