@@ -122,7 +122,7 @@
         head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Termini', 'Importo', 'Stato']],
         body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? '  (' + r.km + ' km)' : ''), pulisci(r.merce), pulisci(r.termini), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
         foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 5 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
-        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 5: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 6: { cellWidth: 20 } },
+        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 5: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 6: { cellWidth: 25 } },
         didParseCell: function (d) { if (d.section === 'head' && d.column.index === 5) d.cell.styles.halign = 'right'; coloraStato(6)(d); },
         showFoot: 'lastPage'
       }));
@@ -155,7 +155,7 @@
         head: [['Data', 'Ordine', az ? 'Trasportatore' : 'Azienda', 'Tratta', 'Importo', 'Stato']],
         body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.nome), pulisci(r.da) + ' - ' + pulisci(r.a), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
         foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 4 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
-        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 2: { cellWidth: 40 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 20 } },
+        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 2: { cellWidth: 40 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 25 } },
         didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },
         showFoot: 'lastPage'
       }));
