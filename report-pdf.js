@@ -42,21 +42,30 @@
     doc.text(az ? 'REPORT PAGAMENTI' : 'REPORT INCASSI', W - M, 12.5, { align: 'right' });
     doc.text('Generato il ' + generato, W - M, 18, { align: 'right' });
 
-    /* ---------- titolo ---------- */
+    /* ---------- titolo e dati del trasportatore (solo nell'intestazione, niente riquadri) ---------- */
     let y = 38;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(19); doc.setTextColor(...NAVY);
     const titolo = singolo
       ? (az ? 'Report trasportatore' : 'Report azienda')
       : (az ? 'Report generale dei pagamenti' : 'Report generale degli incassi');
     doc.text(titolo, M, y);
-    y += 7;
-    if (singolo) {
-      doc.setFontSize(13); doc.setTextColor(...BLUE);
-      doc.text(pulisci((o.loro && o.loro.nome) || ''), M, y);
-      y += 6;
+    y += 8;
+    if (singolo && o.loro) {
+      const d = o.loro;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...BLUE);
+      doc.text(pulisci(d.nome || ''), M, y);
+      y += 5.8;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+      const riga1 = [d.referente ? 'Referente: ' + d.referente : '', d.piva ? 'P.IVA ' + d.piva : '', d.indirizzo || ''].filter(Boolean).join('   |   ');
+      const riga2 = [d.tel ? 'Tel. ' + d.tel : '', d.email || ''].filter(Boolean).join('   |   ');
+      [riga1, riga2].forEach(t => { if (t) { doc.text(doc.splitTextToSize(pulisci(t), W - 2 * M)[0], M, y); y += 4.8; } });
+      y += 1;
     }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...MUTED);
-    doc.text('Periodo: ' + pulisci(o.periodo || 'da sempre') + (o.filtro && o.filtro !== 'Tutti' ? '   |   Solo: ' + pulisci(o.filtro) : ''), M, y);
+    let sotto = 'Periodo: ' + pulisci(o.periodo || 'da sempre');
+    if (!singolo) { const nPers = new Set(righe.map(r => r.nome)).size; sotto += '   |   ' + nPers + (az ? (nPers === 1 ? ' trasportatore' : ' trasportatori') : (nPers === 1 ? ' azienda' : ' aziende')); }
+    if (o.filtro && o.filtro !== 'Tutti') sotto += '   |   Solo: ' + pulisci(o.filtro);
+    doc.text(sotto, M, y);
     y += 8;
 
     /* ---------- riquadri riassuntivi ---------- */
@@ -78,50 +87,6 @@
       doc.text(c.t, x + 4, y + 15.5);
     });
     y += 27;
-
-    /* ---------- riquadri dati ---------- */
-    function righeDati(d, conRef) {
-      const r = [];
-      r.push({ b: true, t: pulisci(d.nome || '-') });
-      if (conRef && d.referente) r.push({ t: 'Referente: ' + pulisci(d.referente) });
-      if (d.indirizzo) r.push({ t: pulisci(d.indirizzo) });
-      if (d.piva) r.push({ t: 'P.IVA ' + pulisci(d.piva) });
-      if (d.tel) r.push({ t: 'Tel. ' + pulisci(d.tel) });
-      if (d.email) r.push({ t: pulisci(d.email) });
-      return r;
-    }
-    function riquadro(x, w, etichetta, righeT) {
-      const lh = 4.6, h = 11 + righeT.length * lh;
-      doc.setFillColor(255, 255, 255); doc.setDrawColor(...LINE); doc.setLineWidth(0.3);
-      doc.roundedRect(x, y, w, h, 2, 2, 'FD');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
-      doc.text(etichetta.toUpperCase(), x + 4, y + 5.5);
-      let yy = y + 11;
-      righeT.forEach(r => {
-        doc.setFont('helvetica', r.b ? 'bold' : 'normal'); doc.setFontSize(r.b ? 10.5 : 9); doc.setTextColor(...(r.b ? NAVY : INK));
-        const linee = doc.splitTextToSize(r.t, w - 8);
-        doc.text(linee[0], x + 4, yy); yy += lh;
-      });
-      return h;
-    }
-    const bw = (W - 2 * M - gap) / 2;
-    let hMax = 0;
-    if (singolo) {
-      const sx = az ? o.loro : o.io, dx = az ? o.io : o.loro; // sx = chi riceve, dx = chi paga
-      const h1 = riquadro(M, bw, az ? 'Trasportatore (chi riceve il pagamento)' : 'Trasportatore (chi emette la fattura)', righeDati(az ? o.loro : o.io, false));
-      const h2 = riquadro(M + bw + gap, bw, az ? 'Azienda (chi paga)' : 'Azienda (a cui intestare la fattura)', righeDati(az ? o.io : o.loro, true));
-      hMax = Math.max(h1, h2);
-    } else {
-      const nPers = new Set(righe.map(r => r.nome)).size;
-      const h1 = riquadro(M, bw, az ? 'Azienda (chi paga)' : 'Trasportatore', righeDati(o.io, false));
-      const h2 = riquadro(M + bw + gap, bw, 'Riepilogo', [
-        { b: true, t: nPers + (az ? (nPers === 1 ? ' trasportatore' : ' trasportatori') : (nPers === 1 ? ' azienda' : ' aziende')) },
-        { t: righe.length + ' ' + parola(righe.length) + ' nel periodo' },
-        { t: 'Periodo: ' + pulisci(o.periodo || 'da sempre') }
-      ]);
-      hMax = Math.max(h1, h2);
-    }
-    y += hMax + 8;
 
     /* ---------- tabelle ---------- */
     const stile = {
