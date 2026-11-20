@@ -46,6 +46,7 @@ if (window.__rawAuthHash && (window.__rawAuthHash.includes('recovery_token') || 
 <script src="/cap-comuni.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="/report-pdf.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -979,7 +980,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
           <span id="rs-titolo">💶 Resoconto</span>
           <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn-cap" style="font-size:12px;" onclick="rsAggiorna(this)">🔄 Aggiorna</button>
-            <button class="btn-cap" style="font-size:12px;" onclick="rsStampaFattura(null)">🖨️ Stampa per la fattura</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="rsStampaFattura(null)">📄 Scarica report PDF</button>
             <button class="btn-cap" style="font-size:12px;" onclick="rsCSV()">⬇️ CSV</button>
           </span>
         </div>
@@ -999,6 +1000,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
             <span style="color:var(--muted);font-size:12px;">→</span>
             <input type="date" id="rs-al" onchange="renderResoconto()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px;">
           </span>
+          <select id="rs-trasp" class="btn-cap" style="font-size:12px;max-width:220px;" onchange="rsScelto=this.value;renderResoconto()"></select>
           <select id="rs-stato" class="btn-cap" style="font-size:12px;" onchange="renderResoconto()"></select>
           <input id="rs-cerca" oninput="renderResoconto()" style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;">
         </div>
@@ -4004,6 +4006,12 @@ function renderResoconto() {
       ? '<option value="">Tutti</option><option value="da">Da pagare</option><option value="fatto">Già pagati</option>'
       : '<option value="">Tutti</option><option value="da">Da incassare</option><option value="fatto">Già incassati</option>';
   }
+  const selTr = document.getElementById('rs-trasp');
+  if (selTr) {
+    const nomiTutti = Array.from(new Set(rsBase().map(c => rsNome(c.fields)))).filter(Boolean).sort((a, b) => a.localeCompare(b, 'it'));
+    selTr.innerHTML = '<option value="">' + (az ? '🚛 Tutti i trasportatori' : '🏢 Tutte le aziende') + '</option>' + nomiTutti.map(n => '<option value="' + cpEsc(n) + '">' + cpEsc(n) + '</option>').join('');
+    selTr.value = rsScelto || '';
+  }
   const iv = rsIntervallo();
   const lista = rsFiltrati(true);
   const sempre = rsFiltrati(false);
@@ -4018,7 +4026,7 @@ function renderResoconto() {
   document.getElementById('rs-contatori').innerHTML = cont;
   document.getElementById('rs-scelto').innerHTML = rsScelto
     ? `<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:20px;padding:6px 12px;font-size:13px;">${az ? '🚛' : '🏢'} Solo: <b>${cpEsc(rsScelto)}</b> <span style="cursor:pointer;font-weight:700;" onclick="rsScegli('')">✕</span></span>
-       <button class="btn-cap" style="font-size:12px;margin-left:8px;" onclick="rsStampaFattura(rsScelto)">🖨️ Stampa per la fattura di ${cpEsc(rsScelto)}</button>`
+       <button class="btn-cap" style="font-size:12px;margin-left:8px;" onclick="rsStampaFattura(rsScelto)">📄 Scarica report PDF di ${cpEsc(rsScelto)}</button>`
     : '';
   // riquadri per trasportatore / azienda
   const pers = {};
@@ -4033,7 +4041,7 @@ function renderResoconto() {
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${az ? 'da pagare' : 'da incassare'} <b style="color:${x.resta > 0 ? 'var(--amber)' : 'var(--green)'};">${euro(x.resta)}</b></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsScegli(${JSON.stringify(n).replace(/"/g, '&quot;')})">Vedi solo ${az ? 'lui' : 'lei'}</button>
-          <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(${JSON.stringify(n).replace(/"/g, '&quot;')})">🖨️ Fattura</button>
+          <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(${JSON.stringify(n).replace(/"/g, '&quot;')})">📄 Report PDF</button>
         </div></div>`; }).join('') + '</div>'
     : '';
   // giorno per giorno
@@ -4064,7 +4072,7 @@ function renderResoconto() {
             <b style="color:var(--green);font-size:15px;">${euro(rsImp(f))}</b>
             <button class="btn-cap" style="font-size:11px;padding:4px 10px;${pag ? 'background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.5);color:var(--green);' : ''}" onclick="rsSegna('${c.id}', ${pag ? 'false' : 'true'}, this)">${pag ? (az ? '✓ Pagato' : '✓ Incassato') : (az ? 'Segna pagato' : 'Segna incassato')}</button>
             <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="apriSchedaCaricoPreso('${c.id}')">📋 Scheda</button>
-            <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(null, ['${c.id}'])">🖨️</button>
+            <button class="btn-cap" style="font-size:11px;padding:4px 10px;" onclick="rsStampaFattura(null, ['${c.id}'])">📄</button>
           </div>
         </div>`;
       }).join('') + '</div>';
@@ -4107,7 +4115,7 @@ function rsDatiLoro(f) {
   if (rsAz()) return { nome: rsNome(f), indirizzo: f.trasportatore_indirizzo || '', piva: f.trasportatore_piva || '', tel: f.assegnato_a_telefono || '', email: f.trasportatore_email || f.bloccato_da_id || '' };
   return { nome: rsNome(f), referente: f.azienda_referente || '', indirizzo: f.azienda_indirizzo || '', piva: f.azienda_piva || '', tel: f.telefono_azienda || '', email: f.email_azienda || '' };
 }
-function rsStampaFattura(nome, ids) {
+function rsStampaFatturaVecchia(nome, ids) {
   const tutti = rsBase();
   let lista = ids ? tutti.filter(c => ids.indexOf(c.id) !== -1) : rsFiltrati(true);
   if (nome) lista = lista.filter(c => rsNome(c.fields) === nome);
@@ -4144,6 +4152,34 @@ function rsStampaFattura(nome, ids) {
     tr.t td{font-weight:bold;border-top:2px solid #333;} .nota{font-size:11px;color:#666;margin-top:10px;} .pag{page-break-after:always;} .pag:last-child{page-break-after:auto;}
   </style></head><body>${pagine}</body></html>`);
   w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+}
+/* Report PDF (20/11/2026): sostituisce la vecchia stampa. Due versioni nello stesso stile:
+   - un solo trasportatore/azienda (scelto dal menu o dai riquadri): dettaglio + totale da pagare/incassare
+   - generale (nessuno scelto): riepilogo di tutti + dettaglio.
+   Usa solo i dati gia' caricati: nessuna chiamata a Make/Airtable. */
+function rsStampaFattura(nome, ids) {
+  if (!window.ectReportPdf || !window.jspdf) { return rsStampaFatturaVecchia(nome, ids); }
+  const az = rsAz();
+  const tutti = rsBase();
+  let lista = ids ? tutti.filter(c => ids.indexOf(c.id) !== -1) : rsFiltrati(true);
+  let chi = nome || (ids && lista.length ? rsNome(lista[0].fields) : '') || rsScelto || '';
+  if (nome) lista = lista.filter(c => rsNome(c.fields) === nome);
+  if (!lista.length) { alert(az ? 'Nessun trasporto da riportare in questo periodo.' : 'Nessun carico da riportare in questo periodo.'); return; }
+  const iv = ids ? null : rsIntervallo();
+  let periodo = iv ? iv.testo : 'singolo trasporto';
+  if (iv && iv.testo === 'da sempre') {
+    const date = lista.map(c => new Date(rsData(c.fields))).filter(d => !isNaN(d)).sort((a, b) => a - b);
+    if (date.length) periodo = 'da sempre (dal ' + date[0].toLocaleDateString('it-IT') + ' al ' + date[date.length - 1].toLocaleDateString('it-IT') + ')';
+  }
+  const st = (document.getElementById('rs-stato') || {}).value || '';
+  const filtro = ids ? 'Tutti' : st === 'da' ? (az ? 'Da pagare' : 'Da incassare') : st === 'fatto' ? (az ? 'Già pagati' : 'Già incassati') : 'Tutti';
+  const righe = lista.map(c => { const f = c.fields; const d = new Date(rsData(f)); const l = rsDatiLoro(f);
+    return { data: isNaN(d) ? null : d, ordine: f.numero_ordine || '', nome: rsNome(f), piva: l.piva || '', da: f.citta_partenza || '', a: f.citta_arrivo || '', km: f.km_tratta || '', merce: f.tipo_merce || '', termini: f.termini_pagamento || '', importo: rsImp(f), pagato: rsPagato(f) }; });
+  const singolo = !!chi;
+  const loro = singolo ? rsDatiLoro(lista[0].fields) : null;
+  const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  window.ectReportPdf({ az, modo: singolo ? 'singolo' : 'generale', periodo, filtro, io: rsDatiMiei(), loro, righe,
+    nomeFile: 'report-' + (az ? 'pagamenti' : 'incassi') + (singolo ? '-' + slug(chi) : '-generale') + '-' + new Date().toISOString().slice(0, 10) + '.pdf' });
 }
 function rsCSV() {
   const l = rsFiltrati(true);
