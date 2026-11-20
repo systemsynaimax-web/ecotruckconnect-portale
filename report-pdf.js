@@ -131,7 +131,7 @@
       // riepilogo per persona
       const per = {};
       righe.forEach(r => { const p = per[r.nome] = per[r.nome] || { nome: r.nome, piva: r.piva, n: 0, tot: 0, fatto: 0 }; p.n++; p.tot += r.importo; if (r.pagato) p.fatto += r.importo; if (!p.piva && r.piva) p.piva = r.piva; });
-      const elenco = Object.keys(per).map(k => per[k]).sort((a, b) => b.tot - a.tot);
+      const elenco = Object.keys(per).map(k => per[k]).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
       etichettaSezione(az ? 'Quanto dare a ciascun trasportatore' : 'Quanto incassare da ciascuna azienda');
       doc.autoTable(Object.assign({}, stile, {
         startY: y,
@@ -148,18 +148,29 @@
         showFoot: 'lastPage'
       }));
       y = doc.lastAutoTable.finalY + 10;
-      // dettaglio
-      etichettaSezione('Dettaglio dei ' + parola(2));
-      doc.autoTable(Object.assign({}, stile, {
-        startY: y,
-        head: [['Data', 'Ordine', az ? 'Trasportatore' : 'Azienda', 'Tratta', 'Importo', 'Stato']],
-        body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.nome), pulisci(r.da) + ' - ' + pulisci(r.a), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
-        foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 4 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
-        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 2: { cellWidth: 40 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 25 } },
-        didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },
-        showFoot: 'lastPage'
-      }));
-      y = doc.lastAutoTable.finalY + 8;
+      // dettaglio: persona per persona (non mischiato per data)
+      etichettaSezione('Dettaglio dei ' + parola(2) + (az ? ' per trasportatore' : ' per azienda'));
+      elenco.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it')).forEach(p => {
+        const mie = righe.filter(r => r.nome === p.nome);
+        const stimaAltezza = 9 + 9 + mie.length * 8.5 + 10; // intestazione + titoli + righe + totale
+        if (y > H - 55 || (y + stimaAltezza > H - 20 && stimaAltezza < H - 60)) { doc.addPage(); y = 26; }
+        doc.setFillColor(...NAVY); doc.roundedRect(M, y, W - 2 * M, 9, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(255, 255, 255);
+        doc.text(pulisci(p.nome) + (p.piva ? '   -   P.IVA ' + pulisci(p.piva) : ''), M + 4, y + 6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(210, 220, 235);
+        doc.text(p.n + ' ' + parola(p.n) + '   |   totale ' + eur(p.tot) + '   |   ' + lblDaPagare.toLowerCase() + ' ' + eur(p.tot - p.fatto), W - M - 4, y + 6, { align: 'right' });
+        doc.autoTable(Object.assign({}, stile, {
+          startY: y + 9,
+          head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Importo', 'Stato']],
+          body: mie.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? '  (' + r.km + ' km)' : ''), pulisci(r.merce), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
+          foot: [[{ content: 'Totale ' + pulisci(p.nome) + ' (' + p.n + ' ' + parola(p.n) + ')', colSpan: 4 }, { content: eur(p.tot), styles: { halign: 'right' } }, '']],
+          headStyles: Object.assign({}, stile.headStyles, { fillColor: [60, 72, 92] }),
+          columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 25 } },
+          didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },
+          showFoot: 'lastPage'
+        }));
+        y = doc.lastAutoTable.finalY + 9;
+      });
     }
 
     /* ---------- riquadro finale col totale ---------- */
