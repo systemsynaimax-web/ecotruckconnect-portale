@@ -4128,7 +4128,7 @@ function rsStampaFatturaVecchia(nome, ids) {
     const x = rsSomma(l); const loro = rsDatiLoro(l[0].fields);
     const blocco = (tit, d) => `<div class="b"><div class="bt">${tit}</div><b>${esc(d.nome || '—')}</b>${d.referente ? '<br>Referente: ' + esc(d.referente) : ''}${d.indirizzo ? '<br>' + esc(d.indirizzo) : ''}${d.piva ? '<br>P.IVA ' + esc(d.piva) : ''}${d.tel ? '<br>Tel. ' + esc(d.tel) : ''}${d.email ? '<br>' + esc(d.email) : ''}</div>`;
     const righe = l.map(c => { const f = c.fields; const d = new Date(rsData(f));
-      return `<tr><td>${isNaN(d) ? '' : d.toLocaleDateString('it-IT')}</td><td>${esc(f.numero_ordine || '')}</td><td>${esc(f.citta_partenza || '')} → ${esc(f.citta_arrivo || '')}${f.km_tratta ? ' (' + esc(f.km_tratta) + ' km)' : ''}</td><td>${esc(f.tipo_merce || '')}</td><td>${esc(f.termini_pagamento || '')}</td><td class="r">${euro(rsImp(f))}</td><td>${rsPagato(f) ? (az ? 'pagato' : 'incassato') : ''}</td></tr>`; }).join('');
+      return `<tr><td>${isNaN(d) ? '' : d.toLocaleDateString('it-IT')}</td><td>${esc(f.numero_ordine || '')}</td><td>${esc(f.citta_partenza || '')} → ${esc(f.citta_arrivo || '')}${f.km_tratta ? ', ' + esc(f.km_tratta) + ' km' : ''}</td><td>${esc(f.tipo_merce || '')}</td><td>${esc(f.termini_pagamento || '')}</td><td class="r">${euro(rsImp(f))}</td><td>${rsPagato(f) ? (az ? 'pagato' : 'incassato') : ''}</td></tr>`; }).join('');
     return `<div class="pag">
       <h1>${az ? 'Riepilogo trasporti da pagare' : 'Riepilogo per la fattura'}</h1>
       <div class="sub">Periodo: ${esc(iv.testo)} · ${x.n} ${rsParola(x.n)} · stampato il ${new Date().toLocaleString('it-IT')} · EcoTruckConnect</div>
@@ -4166,7 +4166,7 @@ function rsStampaFattura(nome, ids) {
   let periodo = iv ? iv.testo : 'singolo trasporto';
   if (iv && iv.testo === 'da sempre') {
     const date = lista.map(c => new Date(rsData(c.fields))).filter(d => !isNaN(d)).sort((a, b) => a - b);
-    if (date.length) periodo = 'da sempre (dal ' + date[0].toLocaleDateString('it-IT') + ' al ' + date[date.length - 1].toLocaleDateString('it-IT') + ')';
+    if (date.length) periodo = 'da sempre, dal ' + date[0].toLocaleDateString('it-IT') + ' al ' + date[date.length - 1].toLocaleDateString('it-IT');
   }
   const st = (document.getElementById('rs-stato') || {}).value || '';
   const filtro = ids ? 'Tutti' : st === 'da' ? (az ? 'Da pagare' : 'Da incassare') : st === 'fatto' ? (az ? 'Già pagati' : 'Già incassati') : 'Tutti';

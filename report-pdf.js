@@ -120,7 +120,7 @@
       doc.autoTable(Object.assign({}, stile, {
         startY: y,
         head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Termini', 'Importo', 'Stato']],
-        body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? '  (' + r.km + ' km)' : ''), pulisci(r.merce), pulisci(r.termini), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
+        body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), pulisci(r.termini), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
         foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 5 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
         columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 5: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 6: { cellWidth: 25 } },
         didParseCell: function (d) { if (d.section === 'head' && d.column.index === 5) d.cell.styles.halign = 'right'; coloraStato(6)(d); },
@@ -162,8 +162,8 @@
         doc.autoTable(Object.assign({}, stile, {
           startY: y + 9,
           head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Importo', 'Stato']],
-          body: mie.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? '  (' + r.km + ' km)' : ''), pulisci(r.merce), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
-          foot: [[{ content: 'Totale ' + pulisci(p.nome) + ' (' + p.n + ' ' + parola(p.n) + ')', colSpan: 4 }, { content: eur(p.tot), styles: { halign: 'right' } }, '']],
+          body: mie.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
+          foot: [[{ content: 'Totale ' + pulisci(p.nome) + ': ' + p.n + ' ' + parola(p.n), colSpan: 4 }, { content: eur(p.tot), styles: { halign: 'right' } }, '']],
           headStyles: Object.assign({}, stile.headStyles, { fillColor: [60, 72, 92] }),
           columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 25 } },
           didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },

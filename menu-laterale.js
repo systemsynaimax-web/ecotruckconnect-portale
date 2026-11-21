@@ -543,7 +543,7 @@
       '<div class="ms-isc-c"><small>Valida fino al</small><b>' + fmtData(sca) + '</b></div>' +
       '<div class="ms-isc-c"><small>Giorni rimasti</small><b style="color:' + col + '">' + (giorni == null ? '—' : (giorni < 0 ? 'scaduta da ' + (-giorni) : giorni)) + '</b></div>' +
       '<div class="ms-isc-c"><small>Importo annuale</small><b>€ 150,00</b></div></div>' +
-      '<div style="font-size:13px;color:rgba(241,245,249,.65);line-height:1.6;">Prima della scadenza ricevi un promemoria per email con il link di pagamento (pagina sicura Shopify). ' +
+      '<div style="font-size:13px;color:rgba(241,245,249,.65);line-height:1.6;">Prima della scadenza ricevi un promemoria per email con il link di pagamento sicuro su Shopify. ' +
       (sca ? '' : 'La data di scadenza non è ancora registrata sul tuo profilo. ') + 'Qui compaiono la data di iscrizione e la scadenza; i singoli pagamenti li gestiamo noi.</div>';
   }
 

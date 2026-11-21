@@ -2091,7 +2091,7 @@ function stReportPdf(tipo) {
   let periodo = iv.testo;
   if (iv.testo === 'tutto') {
     const date = lista.map(c => new Date(c.fields.data_assegnato || stDataRif(c.fields, c))).filter(d => !isNaN(d)).sort((a, b) => a - b);
-    periodo = 'da sempre' + (date.length ? ' (dal ' + date[0].toLocaleDateString('it-IT') + ' al ' + date[date.length - 1].toLocaleDateString('it-IT') + ')' : '');
+    periodo = 'da sempre' + (date.length ? ', dal ' + date[0].toLocaleDateString('it-IT') + ' al ' + date[date.length - 1].toLocaleDateString('it-IT') : '');
   }
   const importo = f => parseFloat(String(f.importo_pattuito || '0').replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0;
   const righe = lista.map(c => { const f = c.fields; const d = new Date(f.data_assegnato || stDataRif(f, c));
