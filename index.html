@@ -691,7 +691,6 @@ select option:checked{background:#1d4ed8;color:#fff;}
             </div>
             <button class="btn-cap" id="btn-scarica-fatture-pdf" onclick="scaricaFatturePDF()" style="display:none;">📄 Scarica PDF</button>
             <button class="btn-cap" id="btn-scarica-fatture" onclick="scaricaFattureCSV()" style="display:none;">⬇️ Scarica CSV</button>
-            <button class="btn-cap" onclick="stampaConTimbro()">🖨️ Stampa</button>
           </span>
         </h4>
         <div class="table-box" style="margin-bottom:0;">
@@ -750,7 +749,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
             <option value="0">📅 Da sempre</option><option value="7">Ultimi 7 giorni</option><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 3 mesi</option>
           </select>
           <button class="btn-cap" onclick="aggClick(this, caricaStoricoMovimenti)">🔄 Aggiorna</button>
-          <button class="btn-cap" onclick="stampaStoricoMovimenti()">🖨️ Stampa</button>
+          <button class="btn-cap" onclick="stampaStoricoMovimenti()">📄 Scarica PDF</button>
           <button class="btn-cap" onclick="csvStoricoMovimenti()">⬇️ CSV</button>
         </div>
         <div id="sm-lista" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;"><div class="empty" style="padding:24px;text-align:center;color:var(--muted);">Caricamento…</div></div>
@@ -967,7 +966,7 @@ select option:checked{background:#1d4ed8;color:#fff;}
             <select class="btn-cap" style="font-size:12px;" onchange="cpCambiaPeriodo(this.value)"><option value="">📅 Tutti</option><option value="1">Oggi</option><option value="7">7 giorni</option><option value="15">15 giorni</option><option value="30">30 giorni</option></select>
             <select class="btn-cap" id="cp-controparte" style="font-size:12px;max-width:220px;" onchange="cpCambiaControparte(this.value)"><option value="">Tutti</option></select>
             <button class="btn-cap" style="font-size:12px;" onclick="aggClick(this, renderCarichiPresi)">🔄 Aggiorna</button>
-            <button class="btn-cap" style="font-size:12px;" onclick="cpStampa()">🖨️ Stampa</button>
+            <button class="btn-cap" style="font-size:12px;" onclick="cpStampa()">📄 Scarica PDF</button>
             <button class="btn-cap" style="font-size:12px;" onclick="cpScaricaCSV()">⬇️ CSV</button>
           </span>
         </div>
@@ -1040,7 +1039,6 @@ select option:checked{background:#1d4ed8;color:#fff;}
           </div>
           <button class="btn-cap" id="btn-scarica-storico-pdf" onclick="scaricaFatturePDF()" style="font-size:12px;display:none;">📄 PDF</button>
           <button class="btn-cap" id="btn-scarica-storico-csv" onclick="scaricaFattureCSV()" style="font-size:12px;display:none;">⬇️ CSV</button>
-          <button class="btn-cap" onclick="stampaConTimbro()" style="font-size:12px;">🖨️ Stampa</button>
         </span>
       </div>
       <div class="table-box">
@@ -1736,10 +1734,9 @@ function renderStoricoMovimenti(errore) {
 function stampaStoricoMovimenti() {
   const lista = smFiltrati();
   const nome = (document.getElementById('nav-name') || {}).textContent || '';
-  const righe = lista.map(m => '<tr><td>' + smData(m.q) + '</td><td>' + smEsc(m.titolo) + '</td><td>' + ((m.prima || m.dopo) ? 'prima: ' + smEsc(m.prima) + ' → dopo: ' + smEsc(m.dopo) : smEsc(m.testo || '')) + '</td></tr>').join('');
-  const w = window.open('', '_blank'); if (!w) { alert('Consenti i pop-up per stampare.'); return; }
-  w.document.write('<html><head><meta charset="utf-8"><title>Storico movimenti</title><style>body{font-family:Arial;font-size:12px;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}th{background:#eee}</style></head><body><h2>Il mio storico movimenti — EcoTruckConnect</h2><p>' + smEsc(nome) + ' · stampato il ' + smData(new Date().toISOString()) + '</p><table><tr><th>Data e ora</th><th>Movimento</th><th>Dettaglio</th></tr>' + (righe || '<tr><td colspan="3">Nessun movimento</td></tr>') + '</table></body></html>');
-  w.document.close(); w.focus(); setTimeout(() => { try { w.print(); } catch (e) {} }, 300);
+  const righe = lista.map(m => '<tr><td>' + smData(m.q) + '</td><td>' + smEsc(m.titolo) + '</td><td>' + ((m.prima || m.dopo) ? 'prima: ' + smEsc(m.prima) + ' - dopo: ' + smEsc(m.dopo) : smEsc(m.testo || '')) + '</td></tr>').join('');
+  window.ectHtmlInPdf('Il mio storico movimenti', '<table><thead><tr><th>Data e ora</th><th>Movimento</th><th>Dettaglio</th></tr></thead><tbody>' + (righe || '<tr><td colspan="3">Nessun movimento</td></tr>') + '</tbody></table>',
+    { etichetta: 'STORICO MOVIMENTI', sottotitolo: nome + '   |   ' + lista.length + ' movimenti', nomeFile: 'storico-movimenti-' + new Date().toISOString().slice(0, 10) + '.pdf' });
 }
 function csvStoricoMovimenti() {
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
@@ -4233,7 +4230,7 @@ function renderCarichiPresi() {
       '<div id="cp-det-' + i + '" style="display:none;">' + cpScheda(f) +
         (stato !== 'PRESO' ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
           '<a class="btn-cap" href="' + cpMaps(f) + '" target="_blank" rel="noopener" style="font-size:12px;text-decoration:none;">🗺️ Apri il percorso su Google Maps</a>' +
-          '<button class="btn-cap" style="font-size:12px;" onclick="cpStampa([' + i + '])">🖨️ Stampa questo carico</button>' +
+          '<button class="btn-cap" style="font-size:12px;" onclick="cpStampa([' + i + '])">📄 Scarica PDF di questo carico</button>' +
         '</div>') +
       '</div>' +
     '</div>';
@@ -4595,22 +4592,17 @@ function cpCambiaControparte(v) { cpFiltroControparte = v || ''; renderCarichiPr
 function cpStampa(indici) {
   const r = cpLista().lista;
   const scelti = (indici && indici.length) ? indici.map(i => r[i]).filter(Boolean) : r;
-  if (!scelti.length) { alert('Nessun carico da stampare.'); return; }
+  if (!scelti.length) { alert('Nessun carico da scaricare.'); return; }
   const chi = tipoUtente === 'azienda' ? (profiloAzienda.nome || '') : (((trasportatoreFieldsCorrenti.nome || '') + ' ' + (trasportatoreFieldsCorrenti.cognome || '')).trim());
   const ora = new Date();
   const pezzi = scelti.map(c => {
     const f = c.fields;
     return '<div class="c"><h2>' + cpEsc(f.citta_partenza || '') + ' → ' + cpEsc(f.citta_arrivo || '') + ' <small>' + cpEsc(f.numero_ordine || '') + ' · preso il ' + cpDataOra(f.data_assegnato || f.data_candidatura) + '</small></h2>' + cpScheda(f) + '</div>';
   }).join('');
-  const w = window.open('', '_blank');
-  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i pop-up per questo sito.'); return; }
-  w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>EcoTruckConnect — Carichi presi</title><style>' +
-    ':root{--muted:#555;--border:#ccc;--green:#15803d;--blue:#1d4ed8;} body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .t{font-size:12px;color:#555;margin-bottom:16px;} ' +
-    '.c{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:14px;} h2{font-size:15px;margin:0;} h2 small{font-weight:normal;color:#555;font-size:12px;} a{color:#111;text-decoration:none;} div[style*="background"]{background:#fafafa !important;}' +
-    '</style></head><body><h1>EcoTruckConnect — ' + (tipoUtente === 'azienda' ? 'Trasporti presi dai trasportatori' : 'I miei carichi presi') + '</h1>' +
-    '<div class="t">' + cpEsc(chi) + ' · stampato il ' + ora.toLocaleDateString('it-IT') + ' alle ' + ora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + '</div>' + pezzi +
-    '<script>window.onload=function(){window.print();}<\/script></body></html>');
-  w.document.close();
+  window.ectHtmlInPdf(tipoUtente === 'azienda' ? 'Trasporti presi dai trasportatori' : 'I miei carichi presi', pezzi, {
+    etichetta: tipoUtente === 'azienda' ? 'TRASPORTI PRESI' : 'CARICHI PRESI',
+    sottotitolo: chi + '   |   ' + scelti.length + (scelti.length === 1 ? ' carico' : ' carichi'),
+    nomeFile: (tipoUtente === 'azienda' ? 'trasporti-presi-' : 'carichi-presi-') + ora.toISOString().slice(0, 10) + '.pdf' });
 }
 function cpScaricaCSV() {
   const r = cpLista().lista;
@@ -4856,28 +4848,20 @@ function scaricaFatturePDF() {
 
 function scaricaStoricoPDF() {
   if (!ultimeCandidature.length) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(15);
-  doc.text('EcoTruckConnect — Riepilogo movimenti (non è una fattura fiscale)', 14, 18);
-  doc.setFontSize(9);
-  doc.setTextColor(120);
-  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
-  const righe = ultimeCandidature
+  const righe = ultimeCandidature.slice()
     .sort((a, b) => (b.fields.data_candidatura || '').localeCompare(a.fields.data_candidatura || ''))
     .map(c => {
       const f = c.fields;
-      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-      return [data, f.richiesta_id || '—', f.stato || '—', `${euro(PREZZO)}`];
+      const data = f.data_candidatura ? new Date(f.data_candidatura).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+      return [data, f.richiesta_id || '-', f.stato || '-', `${euro(PREZZO)}`];
     });
-  doc.autoTable({
-    head: [['Data', 'ID Richiesta', 'Stato', 'Importo']],
-    body: righe,
-    startY: 30,
-    styles: { fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' }
+  window.ectDocumentoPdf({
+    titolo: 'Riepilogo movimenti', etichetta: 'RIEPILOGO MOVIMENTI',
+    sottotitolo: 'Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni) + '   |   ' + righe.length + (righe.length === 1 ? ' movimento' : ' movimenti'),
+    blocchi: [{ t: 'tab', head: ['Data', 'ID richiesta', 'Stato', 'Importo'], body: righe, destra: [3] }],
+    nota: 'Riepilogo dei movimenti nel periodo. Non e\' una fattura fiscale.',
+    nomeFile: `riepilogo_movimenti_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`
   });
-  doc.save(`riepilogo_movimenti_ecotruckconnect_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 function scaricaFattureAziendaCSV() {
@@ -4904,28 +4888,20 @@ function scaricaFattureAziendaCSV() {
 
 function scaricaFattureAziendaPDF() {
   if (!carichiFatturaAziendaFiltrati.length) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(15);
-  doc.text('EcoTruckConnect — Le mie pubblicazioni', 14, 18);
-  doc.setFontSize(9);
-  doc.setTextColor(120);
-  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT') + ' — Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni), 14, 24);
-  const righe = carichiFatturaAziendaFiltrati
+  const righe = carichiFatturaAziendaFiltrati.slice()
     .sort((a, b) => (b.fields.data_pubblicazione || '').localeCompare(a.fields.data_pubblicazione || ''))
     .map(c => {
       const f = c.fields;
-      const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '—';
-      return [data, f.numero_ordine || '—', f.stato || '—', f.bloccato_da_nome || '—'];
+      const data = f.data_pubblicazione ? new Date(f.data_pubblicazione).toLocaleDateString('it-IT') : '-';
+      return [data, f.numero_ordine || '-', f.stato || '-', f.bloccato_da_nome || '-'];
     });
-  doc.autoTable({
-    head: [['Data', 'Numero Ordine', 'Stato', 'Trasportatore']],
-    body: righe,
-    startY: 30,
-    styles: { fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: 'bold' }
+  window.ectDocumentoPdf({
+    titolo: 'Le mie pubblicazioni', etichetta: 'PUBBLICAZIONI',
+    sottotitolo: 'Periodo: ' + etichettaFiltroFatture(filtroFatturePeriodoGiorni) + '   |   ' + righe.length + (righe.length === 1 ? ' carico pubblicato' : ' carichi pubblicati'),
+    blocchi: [{ t: 'tab', head: ['Data', 'Numero ordine', 'Stato', 'Trasportatore'], body: righe }],
+    nota: 'Elenco dei carichi pubblicati nel periodo. Non e\' una fattura fiscale.',
+    nomeFile: `carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`
   });
-  doc.save(`carichi_pubblicati_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 /* ==================================================

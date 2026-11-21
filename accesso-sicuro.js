@@ -851,6 +851,18 @@
   function ectStampa(titolo, nodi, htmlExtra) {
     // 10/10: nel portale si SCARICA (PDF vero). Se e' attivo il modo "scarica" non apro la finestra di stampa.
     if (window.__ectModoScarica && typeof window.ectScarica === 'function') { window.ectScarica(titolo, nodi, htmlExtra); return; }
+    // 21/11: niente stampa, si scarica sempre il PDF con la grafica EcoTruckConnect (come i report)
+    if (typeof window.ectHtmlInPdf === 'function') {
+      var corpoPdf = '';
+      (nodi || []).forEach(function (n) {
+        if (!n) return;
+        var cp = n.cloneNode(true);
+        cp.querySelectorAll('button, input, select, textarea, .feed-actions, .spiega-apri, .ect-stampa-bar, script').forEach(function (x) { x.remove(); });
+        corpoPdf += cp.outerHTML;
+      });
+      window.ectHtmlInPdf(titolo, (htmlExtra || '') + corpoPdf, { etichetta: 'DOCUMENTO' });
+      return;
+    }
     var w = window.open('', '_blank', 'width=900,height=700');
     if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
     var corpo = '';

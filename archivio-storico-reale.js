@@ -410,6 +410,7 @@
   };
 
   function finestraStampa(titolo, contenuto) {
+    if (typeof window.ectHtmlInPdf === 'function') { window.ectHtmlInPdf(titolo, contenuto, { etichetta: 'ARCHIVIO', sottotitolo: 'Dashboard gestori - dati reali' }); return; }
     var w = window.open('', '_blank'); if (!w) { alert('Il browser ha bloccato la finestra: consenti i pop-up per questo sito.'); return; }
     var ora = new Date();
     w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>' + esc(titolo) + '</title><style>' +

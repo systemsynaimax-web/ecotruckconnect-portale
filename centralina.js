@@ -363,7 +363,7 @@
     }, 1500);
   }
   function stampa(x) {
-    var m = META[x.id] || {}, w = window.open('', '_blank'); if (!w) { msg('Il browser ha bloccato la finestra di stampa.'); return; }
+    var m = META[x.id] || {}, w = window.ectFinestraPdf('Centralina - ' + x.nome, 'CENTRALINA');
     w.document.write('<html><head><meta charset="utf-8"><title>Centralina — ' + esc(x.nome) + '</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{margin:0 0 4px}.s{font-size:18px;font-weight:700}td{padding:6px 10px;border-bottom:1px solid #ccc;vertical-align:top}table{border-collapse:collapse;width:100%;margin-top:14px}</style></head><body><h1>EcoTruckConnect — Centralina</h1><div class="s">' + esc(x.id) + ' · ' + esc(x.nome) + ' — ' + esc(x.stato) + '</div><table>' +
       '<tr><td><b>Stampato il</b></td><td>' + new Date().toLocaleString('it-IT') + (DEMO ? ' (DEMO: dati di esempio)' : '') + '</td></tr>' +
       '<tr><td><b>Ultimo controllo</b></td><td>' + esc(fmt(x.ultimo_controllo)) + '</td></tr>' +
@@ -374,7 +374,7 @@
     w.document.close();
   }
   function stampaReport() {
-    var w = window.open('', '_blank'); if (!w) { alert('Il browser ha bloccato la finestra di stampa: consentila e riprova.'); return; }
+    var w = window.ectFinestraPdf('Report centralina', 'CENTRALINA');
     var oggi = giornoDi(new Date().toISOString());
     var ev = stato.arch.filter(function (e) { return giornoDi(e.quando) === oggi && ancoraAperto(e); }).sort(function (a, b) { return new Date(a.quando) - new Date(b.quando); });
     var g = globale();

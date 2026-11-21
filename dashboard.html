@@ -426,7 +426,7 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <button class="st-btn" onclick="aggiornaOra(this)">🔄 Aggiorna</button>
       <button class="st-btn" onclick="stReportPdf('trasportatore')">📄 Report PDF trasportatori</button>
       <button class="st-btn" onclick="stReportPdf('azienda')">📄 Report PDF aziende</button>
-      <button class="st-btn" onclick="stStampa()">🖨️ Stampa</button>
+      <button class="st-btn" onclick="stStampa()">📄 Scarica PDF</button>
       <button class="st-btn" onclick="stCSV()">⬇️ CSV</button>
     </div>
     <div id="st-contatori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
@@ -442,7 +442,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
       <button onclick="caricaRegistroAttivita()">🔄 Carica registro</button>
       <button onclick="scaricaPDF('registro')">📄 Scarica PDF</button>
       <button onclick="scaricaCSV('registro')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="registro-lista"><div class="feed-empty">Clicca "🔄 Carica registro" per vedere le attività.</div></div>
   </div>
@@ -464,7 +463,6 @@ h1,h2,h3,h4{font-family:var(--font-h);}
     <div class="feed-actions">
       <button onclick="scaricaPDF('anagrafica')">📄 Scarica PDF</button>
       <button onclick="scaricaCSV('anagrafica')">⬇️ Esporta CSV</button>
-      <button onclick="stampaConTimbro()">🖨️ Stampa</button>
     </div>
     <div id="anagrafica-lista"><div class="feed-empty">Caricamento…</div></div>
   </div>
@@ -712,11 +710,11 @@ h1,h2,h3,h4{font-family:var(--font-h);}
 
 <div class="confirm-overlay" id="stampa-overlay" style="display:none;">
   <div class="stampa-box">
-    <div class="stampa-title">🖨️ Stampare l'anagrafica?</div>
-    <div class="stampa-text" id="stampa-testo">Vuoi stampare l'anagrafica di questo utente prima di continuare?</div>
+    <div class="stampa-title">📄 Scaricare l'anagrafica in PDF?</div>
+    <div class="stampa-text" id="stampa-testo">Vuoi scaricare il PDF con l'anagrafica di questo utente prima di continuare?</div>
     <div class="stampa-actions">
       <button class="btn-stampa-no" onclick="rispostaStampa(false)">No, continua</button>
-      <button class="btn-stampa-si" onclick="rispostaStampa(true)">🖨️ Sì, stampa</button>
+      <button class="btn-stampa-si" onclick="rispostaStampa(true)">📄 Sì, scarica PDF</button>
     </div>
   </div>
 </div>
@@ -1299,26 +1297,13 @@ function scaricaAnagrafica() {
   const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || 'utente') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || 'utente';
   const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(15);
-  doc.text(`EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}`, 14, 18);
-  doc.setFontSize(9);
-  doc.setTextColor(120);
-  doc.text('Scaricato il ' + new Date().toLocaleString('it-IT'), 14, 24);
-  doc.setFontSize(12);
-  doc.setTextColor(0);
-  doc.text(nome, 14, 34);
-
-  const righe = campi.map(([label, chiave]) => [label, f[chiave] || '—']);
-  doc.autoTable({
-    body: righe,
-    startY: 40,
-    styles: { fontSize: 10, cellPadding: 5 },
-    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60, textColor: [100,100,100] } }
+  window.ectDocumentoPdf({
+    titolo: 'Anagrafica ' + (r.tipo === 'azienda' ? 'azienda' : 'trasportatore'), etichetta: 'ANAGRAFICA',
+    sottotitolo: nome,
+    blocchi: [{ t: 'kv', righe: campi.map(([label, chiave]) => [label, f[chiave] || '-']) }],
+    nota: 'Scheda anagrafica scaricata dalla Dashboard gestori. Documento riservato.',
+    nomeFile: `anagrafica_${nome.replace(/\s+/g,'_')}.pdf`
   });
-
-  doc.save(`anagrafica_${nome.replace(/\s+/g,'_')}.pdf`);
 }
 
 function richiediConfermaAttivazione() {
@@ -1326,7 +1311,7 @@ function richiediConfermaAttivazione() {
   const nome = recordApertoCorrente.tipo === 'azienda'
     ? (recordApertoCorrente.fields.ragione_sociale || '—')
     : ((recordApertoCorrente.fields.nome || '') + ' ' + (recordApertoCorrente.fields.cognome || '')).trim();
-  document.getElementById('stampa-testo').textContent = `Vuoi stampare l'anagrafica di ${nome} prima di approvarlo?`;
+  document.getElementById('stampa-testo').textContent = `Vuoi scaricare il PDF con l'anagrafica di ${nome} prima di approvarlo?`;
   document.getElementById('stampa-overlay').style.display = 'flex';
 }
 
@@ -1337,25 +1322,8 @@ function rispostaStampa(vuoleStampare) {
 }
 
 function stampaAnagrafica() {
-  if (!recordApertoCorrente) return;
-  const r = recordApertoCorrente;
-  const f = r.fields;
-  const nome = r.tipo === 'azienda' ? (f.ragione_sociale || f.nome || '—') : ((f.nome || '') + ' ' + (f.cognome || '')).trim() || '—';
-  const campi = r.tipo === 'azienda' ? CAMPI_AZIENDA : CAMPI_TRASPORTATORE;
-  const righe = campi.map(([label, chiave]) => `<tr><td style="padding:6px 10px;color:#555;">${label}</td><td style="padding:6px 10px;font-weight:600;">${f[chiave] || '—'}</td></tr>`).join('');
-  const win = window.open('', '_blank', 'width=700,height=800');
-  win.document.write(`
-    <html><head><title>Anagrafica ${nome}</title></head>
-    <body style="font-family:sans-serif;padding:30px;">
-      <h2>EcoTruckConnect — Anagrafica ${r.tipo === 'azienda' ? 'Azienda' : 'Trasportatore'}</h2>
-      <p style="color:#888;font-size:12px;">Stampato il ${new Date().toLocaleString('it-IT')}</p>
-      <h3>${nome}</h3>
-      <table style="border-collapse:collapse;width:100%;">${righe}</table>
-    </body></html>
-  `);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+  /* 21/11/2026: niente stampa, si scarica il PDF con la grafica EcoTruckConnect */
+  scaricaAnagrafica();
 }
 
 async function eseguiAttivazione() {
@@ -1711,8 +1679,6 @@ function getAziendeFiltrate() {
 }
 
 function scaricaPDF(tipo) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
   let titolo, headers, righe;
 
   if (tipo === 'feed') {
@@ -1755,27 +1721,13 @@ function scaricaPDF(tipo) {
       return [f.nome_azienda || '—', `${f.citta_partenza || '—'} → ${f.citta_arrivo || '—'}`, f.tipo_merce || '—', f.stato || '—', data];
     });
   }
-  doc.text(titolo, 14, 18);
-  doc.setFontSize(9);
-  doc.setTextColor(120);
-  doc.text('Generato il ' + new Date().toLocaleString('it-IT'), 14, 24);
-
-  if (!righe.length) {
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text('Nessun dato disponibile con il filtro attuale.', 14, 38);
-  } else {
-    doc.autoTable({
-      head: headers,
-      body: righe,
-      startY: 30,
-      styles: { fontSize: 9, cellPadding: 4 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 247, 250] }
-    });
-  }
-
-  doc.save(`ecotruckconnect_${tipo}_${new Date().toISOString().slice(0,10)}.pdf`);
+  const titoloPulito = String(titolo).replace(/^EcoTruckConnect\s*[—-]\s*/, '');
+  window.ectDocumentoPdf({
+    titolo: titoloPulito, etichetta: 'DASHBOARD GESTORI',
+    sottotitolo: righe.length + (righe.length === 1 ? ' riga' : ' righe') + ' con il filtro attuale',
+    blocchi: righe.length ? [{ t: 'tab', head: headers[0], body: righe }] : [{ t: 'p', txt: 'Nessun dato disponibile con il filtro attuale.' }],
+    nomeFile: `ecotruckconnect_${tipo}_${new Date().toISOString().slice(0,10)}.pdf`
+  });
 }
 
 function scaricaCSV(tipo) {
@@ -2058,25 +2010,16 @@ function stCSV() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 function stStampa() {
-  const righe = stRigheEsportabili(); if (!righe.length) { alert('Nessun movimento da stampare in questo periodo.'); return; }
+  const righe = stRigheEsportabili(); if (!righe.length) { alert('Nessun movimento da scaricare in questo periodo.'); return; }
   const iv = stIntervallo();
   const presi = righe.filter(r => r['Commissione 20 €'] === 'pagata').length;
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
   const blocchi = righe.map(r => `<div class="c"><div class="t">${esc(r['Partenza'])} → ${esc(r['Arrivo'])}${r['Km'] ? ' · ' + esc(r['Km']) + ' km' : ''} <span class="s">${esc(r['Stato'])}</span></div>
     <table>${Object.keys(r).filter(k => r[k] !== '' && k !== 'Partenza' && k !== 'Arrivo' && k !== 'Km' && k !== 'Stato').map(k => `<tr><td class="k">${esc(k)}</td><td>${esc(r[k])}</td></tr>`).join('')}</table></div>`).join('');
-  const w = window.open('', '_blank');
-  if (!w) { alert('Il browser ha bloccato la finestra di stampa: consenti i popup per questo sito.'); return; }
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Storico movimenti EcoTruckConnect</title><style>
-    body{font-family:Arial,sans-serif;color:#111;margin:24px;} h1{font-size:18px;margin:0 0 4px;} .sub{font-size:12px;color:#555;margin-bottom:14px;}
-    .c{border:1px solid #ccc;border-radius:6px;padding:10px 12px;margin-bottom:12px;page-break-inside:avoid;} .t{font-weight:bold;font-size:14px;margin-bottom:6px;}
-    .s{font-size:11px;border:1px solid #999;border-radius:10px;padding:1px 8px;margin-left:6px;font-weight:normal;} table{border-collapse:collapse;width:100%;font-size:12px;}
-    td{padding:2px 8px 2px 0;vertical-align:top;} td.k{color:#555;white-space:nowrap;width:190px;}
-  </style></head><body>
-    <h1>EcoTruckConnect — Storico movimenti${stScelto ? ' — ' + esc(stScelto.nome) : ''}</h1>
-    <div class="sub">Periodo: ${esc(iv.testo)} · ${righe.length} carichi · ${presi} presi e pagati · Stampato il ${new Date().toLocaleString('it-IT')} dalla Dashboard Gestori</div>
-    ${blocchi}
-  </body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+  window.ectHtmlInPdf('Storico movimenti' + (stScelto ? ' - ' + stScelto.nome : ''), blocchi, {
+    etichetta: 'STORICO MOVIMENTI',
+    sottotitolo: 'Periodo: ' + iv.testo + '   |   ' + righe.length + ' carichi   |   ' + presi + ' presi e pagati',
+    nomeFile: 'storico-movimenti' + (stScelto ? '-' + stScelto.nome.replace(/[^\w]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.pdf' });
 }
 
 /* 20/11/2026: report PDF dallo storico (stesso stile del portale). Usa i filtri dello storico:

@@ -408,7 +408,7 @@
   };
 
   function finestraStampa(titolo, contenuto) {
-    var w = window.open('', '_blank'); if (!w) { alert('Il browser ha bloccato la finestra: consenti i pop-up per questo sito.'); return; }
+    var w = window.ectFinestraPdf(titolo, 'ARCHIVIO');
     var ora = new Date();
     w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>' + esc(titolo) + '</title><style>' +
       'body{font-family:Arial,sans-serif;color:#111;margin:24px;font-size:12px;} h1{font-size:18px;margin:0 0 4px;} .t{color:#555;margin-bottom:14px;} h2{font-size:14px;margin:16px 0 6px;border-bottom:1px solid #ccc;padding-bottom:4px;} ' +

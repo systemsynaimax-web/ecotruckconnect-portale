@@ -158,6 +158,39 @@
      SCARICA (10/10/2026): scarica un PDF vero (non apre la stampa).
      ectScarica(titolo, [nodi della pagina], 'html extra con tabelle')
      ===================================================================== */
+  /* 21/11/2026: converte i nodi della pagina in blocchi per il PDF con la grafica EcoTruckConnect (stessa dei report). */
+  function ectDomBlocchi(cont) {
+    var blocchi = [], kv = [];
+    var P = function (t) { return (window.ectPdfPulisci ? window.ectPdfPulisci(t) : String(t || '')); };
+    function chiudiKv() { if (kv.length) { blocchi.push({ t: 'kv', righe: kv }); kv = []; } }
+    function testo(n) { return (n.textContent || '').replace(/\s+/g, ' ').trim(); }
+    function visita(n) {
+      if (n.nodeType !== 1) return;
+      var tag = n.tagName;
+      if (/^(SCRIPT|STYLE|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(tag)) return;
+      if (tag === 'TABLE') {
+        chiudiKv();
+        var righe = Array.prototype.map.call(n.querySelectorAll('tr'), function (tr) { return Array.prototype.map.call(tr.children, testo); }).filter(function (r) { return r.some(Boolean); });
+        if (!righe.length) return;
+        var haHead = !!n.querySelector('thead') || !!n.querySelector('tr th');
+        blocchi.push({ t: 'tab', head: haHead ? righe[0] : righe[0].map(function () { return ''; }), body: haHead ? righe.slice(1) : righe });
+        return;
+      }
+      if (/^H[1-6]$/.test(tag)) { chiudiKv(); if (P(testo(n))) blocchi.push({ t: 'h', txt: testo(n) }); return; }
+      var fig = n.children;
+      if (fig.length === 2 && /^(SMALL|LABEL|SPAN|DIV)$/.test(fig[0].tagName) && /^(B|STRONG|SPAN|DIV)$/.test(fig[1].tagName) && !fig[0].children.length && !fig[1].children.length && testo(fig[0]).length < 60 && testo(fig[1]).length < 120 && testo(fig[0]) && testo(fig[1])) {
+        kv.push([testo(fig[0]), testo(fig[1])]); return;
+      }
+      if (n.querySelector('table, h1, h2, h3, h4, h5, h6, small') && fig.length) { Array.prototype.forEach.call(fig, visita); return; }
+      var t = testo(n); if (!P(t)) return;
+      if (fig.length && Array.prototype.some.call(fig, function (c) { return /^(DIV|P|UL|OL|SECTION)$/.test(c.tagName); })) { Array.prototype.forEach.call(fig, visita); return; }
+      chiudiKv(); blocchi.push({ t: 'p', txt: t });
+    }
+    Array.prototype.forEach.call(cont.children, visita);
+    chiudiKv();
+    return blocchi;
+  }
+
   window.ectScarica = async function (titolo, nodi, htmlExtra) {
     var es = window.ectEsito('Preparo il file «' + titolo + '»…');
     var nomeFile = String(titolo || 'documento').toLowerCase().replace(/[^a-z0-9àèéìòù]+/g, '-').replace(/^-+|-+$/g, '') || 'documento';
@@ -170,6 +203,12 @@
         c.querySelectorAll('button, input, select, textarea, script, style, .ect-stampa-bar, .feed-actions, .spiega-apri').forEach(function (x) { x.remove(); });
         cont.appendChild(c);
       });
+      if (window.ectDocumentoPdf) {
+        var d2 = window.ectDocumentoPdf({ titolo: titolo, etichetta: 'DOCUMENTO', blocchi: ectDomBlocchi(cont), nota: "Documento di riepilogo EcoTruckConnect - SynAIMAX S.R.L.S. Non sostituisce la fattura fiscale.", salva: false });
+        await es.fine('File scaricato: ' + nomeFile + '.pdf', true);
+        d2.save(nomeFile + '.pdf');
+        return;
+      }
       var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
       var W = doc.internal.pageSize.getWidth(), Hh = doc.internal.pageSize.getHeight(), M = 40, y = 52;
       doc.setFontSize(16); doc.text('EcoTruckConnect — ' + titolo, M, y); y += 18;
