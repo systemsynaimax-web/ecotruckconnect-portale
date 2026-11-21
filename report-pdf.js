@@ -5,7 +5,7 @@
    Funziona solo con i dati gia' caricati nel portale: nessuna chiamata a Make o Airtable (0 crediti).
    Richiede jsPDF 2.5.1 + jsPDF-AutoTable 3.8.2 (gia' caricati da index.html). */
 (function () {
-  const NAVY = [14, 22, 35], BLUE = [59, 130, 246], GREEN = [22, 163, 74], AMBER = [217, 119, 6],
+  const NAVY = [14, 22, 35], BLUE = [59, 130, 246], GREEN = [22, 163, 74], AMBER = [220, 38, 38],
     MUTED = [100, 110, 125], LIGHT = [243, 246, 250], LINE = [221, 226, 234], INK = [30, 36, 48];
 
   function eur(n) {
@@ -181,7 +181,7 @@
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(190, 200, 215);
       const chi = singolo ? pulisci((o.loro && o.loro.nome) || '') : '';
       doc.text(az ? (singolo ? 'Da pagare a ' + chi : 'Da pagare in totale') : (singolo ? 'Da incassare da ' + chi : 'Da incassare in totale'), M + 6, y + 9.4);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); if (resta > 0.005) doc.setTextColor(255, 80, 80); else doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); if (resta > 0.005) doc.setTextColor(255, 80, 80); else doc.setTextColor(74, 222, 128);
       doc.text(eur(resta), W - M - 6, y + 10, { align: 'right' });
       y += 20;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
