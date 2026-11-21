@@ -180,8 +180,8 @@
       doc.setFillColor(...NAVY); doc.roundedRect(M, y, W - 2 * M, 15, 2.5, 2.5, 'F');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(190, 200, 215);
       const chi = singolo ? pulisci((o.loro && o.loro.nome) || '') : '';
-      doc.text(az ? (singolo ? 'Ancora da pagare a ' + chi : 'Ancora da pagare in totale') : (singolo ? 'Ancora da incassare da ' + chi : 'Ancora da incassare in totale'), M + 6, y + 9.4);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(255, 255, 255);
+      doc.text(az ? (singolo ? 'Da pagare a ' + chi : 'Da pagare in totale') : (singolo ? 'Da incassare da ' + chi : 'Da incassare in totale'), M + 6, y + 9.4);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); if (resta > 0.005) doc.setTextColor(255, 80, 80); else doc.setTextColor(255, 255, 255);
       doc.text(eur(resta), W - M - 6, y + 10, { align: 'right' });
       y += 20;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
