@@ -2086,7 +2086,7 @@ function stReportPdf(tipo) {
   const az = tipo === 'trasportatore'; // true = report sui trasportatori (pagamenti), false = sulle aziende (incassi)
   const nomeDi = f => az ? stNomeTrasp(f) : (f.nome_azienda || '');
   const lista = stFiltrati().filter(c => String(c.fields.stato || '').toUpperCase() === 'PRESO' && nomeDi(c.fields));
-  if (!lista.length) { alert('Nessun carico preso da riportare con questi filtri.'); return; }
+  /* Nessun carico: il report esce lo stesso (modello con intestazione e tabella vuota). */
   const chi = (stScelto && stScelto.tipo === tipo) ? stScelto.nome : '';
   const iv = stIntervallo();
   let periodo = iv.testo;
@@ -2097,7 +2097,7 @@ function stReportPdf(tipo) {
   const importo = f => parseFloat(String(f.importo_pattuito || '0').replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0;
   const righe = lista.map(c => { const f = c.fields; const d = new Date(f.data_assegnato || stDataRif(f, c));
     return { data: isNaN(d) ? null : d, ordine: f.numero_ordine || '', nome: nomeDi(f), piva: (az ? f.trasportatore_piva : f.azienda_piva) || '', da: f.citta_partenza || '', a: f.citta_arrivo || '', km: f.km_tratta || '', merce: f.tipo_merce || '', termini: f.termini_pagamento || '', importo: importo(f), pagato: az ? !!f.pagato_azienda : !!f.incassato_trasportatore }; });
-  const f0 = lista[0].fields;
+  const f0 = lista.length ? lista[0].fields : {};
   const loro = !chi ? null : az
     ? { nome: chi, indirizzo: f0.trasportatore_indirizzo || '', piva: f0.trasportatore_piva || '', tel: f0.assegnato_a_telefono || '', email: f0.trasportatore_email || f0.bloccato_da_id || '' }
     : { nome: chi, referente: f0.azienda_referente || '', indirizzo: f0.azienda_indirizzo || '', piva: f0.azienda_piva || '', tel: f0.telefono_azienda || '', email: f0.email_azienda || '' };

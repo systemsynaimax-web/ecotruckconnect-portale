@@ -4164,7 +4164,7 @@ function rsStampaFattura(nome, ids) {
   let lista = ids ? tutti.filter(c => ids.indexOf(c.id) !== -1) : rsFiltrati(true);
   let chi = nome || (ids && lista.length ? rsNome(lista[0].fields) : '') || rsScelto || '';
   if (nome) lista = lista.filter(c => rsNome(c.fields) === nome);
-  if (!lista.length) { alert(az ? 'Nessun trasporto da riportare in questo periodo.' : 'Nessun carico da riportare in questo periodo.'); return; }
+  /* Nessun carico nel periodo: il report esce lo stesso (modello con intestazione e tabella vuota), cosi' si vede com'e' fatto. */
   const iv = ids ? null : rsIntervallo();
   let periodo = iv ? iv.testo : 'singolo trasporto';
   if (iv && iv.testo === 'da sempre') {
@@ -4176,7 +4176,7 @@ function rsStampaFattura(nome, ids) {
   const righe = lista.map(c => { const f = c.fields; const d = new Date(rsData(f)); const l = rsDatiLoro(f);
     return { data: isNaN(d) ? null : d, ordine: f.numero_ordine || '', nome: rsNome(f), piva: l.piva || '', da: f.citta_partenza || '', a: f.citta_arrivo || '', km: f.km_tratta || '', merce: f.tipo_merce || '', termini: f.termini_pagamento || '', importo: rsImp(f), pagato: rsPagato(f) }; });
   const singolo = !!chi;
-  const loro = singolo ? rsDatiLoro(lista[0].fields) : null;
+  const loro = singolo && lista.length ? rsDatiLoro(lista[0].fields) : null;
   const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
   window.ectReportPdf({ az, modo: singolo ? 'singolo' : 'generale', periodo, filtro, io: rsDatiMiei(), loro, righe,
     nomeFile: 'report-' + (az ? 'pagamenti' : 'incassi') + (singolo ? '-' + slug(chi) : '-generale') + '-' + new Date().toISOString().slice(0, 10) + '.pdf' });
