@@ -62,9 +62,10 @@
       y += 1;
     }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...MUTED);
-    let sotto = 'Periodo: ' + pulisci(o.periodo || 'da sempre');
-    if (!singolo) { const nPers = new Set(righe.map(r => r.nome)).size; sotto += '   |   ' + nPers + (az ? (nPers === 1 ? ' trasportatore' : ' trasportatori') : (nPers === 1 ? ' azienda' : ' aziende')); }
-    if (o.filtro && o.filtro !== 'Tutti') sotto += '   |   Solo: ' + pulisci(o.filtro);
+    const per0 = pulisci(o.periodo || '').replace(/^da sempre,?\s*/i, '').trim();
+    let sotto = per0 ? 'Periodo: ' + per0 : '';
+    if (!singolo) { const nPers = new Set(righe.map(r => r.nome)).size; sotto += (sotto ? '   |   ' : '') + nPers + (az ? (nPers === 1 ? ' trasportatore' : ' trasportatori') : (nPers === 1 ? ' azienda' : ' aziende')); }
+    if (o.filtro && o.filtro !== 'Tutti') sotto += (sotto ? '   |   ' : '') + 'Solo: ' + pulisci(o.filtro);
     doc.text(sotto, M, y);
     y += 8;
 
@@ -119,11 +120,11 @@
       etichettaSezione('Dettaglio dei ' + parola(2));
       doc.autoTable(Object.assign({}, stile, {
         startY: y,
-        head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Termini', 'Importo', 'Stato']],
-        body: righe.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), pulisci(r.termini), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
-        foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 5 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
-        columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 5: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 6: { cellWidth: 25 } },
-        didParseCell: function (d) { if (d.section === 'head' && d.column.index === 5) d.cell.styles.halign = 'right'; coloraStato(6)(d); },
+        head: [['Data', 'Tratta', 'Merce', 'Termini', 'Importo', 'Stato']],
+        body: righe.map(r => [dataIt(r.data), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), pulisci(r.termini), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
+        foot: [[{ content: 'Totale ' + righe.length + ' ' + parola(righe.length), colSpan: 4 }, { content: eur(tot), styles: { halign: 'right' } }, '']],
+        columnStyles: { 0: { cellWidth: 22 }, 4: { halign: 'right', cellWidth: 26, fontStyle: 'bold' }, 5: { cellWidth: 26 } },
+        didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },
         showFoot: 'lastPage'
       }));
       y = doc.lastAutoTable.finalY + 8;
@@ -161,12 +162,12 @@
         doc.text(p.n + ' ' + parola(p.n) + '   |   totale ' + eur(p.tot) + '   |   ' + lblDaPagare.toLowerCase() + ' ' + eur(p.tot - p.fatto), W - M - 4, y + 6, { align: 'right' });
         doc.autoTable(Object.assign({}, stile, {
           startY: y + 9,
-          head: [['Data', 'Ordine', 'Tratta', 'Merce', 'Importo', 'Stato']],
-          body: mie.map(r => [dataIt(r.data), pulisci(r.ordine), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
-          foot: [[{ content: 'Totale ' + pulisci(p.nome) + ': ' + p.n + ' ' + parola(p.n), colSpan: 4 }, { content: eur(p.tot), styles: { halign: 'right' } }, '']],
+          head: [['Data', 'Tratta', 'Merce', 'Importo', 'Stato']],
+          body: mie.map(r => [dataIt(r.data), pulisci(r.da) + ' - ' + pulisci(r.a) + (r.km ? ', ' + r.km + ' km' : ''), pulisci(r.merce), eur(r.importo), r.pagato ? lblPagato : lblDaPagare]),
+          foot: [[{ content: 'Totale ' + pulisci(p.nome) + ': ' + p.n + ' ' + parola(p.n), colSpan: 3 }, { content: eur(p.tot), styles: { halign: 'right' } }, '']],
           headStyles: Object.assign({}, stile.headStyles, { fillColor: [60, 72, 92] }),
-          columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 31, font: 'courier', fontSize: 7 }, 4: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, 5: { cellWidth: 25 } },
-          didParseCell: function (d) { if (d.section === 'head' && d.column.index === 4) d.cell.styles.halign = 'right'; coloraStato(5)(d); },
+          columnStyles: { 0: { cellWidth: 22 }, 3: { halign: 'right', cellWidth: 26, fontStyle: 'bold' }, 4: { cellWidth: 26 } },
+          didParseCell: function (d) { if (d.section === 'head' && d.column.index === 3) d.cell.styles.halign = 'right'; coloraStato(4)(d); },
           showFoot: 'lastPage'
         }));
         y = doc.lastAutoTable.finalY + 9;
